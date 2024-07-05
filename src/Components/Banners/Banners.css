@@ -28,8 +28,16 @@
     padding: 0% 10%;
     padding-top: 5rem;
 }
-
-@media (max-width: 700px){
+@media (max-width: 1020px){
+    #swiper_container{
+        height: 50vh;
+     }
+     .loadingBanner{
+       height: 50vh;
+     
+    }
+}
+@media (max-width: 900px){
     .BannerContain{
         padding: 0% 3%;
         padding-top: 1rem;

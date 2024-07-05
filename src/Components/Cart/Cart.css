@@ -3,7 +3,7 @@
 .modal-cart {
     top: 0;
     background-color: var(--blanco);
-    width: 30%;
+    width: 65vh;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -32,6 +32,12 @@
     padding: 13px;
     border: none;
 }
+.modal-send-form select {
+    background-color: var(--gris2);
+    border-radius: 6px;
+    padding: 13px;
+    border: none;
+}
 .overlay-cart {
     position: fixed;
     top: 0;
@@ -48,7 +54,7 @@
 .modal-content-cart {
     width: 100%;
     overflow-y: scroll;
-    min-height: 70vh;
+    height: 72vh;
     padding: 10px;
    
     
@@ -76,6 +82,7 @@
     border-radius: 10px;
     padding-bottom: 10px;
     border-bottom: 1px solid var(--gris2);
+    justify-content: space-around;
 }
 .deleteToCart{
     background-color: var(--color1);
@@ -85,16 +92,14 @@
     cursor: pointer;
 }
 .deleteCart{
-    margin-left: 95%;
-    margin-right: 0;
-    margin-top: -25px;
-    position: absolute;
+   
     cursor: pointer;
     color: var(--color1);
     font-weight: 500;
     background-color: transparent;
     border: none;
-    font-size: 20px;
+    font-size: 17px;
+    text-align: right;
 }
 .cardProductCart img{
     width: 5rem;
@@ -105,21 +110,28 @@
 .cardProductCartText{
     display: flex;
     flex-direction: column;
-    width: 60%;
+    justify-content: space-around;
+    gap: 7px;
+    width: 50%;
 }
 
 .cardProductCartText h3{
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 40ch;
+    max-width: 20ch;
     font-weight: 500;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--text-color2);
 }
-.cardProductCartText p{
+.cardProductCartText span{
+    color: var(--text-color2);
+    font-size: 14px;
+}
+.cardProductCartText strong{
     color: var(--text-color2);
     font-size: 15px;
+    font-weight: 500;
 }
 .deFLex{
     display: flex;
@@ -148,9 +160,12 @@
    justify-content: space-between;
    gap: 2rem;
 }
+.deFLexBtns .btn{
+    font-size: 14px;
+}
 .btnWpp{
     background-color: rgb(30, 184, 30);
-    padding: 11px;
+    padding: 9px;
     color: var(--blanco);
     border-radius: 60px;
     border: none;
@@ -204,6 +219,120 @@
     color: var(--text-color2);
 }
 
+.cartIconFixed{
+    position: fixed;
+    bottom: 50px;
+    right: 0;
+    left: 92%;
+    background-color: var(--color1);
+    color: var(--blanco);
+    padding: 25px;
+    border-radius: 100%;
+   width: 2.5rem;
+   height:2.5rem;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   border: none;
+   font-size: 17px;
+   z-index: 2;
+   box-shadow: 0px 4px 30px rgba(0, 0, 0, 0.196);
+ 
+}
+.cartIconFixed span{
+    background-color: rgb(0, 0, 0);
+    padding: 4px 7px;
+    border-radius: 100%;
+    font-size: 12px;
+   position: absolute;
+   margin-top: -15px;
+   margin-left: 1rem;
+   color: var(--blanco);
+}
+.deFLexRadio{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
+    color: var(--text-color2);
+    background-color: var(--gris2);
+    border-radius: 6px;
+    padding: 13px;
+    border: none;
+    font-size: 14px;
+}
+.deFLexRadio div{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.deFlexCantidad{
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+.deFlexCantidad button{
+    color: var(--blanco);
+    background-color: var(--color1);
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 3px 6px;
+}
+.deFlexCantidad span{
+    font-weight: 600;
+}
+.deNonefieldset{
+    display: none;
+}
+
+.mesaCard{
+    border-radius: 10px;
+    padding: 10px;
+    width:5rem;
+    height: 4rem;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  
+    font-size: 14px;
+}
+.mesaCard input{
+    /* display: none; */
+    color: var(--color1);
+    background-color: aqua;
+    width: 100%;
+    margin-top: 4px;
+}
+.mesasGrapCart span{
+    font-size: 13px;
+}
+.mesasGrapCart{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 40vh;
+    overflow-y: scroll;
+}
+.mesasGrapCart::-webkit-scrollbar{
+    width: 5px;
+    height: 5px;
+ 
+    cursor: pointer;
+    background-color: transparent;
+   
+}
+ 
+.mesasGrapCart::-webkit-scrollbar-thumb {
+    background-color: var(--color1); 
+    border-radius: 10px;
+    margin-top: 3rem;
+  }
 @media (max-width: 900px) {
     .modal-cart {
         width: 100%;
@@ -217,4 +346,14 @@
   .cartIcon{
     color: var(--blanco);
   }
+  .cartIconFixed{
+    position: fixed;
+  bottom: 30px;
+    right: 0;
+    left: 80%;
+   
+}
+.mesasGrapCart{
+    max-height: 45vh;
+}
 }

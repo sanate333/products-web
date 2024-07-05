@@ -1,0 +1,12 @@
+.deleteFav{
+
+    cursor: pointer;
+    color: red;
+    font-weight: 500;
+    background-color: transparent;
+    border: none;
+    font-size: 17px;
+}
+@media (max-width: 1024px) {
+    
+}

@@ -2,75 +2,110 @@ import React, { useEffect, useState } from 'react';
 import { Link as Anchor } from "react-router-dom";
 import './ProductosMain.css'
 import baseURL from '../../url';
+import moneda from '../../moneda';
+import contador from '../../contador'
 export default function ProductosMain() {
-    const [productos, setProductos] = useState([]);
-
+    const [pedidos, setPedidos] = useState([]);
+    const [mesas, setMesas] = useState([]);
     useEffect(() => {
-        cargarProductos();
+        cargarPedidos();
+        cargarMesas()
     }, []);
 
 
 
-    const cargarProductos = () => {
-        fetch(`${baseURL}/productosGet.php`, {
+    const cargarPedidos = () => {
+        fetch(`${baseURL}/pedidoGet.php`, {
             method: 'GET',
         })
             .then(response => response.json())
             .then(data => {
-                setProductos(data.productos.reverse().slice(0, 5) || []);
-                console.log(data.productos)
+                setPedidos(data.pedidos.reverse().slice(0, 5) || []);
+                console.log(data.pedidos)
             })
-            .catch(error => console.error('Error al cargar productos:', error));
+            .catch(error => console.error('Error al cargar pedidos:', error));
+    };
+    const cargarMesas = () => {
+        fetch(`${baseURL}/mesaGet.php`, {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(data => {
+                setMesas(data.mesas || []);
+                console.log(data.mesas)
+            })
+            .catch(error => console.error('Error al cargar mesas:', error));
+    };
+    const [counter, setCounter] = useState(contador);
+    const [isPaused, setIsPaused] = useState(false);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!isPaused) {
+                setCounter((prevCounter) => {
+                    if (prevCounter === 1) {
+                        recargar();
+                        return contador;
+                    }
+                    return prevCounter - 1;
+                });
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isPaused]);
+    const togglePause = () => {
+        setIsPaused(!isPaused);
     };
 
+
+    const recargar = () => {
+        cargarMesas();
+        cargarPedidos();
+    };
 
     return (
 
 
-        <div className='table-containerProductos'>
+        <div className='table-containerPedidos'>
             <div className='deFlexMore'>
-                <h3>Ultimos {productos?.length} productos</h3>
-                <Anchor to={`/dashboard/productos`} className='logo'>
+                <h3>Ultimos {pedidos?.length} pedidos</h3>
+                <Anchor to={`/dashboard/pedidos`} className='logo'>
                     Ver más
                 </Anchor>
             </div>
             <table className='table'>
                 <thead>
                     <tr>
-                        <th>IdProducto</th>
-                        <th>Titulo</th>
-                        <th>Descripcion</th>
-                        <th>Precio</th>
-                        <th>Categoria</th>
-                        <th>Imagen 1</th>
+                        <th>Id Pedido</th>
+                        <th>Mesa</th>
+                        <th>Estado</th>
+                        <th>Nombre</th>
+                        <th>Total</th>
+                        <th>Fecha</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {productos.map(item => (
-                        <tr key={item.idProducto}>
-                            <td>{item.idProducto}</td>
-                            <td>{item.titulo}</td>
-                            <td>{item.descripcion}</td>
+                    {pedidos.map(item => (
+                        <tr key={item.idPedido}>
+                            <td>{item.idPedido}</td>
+                            {
+                                mesas.filter(mesa => mesa?.idMesa === item?.idMesa).map(mapeomesa => (
+                                    <td>{mapeomesa?.mesa}</td>
+                                ))
+                            }
+
                             <td style={{
-                                color: '#008000',
+                                color: item?.estado === 'Pendiente' ? '#DAA520' :
+                                    item?.estado === 'Entregado' ? '#0000FF' :
+                                        item?.estado === 'Rechazado' ? '#FF0000' :
+                                            item?.estado === 'Pagado' ? '#008000' :
+                                                '#000000'
                             }}>
-                                ${`${item?.precio}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
+                                {item?.estado}
                             </td>
-
-                            <td style={{
-                                color: '#DAA520',
-
-                            }}>  {`${item?.categoria}`}</td>
-                            <td>
-                                {item.imagen1 ? (
-                                    <img src={item.imagen1} alt="imagen1" />
-                                ) : (
-                                    <span className='imgNonetd'>
-                                        Sin imagen
-                                    </span>
-                                )}
-                            </td>
-
+                            <td>{item.nombre}</td>
+                            <td style={{ color: '#008000', }}>{moneda} {item.total}</td>
+                            <td>{item.createdAt}</td>
 
                         </tr>
                     ))}

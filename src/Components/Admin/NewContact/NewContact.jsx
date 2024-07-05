@@ -11,14 +11,14 @@ export default function NewContact() {
     const [instagram, setInstagram] = useState('');
     const [email, setEmail] = useState('');
     const [direccion, setDireccion] = useState('');
-    const [localidad, setLocalidad] = useState('');
+    const [facebook, setFacebook] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
     const toggleModal = () => {
         setTelefono('');
         setInstagram('');
         setEmail('');
         setDireccion('');
-        setLocalidad('');
+        setFacebook('');
         setMensaje('');
         setModalOpen(!modalOpen);
     };
@@ -30,7 +30,7 @@ export default function NewContact() {
         formData.append('instagram', instagram);
         formData.append('email', email);
         formData.append('direccion', direccion);
-        formData.append('localidad', localidad);
+        formData.append('facebook', facebook);
 
         setMensaje('Procesando...');
 
@@ -67,73 +67,78 @@ export default function NewContact() {
             {modalOpen && (
                 <div className='modal'>
                     <div className='modal-content'>
-                        <div className='deFlexBack'>
-                            <h4>Agregar nuevo Contacto</h4>
+                        <div className='deFlexBtnsModal'>
+                            <button className='selected'>
+                                Agregar Contacto
+                            </button>
                             <span className='close' onClick={toggleModal}>
                                 &times;
                             </span>
                         </div>
                         <form>
-                            <fieldset>
-                                <legend>Nombre</legend>
-                                <input
-                                    type='text'
-                                    name='nombre'
-                                    value={nombre}
-                                    onChange={(e) => setNombre(e.target.value)}
-                                />
-                            </fieldset>
-                            <fieldset>
-                                <legend>Telefono</legend>
-                                <input
-                                    type='text'
-                                    name='telefono'
-                                    value={telefono}
-                                    onChange={(e) => setTelefono(e.target.value)}
-                                />
-                            </fieldset>
-                            <fieldset>
-                                <legend>Instagram</legend>
-                                <input
-                                    type='url'
-                                    name='instagram'
-                                    value={instagram}
-                                    onChange={(e) => setInstagram(e.target.value)}
-                                />
-                            </fieldset>
-                            <fieldset>
-                                <legend>Email</legend>
-                                <input
-                                    type='email'
-                                    name='email'
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-                            </fieldset>
-                            <fieldset>
-                                <legend>Dirección</legend>
-                                <input
-                                    type='text'
-                                    name='direccion'
-                                    value={direccion}
-                                    onChange={(e) => setDireccion(e.target.value)}
-                                />
-                            </fieldset>
-                            <fieldset>
-                                <legend>Localidad</legend>
-                                <input
-                                    type='text'
-                                    name='localidad'
-                                    value={localidad}
-                                    onChange={(e) => setLocalidad(e.target.value)}
-                                />
-                            </fieldset>
+                            <div className='flexGrap'>
+                                <fieldset>
+                                    <legend>Nombre</legend>
+                                    <input
+                                        type='text'
+                                        name='nombre'
+                                        value={nombre}
+                                        onChange={(e) => setNombre(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Telefono</legend>
+                                    <input
+                                        type='text'
+                                        name='telefono'
+                                        value={telefono}
+                                        onChange={(e) => setTelefono(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Instagram</legend>
+                                    <input
+                                        type='url'
+                                        name='instagram'
+                                        value={instagram}
+                                        onChange={(e) => setInstagram(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>facebook</legend>
+                                    <input
+                                        type='text'
+                                        name='facebook'
+                                        value={facebook}
+                                        onChange={(e) => setFacebook(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Email</legend>
+                                    <input
+                                        type='email'
+                                        name='email'
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Dirección</legend>
+                                    <input
+                                        type='text'
+                                        name='direccion'
+                                        value={direccion}
+                                        onChange={(e) => setDireccion(e.target.value)}
+                                    />
+                                </fieldset>
+
+                            </div>
                             {mensaje ? (
                                 <button type='button' className='btnLoading' disabled>
                                     {mensaje}
                                 </button>
                             ) : (
-                                <button type='button' onClick={crear} className='btnSave'>
+                                <button type='button' onClick={crear} className='btnPost'>
                                     Agregar
                                 </button>
                             )}

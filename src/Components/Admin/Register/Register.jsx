@@ -71,9 +71,14 @@ export default function Register() {
             {modalOpen && (
                 <div className="modal">
                     <div className="modal-content">
-                        <div className='deFlexBack'>
-                            <h4>Agregar Usuario</h4>
-                            <span className="close" onClick={toggleModal}>&times;</span>
+
+                        <div className='deFlexBtnsModal'>
+                            <button className='selected'>
+                                Agregar Usuario
+                            </button>
+                            <span className='close' onClick={toggleModal}>
+                                &times;
+                            </span>
                         </div>
                         <form onSubmit={crearCatalogo} id='crearForm'>
 
@@ -113,7 +118,7 @@ export default function Register() {
                                         required
                                     >
                                         <option value="">Seleccione un rol</option>
-                                        <option value="usuario">Usuario</option>
+                                        <option value="mesero">Mesero</option>
                                         <option value="admin">Admin</option>
                                     </select>
                                 </fieldset>
@@ -145,7 +150,7 @@ export default function Register() {
                                     {mensaje2}
                                 </button>
                             ) : (
-                                <button type="submit" className='btnSave'>
+                                <button type="submit" className='btnPost'>
                                     Agregar
                                 </button>
                             )}

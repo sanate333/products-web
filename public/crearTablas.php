@@ -48,7 +48,7 @@ try {
         instagram VARCHAR(100) NOT NULL,
         email VARCHAR(100) NOT NULL,
         direccion VARCHAR(255) NOT NULL,
-        localidad VARCHAR(100) NOT NULL
+        facebook VARCHAR(100) NOT NULL
     )";
     crearTablaSiNoExiste($conexion, 'contacto', $consultaContacto);
 
@@ -65,13 +65,24 @@ try {
         idProducto INT(11) AUTO_INCREMENT PRIMARY KEY,
         descripcion TEXT NOT NULL,
         titulo VARCHAR(255) NOT NULL,
-        precio INT(100) NOT NULL,
+        precio DECIMAL(10,2) NOT NULL,
         categoria VARCHAR(30) NOT NULL,
         masVendido VARCHAR(30) NOT NULL,
         imagen1 VARCHAR(900),
         imagen2 VARCHAR(900),
         imagen3 VARCHAR(900),
         imagen4 VARCHAR(900),
+        item1 VARCHAR(255),
+         item2 VARCHAR(255),
+         item3 VARCHAR(255),
+         item4 VARCHAR(255),
+         item5 VARCHAR(255),
+        item6 VARCHAR(255),
+         item7 VARCHAR(255),
+        item8 VARCHAR(255),
+        item9 VARCHAR(255),
+        item10 VARCHAR(255),
+        precioAnterior DECIMAL(10,2) NOT NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     crearTablaSiNoExiste($conexion, 'productos', $consultaProductos);
@@ -94,9 +105,31 @@ try {
     $consultaCodigos = "CREATE TABLE IF NOT EXISTS `codigos` (
     idCodigo INT(11) AUTO_INCREMENT PRIMARY KEY,
     codigo VARCHAR(50) NOT NULL,
-    descuento INT(20) DEFAULT 0
+    descuento DECIMAL(10,2) NOT NULL
     )";
     crearTablaSiNoExiste($conexion, 'codigos', $consultaCodigos);
+
+// Crear tabla 'mesas' si no existe
+$consultaMesas = "CREATE TABLE IF NOT EXISTS `mesas` (
+    idMesa INT(11) AUTO_INCREMENT PRIMARY KEY,
+    mesa VARCHAR(100) NOT NULL,
+    estado VARCHAR(50) NOT NULL
+)";
+crearTablaSiNoExiste($conexion, 'mesas', $consultaMesas);
+
+// Crear tabla 'pedidos' si no existe
+$consultaPedidos = "CREATE TABLE IF NOT EXISTS `pedidos` (
+    idPedido INT(11) AUTO_INCREMENT PRIMARY KEY,
+    idMesa INT(11) NOT NULL,
+    estado VARCHAR(50) NOT NULL,
+    productos JSON NOT NULL,
+    total DECIMAL(10,2) NOT NULL,
+    nota VARCHAR(255) NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    codigo VARCHAR(50) NOT NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)";
+crearTablaSiNoExiste($conexion, 'pedidos', $consultaPedidos);
 
 
 

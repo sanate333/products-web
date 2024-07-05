@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './NavbarDashboard.css'
 import { Link as Anchor, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHome, faUser, faBook, faImage, faAddressBook, faTachometerAlt, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faHome, faUser, faBook, faImage, faAddressBook, faTachometerAlt, faCode, faTable, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
 
@@ -19,6 +19,8 @@ export default function Navbar() {
             </Anchor>
             <div className='links'>
                 <Anchor to={`/dashboard`} className={location.pathname === '/dashboard' ? 'activeLink' : ''}><FontAwesomeIcon icon={faHome} /> Inicio</Anchor>
+                <Anchor to={`/dashboard/mesas`} className={location.pathname === '/dashboard/mesas' ? 'activeLink' : ''}><FontAwesomeIcon icon={faTable} /> Mesas</Anchor>
+                <Anchor to={`/dashboard/pedidos`} className={location.pathname === '/dashboard/pedidos' ? 'activeLink' : ''}><FontAwesomeIcon icon={faClipboardList} /> Pedidos</Anchor>
                 <Anchor to={`/dashboard/productos`} className={location.pathname === '/dashboard/productos`' ? 'activeLink' : ''} ><FontAwesomeIcon icon={faBook} /> Productos</Anchor>
                 <Anchor to={`/dashboard/categorias`} className={location.pathname === '/dashboard/categorias' ? 'activeLink' : ''}><FontAwesomeIcon icon={faTachometerAlt} /> Categorias</Anchor>
                 <Anchor to={`/dashboard/banners`} className={location.pathname === '/dashboard/banners' ? 'activeLink' : ''}><FontAwesomeIcon icon={faImage} /> Banners</Anchor>

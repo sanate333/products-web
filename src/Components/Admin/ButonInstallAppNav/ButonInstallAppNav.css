@@ -4,4 +4,6 @@
     padding: 6px 10px;
     border-radius: 7px;
     color: var(--blanco);
+    display: flex;
+    gap: 10px;
 }

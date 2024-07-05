@@ -5,13 +5,19 @@ import './Cart.css';
 import whatsappIcon from '../../images/wpp.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faShoppingCart, faTrash } from '@fortawesome/free-solid-svg-icons';
-
+import { Link as Anchor } from "react-router-dom";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import moneda from '../moneda';
+import Swal from 'sweetalert2';
+import contador from '../contador'
 export default function Cart() {
     const [cartItems, setCartItems] = useState([]);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [modalIsOpen, setModalIsOpen] = useState(false);
     const [modalIsOpen2, setModalIsOpen2] = useState(false);
+    const [modalIsOpen3, setModalIsOpen3] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [noteText, setNoteText] = useState('');
     const [location, setLocation] = useState('');
@@ -21,8 +27,11 @@ export default function Cart() {
     const [descuento, setDescuento] = useState(0);
     const [codigoValido, setCodigoValido] = useState(false);
     const [totalPrice, setTotalPrice] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState('efectivo');
+    const [deliveryOption, setDeliveryOption] = useState('delivery');
     useEffect(() => {
         cargarContacto();
+        cargarMesas();
     }, []);
     useEffect(() => {
         // Calcular el precio total al cargar el carrito o al actualizar los productos
@@ -56,6 +65,7 @@ export default function Cart() {
                 return {
                     ...producto,
                     cantidad: cartItem.cantidad,
+                    item: cartItem.item,
                 };
             });
 
@@ -91,6 +101,7 @@ export default function Cart() {
     const openModal = () => {
         setModalIsOpen(true);
         setIsFocused(true);
+        cargarMesas()
     };
 
     const closeModal = () => {
@@ -105,7 +116,13 @@ export default function Cart() {
     const closeModal2 = () => {
         setModalIsOpen2(false);
     };
+    const openModal3 = () => {
+        setModalIsOpen3(true);
+    };
 
+    const closeModal3 = () => {
+        setModalIsOpen3(false);
+    };
     const removeFromCart = (id) => {
         const updatedCart = cartItems.filter(item => item.idProducto !== id);
         setCartItems(updatedCart);
@@ -158,20 +175,16 @@ export default function Cart() {
             totalPriceWithDiscount = 0; // O cualquier otro manejo que desees
         }
 
-        const formattedTotalPrice = totalPriceWithDiscount?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const formattedTotalPrice = totalPriceWithDiscount.toFixed(2);
 
         const phoneNumber = `${contactos.telefono}`;
 
         const cartDetails = cartItems.map((item) => (
-            `\n*${item.titulo}* - Cantidad: ${item.cantidad}
-    Precio: $${item.precio?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}\n`
+            `\n*${item.titulo}*\nCantidad: ${item.cantidad} \n${item?.item}\nPrecio: ${moneda} ${item.precio}\n`
         ));
 
         let noteMessage = '';
 
-        if (location.trim() !== '') {
-            noteMessage += `\nUbicación: ${location}`;
-        }
 
         if (name.trim() !== '') {
             noteMessage += `\nNombre: ${name}`;
@@ -181,12 +194,14 @@ export default function Cart() {
             noteMessage += `\nNota: ${noteText}`;
         }
         if (codigo.trim() !== '') {
-            noteMessage += `\nCodigo : ${codigo}
-            \nDescuento de : $${descuentoActualizado?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}
-            `;
+            noteMessage += `\nCodigo : ${codigo}\nDescuento de : ${moneda} ${descuentoActualizado}`;
         }
 
-        const message = `¡Hola! 🌟 Estoy interesado en encargar:\n\n${cartDetails.join('')}\n${noteMessage}Total: $${formattedTotalPrice}`;
+        const paymentMessage = paymentMethod === 'efectivo' ? 'Pago en efectivo' : 'Pago por transferencia bancaria';
+        const paymentMessage2 = deliveryOption === 'delivery' ? 'Envio a domicilio' : 'Retiro personalmente';
+
+
+        const message = `¡Hola! 🌟 Estoy interesado en encargar:\n${cartDetails.join('')}\n------------------------------------>\n ${noteMessage}\n${paymentMessage2}\n${paymentMessage}\n\n------------------------------------>\n\n*Total: ${moneda} ${formattedTotalPrice}*`;
 
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
@@ -200,11 +215,155 @@ export default function Cart() {
         setModalIsOpen2(false);
     };
 
+    // Función para aumentar la cantidad de un producto en el carrito
+    const increaseQuantity = (index) => {
+        const updatedCartItems = [...cartItems];
+        updatedCartItems[index].cantidad += 1;
+        setCartItems(updatedCartItems);
+        localStorage.setItem('cart', JSON.stringify(updatedCartItems));
+    };
+
+    // Función para disminuir la cantidad de un producto en el carrito
+    const decreaseQuantity = (index) => {
+        const updatedCartItems = [...cartItems];
+        if (updatedCartItems[index].cantidad > 1) {
+            updatedCartItems[index].cantidad -= 1;
+            setCartItems(updatedCartItems);
+            localStorage.setItem('cart', JSON.stringify(updatedCartItems));
+        }
+    };
+
+
+    /* realizar pedidos------------------------*/
+    const [mesas, setMesas] = useState([]);
+    const [idMesa, setIdMesa] = useState('');
+    const [estado, setEstado] = useState('Pendiente');
+
+    const [mensaje, setMensaje] = useState('');
+    const [selectedMesa, setSelectedMesa] = useState('');
+    const cargarMesas = () => {
+        fetch(`${baseURL}/mesaGet.php`, {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(data => {
+                setMesas(data.mesas || []);
+            })
+            .catch(error => console.error('Error al cargar mesas:', error));
+    };
+    const crearPedido = async () => {
+        setMensaje('Procesando...');
+
+        try {
+            // Construir la lista de productos del pedido
+            const productosPedido = cartItems.map(item => {
+                return {
+                    titulo: item.titulo,
+                    cantidad: item.cantidad,
+                    item: item.item,
+                    categoria: item.categoria,
+                    precio: item.precio,
+                    imagen: obtenerImagen(item)
+
+                }
+            });
+            // Convertir la lista de productos a JSON
+            const productosPedidoJSON = JSON.stringify(productosPedido);
+            // Calcular el precio total del pedido
+            let totalPrice = 0;
+            cartItems.forEach(item => {
+                totalPrice += item.precio * item.cantidad;
+            });
+
+            // Obtener el descuento del código de descuento
+            const codigoDescuento = codigos.find(item => item.codigo === codigo);
+            let descuentoCodigo = 0;
+
+            if (codigoDescuento) {
+                descuentoCodigo = codigoDescuento.descuento;
+            }
+
+            // Aplicar el descuento del código de descuento
+            const totalPriceWithDiscount = totalPrice - descuentoCodigo;
+
+            // Enviar el pedido con el precio total descontado
+            const formData = new FormData();
+            formData.append('idMesa', idMesa);
+            formData.append('estado', estado);
+            formData.append('productos', productosPedidoJSON);
+            formData.append('total', totalPriceWithDiscount);
+            formData.append('nombre', name);
+            formData.append('nota', noteText);
+            formData.append('codigo', codigo);
+            const response = await fetch(`${baseURL}/pedidoPost.php`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            const data = await response.json();
+            if (data.mensaje) {
+                setMensaje('');
+                Swal.fire(
+                    'Pedido enviado!',
+                    data.mensaje,
+                    'success'
+                );
+                setName('')
+                setCodigo('')
+                setNoteText('')
+                cargarMesas()
+                closeModal()
+                closeModal2()
+                closeModal3()
+                clearCart()
+            } else if (data.error) {
+                setMensaje('');
+                toast.error(data.error, { autoClose: 1000 });
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            setMensaje('');
+            toast.error('Error de conexión. Por favor, inténtelo de nuevo.', { autoClose: 1000 });
+        }
+    };
+
+    const [counter, setCounter] = useState(contador);
+    const [isPaused, setIsPaused] = useState(false);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!isPaused) {
+                setCounter((prevCounter) => {
+                    if (prevCounter === 1) {
+                        recargar();
+                        return contador;
+                    }
+                    return prevCounter - 1;
+                });
+            }
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [isPaused]);
+    const togglePause = () => {
+        setIsPaused(!isPaused);
+    };
+    const recargar = () => {
+        cargarMesas();
+
+    };
 
     return (
         <div>
-            <button onClick={openModal} className='cartIcon'><FontAwesomeIcon icon={faShoppingCart} /> </button>
+            <ToastContainer />
+            <button onClick={openModal} className='cartIconFixed'>
+                {
+                    cartItems?.length >= 1 && (
+                        <span>{cartItems.length}</span>
+                    )
 
+                }
+                <FontAwesomeIcon icon={faShoppingCart} />
+            </button>
 
             <Modal
                 isOpen={modalIsOpen}
@@ -227,30 +386,42 @@ export default function Cart() {
                             ) : (
                                 <div>
 
-                                    {cartItems.map((item) => (
-                                        <div key={item.idProducto} className='cardProductCart'>
-                                            <img src={obtenerImagen(item)} alt="imagen" />
+                                    {cartItems.map((item, index) => (
+                                        <div key={item?.idProducto} className='cardProductCart' >
+                                            <Anchor to={`/producto/${item?.idProducto}/${item?.titulo?.replace(/\s+/g, '-')}`} onClick={closeModal}>
+                                                <img src={obtenerImagen(item)} alt="imagen" />
+                                            </Anchor>
                                             <div className='cardProductCartText'>
                                                 <h3>{item.titulo}</h3>
-                                                <p>Cantidad: {item.cantidad}</p>
-                                                <p>Precio: ${item?.precio?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</p>
-
+                                                <span>
+                                                    {item?.item?.map((sabor, index) => (
+                                                        <span key={index}> {sabor}</span>
+                                                    ))}
+                                                </span>
+                                                <strong>{moneda} {item?.precio}</strong>
                                             </div>
-                                            <button onClick={() => removeFromCart(item.idProducto)} className='deleteCart'>  <FontAwesomeIcon icon={faTrash} /></button>
+                                            <div className='deColumn'>
+                                                <button onClick={() => removeFromCart(item.idProducto)} className='deleteCart'>  <FontAwesomeIcon icon={faTrash} /></button>
+                                                <div className='deFlexCantidad'>
+                                                    <button onClick={() => decreaseQuantity(index)}>-</button>
+                                                    <span>{item.cantidad}</span>
+                                                    <button onClick={() => increaseQuantity(index)}>+</button>
+                                                </div>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
                         <div className='deColumnCart'>
-                            <h4>Total: ${totalPrice?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</h4>
-
+                            <h4>Total: {moneda} {totalPrice.toFixed(2)}</h4>
                             <div className='deFLexBtns'>
-
                                 <button className='btnWpp' onClick={openModal2}>
-                                    Pedir por  WhatsApp<img src={whatsappIcon} alt="WhatsApp" />
+                                    Pedir por <img src={whatsappIcon} alt="WhatsApp" />
                                 </button>
-
+                                <button className='btn' onClick={openModal3}>
+                                    Pedí en tu mesa
+                                </button>
                             </div>
                         </div>
 
@@ -272,14 +443,61 @@ export default function Cart() {
                                     onChange={(e) => setName(e.target.value)}
                                     placeholder='Nombre (opcional)'
                                 />
-                                <input
-                                    type="text"
-                                    id="location"
-                                    value={location}
-                                    onChange={(e) => setLocation(e.target.value)}
-                                    placeholder='Ubicación (opcional)'
-                                />
 
+
+                                <div className='deFLexRadio'>
+                                    <label>Opciones de entrega</label>
+
+                                    <div>
+                                        <input
+                                            type="radio"
+                                            id="delivery"
+                                            name="deliveryOption"
+                                            value="delivery"
+                                            checked={deliveryOption === 'delivery'}
+                                            onChange={() => setDeliveryOption('delivery')}
+                                        />
+                                        <label htmlFor="delivery">Envío a domicilio</label>
+                                    </div>
+                                    <div>
+                                        <input
+                                            type="radio"
+                                            id="pickup"
+                                            name="deliveryOption"
+                                            value="pickup"
+                                            checked={deliveryOption === 'pickup'}
+                                            onChange={() => setDeliveryOption('pickup')}
+                                        />
+                                        <label htmlFor="pickup">Retirar personalmente</label>
+                                    </div>
+                                </div>
+
+                                <div className='deFLexRadio'>
+                                    <label>Formas de pago</label>
+                                    <div >
+                                        <input
+                                            type="radio"
+                                            id="efectivo"
+                                            name="paymentMethod"
+                                            value="efectivo"
+                                            checked={paymentMethod === 'efectivo'}
+                                            onChange={() => setPaymentMethod('efectivo')}
+                                        />
+                                        <label htmlFor="efectivo">Efectivo</label>
+                                    </div>
+                                    <div >
+                                        <input
+                                            type="radio"
+                                            id="transferencia"
+                                            name="paymentMethod"
+                                            value="transferencia"
+                                            checked={paymentMethod === 'transferencia'}
+                                            onChange={() => setPaymentMethod('transferencia')}
+                                        />
+                                        <label htmlFor="transferencia">Transferencia</label>
+                                    </div>
+
+                                </div>
                                 <input
                                     type="text"
                                     id="codigo"
@@ -294,6 +512,82 @@ export default function Cart() {
                                 />
                                 <button onClick={handleWhatsappMessage} className='btn'>Enviar</button>
 
+                            </div>
+
+                        </Modal>
+                        <Modal
+                            isOpen={modalIsOpen3}
+                            onRequestClose={closeModal3}
+                            className="modal-cart"
+                            overlayClassName="overlay-cart"
+                        >
+                            <div className='deFLex'>
+                                <button onClick={closeModal3} ><FontAwesomeIcon icon={faArrowLeft} />  </button>
+                                <h4>Elige tu mesa</h4>
+                            </div>
+                            <div className="modal-send-form">
+                                <input
+                                    type="text"
+                                    id="name"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder='Nombre'
+                                />
+                                <input
+                                    type="text"
+                                    id="codigo"
+                                    value={codigo}
+                                    onChange={(e) => setCodigo(e.target.value)}
+                                    placeholder='Codigo de descuento (opcional)'
+                                />
+                                <textarea
+                                    placeholder="Agrega una nota (opcional)"
+                                    value={noteText}
+                                    onChange={(e) => setNoteText(e.target.value)}
+                                />
+                                <div className='mesasGrapCart'>
+                                    {mesas.map(item => (
+                                        <div
+                                            key={item.idMesa}
+                                            className={`mesaCard ${item.estado === 'libre' ? (selectedMesa === item.idMesa ? 'selectedMesa' : 'bg-green') : 'bg-red'}`}
+                                            onClick={() => { if (item.estado === 'libre') setIdMesa(item.idMesa) }}
+                                        >
+                                            <label>
+                                                {item.mesa}
+                                            </label>
+                                            <span>
+                                                {item.estado === 'libre' ? (selectedMesa === item.idMesa ? 'selectedMesa' : '') : 'ocupada'}
+                                            </span>
+                                            {item.estado === 'libre' && (
+                                                <input
+                                                    type='radio'
+                                                    name='productos'
+                                                    value={item.idMesa}
+                                                    readOnly
+                                                    checked={idMesa === item.idMesa}
+                                                />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <fieldset className='deNonefieldset'>
+                                    <legend>Productos</legend>
+                                    <textarea
+                                        name='productos'
+                                        value={cartItems.map(item => ` ${item.categoria}, ${item.titulo}, x ${item.cantidad}, ${item.item},${item.categoria},${item.precio}, ${obtenerImagen(item)}  `).join('\n')}
+                                        readOnly
+                                    />
+                                </fieldset>
+                                {mensaje ? (
+                                    <button type='button' className='btn' disabled>
+                                        {mensaje}
+                                    </button>
+                                ) : (
+                                    <button type='button' onClick={crearPedido} className='btn'>
+                                        Finalizar pedido
+                                    </button>
+                                )}
                             </div>
 
                         </Modal>

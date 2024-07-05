@@ -36,8 +36,8 @@ try {
             $contrasenaHash = $row['contrasena'];
 
             if (password_verify($contrasenaLogin, $contrasenaHash)) {
-                // Iniciar sesión solo si el rol es 'admin'
-                if ($row['rol'] == 'admin') {
+                // Iniciar sesión si el rol es 'admin' o 'mesero'
+                if ($row['rol'] == 'admin' || $row['rol'] == 'mesero') {
                     session_start();
                     $_SESSION['usuario_id'] = $row['idUsuario'];
                     $_SESSION['rol'] = $row['rol'];
@@ -49,7 +49,10 @@ try {
                         "email" => $row['email'],
                     ];
 
-                    echo json_encode(["mensaje" => "Inicio de sesión exitoso como administrador", "redirect" => "dashboard.php", "usuario" => $usuario]);
+                    $mensaje = ($row['rol'] == 'admin') ? "Inicio de sesión exitoso como administrador" : "Inicio de sesión exitoso como mesero";
+                    $redirect = ($row['rol'] == 'admin') ? "dashboard.php" : "mesero_home.php"; // Asumiendo que tienes una página para meseros
+
+                    echo json_encode(["mensaje" => $mensaje, "redirect" => $redirect, "usuario" => $usuario]);
                 } else {
                     echo json_encode(["error" => "No tienes permisos para acceder"]);
                 }

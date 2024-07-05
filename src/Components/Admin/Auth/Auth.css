@@ -9,24 +9,32 @@
 }
 .AuthContainer img{
     width: 80px;
+    height: 80px;
+    object-fit: cover;
     border-radius: 100%;
    
 }
-.sinCuenta{
-    background-color: transparent;
-    border: none;
-   
-    text-align: center;
-    color: var(--text-color2);
-    cursor: pointer;
-    margin-top: 2rem;
-    font-size: 17px;
-}
-.sinCuenta span{
-    color: var(--color1);
-    font-size: 18px;
-    margin-left: 10px;
-}
+
 .logoAtuh{
     width: 100px;
 }
+.deFlexActiveLink{
+    display: flex;
+    gap: 1rem;
+    background-color: var(--gris2);
+    border-radius: 10rem;
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+.deFlexActiveLink a{
+    color: var(--color1);
+    padding: 6px 20px;
+}
+.deFlexActiveLink .activeLink {
+    
+    background-color: var(--color1)!important;
+    border-radius: 20px;
+    color: var(--blanco)!important;
+}
+
+

@@ -1,24 +1,27 @@
 import React, { useState } from 'react';
+import { Link as Anchor, useLocation } from 'react-router-dom'; // Importa useLocation
 import Login from '../Login/Login';
-
 import './Auth.css';
-import logo from '../../../images/logo.png'
-import { Link as Anchor } from 'react-router-dom';
-export default function Auth() {
-    const [showLogin, setShowLogin] = useState(true);
+import logo from '../../../images/logo.png';
 
-    const toggleComponent = () => {
-        setShowLogin((prevShowLogin) => !prevShowLogin);
-    };
+export default function Auth() {
+
+    const location = useLocation();
 
     return (
         <div className='AuthContainer'>
             <Anchor to={`/`} >
                 <img src={logo} alt="Efecto Vial" className='logoAtuh' />
             </Anchor>
-
+            <div className='deFlexActiveLink'>
+                <Anchor to={`/dashboard`} className={` ${location.pathname === '/dashboard' ? 'activeLink' : ''}`}>
+                    Dashboard
+                </Anchor>
+                <Anchor to={`/meseros`} className={` ${location.pathname === '/meseros' ? 'activeLink' : ''}`}>
+                    Meseros
+                </Anchor>
+            </div>
             <Login />
-
 
         </div>
     );

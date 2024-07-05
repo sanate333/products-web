@@ -55,8 +55,11 @@ export default function NewCategoria() {
             {modalOpen && (
                 <div className='modal'>
                     <div className='modal-content'>
-                        <div className='deFlexBack'>
-                            <h4>Agregar Categoría</h4>
+
+                        <div className='deFlexBtnsModal'>
+                            <button className='selected'>
+                                Agregar Categoría
+                            </button>
                             <span className='close' onClick={toggleModal}>
                                 &times;
                             </span>
@@ -76,7 +79,7 @@ export default function NewCategoria() {
                                     {mensaje}
                                 </button>
                             ) : (
-                                <button type='button' onClick={crear} className='btnSave'>
+                                <button type='button' onClick={crear} className='btnPost'>
                                     Agregar
                                 </button>
                             )}

@@ -13,6 +13,8 @@ export default function InputSearch() {
         { title: 'Contacto', link: '/dashboard/contacto' },
         { title: 'Categorias', link: '/dashboard/categorias' },
         { title: 'Codigos', link: '/dashboard/codigos' },
+        { title: 'Mesas', link: '/dashboard/mesas' },
+        { title: 'Pedidos', link: '/dashboard/pedidos' },
     ];
 
 

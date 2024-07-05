@@ -4,14 +4,17 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Login.css';
-import { useNavigate, } from 'react-router';
+import { useNavigate, useLocation } from 'react-router';
 import baseURL from '../../url';
+
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const location = useLocation();
+
     const handleLogin = async (e) => {
         e.preventDefault();
 
@@ -32,10 +35,22 @@ export default function Login() {
                     console.log(data.mensaje);
                     toast.success(data.mensaje);
                     setTimeout(() => {
-                        window.location.reload();
-
+                        if (data.mensaje === "Inicio de sesión exitoso como administrador") {
+                            if (location.pathname === '/dashboard') {
+                                window.location.reload();
+                            } else {
+                                navigate('/dashboard');
+                            }
+                        } else if (data.mensaje === "Inicio de sesión exitoso como mesero") {
+                            if (location.pathname === '/meseros') {
+                                window.location.reload();
+                            } else {
+                                navigate('/meseros');
+                            }
+                        } else {
+                            window.location.reload();
+                        }
                     }, 2000);
-
                 } else if (data.error) {
                     setErrorMessage(data.error);
                     console.log(data.error);
@@ -43,7 +58,6 @@ export default function Login() {
                 }
             } else {
                 throw new Error('Error en la solicitud al servidor');
-
             }
         } catch (error) {
             console.error('Error:', error.message);
@@ -54,7 +68,6 @@ export default function Login() {
     return (
         <div className='formContain'>
             <ToastContainer />
-            <h2>Iniciar Sesión</h2>
             <form onSubmit={handleLogin} className='formAuth'>
                 <div className='inputsAuth'>
                     <label htmlFor="email">Email:</label>
@@ -93,8 +106,6 @@ export default function Login() {
                     Iniciar Sesión
                 </button>
             </form>
-
-
         </div>
     );
 }

@@ -71,7 +71,7 @@ export default function UsuariosData() {
             title: 'Editar Rol',
             input: 'select',
             inputOptions: {
-                'usuario': 'Usuario',
+                'mesero': 'Mesero',
                 'admin': 'Admin'
             },
             inputValue: rolActual,
@@ -195,7 +195,7 @@ export default function UsuariosData() {
 
                         <select value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
                             <option value="">Todos</option>
-                            <option value="usuario">Usuario</option>
+                            <option value="mesero">Mesero</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
@@ -231,7 +231,7 @@ export default function UsuariosData() {
                                 <td>{usuario.nombre}</td>
                                 <td>{usuario.email}</td>
                                 <td style={{
-                                    color: usuario?.rol === 'usuario' ? '#DAA520' : usuario?.rol === 'admin' ? '#008000' : '#FF0000',
+                                    color: usuario?.rol === 'mesero' ? '#DAA520' : usuario?.rol === 'admin' ? '#008000' : '#FF0000',
 
                                 }}>  {`${usuario?.rol}`}</td>
                                 <td>{usuario.createdAt}</td>

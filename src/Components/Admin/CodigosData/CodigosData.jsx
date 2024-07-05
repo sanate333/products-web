@@ -6,7 +6,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import baseURL from '../../url';
 import NewCodigo from '../NewCodigo/NewCodigo';
-
+import moneda from '../../moneda';
 export default function CodigosData() {
     const [codigos, setCodigos] = useState([]);
 
@@ -81,7 +81,7 @@ export default function CodigosData() {
                             <tr key={item.idCodigo}>
                                 <td>{item.idCodigo}</td>
                                 <td>{item.codigo}</td>
-                                <td style={{ color: 'green' }}>${item.descuento?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
+                                <td style={{ color: 'green' }}>{moneda} {item.descuento?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
                                 <td>
                                     <button className='eliminar' onClick={() => eliminarCodigo(item.idCodigo)}>
                                         <FontAwesomeIcon icon={faTrash} />

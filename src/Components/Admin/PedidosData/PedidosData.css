@@ -1,0 +1,82 @@
+.cardsProductData{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.cardProductData{
+    min-width: 18rem;
+    width: 47%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-radius: 10px;
+    background-color: var(--blanco);
+}
+.cardProductData img{
+    width: 5rem;
+    height: 5rem;
+    border-radius: 10px;
+    object-fit: cover;
+    background-image: var(--gris);
+}
+.cardProductDataText{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+   
+}
+.cardProductDataText h3{
+    color: var(--text-color2);
+    font-weight: 500;
+}
+.cardProductDataText h5{
+    color: var(--text-color2);
+    font-weight: 500;
+    font-size: 11px;
+}
+.cardProductDataText span{
+    color: var(--text-color2);
+    font-weight: 500;
+    font-size: 13px;
+}
+.cardProductDataText strong{
+    font-weight: 500;
+    color: var(--color1);
+    font-size: 15px;
+}
+.cardProductDataText strong span{
+    padding-left: 2rem;
+    color: var(--color1);
+    font-size: 15px;
+}
+
+.pendiente {
+    background-color: yellow!important;
+  }
+  
+  .cancelado {
+    background-color: red!important;;
+  }
+  
+  .entregado {
+    background-color: blue!important;
+  }
+  
+  .pagado {
+    background-color: green!important;
+  }
+  
+
+
+
+
+
+
+@media (max-width: 900px) {
+    .cardProductData{
+        width: 100%;
+    }
+}

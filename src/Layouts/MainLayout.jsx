@@ -30,13 +30,15 @@ export default function MainLayout() {
     return (
         <div>
             <div>
-
-
                 {loading ? (
                     <Spiner />
                 ) : usuario.idUsuario ? (
                     <>
-                        <Outlet />
+                        {usuario.rol === 'admin' ? (
+                            <Outlet />
+                        ) : (
+                            <Auth />
+                        )}
                     </>
                 ) : (
                     <Auth />

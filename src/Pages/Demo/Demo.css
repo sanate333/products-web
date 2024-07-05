@@ -1,5 +1,8 @@
+.espaciobg2{
+    height: 4rem;
+}
 
-@media (max-width: 700px){
+@media (max-width: 900px){
     .demo{
         border-radius: 0 30px 0 0px;
         background-color: var(--gris);
@@ -12,5 +15,8 @@
     .espaciobg{
         height: 4rem;
         background-color: var(--blanco);
+    }
+    .espaciobg2{
+        height: 10px;
     }
 }

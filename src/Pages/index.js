@@ -1,5 +1,7 @@
 import IndexLayout from "../Layouts/IndexLayout";
 import MainLayout from "../Layouts/MainLayout";
+import PagesLayaut from '../Layouts/PagesLayaut'
+import MeseroLayout from '../Layouts/MeseroLayout'
 import { createBrowserRouter } from "react-router-dom";
 import Productos from '../Pages/Productos/Productos'
 import Usuarios from '../Pages/Usuarios/Usuarios'
@@ -8,13 +10,38 @@ import Main from "./Main/Main";
 import Contacto from "./Contacto/Contacto";
 import Categorias from "./Categorias/Categorias";
 import Codigos from "./Codigos/Codigos";
-
+import Mesas from "./Mesas/Mesas";
+import Pedidos from "./Pedidos/Pedidos";
+import PageDetail from '../Pages/PageDetail/PageDetail';
+import MeserosPage from './MeserosPage/MeserosPage';
 export const router = createBrowserRouter([
 
     {
         path: "/",
         element: <IndexLayout />,
 
+    },
+    {
+        path: "/",
+        element: <PagesLayaut />,
+        children: [
+            {
+                path: `/producto/:idProducto/:producto`,
+                element: <PageDetail />,
+            },
+
+        ]
+    },
+    {
+        path: "/",
+        element: <MeseroLayout />,
+        children: [
+            {
+                path: `/meseros`,
+                element: <MeserosPage />,
+            },
+
+        ]
     },
     {
         path: "/",
@@ -47,6 +74,14 @@ export const router = createBrowserRouter([
             {
                 path: `/dashboard/codigos`,
                 element: <Codigos />,
+            },
+            {
+                path: `/dashboard/mesas`,
+                element: <Mesas />,
+            },
+            {
+                path: `/dashboard/pedidos`,
+                element: <Pedidos />,
             },
         ],
     },
