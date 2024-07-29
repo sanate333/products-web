@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Nabvar from '../Components/Navbar/Navbar'
 import Demo from '../Pages/Demo/Demo'
-
+import Developer from '../Components/Developer/Developer'
 export default function IndexLayout() {
 
 
@@ -14,6 +14,7 @@ export default function IndexLayout() {
 
             </div>
             <Demo />
+            <Developer />
         </div>
     );
 }
