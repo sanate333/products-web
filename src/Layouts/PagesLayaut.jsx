@@ -5,7 +5,6 @@ import { useMediaQuery } from '@react-hook/media-query';
 import Footer from '../Components/Footer/Footer'
 import BtnWhatsapp from '../Components/BtnWhatsapp/BtnWhatsapp'
 import Cart from '../Components/Cart/Cart'
-import Developer from '../Components/Developer/Developer'
 export default function IndexLayout() {
 
 
@@ -20,14 +19,12 @@ export default function IndexLayout() {
                     <Footer />
                     <BtnWhatsapp />
                     <Cart />
-                    <Developer />
                 </> :
                 <>
 
                     <Outlet />
                     <Footer />
                     <Cart />
-                    <Developer />
                 </>}
 
 

@@ -67,8 +67,10 @@ export default function NewCodigo() {
             {modalOpen && (
                 <div className='modal'>
                     <div className='modal-content'>
-                        <div className='deFlexBack'>
-                            <h4>Agregar Codigo</h4>
+                        <div className='deFlexBtnsModal'>
+                            <button className='selected'>
+                                Agregar Codigo
+                            </button>
                             <span className='close' onClick={toggleModal}>
                                 &times;
                             </span>

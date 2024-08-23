@@ -35,6 +35,18 @@ try {
             exit;
         }
 
+        // Verificar si hay productos asociados a la categoría
+        $sqlCheckProducts = "SELECT COUNT(*) FROM productos WHERE idCategoria = :idCategoria";
+        $sentenciaCheckProducts = $conexion->prepare($sqlCheckProducts);
+        $sentenciaCheckProducts->bindParam(':idCategoria', $idCategoria, PDO::PARAM_INT);
+        $sentenciaCheckProducts->execute();
+        $cantidadProductos = $sentenciaCheckProducts->fetchColumn();
+
+        if ($cantidadProductos > 0) {
+            echo json_encode(["error" => "No se puede eliminar la categoría porque hay productos asociados a ella."]);
+            exit;
+        }
+
         // Eliminar la categoría de la base de datos
         $sqlDelete = "DELETE FROM categorias WHERE idCategoria = :idCategoria";
         $sentenciaDelete = $conexion->prepare($sqlDelete);

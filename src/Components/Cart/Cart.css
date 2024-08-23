@@ -356,4 +356,8 @@
 .mesasGrapCart{
     max-height: 45vh;
 }
+.deColumnCart h4{
+    padding-bottom: 10px;
+   font-size: 15px;
+}
 }

@@ -66,7 +66,7 @@ try {
         descripcion TEXT NOT NULL,
         titulo VARCHAR(255) NOT NULL,
         precio DECIMAL(10,2) NOT NULL,
-        categoria VARCHAR(30) NOT NULL,
+        idCategoria INT(100) NOT NULL,
         masVendido VARCHAR(30) NOT NULL,
         imagen1 VARCHAR(900),
         imagen2 VARCHAR(900),

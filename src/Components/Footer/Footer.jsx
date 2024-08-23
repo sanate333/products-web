@@ -64,9 +64,7 @@ export default function Footer() {
                     <Anchor to={contactos.instagram} target="_blank"><i className='fa fa-instagram'></i></Anchor>
                     <Anchor to={`tel:${contactos.telefono}`} target="_blank"><i className='fa fa-whatsapp'></i></Anchor>
                     <Anchor to={contactos.facebook} target="_blank"><i className='fa fa-facebook'></i></Anchor>
-                    <Anchor to={`/dashboard`} >
-                        <FontAwesomeIcon icon={faUser} />
-                    </Anchor>
+
                 </div>
             </div>
             <div className='footerText'>
@@ -86,9 +84,10 @@ export default function Footer() {
 
             </div>
             <div className='footerText'>
-                <h3>Accesos </h3>
-                <Anchor to='dashboard' >Dashboard</Anchor>
-                <Anchor to='meseros' >Meseros</Anchor>
+                <h3>Acceso</h3>
+                <Anchor to={`/dashboard`} className='btnAnch'>
+                    <FontAwesomeIcon icon={faUser} /> Dashboard
+                </Anchor>
             </div>
         </div>
     )

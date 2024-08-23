@@ -201,6 +201,11 @@ hr{
     color: var(--text-color2);
     font-weight: 500;
 }
+.deFLexBuet{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 @media (max-width: 1024px) {
     .deFLexIcon{
         gap: 1rem;

@@ -1,7 +1,6 @@
 import IndexLayout from "../Layouts/IndexLayout";
 import MainLayout from "../Layouts/MainLayout";
 import PagesLayaut from '../Layouts/PagesLayaut'
-import MeseroLayout from '../Layouts/MeseroLayout'
 import { createBrowserRouter } from "react-router-dom";
 import Productos from '../Pages/Productos/Productos'
 import Usuarios from '../Pages/Usuarios/Usuarios'
@@ -13,7 +12,6 @@ import Codigos from "./Codigos/Codigos";
 import Mesas from "./Mesas/Mesas";
 import Pedidos from "./Pedidos/Pedidos";
 import PageDetail from '../Pages/PageDetail/PageDetail';
-import MeserosPage from './MeserosPage/MeserosPage';
 export const router = createBrowserRouter([
 
     {
@@ -32,17 +30,7 @@ export const router = createBrowserRouter([
 
         ]
     },
-    {
-        path: "/",
-        element: <MeseroLayout />,
-        children: [
-            {
-                path: `/meseros`,
-                element: <MeserosPage />,
-            },
 
-        ]
-    },
     {
         path: "/",
         element: <MainLayout />,

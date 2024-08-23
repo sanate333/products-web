@@ -29,7 +29,11 @@
   border: none;
   padding: 20px;
 }
-
+.sectionSearch h3{
+  color: var(--text-color2);
+  padding: 10px;
+  font-weight: 500;
+}
 .modalSearch {
   top: 4rem;
   left: 0;

@@ -167,7 +167,7 @@ export default function PedidosData() {
             const total = parseFloat(item.total); // Convertir a número
             totalGeneral += total;
             const productos = JSON.parse(item.productos);
-            const infoProductos = productos.map(producto => `${producto.categoria} - ${producto.titulo} - ${moneda}${producto.precio} - x${producto.cantidad}  `);
+            const infoProductos = productos.map(producto => `${producto.titulo} - ${moneda}${producto.precio} - x${producto.cantidad}  `);
             return {
                 'ID Pedido': item.idPedido,
                 'Mesa': mesas.find(mesa => mesa.idMesa === item.idMesa)?.mesa,
@@ -229,7 +229,7 @@ export default function PedidosData() {
             const total = parseFloat(item.total); // Convertir a número
             totalGeneral += total;
             const productos = JSON.parse(item.productos);
-            const infoProductos = productos.map(producto => `${producto.categoria} - ${producto.titulo} - ${moneda}${producto.precio} - x${producto.cantidad}  `);
+            const infoProductos = productos.map(producto => `${producto.titulo} - ${moneda}${producto.precio} - x${producto.cantidad}  `);
             return {
                 idPedido: item.idPedido,
                 mesa: mesas.find(mesa => mesa.idMesa === item.idMesa)?.mesa,
@@ -326,7 +326,6 @@ export default function PedidosData() {
 
             if (producto) {
                 pdf.text(`Producto: ${producto.titulo}`, 39, y + 3);
-                pdf.text(`Categoría: ${producto.categoria}`, 39, y + 7);
                 pdf.text(`Precio: ${moneda} ${producto.precio}`, 39, y + 11);
                 pdf.text(`Cantidad: ${producto.cantidad}`, 39, y + 15);
                 pdf.text(`${producto.item}`, 39, y + 19);
@@ -574,7 +573,7 @@ export default function PedidosData() {
                                                 <h3>{producto.titulo}</h3>
                                                 <strong>{moneda} {producto.precio} <span>x{producto.cantidad}</span></strong>
                                                 <span>{producto.item}</span>
-                                                <h5>{producto.categoria}</h5>
+
                                             </div>
                                         </div>
                                     ))}

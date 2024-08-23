@@ -60,9 +60,9 @@ export default function NewProduct() {
         setMensaje('');
 
         if (
-            !formData.get('descripcion') ||
+
             !formData.get('titulo') ||
-            !formData.get('categoria') ||
+            !formData.get('idCategoria') ||
             !formData.get('masVendido') ||
             !formData.get('precio') ||
             !formData.get('imagen1') ||
@@ -150,7 +150,7 @@ export default function NewProduct() {
 
                             <div className='flexGrap'>
                                 <fieldset>
-                                    <legend>Título</legend>
+                                    <legend>Título (obligatorio)</legend>
                                     <input
                                         type="text"
                                         id="titulo"
@@ -162,7 +162,7 @@ export default function NewProduct() {
                                 </fieldset>
 
                                 <fieldset>
-                                    <legend>Precio</legend>
+                                    <legend>Precio (obligatorio)</legend>
                                     <input
                                         type="number"
                                         id="precio"
@@ -174,36 +174,24 @@ export default function NewProduct() {
                                         onChange={(e) => setPrecio(e.target.value)}
                                     />
                                 </fieldset>
-                                <fieldset id='descripcion'>
-                                    <legend>Descripción</legend>
-                                    <textarea
-                                        id="descripcion"
-                                        name="descripcion"
-                                        required
-                                        value={descripcion}
-                                        onChange={(e) => setDescripcion(e.target.value)}
-                                        placeholder="Descripción"
-                                    />
-                                </fieldset>
+
 
                                 <fieldset>
-                                    <legend>Categoría</legend>
+                                    <legend>Categoría (obligatorio)</legend>
                                     <select
-                                        id="categoria"
-                                        name="categoria"
+                                        id="idCategoria"
+                                        name="idCategoria"
                                         value={categoria}
                                         onChange={handleCategoriaChange}
                                     >
                                         <option value="">Selecciona una categoría</option>
-                                        {
-                                            categorias.map(item => (
-                                                <option value={item?.categoria}>{item?.categoria}</option>
-                                            ))
-                                        }
+                                        {categorias.map(item => (
+                                            <option key={item.idCategoria} value={item.idCategoria}>{item.categoria}</option>
+                                        ))}
                                     </select>
                                 </fieldset>
                                 <fieldset>
-                                    <legend>Más vendido</legend>
+                                    <legend>Más vendido (obligatorio)</legend>
                                     <select
                                         id="masVendido"
                                         name="masVendido"
@@ -215,6 +203,17 @@ export default function NewProduct() {
                                         <option value="no">No</option>
 
                                     </select>
+                                </fieldset>
+                                <fieldset id='descripcion'>
+                                    <legend>Descripción</legend>
+                                    <textarea
+                                        id="descripcion"
+                                        name="descripcion"
+                                        required
+                                        value={descripcion}
+                                        onChange={(e) => setDescripcion(e.target.value)}
+                                        placeholder="Descripción"
+                                    />
                                 </fieldset>
                                 <fieldset>
                                     <legend>Precio anterior</legend>

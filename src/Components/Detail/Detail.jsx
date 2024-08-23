@@ -16,7 +16,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import DetailLoading from "../DetailLoading/DetailLoading";
 import moneda from '../moneda';
-import contador from '../contador'
+
 export default function Detail() {
     const navigate = useNavigate();
     const swiperRef = useRef(null);
@@ -30,21 +30,36 @@ export default function Detail() {
     const [loading, setLoading] = useState(true);
     const [contactos, setContactos] = useState([]);
     const [favoritos, setFavoritos] = useState([]);
-    const [selectedItem, setSelectedItem] = useState('');
-    const [mesas, setMesas] = useState([]);
-    const [idMesa, setIdMesa] = useState('');
-    const [estado, setEstado] = useState('Pendiente');
-
+    const items = [producto?.item1, producto?.item2, producto?.item3, producto?.item4, producto?.item5, producto?.item6, producto?.item7, producto?.item8, producto?.item9, producto?.item10]
+    const [categorias, setCategorias] = useState([]);
+    // const [selectedItem, setSelectedItem] = useState(items[0] || "");
+    const [selectedItemIndex, setSelectedItemIndex] = useState(0);
+    const location = useLocation();
 
     useEffect(() => {
         cargarProductos();
         cargarContacto();
         cargarFavoritos();
+        cargarCategoria()
+        if (items.length > 0) {
+            setSelectedItemIndex(0);
+        }
+
     }, []);
-
-
-
-
+    const handleSelectionChange = (index) => {
+        setSelectedItemIndex(index);
+    };
+    const cargarCategoria = () => {
+        fetch(`${baseURL}/categoriasGet.php`, {
+            method: 'GET',
+        })
+            .then(response => response.json())
+            .then(data => {
+                setCategorias(data.categorias || []);
+                console.log(data.categorias)
+            })
+            .catch(error => console.error('Error al cargar contactos:', error));
+    };
     const cargarContacto = () => {
         fetch(`${baseURL}/contactoGet.php`, {
             method: 'GET',
@@ -106,14 +121,13 @@ export default function Detail() {
     const handleWhatsappMessage = () => {
         const phoneNumber = contactos?.telefono;
         const title = encodeURIComponent(producto?.titulo?.replace(/\s+/g, '-'));
-        const formattedPrice = Number(producto?.precio).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-        const price = encodeURIComponent(formattedPrice);
-        const category = encodeURIComponent(producto?.categoria);
-        const item = selectedItem;
-        const message = `Hola, quisiera más información sobre\n\n *${title}*
-        \nCategoría: ${category}
-        \n - ${item}
-        \n ${moneda} ${formattedPrice}`;
+        const formattedPrice = Number(producto?.precio).toLocaleString('es-ES', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+        const item = items[selectedItemIndex];
+
+        const message = `Hola 🌟, quisiera más información sobre\n\n✅ *${title}*\n     ${item}\n     ${moneda} ${formattedPrice}`;
 
         const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 
@@ -121,36 +135,35 @@ export default function Detail() {
     };
 
     const goBack = () => {
-        navigate(-1);
+        if (location.key !== 'default') {
+            navigate(-1);
+        } else {
+            navigate('/');
+        }
     };
 
 
 
-    const addToCart = () => {
+
+    const addToCart = (selectedItem) => {
         if (producto) {
+            if (producto.stock < 1) {
+                toast.error('No hay stock', { autoClose: 400 });
+                return;
+            }
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
-            // Verificar si existe un producto con el mismo ID en el carrito
             const existingItemIndex = cart.findIndex(item =>
                 item.idProducto === producto.idProducto
             );
             if (existingItemIndex !== -1) {
-                // Si el producto ya existe en el carrito, agregamos el nuevo sabor al array de sabores
                 const existingItem = cart[existingItemIndex];
-                const updatedItems = [...existingItem.item, selectedItem]; // Agregar el nuevo sabor
-
-                // Actualizar la cantidad del producto existente en el carrito
+                const updatedSabores = [...existingItem.item, selectedItem];
                 const updatedCantidad = existingItem.cantidad + cantidad;
-
-                // Actualizar el producto existente en el carrito con el nuevo sabor y cantidad
-                cart[existingItemIndex] = { ...existingItem, item: updatedItems, cantidad: updatedCantidad };
+                cart[existingItemIndex] = { ...existingItem, item: updatedSabores, cantidad: updatedCantidad };
             } else {
-                // Si el producto no existe en el carrito, lo agregamos con el sabor seleccionado
                 cart.push({ idProducto: producto.idProducto, item: [selectedItem], cantidad });
             }
-
-            // Actualizamos el carrito en el localStorage
             localStorage.setItem('cart', JSON.stringify(cart));
-            // Agregamos la llamada a cargarProductos para actualizar la lista de productos en Products
             cargarProductos();
             toast.success('Producto agregado', { autoClose: 400 });
             setTimeout(() => {
@@ -159,7 +172,6 @@ export default function Detail() {
             }, 600);
         }
     };
-
 
     const incrementCantidad = () => {
         setCantidad(cantidad + 1);
@@ -316,147 +328,65 @@ export default function Detail() {
                 <div className="textDetail">
                     <h2 className="title">{producto.titulo}</h2>
                     <hr />
-                    <h4>  <FontAwesomeIcon icon={faStar} />{producto.categoria}</h4>
+                    <div className="deFLexBuet">
+                        {
+                            categorias
+                                .filter(categoriaFiltrada => categoriaFiltrada.idCategoria === producto.idCategoria)
+                                .map(categoriaFiltrada => (
+                                    <h4>  <FontAwesomeIcon icon={faStar} />{categoriaFiltrada.categoria}</h4>
+
+                                ))
+                        }
+                        {producto.stock >= 1 ? (
+                            <h4 style={{ color: 'green', backgroundColor: '#ccffcc', padding: '0px 10px', borderRadius: '6px' }}>Stock {producto.stock}</h4>
+                        ) : producto.stock <= 0 ? (
+                            <h4 style={{ color: 'red', backgroundColor: '#ffc1c1', padding: '0px 10px', borderRadius: '6px' }}>Agotado</h4>
+                        ) : (
+
+                            <h4>{producto.stock}</h4>
+                        )}
+                    </div>
+
                     <div className='deFLexPrice'>
                         <h5 className="price">
                             {moneda} {producto?.precio}
+
                         </h5>
+
                         {
-                            (producto?.precioAnterior > 0 && producto?.precioAnterior !== undefined) && (
+                            (producto?.precioAnterior >= 1 && producto?.precioAnterior !== undefined) && (
                                 <h5 className='precioTachadoDetail'>{moneda} {producto?.precioAnterior}</h5>
                             )
                         }
+
+
                     </div>
                     <p>{producto.descripcion}</p>
                     <div className='itemsDetail'>
-                        {producto.item1 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item1}
-                                    checked={selectedItem === producto.item1}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item1}
-                            </label>
-                        )}
-                        {producto.item2 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item2}
-                                    checked={selectedItem === producto.item2}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item2}
-                            </label>
-                        )}
-                        {producto.item3 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item3}
-                                    checked={selectedItem === producto.item3}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item3}
-                            </label>
-                        )}
-                        {producto.item4 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item4}
-                                    checked={selectedItem === producto.item4}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item4}
-                            </label>
-                        )}
-                        {producto.item5 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item5}
-                                    checked={selectedItem === producto.item5}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item5}
-                            </label>
-                        )}
-                        {producto.item6 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item6}
-                                    checked={selectedItem === producto.item6}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item6}
-                            </label>
-                        )}
-                        {producto.item7 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item7}
-                                    checked={selectedItem === producto.item7}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item7}
-                            </label>
-                        )}
-                        {producto.item8 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item8}
-                                    checked={selectedItem === producto.item8}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item8}
-                            </label>
-                        )}
-                        {producto.item9 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item9}
-                                    checked={selectedItem === producto.item9}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item9}
-                            </label>
-                        )}
-                        {producto.item10 && (
-                            <label>
-                                <input
-                                    type="radio"
-                                    name="talle"
-                                    value={producto.item10}
-                                    checked={selectedItem === producto.item10}
-                                    onChange={(e) => setSelectedItem(e.target.value)}
-                                />
-                                {producto.item10}
-                            </label>
-                        )}
+                        {producto && items.length > 0 && items.map((item, index) => (
+                            item && (
+                                <label key={index}>
+                                    <input
+                                        type="radio"
+                                        name="talle"
+                                        value={item}
+                                        checked={selectedItemIndex === index}
+                                        onChange={() => handleSelectionChange(index)}
+                                    />
+                                    {item}
+                                </label>
+                            )
+                        ))}
                     </div>
+
+
                     <div className='deFlexCart'>
                         <button onClick={decrementCantidad}>-</button>
                         <span>{cantidad}</span>
                         <button onClick={incrementCantidad}>+</button>
                     </div>
                     <div className='deFlexGoTocart'>
-                        <button onClick={addToCart} className='btnAdd'>Agregar  <FontAwesomeIcon icon={faShoppingCart} />  </button>
+                        <button onClick={() => addToCart(items[selectedItemIndex])} className='btnAdd'>Agregar  <FontAwesomeIcon icon={faShoppingCart} />  </button>
                         <button className="wpp" onClick={handleWhatsappMessage}>
                             WhatsApp
                             <img src={whatsappIcon} alt="whatsappIcon" />
@@ -474,10 +404,7 @@ export default function Detail() {
             >
                 <img src={modalImage} alt={producto.titulo} />
             </Modal>
-
-
-
-        </div >
+        </div>
 
     )
 }

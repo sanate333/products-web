@@ -11,6 +11,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import moneda from '../moneda';
 import Swal from 'sweetalert2';
 import contador from '../contador'
+import MiPedido from '../MiPedido/MiPedido'
 export default function Cart() {
     const [cartItems, setCartItems] = useState([]);
     const [productos, setProductos] = useState([]);
@@ -373,6 +374,7 @@ export default function Cart() {
             >
                 <div className='deFLex'>
                     <button onClick={closeModal} ><FontAwesomeIcon icon={faArrowLeft} />  </button>
+                    <MiPedido />
                     <button onClick={clearCart} className='deleteToCart'>Vaciar carrito</button>
                 </div>
                 {cartItems?.length === 0 ?

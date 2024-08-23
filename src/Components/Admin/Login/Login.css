@@ -60,6 +60,7 @@
     border-radius: 30rem;
     background-color: var(--color1);
     color: var(--blanco);
+    margin-top: 10px;
     font-size: 16px;
 }
 

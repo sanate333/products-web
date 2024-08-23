@@ -28,7 +28,7 @@ try {
         $descripcion = $_POST['descripcion'];
         $titulo = $_POST['titulo'];
         $precio = $_POST['precio'];
-        $categoria = $_POST['categoria'];
+        $idCategoria = $_POST['idCategoria'];
         $masVendido = $_POST['masVendido'];
         $item1 = $_POST['item1'];
         $item2 = $_POST['item2'];
@@ -41,7 +41,7 @@ try {
         $item9 = $_POST['item9'];
         $item10 = $_POST['item10'];
         $precioAnterior = $_POST['precioAnterior'];
-        if (!empty($descripcion) && !empty($titulo) && !empty($precio) &&  !empty($categoria) &&  !empty($masVendido)) {
+        if ( !empty($titulo) && !empty($precio) &&  !empty($idCategoria) &&  !empty($masVendido)) {
 
             // Verificar si se enviaron imágenes
             $imagenesPresentes = isset($_FILES['imagen1']) || isset($_FILES['imagen2']) || isset($_FILES['imagen3']) || isset($_FILES['imagen4']);
@@ -96,15 +96,15 @@ try {
                 }
 
                 // Almacenar enlaces completos en la base de datos
-                $sqlInsert = "INSERT INTO `productos` (descripcion, titulo, precio, categoria, masVendido, imagen1, imagen2 , imagen3, imagen4,
+                $sqlInsert = "INSERT INTO `productos` (descripcion, titulo, precio, idCategoria, masVendido, imagen1, imagen2 , imagen3, imagen4,
                  item1, item2, item3, item4, item5, item6, item7, item8, item9, item10,precioAnterior) 
-                 VALUES (:descripcion, :titulo, :precio, :categoria,:masVendido, :imagen1, :imagen2, :imagen3 , :imagen4,
+                 VALUES (:descripcion, :titulo, :precio, :idCategoria,:masVendido, :imagen1, :imagen2, :imagen3 , :imagen4,
                  :item1, :item2, :item3, :item4, :item5, :item6, :item7, :item8, :item9, :item10, :precioAnterior)";
                 $stmt = $conexion->prepare($sqlInsert);
                 $stmt->bindParam(':descripcion', $descripcion);
                 $stmt->bindParam(':titulo', $titulo);
                 $stmt->bindParam(':precio', $precio);
-                $stmt->bindParam(':categoria', $categoria);
+                $stmt->bindParam(':idCategoria', $idCategoria);
                 $stmt->bindParam(':masVendido', $masVendido);
                 $stmt->bindParam(':imagen1', $rutaImagenCompleta);
                 $stmt->bindParam(':imagen2', $rutaImagen2Completa);

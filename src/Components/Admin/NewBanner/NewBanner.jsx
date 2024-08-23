@@ -74,9 +74,13 @@ export default function NewBanner() {
             {modalOpen && (
                 <div className="modal">
                     <div className="modal-content">
-                        <div className='deFlexBack'>
-                            <h4>Agregar Banner</h4>
-                            <span className="close" onClick={toggleModal}>&times;</span>
+                        <div className='deFlexBtnsModal'>
+                            <button className='selected'>
+                                Agregar Banner
+                            </button>
+                            <span className='close' onClick={toggleModal}>
+                                &times;
+                            </span>
                         </div>
                         <form id="crearForm">
                             <div className="flexGrap">

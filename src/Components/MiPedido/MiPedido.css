@@ -1,0 +1,39 @@
+.paddingConten{
+   padding: 20px 10px 10px;
+}
+.paddingConten h4{
+    color: var(--text-color2);
+    padding-bottom: 5px;
+}
+.paddingConten hr{
+    margin-bottom: 1rem;
+}
+
+.MiPedidoContain .modal-content-cart {
+    width: 100%;
+    overflow-y: scroll;
+    height: 50vh;
+    padding: 10px;
+   
+    
+}
+
+.deFlexSpanPedido{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.deFlexSpanPedido span{
+    background-color: var(--gris2);
+    padding: 6px 15px;
+    border-radius: 2rem;
+    color: var(--text-color2);
+}
+@media (max-width: 1024px){
+    .MiPedidoContain .modal-content-cart {
+        height: 60vh;
+    }
+    .deFlexSpanPedido span{
+       font-size: 13px;
+    }
+}

@@ -51,22 +51,22 @@ try {
          $precioAnterior = isset($data['precioAnterior']) ? $data['precioAnterior'] : null;
  
         if (empty($nuevaCategoria)) {
-            $sqlSelect = "SELECT categoria FROM productos WHERE idProducto = :idProducto";
+            $sqlSelect = "SELECT idCategoria FROM productos WHERE idProducto = :idProducto";
             $stmt = $conexion->prepare($sqlSelect);
             $stmt->bindParam(':idProducto', $idProducto, PDO::PARAM_INT);
             $stmt->execute();
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $nuevaCategoria = $row['categoria'];
+            $nuevaCategoria = $row['idCategoria'];
         }
 
-        $sqlUpdate = "UPDATE productos SET descripcion = :descripcion, titulo = :titulo, categoria = :categoria, precio = :precio, masVendido = :masVendido, 
+        $sqlUpdate = "UPDATE productos SET descripcion = :descripcion, titulo = :titulo, idCategoria = :idCategoria, precio = :precio, masVendido = :masVendido, 
         item1 = :item1, item2 = :item2, item3 = :item3, item4 = :item4, item5 = :item5, item6 = :item6, item7 = :item7, item8 = :item8, 
         item9 = :item9, item10 = :item10, precioAnterior = :precioAnterior
         WHERE idProducto = :idProducto";
         $sentenciaUpdate = $conexion->prepare($sqlUpdate);
         $sentenciaUpdate->bindParam(':descripcion', $nuevaDescripcion);
         $sentenciaUpdate->bindParam(':titulo', $nuevoTitulo);
-        $sentenciaUpdate->bindParam(':categoria', $nuevaCategoria); 
+        $sentenciaUpdate->bindParam(':idCategoria', $nuevaCategoria); 
         $sentenciaUpdate->bindParam(':precio', $nuevoPrecio);
         $sentenciaUpdate->bindParam(':masVendido', $masVendido); 
         $sentenciaUpdate->bindParam(':item1', $item1); 

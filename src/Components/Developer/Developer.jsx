@@ -31,7 +31,7 @@ export default function Developer() {
     return (
         <div className='Developer'>
             <p onClick={handleOpenModal}>
-                Desarrollado por - Juan Rivera
+                © 2024 En catálogo - Juan Rivera
             </p>
 
             <Modal
@@ -45,7 +45,7 @@ export default function Developer() {
                     <img src="https://i.postimg.cc/zf0V90pC/1682983895887.jpg" alt="Juan Rivera" className='banner-dev-modal' />
                     <div className='text-dev-modal'>
                         <img src="https://www.juan-rivera-developer.net/static/media/JUAN%20RIVERA.8d5ed53bbc2749a83200.png" alt="Juan Rivera" />
-                        <h2>Desarrollado por <br />  <Anchor to='https://www.juan-rivera-developer.net/' target="_blank">Juan Rivera</Anchor></h2>
+                        <h2><Anchor to='https://www.juan-rivera-developer.net/' target="_blank">Juan Rivera</Anchor></h2>
                         <div className='socialsDev'>
                             <Anchor to='https://www.linkedin.com/in/juan-rivera-9ba866215/' target="_blank"><i className='fa fa-linkedin' id="linkedin"></i></Anchor>
                             <Anchor to='https://github.com/RIVERA-PRO' target="_blank"><i className='fa fa-github' id="github"></i></Anchor>

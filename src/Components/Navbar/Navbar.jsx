@@ -6,7 +6,6 @@ import baseURL from '../url';
 import 'swiper/swiper-bundle.css';
 import Profile from '../Profile/Profile';
 import './Navbar.css';
-import InfoUserLoguedNav from '../InfoUserLoguedNav/InfoUserLoguedNav';
 import Favoritos from '../Favoritos/Favoritos';
 import InputSerach from '../InputSerach/InputSearchs';
 import Logout from '../Admin/Logout/Logout';
@@ -60,31 +59,12 @@ export default function Navbar() {
             <nav>
                 <Anchor to={`/`} className='logo'>
                     <img src={logo} alt="logo" />
-                    {loading ? (
-                        <div></div>
-                    ) : usuario.idUsuario ? (
-                        <InfoUserLoguedNav />
-                    ) : (
-                        <></>
-                    )}
+
                 </Anchor>
 
                 <div className='deFLexNavs'>
-                    {loading ? (
-                        <div></div>
-                    ) : usuario.idUsuario ? (
-                        <>
-                        </>
-                    ) : (
-                        <>
-                            {location.pathname !== '/meseros' && (
-                                <>
-                                    <Favoritos />
-                                    <InputSerach />
-                                </>
-                            )}
-                        </>
-                    )}
+                    <Favoritos />
+                    <InputSerach />
 
                     <div className={`nav_toggle  ${isOpen && "open"}`} onClick={() => setIsOpen(!isOpen)}>
                         <span></span>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faArrowUp, faArrowDown, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faArrowUp, faArrowDown, faSync, faEye } from '@fortawesome/free-solid-svg-icons';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
@@ -11,6 +11,7 @@ import 'jspdf-autotable';
 import baseURL from '../../url';
 import NewProduct from '../NewProduct/NewProduct';
 import moneda from '../../moneda';
+import { Link as Anchor } from "react-router-dom";
 export default function ProductosData() {
     const [productos, setProductos] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
@@ -25,7 +26,6 @@ export default function ProductosData() {
     const [filtroId, setFiltroId] = useState('');
     const [filtroTitulo, setFiltroTitulo] = useState('');
     const [filtroCategoria, setFiltroCategoria] = useState('');
-    const [filtroCategoria2, setFiltroCategoria2] = useState('');
     const [filtroMasVendido, setFiltroMasVendido] = useState('');
     const [ordenInvertido, setOrdenInvertido] = useState(false);
     const [imagenPreview, setImagenPreview] = useState(null);
@@ -70,7 +70,7 @@ export default function ProductosData() {
         setNuevaDescripcion(producto.descripcion);
         setNuevoPrecio(producto.precio);
         setNuevoMasVendido(producto.masVendido)
-        setNuevaCategoria(producto.categoria)
+        setNuevaCategoria(producto.idCategoria)
         setItem1(producto.item1);
         setItem2(producto.item2);
         setItem3(producto.item3);
@@ -144,10 +144,10 @@ export default function ProductosData() {
     const productosFiltrados = productos.filter(item => {
         const idMatch = item.idProducto.toString().includes(filtroId);
         const tituloMatch = !filtroTitulo || item.titulo.includes(filtroTitulo);
-        const categoriaMatch = !filtroCategoria || item.categoria.includes(filtroCategoria);
+        const categoriaMatch = item.idCategoria.toString().includes(filtroCategoria);
         const masVendidoMatch = !filtroMasVendido || item.masVendido.includes(filtroMasVendido);
-        const categoriasMatch = !filtroCategoria2 || item.categoria.includes(filtroCategoria2);
-        return idMatch && tituloMatch && categoriaMatch && masVendidoMatch && categoriasMatch;
+
+        return idMatch && tituloMatch && categoriaMatch && masVendidoMatch;
     });
 
     const descargarExcel = () => {
@@ -215,7 +215,7 @@ export default function ProductosData() {
         const payload = {
 
             nuevoTitulo: nuevoTitulo !== '' ? nuevoTitulo : producto.titulo,
-            nuevaDescripcion: nuevaDescripcion !== '' ? nuevaDescripcion : producto.descripcion,
+            nuevaDescripcion: nuevaDescripcion !== undefined ? nuevaDescripcion : producto.descripcion,
             nuevoPrecio: nuevoPrecio !== '' ? nuevoPrecio : producto.precio,
             nuevaCategoria: nuevaCategoria !== '' ? nuevaCategoria : producto.categoria,
             masVendido: nuevoMasVendido !== '' ? nuevoMasVendido : producto.masVendido,
@@ -365,18 +365,15 @@ export default function ProductosData() {
                     <div className='inputsColumn'>
                         <input type="text" value={filtroTitulo} onChange={(e) => setFiltroTitulo(e.target.value)} placeholder='Titulo' />
                     </div>
-                    <div className='inputsColumn'>
-                        <input type="text" value={filtroCategoria2} onChange={(e) => setFiltroCategoria2(e.target.value)} placeholder='Categoria' />
-                    </div>
+
                     <div className='inputsColumn'>
                         <select value={filtroCategoria} onChange={(e) => setFiltroCategoria(e.target.value)}>
                             <option value="">Categorias</option>
                             {
                                 categorias.map(item => (
-                                    <option value={item?.categoria}>{item?.categoria}</option>
+                                    <option value={item?.idCategoria}>{item?.categoria}</option>
                                 ))
                             }
-
                         </select>
                     </div>
                     <div className='inputsColumn'>
@@ -457,7 +454,7 @@ export default function ProductosData() {
                                     <legend>Descripcion</legend>
                                     <textarea
                                         type="text"
-                                        value={nuevaDescripcion !== '' ? nuevaDescripcion : producto.descripcion}
+                                        value={nuevaDescripcion}
                                         onChange={(e) => setNuevaDescripcion(e.target.value)}
                                     />
                                 </fieldset>
@@ -468,14 +465,24 @@ export default function ProductosData() {
                                         value={nuevaCategoria !== '' ? nuevaCategoria : producto.categoria}
                                         onChange={(e) => setNuevaCategoria(e.target.value)}
                                     >
-                                        <option value={producto.categoria}>{producto.categoria}</option>
+
+                                        {
+                                            categorias
+                                                .filter(categoriaFiltrada => categoriaFiltrada.idCategoria === producto.idCategoria)
+                                                .map(categoriaFiltrada => (
+
+                                                    <option value={producto.categoria}> {categoriaFiltrada.categoria}</option>
+                                                ))
+                                        }
+
                                         {
                                             categorias.map(item => (
-                                                <option value={item?.categoria}>{item?.categoria}</option>
+                                                <option value={item?.idCategoria}>{item?.categoria}</option>
                                             ))
                                         }
                                     </select>
                                 </fieldset>
+
                                 <fieldset>
                                     <legend>Más vendido</legend>
                                     <select
@@ -726,10 +733,8 @@ export default function ProductosData() {
                         <tr>
                             <th>Id Producto</th>
                             <th>Titulo</th>
-                            <th>Descripcion</th>
                             <th>Precio</th>
                             <th>Categoria</th>
-                            <th>Más vendido</th>
                             <th>Imagen</th>
                             <th>Imagen 2</th>
                             <th>Imagen 3</th>
@@ -742,7 +747,6 @@ export default function ProductosData() {
                             <tr key={item.idProducto}>
                                 <td>{item.idProducto}</td>
                                 <td>{item.titulo}</td>
-                                <td>{item.descripcion}</td>
 
                                 <td style={{
                                     color: '#008000',
@@ -750,11 +754,18 @@ export default function ProductosData() {
                                     {moneda} {`${item?.precio}`}
                                 </td>
 
-                                <td style={{
-                                    color: '#DAA520',
+                                {categorias
+                                    .filter(categoriaFiltrada => categoriaFiltrada.idCategoria === item.idCategoria)
+                                    .map(categoriaFiltrada => (
+                                        <td
+                                            key={categoriaFiltrada.idCategoria}
+                                            style={{ color: '#DAA520' }}
+                                        >
+                                            {categoriaFiltrada.categoria}
+                                        </td>
+                                    ))
+                                }
 
-                                }}>  {`${item?.categoria}`}</td>
-                                <td>{item.masVendido}</td>
                                 <td>
                                     {item.imagen1 ? (
                                         <img src={item.imagen1} alt="imagen1" />
@@ -800,6 +811,9 @@ export default function ProductosData() {
                                     <button className='editar' onClick={() => abrirModal(item)}>
                                         <FontAwesomeIcon icon={faEdit} />
                                     </button>
+                                    <Anchor className='editar' to={`/producto/${item?.idProducto}/${item?.titulo?.replace(/\s+/g, '-')}`}>
+                                        <FontAwesomeIcon icon={faEye} />
+                                    </Anchor>
                                 </td>
                             </tr>
                         ))}

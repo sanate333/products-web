@@ -36,7 +36,7 @@ const ButonInstallAppNav = () => {
 
     return (
         <button onClick={handleInstallClick} className='btnInstall' >
-            Instalar acceso
+            Instalar
         </button>
     );
 };
