@@ -56,6 +56,7 @@ export default function ImagenesIA() {
   const [files, setFiles] = useState([]);
   const [actionError, setActionError] = useState('');
   const [variants, setVariants] = useState([]);
+  const [imageUrl, setImageUrl] = useState('');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -182,6 +183,7 @@ export default function ImagenesIA() {
   const handleGenerate = async () => {
     setLoading(true);
     setActionError('');
+    setImageUrl('');
     setStatusMessage('Generando imagen... puede tardar hasta 60 segundos.');
     const ready = await checkServer();
     if (!ready) {
@@ -193,25 +195,27 @@ export default function ImagenesIA() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 60000);
     try {
+      const payload = {
+        productId: form.productId || 'producto',
+        productName: form.productName || 'Producto',
+        template: form.templateType || 'hero',
+        size: form.size || '1024x1024',
+        language: form.language || 'es',
+        prompt: form.productDetails
+          ? `Foto profesional del producto ${form.productName || 'Producto'}. ${form.productDetails}`
+          : `Foto profesional del producto ${form.productName || 'Producto'}, fondo blanco, iluminacion de estudio, alta calidad.`,
+      };
+
       const result = await fetchJsonWithFallback('image-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         signal: controller.signal,
-        body: JSON.stringify({
-          userId: form.userId,
-          productId: form.productId,
-          country: form.country,
-          templateType: form.templateType,
-          angle: form.angle || 'hero shot',
-          benefit: form.benefit || 'claridad',
-          style: form.style || 'realista',
-          size: form.size,
-          language: form.language,
-        }),
+        body: JSON.stringify(payload),
       });
       if (result.ok && result.data?.ok) {
         const data = result.data;
-        setVariants(data.variants ?? []);
+        setVariants([]);
+        setImageUrl(data.image_url || '');
         fetchImages();
         setStatusMessage('Imagenes generadas. Revisa la seccion de variantes.');
       } else if (result.ok && result.data) {
@@ -465,13 +469,13 @@ export default function ImagenesIA() {
         <section className="variantsSection">
         <h2>Variantes generadas</h2>
         <div className="variantsGrid">
-          {variants.map((variant) => (
-            <article key={variant.id}>
-              <img src={variant.url} alt="Variante generada" />
-              <p className="prompt">{variant.promptUsed}</p>
+          {imageUrl ? (
+            <article>
+              <img src={imageUrl} alt="Imagen generada" />
             </article>
-          ))}
-          {!variants.length && <p className="empty">Genera variantes para verlas aqui.</p>}
+          ) : (
+            <p className="empty">Genera una imagen para verla aqui.</p>
+          )}
         </div>
         </section>
 

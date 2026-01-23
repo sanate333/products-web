@@ -273,122 +273,45 @@ app.post("/api/image-analyze", uploadMemory.array("files", 3), handleImageAnalyz
 
 const handleImageGenerate = async (req, res) => {
   const {
-    userId,
-    productId,
-    country,
+    prompt,
+    size,
+    template,
     templateType,
-    angle,
-    benefit,
-    style,
-    size = "1024x1024",
-    referenceImageIds = [],
-    referenceFilenames = [],
-  } = req.body;
+    language,
+    productName,
+    productId,
+  } = req.body || {};
 
-  if (!userId || !productId || !country || !templateType || !angle || !benefit || !style) {
-    return res.status(400).json({ ok: false, error: "missing_required_fields" });
-  }
-
-  const { data, index } = readMetadata();
-  if (!ensureLimit(index, userId, productId, variantTemplates.length).ok) {
-    return res.status(409).json({ ok: false, error: "max_10_images" });
-  }
-
-  const existing = index.get(`${userId}:${productId}`) ?? [];
-  const nextOrder = (existing.reduce((max, img) => Math.max(max, img.orderIndex ?? 0), 0) || 0) + 1;
-  const generated = [];
-
-  const referenceSection = [
-    referenceImageIds && referenceImageIds.length ? `Referencias: ${referenceImageIds.join(", ")}.` : "",
-    referenceFilenames && referenceFilenames.length ? `Influenciado por archivos: ${referenceFilenames.join(", ")}.` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const safeTemplate = (template || templateType || "hero").toString();
+  const safeLanguage = (language || "es").toString();
+  const safeProductName = (productName || "Producto").toString();
+  const safeProductId = (productId || "producto").toString();
+  const safeSize = (size && String(size).trim()) || "1024x1024";
+  const safePrompt =
+    (prompt && String(prompt).trim()) ||
+    `Foto profesional del producto ${safeProductName}, fondo blanco, iluminacion de estudio, alta calidad. Estilo ${safeTemplate}. Idioma ${safeLanguage}.`;
 
   try {
     if (mockMode) {
-      for (const [idx, variant] of variantTemplates.entries()) {
-        const prompt = `Mock prompt ${variant.label}`;
-        const filename = `mock_${userId}_${productId}_${variant.label}.png`;
-        createMockImage(filename);
-        const url = `/ai-images/${filename}`;
-        const buffer = Buffer.from(placeholderBase64, "base64");
-        const record = {
-          id: randomUUID(),
-          userId,
-          productId,
-          country,
-          templateType,
-          prompt,
-          createdAt: new Date().toISOString(),
-          orderIndex: nextOrder + idx,
-          rankScore: null,
-          tags: [angle, benefit, style, variant.label],
-          source: "generated",
-          files: [
-            {
-              url,
-              filename,
-              mime: "image/png",
-              size: buffer.length,
-              width: 1,
-              height: 1,
-            },
-          ],
-        };
-        data.images.push(record);
-        generated.push({ id: record.id, promptUsed: prompt, url });
-      }
-      writeMetadataAtomic(data);
-      return res.json({ ok: true, variants: generated });
+      const image_url = `data:image/png;base64,${placeholderBase64}`;
+      return res.json({ ok: true, image_url });
     }
 
-    for (const [idx, variant] of variantTemplates.entries()) {
-      const prompt = `Fotografia comercial ultra realista para ${templateType} en ${country} sobre productos de ${productId}. Enfatiza ${angle} y el beneficio ${benefit} con estilo ${style}. ${variant.detail}. ${referenceSection} Sin texto dentro de la imagen. Personas reales con apariencia natural. Composicion limpia y espacio negativo para copy.`;
-      const response = await openaiClient.images.generate({
-        model: "gpt-image-1",
-        prompt,
-        size,
-        response_format: "b64_json",
-      });
-      const payload = response?.data?.[0];
-      const b64 = payload?.b64_json;
-      if (!b64) {
-        return res.status(502).json({ ok: false, error: "empty_payload" });
-      }
-      const buffer = Buffer.from(b64, "base64");
-      const filename = `${userId}_${productId}_${Date.now()}_${variant.label}.png`;
-      const filepath = path.resolve(storageDir, filename);
-      fs.writeFileSync(filepath, buffer);
-      const url = `/ai-images/${filename}`;
-      const record = {
-        id: randomUUID(),
-        userId,
-        productId,
-        country,
-        templateType,
-        prompt,
-        createdAt: new Date().toISOString(),
-        orderIndex: nextOrder + idx,
-        rankScore: null,
-        tags: [angle, benefit, style, variant.label],
-        source: "generated",
-        files: [
-          {
-            url,
-            filename,
-            mime: "image/png",
-            size: buffer.length,
-            width: null,
-            height: null,
-          },
-        ],
-      };
-      data.images.push(record);
-      generated.push({ id: record.id, promptUsed: prompt, url });
+    const result = await openaiClient.images.generate({
+      model: "gpt-image-1",
+      prompt: safePrompt,
+      size: safeSize,
+    });
+
+    const image_url =
+      result?.data?.[0]?.url ||
+      (result?.data?.[0]?.b64_json ? `data:image/png;base64,${result.data[0].b64_json}` : null);
+
+    if (!image_url) {
+      return res.status(500).json({ ok: false, error: "image_generation_failed" });
     }
-    writeMetadataAtomic(data);
-    return res.json({ ok: true, variants: generated });
+
+    return res.json({ ok: true, image_url, productId: safeProductId });
   } catch (error) {
     return res.status(500).json({ ok: false, error: String(error?.message ?? error) });
   }
