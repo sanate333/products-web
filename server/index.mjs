@@ -116,7 +116,7 @@ function getSortedImages(list) {
   });
 }
 
-const PORT = Number(process.env.PORT) || 5055;
+const PORT = process.env.PORT || 5055;
 
 app.get("/", (_req, res) => res.send("SERVER ACTIVO DESDE SERVER/INDEX.MJS"));
 app.get("/health", (_req, res) => res.json({ ok: true }));
@@ -522,6 +522,6 @@ app.post("/landing-plan", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`SERVER ACTIVO EN http://localhost:${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log("SERVER ACTIVO EN http://localhost:" + PORT);
 });
