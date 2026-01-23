@@ -11,12 +11,13 @@
   --bg-color: #111111;
   --gris:#fafafa;
   --gris2:#f3eeee;
-  --color1:#F80050;
-  --color2:#752FB5;
-  --color3:rgba(31, 135, 233, 0.455);
+  --color1:#19b8ff;
+  --color2:#0a7ccf;
+  --color3:rgba(25, 184, 255, 0.35);
   --blanco: #fff;
   --input:#c1bfbf;
-  --loading:#f8004f60;
+  --loading:rgba(25, 184, 255, 0.35);
+  --green-vivid: #18c45a;
 }
 
 
@@ -30,7 +31,7 @@ a{
  body{
   background-color: var(--gris);
  }
- a, .detail-contain img, p,.modalNav,#SwiperSlide-scroll-products,  .categoriasInputs input,.cardProdcutSelected, .cardProdcutmasVendido,.cartIconFixed{
+ a, .detail-contain img, p,.modalNav,.swiperSlideProducts, .categoriasInputs input,.cardProdcutSelected, .cardProdcutmasVendido,.cartIconFixed{
   opacity: 0;
   animation: slideFromLeft 1s ease-in-out forwards;
   -webkit-animation: slideFromLeft 1s ease-in-out forwards;

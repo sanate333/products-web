@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faSync, faEye, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
+import { faSync, faArrowUp, faArrowDown } from '@fortawesome/free-solid-svg-icons';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
 import './PedidosData.css'
 import 'jspdf-autotable';
-import baseURL from '../../url';
+import baseURL, { resolveImg } from '../../url';
 import moneda from '../../moneda';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
@@ -19,28 +19,61 @@ export default function PedidosData() {
     const [nuevoEstado, setNuevoEstado] = useState('');
     const [pedido, setPedido] = useState({});
     const [selectedSection, setSelectedSection] = useState('texto');
-    const [mesas, setMesas] = useState([]);
     const [filtroId, setFiltroId] = useState('');
-    const [filtroMesa, setFiltroMesa] = useState('');
     const [filtroEstado, setFiltroEstado] = useState('');
-    const [filtroDesde, setFiltroDesde] = useState('');
-    const [filtroHasta, setFiltroHasta] = useState('');
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const [filtroDesde, setFiltroDesde] = useState(todayIso);
+    const [filtroHasta, setFiltroHasta] = useState(todayIso);
     const [ordenInvertido, setOrdenInvertido] = useState(false);
+    const [trackingNumber, setTrackingNumber] = useState('');
+    const [trackingUrl, setTrackingUrl] = useState('');
+    const [isSendingTracking, setIsSendingTracking] = useState(false);
+    const lastOrderIdRef = useRef(null);
+    const soundRef = useRef(null);
+    const INSTAGRAM_URL = 'https://www.instagram.com/sanate.col/';
     useEffect(() => {
         cargarPedidos();
-        cargarMesas()
     }, []);
 
-    const cargarMesas = () => {
-        fetch(`${baseURL}/mesaGet.php`, {
-            method: 'GET',
-        })
-            .then(response => response.json())
-            .then(data => {
-                setMesas(data.mesas || []);
-                console.log(data.mesas)
-            })
-            .catch(error => console.error('Error al cargar mesas:', error));
+    useEffect(() => {
+        if (modalVisible) {
+            document.body.classList.add('dashboard-modal-open');
+        } else {
+            document.body.classList.remove('dashboard-modal-open');
+        }
+        return () => document.body.classList.remove('dashboard-modal-open');
+    }, [modalVisible]);
+    const getPendingPedidos = () => {
+        const pending = JSON.parse(localStorage.getItem('pendingPedidos')) || [];
+        return pending.map((item) => ({
+            idPedido: `LOCAL-${item.id}`,
+            localId: item.id,
+            isLocal: true,
+            estado: item.estado || 'Pendiente',
+            nombre: item.nombre,
+            whatsapp: item.whatsapp,
+            direccion: item.direccion,
+            departamento: item.departamento,
+            formaPago: item.formaPago,
+            nota: item.nota,
+            codigo: item.codigo,
+            total: item.total,
+            productos: item.productos || [],
+            createdAt: item.createdAt || '',
+        }));
+    };
+    const parseProductos = (productos) => {
+        try {
+            return typeof productos === 'string' ? JSON.parse(productos || '[]') : (productos || []);
+        } catch (error) {
+            console.error('Error al formatear productos:', error);
+            return [];
+        }
+    };
+    const removePendingPedido = (localId) => {
+        const pending = JSON.parse(localStorage.getItem('pendingPedidos')) || [];
+        const updatedPending = pending.filter((item) => item.id !== localId);
+        localStorage.setItem('pendingPedidos', JSON.stringify(updatedPending));
     };
     const cargarPedidos = () => {
         fetch(`${baseURL}/pedidoGet.php`, {
@@ -48,10 +81,42 @@ export default function PedidosData() {
         })
             .then(response => response.json())
             .then(data => {
-                setPedidos(data.pedidos.reverse() || []);
+                const pending = getPendingPedidos();
+                const pedidosRemotos = data.pedidos?.reverse() || [];
+                const latestRemoteId = pedidosRemotos.reduce((max, item) => {
+                    const id = Number(item.idPedido);
+                    if (Number.isNaN(id)) return max;
+                    return id > max ? id : max;
+                }, 0);
+                const merged = [...pending, ...pedidosRemotos].sort((a, b) => {
+                    const dateA = new Date(a.createdAt || 0).getTime();
+                    const dateB = new Date(b.createdAt || 0).getTime();
+                    return dateB - dateA;
+                });
+                setPedidos(merged);
+                if (latestRemoteId > 0) {
+                    if (lastOrderIdRef.current === null) {
+                        lastOrderIdRef.current = latestRemoteId;
+                    } else if (latestRemoteId > lastOrderIdRef.current) {
+                        lastOrderIdRef.current = latestRemoteId;
+                        if (!soundRef.current) {
+                            soundRef.current = new Audio('/shopify.mp3');
+                        }
+                        soundRef.current.currentTime = 0;
+                        soundRef.current.play().catch(() => {});
+                    }
+                }
                 console.log(data.pedidos)
             })
-            .catch(error => console.error('Error al cargar pedidos:', error));
+            .catch(error => {
+                console.error('Error al cargar pedidos:', error);
+                const pending = getPendingPedidos().sort((a, b) => {
+                    const dateA = new Date(a.createdAt || 0).getTime();
+                    const dateB = new Date(b.createdAt || 0).getTime();
+                    return dateB - dateA;
+                });
+                setPedidos(pending);
+            });
     };
 
     const eliminar = (idPedido) => {
@@ -66,6 +131,13 @@ export default function PedidosData() {
             cancelButtonText: 'Cancelar',
         }).then((result) => {
             if (result.isConfirmed) {
+                if (pedido?.isLocal || idPedido?.toString().startsWith('LOCAL-')) {
+                    const localId = pedido?.localId || idPedido?.toString().replace('LOCAL-', '');
+                    removePendingPedido(localId);
+                    setPedidos((prev) => prev.filter((item) => item.idPedido !== idPedido));
+                    Swal.fire('雁Eliminado!', 'Pedido local eliminado.', 'success');
+                    return;
+                }
                 fetch(`${baseURL}/pedidoDelete.php?idPedido=${idPedido}`, {
                     method: 'DELETE',
                 })
@@ -89,6 +161,8 @@ export default function PedidosData() {
     const abrirModal = (item) => {
         setPedido(item);
         setNuevoEstado(item.estado)
+        setTrackingNumber('');
+        setTrackingUrl('');
         setModalVisible(true);
     };
 
@@ -97,6 +171,25 @@ export default function PedidosData() {
     };
 
     const handleUpdateText = (idPedido) => {
+        if (pedido?.isLocal) {
+            const pending = JSON.parse(localStorage.getItem('pendingPedidos')) || [];
+            const updatedPending = pending.map((item) => {
+                if (item.id === pedido.localId) {
+                    return { ...item, estado: nuevoEstado || item.estado || 'Pendiente' };
+                }
+                return item;
+            });
+            localStorage.setItem('pendingPedidos', JSON.stringify(updatedPending));
+            setPedidos((prev) => prev.map((item) => {
+                if (item.idPedido === pedido.idPedido) {
+                    return { ...item, estado: nuevoEstado || item.estado || 'Pendiente' };
+                }
+                return item;
+            }));
+            Swal.fire('Editado!', 'Pedido local actualizado.', 'success');
+            cerrarModal();
+            return;
+        }
         const payload = {
             estado: nuevoEstado !== '' ? nuevoEstado : pedido.estado,
         };
@@ -140,7 +233,6 @@ export default function PedidosData() {
 
     const filtrados = pedidos.filter(item => {
         const idMatch = item.idPedido.toString().includes(filtroId);
-        const mesaMatch = item.idMesa.toString().includes(filtroMesa);
         const estadoMatch = !filtroEstado || item.estado.includes(filtroEstado);
         const desdeMatch = !filtroDesde || new Date(item.createdAt) >= new Date(filtroDesde);
 
@@ -149,7 +241,7 @@ export default function PedidosData() {
         adjustedHasta.setDate(adjustedHasta.getDate() + 1);
 
         const hastaMatch = !filtroHasta || new Date(item.createdAt) < adjustedHasta;
-        return idMatch && mesaMatch && estadoMatch && desdeMatch && hastaMatch;
+        return idMatch && estadoMatch && desdeMatch && hastaMatch;
     });
 
 
@@ -166,13 +258,16 @@ export default function PedidosData() {
         const data = filtrados.map(item => {
             const total = parseFloat(item.total); // Convertir a número
             totalGeneral += total;
-            const productos = JSON.parse(item.productos);
+            const productos = parseProductos(item.productos);
             const infoProductos = productos.map(producto => `${producto.titulo} - ${moneda}${producto.precio} - x${producto.cantidad}  `);
             return {
                 'ID Pedido': item.idPedido,
-                'Mesa': mesas.find(mesa => mesa.idMesa === item.idMesa)?.mesa,
                 'Estado': item.estado,
                 'Nombre': item.nombre,
+                'WhatsApp': item.whatsapp,
+                'Direccion': item.direccion,
+                'Departamento': item.departamento,
+                'Forma de pago': item.formaPago,
                 'Nota': item.nota,
                 'Productos': infoProductos.join('\n'),
                 'Codigo': item.codigo,
@@ -188,9 +283,11 @@ export default function PedidosData() {
         const totalRow = {
 
             'ID Pedido': '',
-            'Mesa': '',
             'Estado': '',
             'Nombre': '',
+            'WhatsApp': '',
+            'Direccion': '',
+            'Forma de pago': '',
             'Nota': '',
             'Productos': '',
             'Codigo': 'Total General:',
@@ -213,9 +310,12 @@ export default function PedidosData() {
 
         const columns = [
             { title: 'ID Pedido', dataKey: 'idPedido' },
-            { title: 'Mesa', dataKey: 'mesa' },
             { title: 'Estado', dataKey: 'estado' },
             { title: 'Nombre', dataKey: 'nombre' },
+            { title: 'WhatsApp', dataKey: 'whatsapp' },
+            { title: 'Direccion', dataKey: 'direccion' },
+            { title: 'Departamento', dataKey: 'departamento' },
+            { title: 'Forma de pago', dataKey: 'formaPago' },
             { title: 'Nota', dataKey: 'nota' },
             { title: 'Productos', dataKey: 'productos' },
             { title: 'Codigo', dataKey: 'codigo' },
@@ -228,13 +328,16 @@ export default function PedidosData() {
         const data = filtrados.map(item => {
             const total = parseFloat(item.total); // Convertir a número
             totalGeneral += total;
-            const productos = JSON.parse(item.productos);
+            const productos = parseProductos(item.productos);
             const infoProductos = productos.map(producto => `${producto.titulo} - ${moneda}${producto.precio} - x${producto.cantidad}  `);
             return {
                 idPedido: item.idPedido,
-                mesa: mesas.find(mesa => mesa.idMesa === item.idMesa)?.mesa,
                 estado: item.estado,
                 nombre: item.nombre,
+                whatsapp: item.whatsapp,
+                direccion: item.direccion,
+                departamento: item.departamento,
+                formaPago: item.formaPago,
                 nota: item.nota,
                 productos: infoProductos.join('\n'),
                 codigo: item.codigo,
@@ -249,9 +352,12 @@ export default function PedidosData() {
         // Agregar fila con el total general
         const totalRow = {
             idPedido: '',
-            mesa: '',
             estado: '',
             nombre: '',
+            whatsapp: '',
+            direccion: '',
+            departamento: '',
+            formaPago: '',
             nota: '',
             productos: '',
             codigo: 'Total General:',
@@ -280,14 +386,15 @@ export default function PedidosData() {
         // Obtener los detalles del pedido actualmente mostrado en el modal
         const pedidoActual = pedido;
 
-        const mesaFiltrada = mesas?.filter(mesa => mesa?.idMesa === pedidoActual?.idMesa)
-
         // Agregar detalles del pedido al PDF
         const pedidoData = [
             [`ID Pedido:`, `${pedidoActual.idPedido}`],
-            [`Mesa:`, `${mesaFiltrada[0]?.mesa}`],
             [`Estado:`, `${pedidoActual.estado}`],
             [`Nombre:`, `${pedidoActual.nombre}`],
+            [`WhatsApp:`, `${pedidoActual.whatsapp}`],
+            [`Direccion:`, `${pedidoActual.direccion}`],
+            [`Departamento:`, `${pedidoActual.departamento}`],
+            [`Forma de pago:`, `${pedidoActual.formaPago}`],
             [`Nota:`, `${pedidoActual.nota}`],
             [`Código:`, `${pedidoActual.codigo}`],
             [`Total:`, `${moneda} ${pedidoActual.total}`],
@@ -303,7 +410,7 @@ export default function PedidosData() {
         y += 5;
 
         // Obtener los productos del pedido actual
-        const productosPedido = JSON.parse(pedidoActual.productos);
+        const productosPedido = parseProductos(pedidoActual.productos);
 
         // Generar sección de productos con imágenes y contenido
         for (let i = 0; i < productosPedido.length; i++) {
@@ -361,10 +468,277 @@ export default function PedidosData() {
 
 
     const recargar = () => {
-        cargarMesas();
         cargarPedidos();
     };
+    const updatePedidoEstado = (item, estado) => {
+        if (item?.isLocal) {
+            const pending = JSON.parse(localStorage.getItem('pendingPedidos')) || [];
+            const updatedPending = pending.map((p) => {
+                if (p.id === item.localId) {
+                    return { ...p, estado };
+                }
+                return p;
+            });
+            localStorage.setItem('pendingPedidos', JSON.stringify(updatedPending));
+            setPedidos((prev) => prev.map((p) => {
+                if (p.idPedido === item.idPedido) {
+                    return { ...p, estado };
+                }
+                return p;
+            }));
+            cargarPedidos();
+            return;
+        }
+        fetch(`${baseURL}/pedidoPut.php?idPedido=${item.idPedido}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ estado }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    Swal.fire('Error!', data.error, 'error');
+                } else {
+                    Swal.fire('Listo!', data.mensaje, 'success');
+                    cargarPedidos();
+                }
+            })
+            .catch(error => {
+                console.log(error.message);
+                toast.error(error.message);
+            });
+    };
+    const formatPedidoId = (idPedido) => {
+        const idNum = Number(idPedido);
+        if (Number.isNaN(idNum)) {
+            return `#${idPedido}`;
+        }
+        return `#${String(idNum).padStart(3, '0')}`;
+    };
+    const normalizePhone = (value) => {
+        const digits = String(value || '').replace(/\D/g, '');
+        if (!digits) return '';
+        if (digits.startsWith('57')) return digits;
+        if (digits.length === 10) return `57${digits}`;
+        return digits;
+    };
 
+    const openWhatsApp = (phone, message) => {
+        const encodedMessage = encodeURIComponent(message);
+        const appUrl = `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+        const webUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+        const fallbackTimer = setTimeout(() => {
+            window.open(webUrl, '_blank', 'noopener,noreferrer');
+        }, 600);
+        window.addEventListener('blur', () => clearTimeout(fallbackTimer), { once: true });
+        window.location.href = appUrl;
+    };
+
+    const buildCopyText = () => {
+        const productos = parseProductos(pedido.productos);
+        const productosLines = productos.map((producto) => {
+            const cantidad = producto?.cantidad || 1;
+            return `- ${producto?.titulo || 'Producto'} x${cantidad} (${moneda} ${producto?.precio})`;
+        });
+        return [
+            `Pedido: ${formatPedidoId(pedido.idPedido)}`,
+            `Nombre: ${pedido?.nombre || ''}`,
+            `WhatsApp: ${pedido?.whatsapp || ''}`,
+            `Direccion: ${pedido?.direccion || ''}`,
+            `Departamento: ${pedido?.departamento || ''}`,
+            `Forma de pago: ${pedido?.formaPago || ''}`,
+            `Estado: ${pedido?.estado || ''}`,
+            `Fecha: ${pedido?.createdAt || ''}`,
+            `Total: ${moneda} ${pedido?.total || ''}`,
+            '',
+            'Productos:',
+            ...productosLines,
+        ].join('\n');
+    };
+
+    const handleCopyDatos = async () => {
+        const text = buildCopyText();
+        try {
+            if (navigator?.clipboard?.writeText) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.setAttribute('readonly', '');
+                textarea.style.position = 'absolute';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+            }
+            toast.success('Datos copiados.');
+        } catch (error) {
+            toast.error('No se pudo copiar.');
+        }
+    };
+
+    const handleEnviarGuia = () => {
+        if (isSendingTracking) {
+            return;
+        }
+        const phone = normalizePhone(pedido?.whatsapp);
+        if (!phone) {
+            Swal.fire('Atencion', 'No se encontro el WhatsApp del cliente.', 'warning');
+            return;
+        }
+        if (!trackingNumber.trim()) {
+            Swal.fire('Atencion', 'Ingresa la guia de envio.', 'warning');
+            return;
+        }
+        setIsSendingTracking(true);
+        const mensaje = [
+            `Hola ${pedido?.nombre || ''}, gracias por tu compra.`,
+            'Tu envio ya va en camino.',
+            `Guia: ${trackingNumber.trim()}`,
+            trackingUrl.trim() ? `Seguimiento: ${trackingUrl.trim()}` : null,
+            `Instagram: ${INSTAGRAM_URL}`,
+        ].filter(Boolean).join('\n');
+
+        updatePedidoEstado(pedido, 'Enviado');
+        openWhatsApp(phone, mensaje);
+        setIsSendingTracking(false);
+    };
+
+    const buildTrackingMessage = (lines) => {
+        return [
+            `Hola ${pedido?.nombre || ''},`,
+            ...lines,
+            `Guia: ${trackingNumber.trim()}`,
+            trackingUrl.trim() ? `Seguimiento: ${trackingUrl.trim()}` : null,
+            `Instagram: ${INSTAGRAM_URL}`,
+        ].filter(Boolean).join('\n');
+    };
+
+    const handlePrimerIntento = () => {
+        const phone = normalizePhone(pedido?.whatsapp);
+        if (!phone) {
+            Swal.fire('Atencion', 'No se encontro el WhatsApp del cliente.', 'warning');
+            return;
+        }
+        if (!trackingNumber.trim()) {
+            Swal.fire('Atencion', 'Ingresa la guia de envio.', 'warning');
+            return;
+        }
+        const mensaje = buildTrackingMessage([
+            'Hoy intentamos realizar la entrega.',
+            'Por favor estar atento, gracias.',
+        ]);
+        openWhatsApp(phone, mensaje);
+    };
+
+    const handleSegundoIntento = () => {
+        const phone = normalizePhone(pedido?.whatsapp);
+        if (!phone) {
+            Swal.fire('Atencion', 'No se encontro el WhatsApp del cliente.', 'warning');
+            return;
+        }
+        if (!trackingNumber.trim()) {
+            Swal.fire('Atencion', 'Ingresa la guia de envio.', 'warning');
+            return;
+        }
+        const mensaje = buildTrackingMessage([
+            'Ya intentamos entregar por segunda vez.',
+            'Por favor confirma si has podido recibir o si hay algun inconveniente.',
+        ]);
+        openWhatsApp(phone, mensaje);
+    };
+
+    const formatProductosResumen = (productos) => {
+        const items = parseProductos(productos);
+        const titles = items.map((producto) => producto?.titulo).filter(Boolean);
+        if (!titles.length) {
+            return 'Sin productos';
+        }
+        const visible = titles.slice(0, 2);
+        const remaining = titles.length - visible.length;
+        return remaining > 0 ? `${visible.join(', ')} +${remaining}` : visible.join(', ');
+    };
+
+    const getItemsCount = (productos) => {
+        const items = parseProductos(productos);
+        return items.reduce((total, item) => total + (item?.cantidad || 1), 0);
+    };
+
+    const getColombiaDateKey = (date) =>
+        date.toLocaleDateString('sv-SE', { timeZone: 'America/Bogota' });
+
+    const formatHora = (value) => {
+        if (!value) return '';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        return date.toLocaleTimeString('es-CO', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'America/Bogota',
+        });
+    };
+
+    const getDateKey = (value) => {
+        if (!value) return 'Sin fecha';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return 'Sin fecha';
+        return getColombiaDateKey(date);
+    };
+
+    const getDateLabel = (key) => {
+        if (key === 'Sin fecha') return 'Sin fecha';
+        const today = new Date();
+        const todayKey = getColombiaDateKey(today);
+        const ayer = new Date(today);
+        ayer.setDate(today.getDate() - 1);
+        const ayerKey = getColombiaDateKey(ayer);
+        if (key === todayKey) return 'Hoy';
+        if (key === ayerKey) return 'Ayer';
+        const date = new Date(key);
+        if (Number.isNaN(date.getTime())) return key;
+        return date.toLocaleDateString('es-CO', {
+            day: 'numeric',
+            month: 'long',
+            timeZone: 'America/Bogota',
+        });
+    };
+
+    const getProductoImagen = (producto) => {
+        const src = producto?.imagen || producto?.imagen1 || producto?.imagen2 || producto?.imagen3 || producto?.imagen4 || null;
+        return resolveImg(src);
+    };
+
+    const getEstadoBadge = (estado) => {
+        const value = estado || 'Pendiente';
+        const badgeMap = {
+            Pendiente: 'badgePendiente',
+            Enviado: 'badgeEnviado',
+            Entregado: 'badgeEntregado',
+            Rechazado: 'badgeRechazado',
+            Pagado: 'badgePagado',
+        };
+        return { label: value, className: badgeMap[value] || 'badgePendiente' };
+    };
+
+    const handleEstadoChange = (value) => {
+        setNuevoEstado(value);
+        updatePedidoEstado(pedido, value);
+        setPedido((prev) => ({ ...prev, estado: value }));
+    };
+
+    const groupedPedidos = [];
+    let lastGroupKey = null;
+    filtrados.forEach((item) => {
+        const groupKey = getDateKey(item.createdAt);
+        if (groupKey !== lastGroupKey) {
+            groupedPedidos.push({ type: 'header', key: groupKey, label: getDateLabel(groupKey) });
+            lastGroupKey = groupKey;
+        }
+        groupedPedidos.push({ type: 'item', item });
+    });
 
     return (
         <div>
@@ -389,19 +763,10 @@ export default function PedidosData() {
                         <input type="number" value={filtroId} onChange={(e) => setFiltroId(e.target.value)} placeholder='Id Pedido' />
                     </div>
                     <div className='inputsColumn'>
-                        <select value={filtroMesa} onChange={(e) => setFiltroMesa(e.target.value)}>
-                            <option value="">Mesas</option>
-                            {
-                                mesas.map(mapeomesa => (
-                                    <option value={mapeomesa?.idMesa}>{mapeomesa?.mesa}</option>
-                                ))
-                            }
-                        </select>
-                    </div>
-                    <div className='inputsColumn'>
                         <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}>
                             <option value="">Estado</option>
                             <option value="Entregado">Entregado</option>
+                            <option value="Enviado">Enviado</option>
                             <option value="Rechazado">Rechazado</option>
                             <option value="Pagado">Pagado</option>
                             <option value="Pendiente">Pendiente</option>
@@ -416,63 +781,41 @@ export default function PedidosData() {
 
             </div>
 
-            <div className='table-container'>
-                <table className='table'>
-                    <thead>
-                        <tr>
-                            <th>Id Pedido</th>
-                            <th>Mesa</th>
-                            <th>Estado</th>
-                            <th>Nombre</th>
-                            <th>Nota</th>
-                            <th>Codigo</th>
-                            <th>Total</th>
-                            <th>Fecha</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filtrados.map(item => (
-                            <tr key={item.idPedido}>
-                                <td>{item.idPedido}</td>
-                                {
-                                    mesas.filter(mesa => mesa?.idMesa === item?.idMesa).map(mapeomesa => (
-                                        <td>{mapeomesa?.mesa}</td>
-                                    ))
-                                }
-                                <td style={{
-                                    color: item?.estado === 'Pendiente' ? '#DAA520' :
-                                        item?.estado === 'Entregado' ? '#0000FF' :
-                                            item?.estado === 'Rechazado' ? '#FF0000' :
-                                                item?.estado === 'Pagado' ? '#008000' :
-                                                    '#000000'
-                                }}>
-                                    {item?.estado}
-                                </td>
-                                <td>{item.nombre}</td>
-                                <td>{item.nota}</td>
-                                <td>{item.codigo}</td>
-                                <td style={{ color: '#008000', }}>{moneda} {item.total}</td>
-                                <td>{item.createdAt}</td>
-                                <td>
-
-                                    <button className='eliminar' onClick={() => eliminar(item.idPedido)}>
-                                        <FontAwesomeIcon icon={faTrash} />
-                                    </button>
-                                    <button className='editar' onClick={() => abrirModal(item)}>
-
-                                        <FontAwesomeIcon icon={faEye} />
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-
-                </table>
+            <div className='pedidoList'>
+                {groupedPedidos.map((entry) => {
+                    if (entry.type === 'header') {
+                        return (
+                            <div key={entry.key} className='pedidoGroup'>
+                                {entry.label}
+                            </div>
+                        );
+                    }
+                    const { item } = entry;
+                    const itemsCount = getItemsCount(item.productos);
+                    const badge = getEstadoBadge(item?.estado);
+                    return (
+                        <button type="button" key={item.idPedido} className='pedidoCard' onClick={() => abrirModal(item)}>
+                            <div className='pedidoCardHeader'>
+                                <span className='pedidoId'>{formatPedidoId(item.idPedido)}</span>
+                                <span className='pedidoTotal'>{moneda} {item.total}</span>
+                            </div>
+                            <div className='pedidoCardMeta'>
+                                <span className='pedidoNombre'>{item.nombre}</span>
+                                <span className='pedidoProductos'>{formatProductosResumen(item.productos)}</span>
+                                <span className='pedidoDetalle'>- {itemsCount} articulo(s) - {formatHora(item.createdAt)}</span>
+                            </div>
+                            <div className='pedidoBadges'>
+                                <span className={`pedidoBadge ${badge.className}`}>
+                                    {badge.label}
+                                </span>
+                            </div>
+                        </button>
+                    );
+                })}
             </div>
             {modalVisible && (
                 <div className="modal">
-                    <div className="modal-content">
+                    <div className="modal-content pedidoModalContent">
                         <div className='deFlexBtnsModal'>
                             <div className='deFlexBtnsModal'>
                                 <button
@@ -481,7 +824,6 @@ export default function PedidosData() {
                                 >
                                     Pedido
                                 </button>
-                                <button onClick={handleDownloadPDF} className='texto'>Descargar PDF</button>
                             </div>
 
                             <span className="close" onClick={cerrarModal}>
@@ -490,85 +832,68 @@ export default function PedidosData() {
                         </div>
                         <div className='sectiontext' style={{ display: selectedSection === 'texto' ? 'flex' : 'none' }}>
                             <div className='flexGrap'>
-                                <fieldset>
-                                    <legend>ID Pedido</legend>
-                                    <input
-                                        value={pedido.idPedido}
-                                        disabled
-
-                                    />
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Mesa </legend>
-                                    {
-                                        mesas.filter(mesa => mesa?.idMesa === pedido?.idMesa).map(mapeomesa => (
-                                            <input
-                                                value={mapeomesa.mesa}
-                                                disabled
-
-                                            />
-                                        ))
-                                    }
-
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Nombre</legend>
-                                    <input
-                                        value={pedido.nombre}
-                                        disabled
-
-                                    />
-                                </fieldset>
-
-                                <fieldset>
-                                    <legend>Codigo</legend>
-                                    <input
-                                        value={pedido.codigo}
-                                        disabled
-
-                                    />
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Nota</legend>
-                                    <input
-                                        value={pedido.nota}
-                                        disabled
-
-                                    />
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Fecha </legend>
-                                    <input
-                                        value={pedido.createdAt}
-                                        disabled
-
-                                    />
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Total </legend>
-                                    <input
-                                        value={pedido.total}
-                                        disabled
-
-                                    />
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Estado</legend>
-                                    <select
-                                        value={nuevoEstado !== '' ? nuevoEstado : pedido.estado}
-                                        onChange={(e) => setNuevoEstado(e.target.value)}
-                                    >
-                                        <option value={pedido.estado}>{pedido.estado}</option>
-                                        <option value="Entregado">Entregado</option>
-                                        <option value="Rechazado">Rechazado</option>
-                                        <option value="Pagado">Pagado</option>
-                                    </select>
-                                </fieldset>
+                                <div className='pedidoDatosActions'>
+                                    <button type="button" className='btnPost btnCopy' onClick={handleCopyDatos}>
+                                        Copiar datos
+                                    </button>
+                                </div>
+                                <div className='pedidoDatosGrid'>
+                                    <fieldset>
+                                        <legend>ID Pedido</legend>
+                                        <input value={pedido.idPedido} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Nombre</legend>
+                                        <input value={pedido.nombre || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>WhatsApp</legend>
+                                        <input value={pedido.whatsapp || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Direccion</legend>
+                                        <input value={pedido.direccion || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Departamento</legend>
+                                        <input value={pedido.departamento || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Forma de pago</legend>
+                                        <input value={pedido.formaPago || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Estado</legend>
+                                        <select
+                                            value={nuevoEstado !== '' ? nuevoEstado : pedido.estado}
+                                            onChange={(e) => handleEstadoChange(e.target.value)}
+                                        >
+                                            <option value={pedido.estado}>{pedido.estado}</option>
+                                            <option value="Entregado">Entregado</option>
+                                            <option value="Enviado">Enviado</option>
+                                            <option value="Rechazado">Rechazado</option>
+                                            <option value="Pagado">Pagado</option>
+                                            <option value="Pendiente">Pendiente</option>
+                                        </select>
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Fecha</legend>
+                                        <input value={pedido.createdAt || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Codigo</legend>
+                                        <input value={pedido.codigo || ''} disabled />
+                                    </fieldset>
+                                    <fieldset>
+                                        <legend>Nota</legend>
+                                        <input value={pedido.nota || ''} disabled />
+                                    </fieldset>
+                                </div>
 
                                 <div className='cardsProductData'>
-                                    {JSON.parse(pedido.productos).map(producto => (
+                                    {parseProductos(pedido.productos).map(producto => (
                                         <div key={producto.titulo} className='cardProductData'>
-                                            <img src={producto.imagen} alt="imagen" />
+                                            <img src={getProductoImagen(producto)} alt="imagen" />
                                             <div className='cardProductDataText'>
                                                 <h3>{producto.titulo}</h3>
                                                 <strong>{moneda} {producto.precio} <span>x{producto.cantidad}</span></strong>
@@ -579,7 +904,39 @@ export default function PedidosData() {
                                     ))}
                                 </div>
                             </div>
-                            <button className='btnPost' onClick={() => handleUpdateText(pedido.idPedido)} >Guardar </button>
+                            <div className='pedidoTotalRow'>
+                                <span>Total</span>
+                                <strong>{moneda} {pedido.total}</strong>
+                            </div>
+                            <div className='trackingSection'>
+                                <h4>Informacion de seguimiento</h4>
+                                <input
+                                    type="text"
+                                    placeholder="Guia de envio"
+                                    value={trackingNumber}
+                                    onChange={(e) => setTrackingNumber(e.target.value)}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="URL de seguimiento (opcional)"
+                                    value={trackingUrl}
+                                    onChange={(e) => setTrackingUrl(e.target.value)}
+                                />
+                            </div>
+                            <div className='pedidoModalActions'>
+                                <button className='btnPost btnSendTracking' onClick={handleEnviarGuia} disabled={isSendingTracking}>
+                                    {isSendingTracking ? 'Enviando...' : 'Enviar guia'}
+                                </button>
+                                <button className='btnPost btnSendTracking' onClick={handlePrimerIntento}>
+                                    Primer intento de entrega
+                                </button>
+                                <button className='btnPost btnSendTracking' onClick={handleSegundoIntento}>
+                                    Segundo intento de entrega
+                                </button>
+                                <button className='btnPost btnClose' onClick={cerrarModal}>
+                                    Cerrar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -587,3 +944,19 @@ export default function PedidosData() {
         </div>
     );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

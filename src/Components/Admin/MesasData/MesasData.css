@@ -71,6 +71,20 @@
     align-items: center;
   }
 
+  .InputsBtns{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .inputNumber{
+    display: flex;
+    align-items: center;
+    background-color: var(--gris2);
+    border: none;
+    padding: 13px 13px!important;
+    border-radius: 10px;
+    
+}
   @media (max-width: 1024px){
     .cardMesa{
         border-radius: 10px;

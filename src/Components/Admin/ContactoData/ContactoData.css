@@ -1,0 +1,90 @@
+.contactoQuickCard{
+    background: var(--blanco);
+    border: 1px solid #e5e5e5;
+    border-radius: 16px;
+    padding: 16px;
+    margin: 12px 0 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.contactoQuickHeader{
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+}
+.contactoQuickHeader h3{
+    margin: 0;
+    color: var(--text-color2);
+    font-size: 18px;
+}
+.contactoQuickHeader span{
+    font-size: 12px;
+    color: #7a7a7a;
+}
+.contactoQuickTag{
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: #f1f1f1;
+    color: #666;
+}
+.contactoQuickTag.ok{
+    background: #e6f7ed;
+    color: #1e7f3a;
+}
+.contactoQuickTag.pending{
+    background: #fff3e3;
+    color: #b26614;
+}
+.contactoQuickGrid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+.contactoQuickGrid label{
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: #6b6b6b;
+}
+.contactoQuickGrid input{
+    border: 1px solid #d1cccc;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+}
+.contactoQuickPreview{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.contactoQuickLinks{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.contactoQuickLinks a{
+    text-decoration: none;
+    font-size: 13px;
+    color: var(--color1);
+    font-weight: 600;
+}
+@media (max-width: 824px){
+    .contactoQuickGrid{
+        grid-template-columns: 1fr;
+    }
+    .contactoQuickHeader{
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .contactoQuickPreview{
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

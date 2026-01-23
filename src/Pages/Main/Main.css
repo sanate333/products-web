@@ -5,14 +5,14 @@
 .containerSection{
     background-color: var(--gris);
     width: 100%;
-  
+
     padding: 0px 2rem;
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    height: 100vh;
+    min-height: calc(100vh - 100px);
+    padding-bottom: 140px;
     overflow: auto;
-   
 }
 .container{
     background-color: var(--blanco);
@@ -29,6 +29,85 @@
     gap: 2rem;
     justify-content: space-between;
    
+}
+.notifTestCard{
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.installDashCard{
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.installDashCard h3{
+    margin: 0;
+}
+.installDashCard p{
+    margin: 4px 0 0;
+    color: #4b4b4b;
+}
+.installDashBtn{
+    background: #24b5ff;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    width: fit-content;
+}
+.installDashBtn .androidIcon{
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    color: #fff;
+}
+.installDashBtn .androidIcon svg{
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+.installDashStatus{
+    font-size: 0.9rem;
+    color: #1b4f72;
+}
+.notifTestCard h3{
+    margin: 0;
+}
+.notifTestCard p{
+    margin: 4px 0 0;
+    color: #4b4b4b;
+}
+.notifTestActions{
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.notifTestBtn{
+    background: #24b5ff;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+.notifTestBtn.secondary{
+    background: #147fbb;
+}
+.notifTestStatus{
+    font-size: 0.9rem;
+    color: #1b4f72;
 }
 .deFLexMain{
     display: flex;

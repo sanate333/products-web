@@ -57,7 +57,7 @@ export default function NewMesa() {
 
                         <div className='deFlexBtnsModal'>
                             <button className='selected'>
-                                Agregar Mesa
+                                Agregar Pedido
                             </button>
                             <span className='close' onClick={toggleModal}>
                                 &times;
@@ -65,7 +65,7 @@ export default function NewMesa() {
                         </div>
                         <form id="crearForm">
                             <fieldset>
-                                <legend>Mesa</legend>
+                                <legend>Pedido</legend>
                                 <input
                                     type='text'
                                     name='mesa'

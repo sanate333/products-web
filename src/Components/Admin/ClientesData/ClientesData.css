@@ -1,0 +1,82 @@
+.clientesSection {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.clientesHeader {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.clientesHeader input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #f7f7f7;
+    font-size: 14px;
+}
+
+.clientesReload {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: none;
+    background: #2aaae2;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.clientesList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.clienteCard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.clienteInfo h4 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.clienteInfo span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.clienteMeta {
+    text-align: right;
+}
+
+.clienteMeta strong {
+    display: block;
+    font-size: 15px;
+    color: #111827;
+}
+
+.clienteMeta span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.clientesEmpty {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    padding: 20px 0;
+}

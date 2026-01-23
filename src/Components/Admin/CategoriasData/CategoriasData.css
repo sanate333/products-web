@@ -1,0 +1,53 @@
+.categoryOrderCard{
+    background: #f9f9f9;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #e5e5e5;
+    margin-bottom: 12px;
+}
+.categoryOrderCard h4{
+    margin: 0 0 8px 0;
+    color: var(--text-color2);
+}
+.categoryOrderHint{
+    margin: 0 0 10px 0;
+    font-size: 12px;
+    color: #666;
+}
+.categoryOrderList{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.categoryOrderItem{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--blanco);
+    border-radius: 10px;
+    padding: 8px 10px;
+    border: 1px solid #e0e0e0;
+}
+.categoryOrderHandle{
+    cursor: grab;
+    font-size: 16px;
+    color: #999;
+}
+.categoryOrderLabel{
+    color: var(--text-color2);
+    font-size: 14px;
+}
+.categoryOrderActions{
+    margin-left: auto;
+    display: inline-flex;
+    gap: 6px;
+}
+.categoryOrderActions button{
+    border: none;
+    background-color: var(--color1);
+    color: var(--blanco);
+    border-radius: 6px;
+    width: 26px;
+    height: 26px;
+}

@@ -4,12 +4,12 @@
    border-radius: 20px;
 }
 
-#SwiperSlide-scroll {
+.swiperSlideBanner {
     display: flex;
     justify-content: center;
  
 }
-#SwiperSlide-scroll img{
+.swiperSlideBanner img{
     width: 100%;
     object-fit: cover;
   
@@ -27,6 +27,8 @@
 .BannerContain{
     padding: 0% 10%;
     padding-top: 5rem;
+    overflow: visible;
+   
 }
 @media (max-width: 1020px){
     #swiper_container{

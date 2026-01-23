@@ -4,6 +4,7 @@
     flex-direction: column;
     gap: 10px;
     position: relative;
+    align-items: center;
 }
 .inputSearchDashboard .modalInput{
     height: auto
@@ -13,14 +14,15 @@
     border-radius: 8px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0;
     width: 40vh;
     border: 1px solid #d1cccc;
 }
 .search input{
-    padding: 3px ;
+    padding: 6px 8px;
     width: 100%;
     border: none;
+    text-align: center;
 }
 
 .modalInput{

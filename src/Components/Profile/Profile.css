@@ -1,6 +1,6 @@
 .profileContain{
     padding: 10px 5%;
-    background-color: var(--blanco);
+    background-color: transparent;
     display: flex;
     flex-direction: column;
     gap: 2rem;
@@ -18,26 +18,15 @@
 }
 .profileContain h2{
     font-weight: 500;
-    color: var(--text-color2);
+    color: var(--blanco);
 }
 .socials{
     display: flex;
     gap: 2rem;
 }
 .socials a{
-    color: var(--text-color2);
+    color: var(--blanco);
     font-size: 18px;
-}
-.profileText{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    
-}
-.profileText a{
-    color: var(--text-color2);
-    border-bottom: 1px solid var(--gris2);
-    padding-bottom: 10px;
 }
 @media (max-width: 700px) {
     .profileContain{

@@ -1,0 +1,5 @@
+1. Ejecuta npm run build para generar la carpeta "build" con los archivos estáticos optimizados.
+2. En Hostinger abre el Administrador de archivos y entra a public_html. Borra o reemplaza todo su contenido actual.
+3. Sube únicamente los archivos y carpetas que están dentro de build (no subas la carpeta build entera).
+4. Si usas rutas de React, verifica que la propiedad "homepage" en package.json coincide con la URL final o que el hosting sirve siempre index.html.
+5. Cada vez que actualices el proyecto repite npm run build antes de subir nuevamente.

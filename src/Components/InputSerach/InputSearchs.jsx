@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import Modal from 'react-modal';
-import baseURL from '../url';
+import baseURL, { resolveImg } from '../url';
 
 export default function InputSearchs() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -19,6 +19,14 @@ export default function InputSearchs() {
     useEffect(() => {
         cargarProductos();
         cargarCategorias();
+    }, []);
+
+    useEffect(() => {
+        const handleOpenSearch = () => {
+            setModalIsOpen(true);
+        };
+        window.addEventListener('openSearch', handleOpenSearch);
+        return () => window.removeEventListener('openSearch', handleOpenSearch);
     }, []);
 
     const cargarProductos = () => {
@@ -96,7 +104,7 @@ export default function InputSearchs() {
                                     {productos.map((producto) => (
                                         <div key={producto.idProducto}>
                                             <Link to={`/producto/${producto.idProducto}/${producto.titulo.replace(/\s+/g, '-')}`} onClick={closeModal}>
-                                                <img src={producto.imagen1} alt="" />
+                                                <img src={resolveImg(producto.imagen1)} alt="" />
                                                 <p>{producto.titulo}</p>
                                             </Link>
                                         </div>

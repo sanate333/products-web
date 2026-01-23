@@ -1,0 +1,9 @@
+.dashboardMenuBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    border: none;
+    padding: 0;
+    margin: 0;
+    z-index: 1090;
+}

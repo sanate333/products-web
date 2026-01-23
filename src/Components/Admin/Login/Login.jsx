@@ -9,11 +9,12 @@ import baseURL from '../../url';
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
     const handleLogin = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) {
+            e.preventDefault();
+        }
 
         try {
             const formData = new FormData();
@@ -28,19 +29,12 @@ export default function Login() {
 
             if (response.ok) {
                 const data = await response.json();
-                if (data.mensaje) {
-                    console.log(data.mensaje);
-                    toast.success(data.mensaje);
-                    setTimeout(() => {
-                        window.location.reload();
-
-                    }, 2000);
-
+                if (data.mensaje === 'ok') {
+                    toast.success('Ingreso exitoso');
+                    setTimeout(() => window.location.assign('/dashboard'), 700);
                 } else if (data.error) {
-                    setErrorMessage(data.error);
-                    console.log(data.error);
                     toast.error(data.error);
-                }
+                } 
             } else {
                 throw new Error('Error en la solicitud al servidor');
 

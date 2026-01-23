@@ -14,6 +14,8 @@ export default function CategoriasData() {
     const [nuevaCategoria, setNuevaCategoria] = useState('');
     const [categoria, setCategoria] = useState({});
     const [selectedSection, setSelectedSection] = useState('texto');
+    const [categoriaOrder, setCategoriaOrder] = useState([]);
+    const [dragIndex, setDragIndex] = useState(null);
 
     useEffect(() => {
         cargarCategoria();
@@ -27,7 +29,9 @@ export default function CategoriasData() {
         })
             .then(response => response.json())
             .then(data => {
-                setCategoras(data.categorias || []);
+                const loaded = data.categorias || [];
+                setCategoras(loaded);
+                setCategoriaOrder(loaded.map((item) => item.idCategoria));
                 console.log(data.categorias)
             })
             .catch(error => console.error('Error al cargar contactos:', error));
@@ -122,6 +126,57 @@ export default function CategoriasData() {
     const handleSectionChange = (section) => {
         setSelectedSection(section);
     };
+
+    const handleDragStart = (event, index) => {
+        if (event?.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(index));
+        }
+        setDragIndex(index);
+    };
+
+    const handleDragOver = (event) => {
+        event.preventDefault();
+        if (event?.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+    };
+
+    const handleDrop = (event, index) => {
+        event.preventDefault();
+        if (dragIndex === null || dragIndex === index) {
+            setDragIndex(null);
+            return;
+        }
+        const next = [...categoriaOrder];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(index, 0, moved);
+        setCategoriaOrder(next);
+        setDragIndex(null);
+    };
+
+    const guardarOrdenCategorias = () => {
+        if (!categoriaOrder.length) {
+            return;
+        }
+        fetch(`${baseURL}/categoriaOrderPut.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orden: categoriaOrder }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data?.error) {
+                    Swal.fire('Error!', data.error, 'error');
+                    return;
+                }
+                Swal.fire('Listo!', data.mensaje || 'Orden actualizado.', 'success');
+                cargarCategoria();
+            })
+            .catch(() => {
+                Swal.fire('Error!', 'No se pudo guardar el orden.', 'error');
+            });
+    };
     return (
         <div>
             <ToastContainer />
@@ -166,6 +221,58 @@ export default function CategoriasData() {
                 </div>
             )}
             <div className='table-container'>
+                <div className='categoryOrderCard'>
+                    <h4>Ordenar categorias</h4>
+                    <p className='categoryOrderHint'>Arrastra para cambiar el orden.</p>
+                    <div className='categoryOrderList'>
+                        {categoriaOrder.map((idCategoria, index) => {
+                            const item = categorias.find((cat) => cat.idCategoria === idCategoria);
+                            if (!item) return null;
+                            return (
+                                <div
+                                    key={`cat-${idCategoria}`}
+                                    className='categoryOrderItem'
+                                    draggable
+                                    onDragStart={(event) => handleDragStart(event, index)}
+                                    onDragOver={handleDragOver}
+                                    onDrop={(event) => handleDrop(event, index)}
+                                >
+                                    <span className='categoryOrderHandle'>☰</span>
+                                    <span className='categoryOrderLabel'>{item.categoria}</span>
+                                    <div className='categoryOrderActions'>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const target = Math.max(0, index - 1);
+                                                if (target === index) return;
+                                                const next = [...categoriaOrder];
+                                                const [moved] = next.splice(index, 1);
+                                                next.splice(target, 0, moved);
+                                                setCategoriaOrder(next);
+                                            }}
+                                        >
+                                            ↑
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const target = Math.min(categoriaOrder.length - 1, index + 1);
+                                                if (target === index) return;
+                                                const next = [...categoriaOrder];
+                                                const [moved] = next.splice(index, 1);
+                                                next.splice(target, 0, moved);
+                                                setCategoriaOrder(next);
+                                            }}
+                                        >
+                                            ↓
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <button className='btnPost' onClick={guardarOrdenCategorias}>Guardar orden</button>
+                </div>
                 <table className='table'>
                     <thead>
                         <tr>

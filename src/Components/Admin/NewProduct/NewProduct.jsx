@@ -26,11 +26,10 @@ export default function NewProduct() {
     const [item4, setItem4] = useState('');
     const [item5, setItem5] = useState('');
     const [item6, setItem6] = useState('');
-    const [item7, setItem7] = useState('');
-    const [item8, setItem8] = useState('');
-    const [item9, setItem9] = useState('');
-    const [item10, setItem10] = useState('');
     const [precioAnterior, setPrecioAnterior] = useState('');
+    const [stock, setStock] = useState('');
+    const [estadoProducto, setEstadoProducto] = useState('Activo');
+    const [tieneVariantes, setTieneVariantes] = useState(false);
     const toggleModal = () => {
         setModalOpen(!modalOpen);
     };
@@ -136,7 +135,7 @@ export default function NewProduct() {
             </button>
             {modalOpen && (
                 <div className="modal">
-                    <div className="modal-content">
+                    <div className="modal-content newProductModalContent">
 
                         <div className='deFlexBtnsModal'>
                             <button className='selected'>
@@ -228,6 +227,18 @@ export default function NewProduct() {
                                         onChange={(e) => setPrecioAnterior(e.target.value)}
                                     />
                                 </fieldset>
+                                <fieldset>
+                                    <legend>Stock disponible</legend>
+                                    <input
+                                        type="number"
+                                        id="stock"
+                                        name="stock"
+                                        min="0"
+                                        step="1"
+                                        value={stock}
+                                        onChange={(e) => setStock(e.target.value)}
+                                    />
+                                </fieldset>
                                 <div className='items'>
                                     <fieldset>
                                         <legend>Item 1</legend>
@@ -300,56 +311,6 @@ export default function NewProduct() {
                                             onChange={(e) => setItem6(e.target.value)}
                                         />
                                     </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 7</legend>
-                                        <input
-                                            type="text"
-                                            id="item7"
-                                            name="item7"
-                                            required
-                                            value={item7}
-                                            onChange={(e) => setItem7(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 8</legend>
-                                        <input
-                                            type="text"
-                                            id="item8"
-                                            name="item8"
-                                            required
-                                            value={item8}
-                                            onChange={(e) => setItem8(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 9</legend>
-                                        <input
-                                            type="text"
-                                            id="item9"
-                                            name="item9"
-                                            required
-                                            value={item9}
-                                            onChange={(e) => setItem9(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 10</legend>
-                                        <input
-                                            type="text"
-                                            id="item10"
-                                            name="item10"
-                                            required
-                                            value={item10}
-                                            onChange={(e) => setItem10(e.target.value)}
-                                        />
-                                    </fieldset>
-
-
 
                                 </div>
 

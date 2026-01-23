@@ -1,0 +1,91 @@
+{
+  "images": [
+    {
+      "id": "abe7960c-d63f-4730-b497-d5368814daee",
+      "userId": "smoke-user",
+      "productId": "smoke-product",
+      "country": "CO",
+      "templateType": "Hero",
+      "prompt": "Mock prompt lifestyle",
+      "createdAt": "2026-01-22T07:34:13.451Z",
+      "orderIndex": 2,
+      "rankScore": 3,
+      "tags": [
+        "prueba",
+        "segunda prueba",
+        "realista",
+        "lifestyle"
+      ],
+      "source": "generated",
+      "files": [
+        {
+          "url": "/ai-images/mock_smoke-user_smoke-product_lifestyle.png",
+          "filename": "mock_smoke-user_smoke-product_lifestyle.png",
+          "mime": "image/png",
+          "size": 86,
+          "width": 1,
+          "height": 1
+        }
+      ],
+      "recommendedFor": "product"
+    },
+    {
+      "id": "d1e22c34-3b5d-4f1b-b9fa-e557e8775354",
+      "userId": "smoke-user",
+      "productId": "smoke-product",
+      "country": "CO",
+      "templateType": "Hero",
+      "prompt": "Mock prompt close_up",
+      "createdAt": "2026-01-22T07:34:13.452Z",
+      "orderIndex": 3,
+      "rankScore": 2,
+      "tags": [
+        "prueba",
+        "segunda prueba",
+        "realista",
+        "close_up"
+      ],
+      "source": "generated",
+      "files": [
+        {
+          "url": "/ai-images/mock_smoke-user_smoke-product_close_up.png",
+          "filename": "mock_smoke-user_smoke-product_close_up.png",
+          "mime": "image/png",
+          "size": 86,
+          "width": 1,
+          "height": 1
+        }
+      ],
+      "recommendedFor": "product"
+    },
+    {
+      "id": "bb100d36-791e-4c3d-ad2c-90f7b2652616",
+      "userId": "smoke-user",
+      "productId": "smoke-product",
+      "country": "CO",
+      "templateType": "Hero",
+      "prompt": "Mock prompt flatlay",
+      "createdAt": "2026-01-22T07:34:13.454Z",
+      "orderIndex": 4,
+      "rankScore": 1,
+      "tags": [
+        "prueba",
+        "segunda prueba",
+        "realista",
+        "flatlay"
+      ],
+      "source": "generated",
+      "files": [
+        {
+          "url": "/ai-images/mock_smoke-user_smoke-product_flatlay.png",
+          "filename": "mock_smoke-user_smoke-product_flatlay.png",
+          "mime": "image/png",
+          "size": 86,
+          "width": 1,
+          "height": 1
+        }
+      ],
+      "recommendedFor": "product"
+    }
+  ]
+}

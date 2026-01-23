@@ -14,9 +14,15 @@ export default function ContactoData() {
     const [nuevoNombre, setNuevoNombre] = useState('');
     const [nuevoTelefono, setNuevoTelefono] = useState('');
     const [nuevoInstagram, setNuevoInstagram] = useState('');
-    const [nuevoEmail, setNuevoEmail] = useState('');
-    const [nuevaDireccion, setNuevaDieccion] = useState('');
     const [nuevofacebook, setNuevofacebook] = useState('');
+    const [quickNombre, setQuickNombre] = useState('');
+    const [quickTelefono, setQuickTelefono] = useState('');
+    const [quickInstagram, setQuickInstagram] = useState('');
+    const [quickFacebook, setQuickFacebook] = useState('');
+    const [quickEmail, setQuickEmail] = useState('');
+    const [quickDireccion, setQuickDireccion] = useState('');
+    const [principalId, setPrincipalId] = useState(null);
+    const [quickStatus, setQuickStatus] = useState('');
     const [contacto, setContacto] = useState({});
     const [selectedSection, setSelectedSection] = useState('texto');
 
@@ -32,8 +38,17 @@ export default function ContactoData() {
         })
             .then(response => response.json())
             .then(data => {
-                setContactos(data.contacto || []);
-                console.log(data.contacto)
+                const list = data.contacto || [];
+                setContactos(list);
+                const principal = list.length ? list[0] : null;
+                setPrincipalId(principal ? principal.idContacto : null);
+                setQuickNombre(principal ? principal.nombre || '' : '');
+                setQuickTelefono(principal ? principal.telefono || '' : '');
+                setQuickInstagram(principal ? principal.instagram || '' : '');
+                setQuickFacebook(principal ? principal.facebook || '' : '');
+                setQuickEmail(principal ? principal.email || '' : '');
+                setQuickDireccion(principal ? principal.direccion || '' : '');
+                setQuickStatus('');
             })
             .catch(error => console.error('Error al cargar contactos:', error));
     };
@@ -76,8 +91,6 @@ export default function ContactoData() {
         setNuevoNombre(item.nombre);
         setNuevoTelefono(item.telefono);
         setNuevoInstagram(item.instagram);
-        setNuevoEmail(item.email);
-        setNuevaDieccion(item.direccion);
         setNuevofacebook(item.facebook);
         setModalVisible(true);
     };
@@ -93,8 +106,8 @@ export default function ContactoData() {
             nombre: nuevoNombre !== '' ? nuevoNombre : contacto.nombre,
             telefono: nuevoTelefono !== '' ? nuevoTelefono : contacto.telefono,
             instagram: nuevoInstagram !== '' ? nuevoInstagram : contacto.instagram,
-            email: nuevoEmail !== '' ? nuevoEmail : contacto.email,
-            direccion: nuevaDireccion !== '' ? nuevaDireccion : contacto.direccion,
+            email: contacto.email,
+            direccion: contacto.direccion,
             facebook: nuevofacebook !== '' ? nuevofacebook : contacto.facebook,
         };
 
@@ -134,10 +147,185 @@ export default function ContactoData() {
     const handleSectionChange = (section) => {
         setSelectedSection(section);
     };
+    const formatWhatsAppLink = (telefono) => {
+        if (!telefono) return '';
+        const digits = `${telefono}`.replace(/\D/g, '');
+        return `https://wa.me/${digits}`;
+    };
+    const formatSocialLink = (value, baseUrl) => {
+        if (!value) return '';
+        const trimmed = `${value}`.trim();
+        if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+            return trimmed;
+        }
+        return `${baseUrl}/${trimmed.replace('@', '')}`;
+    };
+
+    const handleQuickSave = async () => {
+        if (!quickNombre.trim() && !quickTelefono.trim()) {
+            toast.error('Ingresa al menos Nombre o WhatsApp.');
+            return;
+        }
+        setQuickStatus('Guardando...');
+        try {
+            if (principalId) {
+                const payload = {
+                    nombre: quickNombre,
+                    telefono: quickTelefono,
+                    instagram: quickInstagram,
+                    email: quickEmail,
+                    direccion: quickDireccion,
+                    facebook: quickFacebook,
+                };
+                const res = await fetch(`${baseURL}/contactoPut.php?idContacto=${principalId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+                if (data.error) {
+                    toast.error(data.error);
+                    setQuickStatus('');
+                    return;
+                }
+            } else {
+                const formData = new FormData();
+                formData.append('nombre', quickNombre);
+                formData.append('telefono', quickTelefono);
+                formData.append('instagram', quickInstagram);
+                formData.append('email', quickEmail);
+                formData.append('direccion', quickDireccion);
+                formData.append('facebook', quickFacebook);
+                const res = await fetch(`${baseURL}/contactoPost.php`, {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await res.json();
+                if (data.error) {
+                    toast.error(data.error);
+                    setQuickStatus('');
+                    return;
+                }
+            }
+            toast.success('Contacto guardado.');
+            setQuickStatus('Guardado');
+            cargarContacto();
+        } catch (error) {
+            console.error(error);
+            toast.error('Error guardando el contacto.');
+            setQuickStatus('');
+        }
+    };
     return (
         <div>
 
             <ToastContainer />
+
+            <div className="contactoQuickCard">
+                <div className="contactoQuickHeader">
+                    <div>
+                        <h3>Redes principales</h3>
+                        <span>Se muestran en la pestaña de contacto.</span>
+                    </div>
+                    <span className={`contactoQuickTag ${principalId ? 'ok' : 'pending'}`}>
+                        {principalId ? 'Guardado' : 'Pendiente'}
+                    </span>
+                </div>
+                <div className="contactoQuickGrid">
+                    <label>
+                        Nombre
+                        <input
+                            type="text"
+                            value={quickNombre}
+                            placeholder="Sánate"
+                            onChange={(e) => setQuickNombre(e.target.value)}
+                        />
+                    </label>
+                    <label>
+                        WhatsApp
+                        <input
+                            type="tel"
+                            value={quickTelefono}
+                            placeholder="Ej: 3221234567"
+                            onChange={(e) => setQuickTelefono(e.target.value)}
+                        />
+                    </label>
+                    <label>
+                        Instagram
+                        <input
+                            type="text"
+                            value={quickInstagram}
+                            placeholder="@sanate.col"
+                            onChange={(e) => setQuickInstagram(e.target.value)}
+                        />
+                    </label>
+                    <label>
+                        Facebook
+                        <input
+                            type="text"
+                            value={quickFacebook}
+                            placeholder="SanateColombia"
+                            onChange={(e) => setQuickFacebook(e.target.value)}
+                        />
+                    </label>
+                    <label>
+                        Email (opcional)
+                        <input
+                            type="email"
+                            value={quickEmail}
+                            placeholder="ventas@sanate.store"
+                            onChange={(e) => setQuickEmail(e.target.value)}
+                        />
+                    </label>
+                    <label>
+                        Dirección (opcional)
+                        <input
+                            type="text"
+                            value={quickDireccion}
+                            placeholder="Ciudad, Colombia"
+                            onChange={(e) => setQuickDireccion(e.target.value)}
+                        />
+                    </label>
+                </div>
+            <div className="contactoQuickPreview">
+                <div>
+                    <strong>Vista previa:</strong>
+                    {(() => {
+                        const whatsLink = formatWhatsAppLink(quickTelefono);
+                        const instaLink = formatSocialLink(quickInstagram, 'https://instagram.com');
+                        const fbLink = formatSocialLink(quickFacebook, 'https://facebook.com');
+                        return (
+                    <div className="contactoQuickLinks">
+                        {whatsLink ? (
+                            <a href={whatsLink} target="_blank" rel="noopener noreferrer">
+                                WhatsApp
+                            </a>
+                        ) : (
+                            <span className="contactoQuickEmpty">WhatsApp</span>
+                        )}
+                        {instaLink ? (
+                            <a href={instaLink} target="_blank" rel="noopener noreferrer">
+                                Instagram
+                            </a>
+                        ) : (
+                            <span className="contactoQuickEmpty">Instagram</span>
+                        )}
+                        {fbLink ? (
+                            <a href={fbLink} target="_blank" rel="noopener noreferrer">
+                                Facebook
+                            </a>
+                        ) : (
+                            <span className="contactoQuickEmpty">Facebook</span>
+                        )}
+                    </div>
+                        );
+                    })()}
+                </div>
+                    <button className="btnPost" type="button" onClick={handleQuickSave}>
+                        {quickStatus ? quickStatus : 'Guardar'}
+                    </button>
+                </div>
+            </div>
 
             <NewContact />
 
@@ -174,7 +362,7 @@ export default function ContactoData() {
                                     />
                                 </fieldset>
                                 <fieldset>
-                                    <legend>Telefono</legend>
+                                    <legend>WhatsApp</legend>
                                     <input
                                         type="number"
                                         value={nuevoTelefono !== '' ? nuevoTelefono : contacto.telefono}
@@ -187,22 +375,6 @@ export default function ContactoData() {
                                         type="url"
                                         value={nuevoInstagram !== '' ? nuevoInstagram : contacto.instagram}
                                         onChange={(e) => setNuevoInstagram(e.target.value)}
-                                    />
-                                </fieldset>
-                                <fieldset >
-                                    <legend>email</legend>
-                                    <input
-                                        type="email"
-                                        value={nuevoEmail !== '' ? nuevoEmail : contacto.email}
-                                        onChange={(e) => setNuevoEmail(e.target.value)}
-                                    />
-                                </fieldset>
-                                <fieldset >
-                                    <legend>Direccion</legend>
-                                    <input
-                                        type="text"
-                                        value={nuevaDireccion !== '' ? nuevaDireccion : contacto.direccion}
-                                        onChange={(e) => setNuevaDieccion(e.target.value)}
                                     />
                                 </fieldset>
                                 <fieldset >
@@ -234,11 +406,9 @@ export default function ContactoData() {
                         <tr>
                             <th>Id Contacto</th>
                             <th>Nombre</th>
-                            <th>Telefono</th>
+                            <th>WhatsApp</th>
                             <th>Instagram</th>
                             <th>Facebook</th>
-                            <th>Email</th>
-                            <th>Direccion</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -247,11 +417,48 @@ export default function ContactoData() {
                             <tr key={item.idContacto}>
                                 <td>{item.idContacto}</td>
                                 <td>{item.nombre}</td>
-                                <td>{item.telefono}</td>
-                                <td>{item.instagram}</td>
-                                <td>{item.facebook}</td>
-                                <td>{item.email}</td>
-                                <td>{item.direccion}</td>
+                                <td>
+                                    {item.telefono ? (
+                                        <a
+                                            className='editar'
+                                            href={formatWhatsAppLink(item.telefono)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <i className='fa fa-whatsapp'></i>
+                                        </a>
+                                    ) : (
+                                        '-'
+                                    )}
+                                </td>
+                                <td>
+                                    {item.instagram ? (
+                                        <a
+                                            className='editar'
+                                            href={formatSocialLink(item.instagram, 'https://instagram.com')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <i className='fa fa-instagram'></i>
+                                        </a>
+                                    ) : (
+                                        '-'
+                                    )}
+                                </td>
+                                <td>
+                                    {item.facebook ? (
+                                        <a
+                                            className='editar'
+                                            href={formatSocialLink(item.facebook, 'https://facebook.com')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            <i className='fa fa-facebook'></i>
+                                        </a>
+                                    ) : (
+                                        '-'
+                                    )}
+                                </td>
                                 <td>
 
                                     <button className='eliminar' onClick={() => eliminarContacto(item.idContacto)}>

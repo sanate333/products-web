@@ -24,14 +24,14 @@ try {
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $nombre = $_POST['nombre'];
-        $telefono = $_POST['telefono'];
-        $instagram = $_POST['instagram'];
-        $email = $_POST['email'];
-        $direccion = $_POST['direccion'];
-        $facebook = $_POST['facebook'];
+        $nombre = trim($_POST['nombre'] ?? '');
+        $telefono = trim($_POST['telefono'] ?? '');
+        $instagram = trim($_POST['instagram'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $direccion = trim($_POST['direccion'] ?? '');
+        $facebook = trim($_POST['facebook'] ?? '');
 
-        if (!empty($telefono) && !empty($instagram) && !empty($email) && !empty($direccion) && !empty($facebook) && !empty($nombre)) {
+        if ($nombre !== '' || $telefono !== '') {
 
             // Almacenar en la base de datos
             $sqlInsert = "INSERT INTO `contacto` (nombre, telefono, instagram, email, direccion, facebook) 
@@ -55,7 +55,7 @@ try {
                 "idContacto" => $lastId
             ]);
         } else {
-            echo json_encode(["error" => "Por favor, complete todos los campos correctamente"]);
+            echo json_encode(["error" => "Ingresa al menos el nombre o el WhatsApp"]);
         }
     } else {
         echo json_encode(["error" => "Método no permitido"]);

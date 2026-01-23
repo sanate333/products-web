@@ -7,3 +7,19 @@
     display: flex;
     gap: 10px;
 }
+
+.btnInstallWrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.btnInstallDisabled {
+    opacity: 0.6;
+}
+
+.btnInstallHint {
+    color: var(--colorGris);
+    font-size: 12px;
+    line-height: 1.2;
+}

@@ -1,10 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import './Footer.css'
 import { Link as Anchor } from 'react-router-dom';
 import logo from '../../images/logo.png'
 import baseURL from '../url';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser } from '@fortawesome/free-solid-svg-icons';
+
+const INSTAGRAM_URL = 'https://www.instagram.com/sanate.col/';
+const FACEBOOK_URL = 'https://www.facebook.com/SanateColombia';
+const WHATSAPP_NUMBER = '573234549614';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export default function Footer() {
     const [productos, setProductos] = useState([]);
     const [categorias, setCategorias] = useState([]);
@@ -61,18 +64,12 @@ export default function Footer() {
                     {contactos.nombre}
                 </h2>
                 <div className='socials'>
-                    <Anchor to={contactos.instagram} target="_blank"><i className='fa fa-instagram'></i></Anchor>
-                    <Anchor to={`tel:${contactos.telefono}`} target="_blank"><i className='fa fa-whatsapp'></i></Anchor>
-                    <Anchor to={contactos.facebook} target="_blank"><i className='fa fa-facebook'></i></Anchor>
+                    <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer"><i className='fa fa-instagram'></i></a>
+                    <a href={WHATSAPP_URL} target="_blank" rel="noreferrer"><i className='fa fa-whatsapp'></i></a>
+                    <a href={FACEBOOK_URL} target="_blank" rel="noreferrer"><i className='fa fa-facebook'></i></a>
+                    <span className='androidInfo'><i className='fa fa-android'></i></span>
 
                 </div>
-            </div>
-            <div className='footerText'>
-                <h3>Contacto</h3>
-                <Anchor to={`mailto:${contactos.email}`} target="_blank">{contactos.email}</Anchor>
-                <Anchor to={`tel:${contactos.telefono}`} target="_blank">{contactos.telefono}</Anchor>
-                <Anchor to={`https://www.google.com/maps?q=${encodeURIComponent(contactos.direccion)}`} target="_blank">{contactos.direccion}</Anchor>
-
             </div>
             <div className='footerText'>
                 <h3>Productos</h3>
@@ -82,12 +79,6 @@ export default function Footer() {
                     ))
                 }
 
-            </div>
-            <div className='footerText'>
-                <h3>Acceso</h3>
-                <Anchor to={`/dashboard`} className='btnAnch'>
-                    <FontAwesomeIcon icon={faUser} /> Dashboard
-                </Anchor>
             </div>
         </div>
     )

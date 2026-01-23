@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './InputSearch.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
 export default function InputSearch() {
     const [searchTerm, setSearchTerm] = useState("");
@@ -9,12 +9,14 @@ export default function InputSearch() {
     const enlaces = [
         { title: 'Productos', link: '/dashboard/productos' },
         { title: 'Banners', link: '/dashboard/banners' },
+        { title: 'Sub-Banners', link: '/dashboard/sub-banners' },
         { title: 'Usuarios', link: '/dashboard/usuarios' },
         { title: 'Contacto', link: '/dashboard/contacto' },
         { title: 'Categorias', link: '/dashboard/categorias' },
         { title: 'Codigos', link: '/dashboard/codigos' },
-        { title: 'Mesas', link: '/dashboard/mesas' },
         { title: 'Pedidos', link: '/dashboard/pedidos' },
+        { title: 'Notificaciones', link: '/dashboard/notificaciones' },
+        { title: 'Clientes', link: '/dashboard/clientes' },
     ];
 
 
@@ -38,7 +40,6 @@ export default function InputSearch() {
 
         <div className="inputSearchDashboard">
             <div className='search'>
-                <FontAwesomeIcon icon={faSearch} className="search-icon" />
                 <input
                     type="text"
                     placeholder="Buscar..."

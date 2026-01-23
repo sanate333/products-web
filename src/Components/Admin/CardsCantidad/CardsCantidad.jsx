@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './CardsCantidad.css'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faBook, faImage, faAddressBook, faTachometerAlt, faCode, faTable, faClipboardList } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faImage, faTachometerAlt, faCode, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { Link as Anchor } from "react-router-dom";
 import baseURL from '../../url';
 import contador from '../../contador'
@@ -11,18 +11,20 @@ export default function CardsCantidad() {
     const [categorias, setCategoras] = useState([]);
     const [codigos, setCodigos] = useState([]);
     const [pedidos, setPedidos] = useState([]);
-    const [mesas, setMesas] = useState([]);
     useEffect(() => {
         cargarProductos();
         cargarBanners();
         cargarCategoria();
         cargarCodigos();
         cargarPedidos();
-        cargarMesas();
     }, []);
+    const getPendingPedidos = () => {
+        const pending = JSON.parse(localStorage.getItem('pendingPedidos')) || [];
+        return pending;
+    };
 
     const cargarProductos = () => {
-        fetch(`${baseURL}/productosGet.php`, {
+        fetch(`${baseURL}/productosGet.php?includeOutOfStock=1`, {
             method: 'GET',
         })
             .then(response => response.json())
@@ -76,21 +78,15 @@ export default function CardsCantidad() {
         })
             .then(response => response.json())
             .then(data => {
-                setPedidos(data.pedidos || []);
+                const pending = getPendingPedidos();
+                const pedidosRemotos = data.pedidos || [];
+                setPedidos([...pending, ...pedidosRemotos]);
                 console.log(data.pedidos)
             })
-            .catch(error => console.error('Error al cargar pedidos:', error));
-    };
-    const cargarMesas = () => {
-        fetch(`${baseURL}/mesaGet.php`, {
-            method: 'GET',
-        })
-            .then(response => response.json())
-            .then(data => {
-                setMesas(data.mesas || []);
-                console.log(data.mesas)
-            })
-            .catch(error => console.error('Error al cargar mesas:', error));
+            .catch(error => {
+                console.error('Error al cargar pedidos:', error);
+                setPedidos(getPendingPedidos());
+            });
     };
 
     const [counter, setCounter] = useState(contador);
@@ -116,7 +112,6 @@ export default function CardsCantidad() {
 
 
     const recargar = () => {
-        cargarMesas();
         cargarPedidos();
     };
     return (
@@ -155,14 +150,6 @@ export default function CardsCantidad() {
                 <div>
                     <h3>Codigos</h3>
                     <h2>{codigos.length}</h2>
-                </div>
-
-            </Anchor>
-            <Anchor to={`/dashboard/mesas`} className='cardCantidad' >
-                <FontAwesomeIcon icon={faTable} className='icons' />
-                <div>
-                    <h3>Mesas</h3>
-                    <h2>{mesas.length}</h2>
                 </div>
 
             </Anchor>

@@ -30,7 +30,7 @@ export default function NewPedido() {
             .catch(error => console.error('Error al cargar mesas:', error));
     };
     const cargarProductos = () => {
-        fetch(`${baseURL}/productosGet.php`, {
+        fetch(`${baseURL}/productosGet.php?includeOutOfStock=1`, {
             method: 'GET',
         })
             .then(response => response.json())
@@ -79,6 +79,7 @@ export default function NewPedido() {
             // Construir la lista de productos del pedido
             const productosPedido = cartItems.map(item => {
                 return {
+                    idProducto: item.idProducto,
                     titulo: item.titulo,
                     cantidad: item.cantidad
                 };
@@ -131,12 +132,12 @@ export default function NewPedido() {
 
                         <form>
                             <fieldset>
-                                <legend>ID de Mesa</legend>
+                                <legend>ID de Pedido</legend>
                                 <select
                                     value={idMesa}
                                     onChange={(e) => setIdMesa(e.target.value)}
                                 >
-                                    <option value="">Selecciona una mesa</option>
+                                    <option value="">Selecciona un pedido</option>
                                     {mesas.map(item => (
                                         <option key={item.idMesa} value={item.idMesa}>{item.mesa}</option>
                                     ))}

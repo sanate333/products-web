@@ -4,6 +4,29 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+const blockImageActions = () => {
+  const isImage = (target) => target && target.tagName === 'IMG';
+  document.addEventListener('contextmenu', (event) => {
+    if (isImage(event.target)) {
+      event.preventDefault();
+    }
+  });
+  document.addEventListener('dragstart', (event) => {
+    if (isImage(event.target)) {
+      event.preventDefault();
+    }
+  });
+};
+
+blockImageActions();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' })
+      .catch((error) => console.error('SW error:', error));
+  });
+}
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>

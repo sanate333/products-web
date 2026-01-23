@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
-import baseURL from '../url';
+import baseURL, { resolveImg } from '../url';
 import './Favoritos.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faHeart, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -39,7 +39,8 @@ export default function Favoritos() {
     };
 
     const obtenerImagen = (item) => {
-        return item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || null;
+        const src = item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || null;
+        return resolveImg(src);
     };
 
     const openModal = () => {

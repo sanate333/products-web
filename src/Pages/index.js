@@ -5,12 +5,15 @@ import { createBrowserRouter } from "react-router-dom";
 import Productos from '../Pages/Productos/Productos'
 import Usuarios from '../Pages/Usuarios/Usuarios'
 import Banners from "./Banners/Banners";
+import SubBanners from "./SubBanners/SubBanners";
 import Main from "./Main/Main";
 import Contacto from "./Contacto/Contacto";
 import Categorias from "./Categorias/Categorias";
 import Codigos from "./Codigos/Codigos";
-import Mesas from "./Mesas/Mesas";
 import Pedidos from "./Pedidos/Pedidos";
+import Notificaciones from "./Notificaciones/Notificaciones";
+import Clientes from "./Clientes/Clientes";
+import ImagenesIA from "./ImagenesIA/ImagenesIA";
 import PageDetail from '../Pages/PageDetail/PageDetail';
 export const router = createBrowserRouter([
 
@@ -52,6 +55,10 @@ export const router = createBrowserRouter([
                 element: <Banners />,
             },
             {
+                path: `/dashboard/sub-banners`,
+                element: <SubBanners />,
+            },
+            {
                 path: `/dashboard/contacto`,
                 element: <Contacto />,
             },
@@ -64,12 +71,20 @@ export const router = createBrowserRouter([
                 element: <Codigos />,
             },
             {
-                path: `/dashboard/mesas`,
-                element: <Mesas />,
-            },
-            {
                 path: `/dashboard/pedidos`,
                 element: <Pedidos />,
+            },
+            {
+                path: `/dashboard/notificaciones`,
+                element: <Notificaciones />,
+            },
+            {
+                path: `/dashboard/imagenes-ia`,
+                element: <ImagenesIA />,
+            },
+            {
+                path: `/dashboard/clientes`,
+                element: <Clientes />,
             },
         ],
     },

@@ -2,10 +2,23 @@
     height: 4rem;
 }
 
+.demo{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+.section-bg-color{
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
 @media (max-width: 900px){
     .demo{
         border-radius: 0 30px 0 0px;
         background-color: var(--gris);
+        padding-bottom: 0;
        
     }
     .section-bg-color{

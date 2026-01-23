@@ -6,6 +6,14 @@
 .items fieldset{
     width: 15%;
 }
+
+.modal{
+    z-index: 1400;
+}
+
+.newProductModalContent{
+    padding-bottom: 160px;
+}
 @media (max-width: 824px){
     .items fieldset{
         width: 45%!important;

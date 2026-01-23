@@ -1,6 +1,6 @@
 {
-  "short_name": "Restaurante",
-  "name": "Restaurante",
+  "short_name": "SANATE",
+  "name": "SANATE",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,7 +18,8 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#ffffff"

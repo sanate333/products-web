@@ -11,6 +11,10 @@ object-fit: cover;
     background-color: var(--gris);
   position: relative;
 }
+.cardBanner.dragging{
+    outline: 2px dashed var(--color1);
+    opacity: 0.7;
+}
 .BannerContainer{
 display: flex;
 flex-direction: column;
@@ -24,17 +28,43 @@ gap: 2rem;
     overflow: auto;
    
 }
-.btnBannerDelete{
+.bannerActions{
     position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 6px;
+}
+.btnBannerDelete{
     background-color: var(--blanco);
     color: var(--color1);
     border: none;
-    margin-top: 10px;
-    margin-left: -30px;
-    font-size: 16px;
-    padding: 4px;
-    border-radius: 2px;
-    
+    font-size: 14px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btnBannerReplace{
+    background-color: var(--blanco);
+    color: var(--text-color2);
+    border: none;
+    font-size: 12px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btnBannerReplace input{
+    display: none;
+}
+.bannerBadge{
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    background-color: var(--color1);
+    color: var(--blanco);
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 10px;
 }
 
 .BannerWrap::-webkit-scrollbar{

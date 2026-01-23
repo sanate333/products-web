@@ -3,7 +3,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './MiPedido.css';
 import 'jspdf-autotable';
-import baseURL from '../url';
+import baseURL, { resolveImg } from '../url';
 import moneda from '../moneda';
 import contador from '../contador';
 import Modal from 'react-modal';
@@ -151,7 +151,8 @@ export default function MiPedido() {
     }, [productos, isFocused]);
 
     const obtenerImagen = (item) => {
-        return item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || null;
+        const src = item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || null;
+        return resolveImg(src);
     };
     const clearCart = () => {
         setCartItems([]);
@@ -265,7 +266,7 @@ export default function MiPedido() {
                             <div className='cardsProductData'>
                                 {JSON.parse(pedidoDetalle.productos).map(producto => (
                                     <div key={producto.titulo} className='cardProductData'>
-                                        <img src={producto.imagen} alt="imagen" />
+                                        <img src={resolveImg(producto.imagen)} alt="imagen" />
                                         <div className='cardProductDataText'>
                                             <h3>{producto.titulo}</h3>
                                             <strong>{moneda} {producto.precio} <span>x{producto.cantidad}</span></strong>

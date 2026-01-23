@@ -6,8 +6,14 @@
     border-radius: 10px;
     padding: 5px 10px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+}
+.headerDashMain{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
 }
 .deFlexHeader{
   display: flex;
@@ -15,10 +21,54 @@
   justify-content: space-between;
  gap: 2rem;
 }
+.notifyPrompt{
+  width: 100%;
+  background: #eaf6ff;
+  border: 1px solid #b7ddff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  color: #1c4f7a;
+}
+.notifyPrompt span{
+  display: block;
+  font-size: 0.9rem;
+}
+.notifyPromptActions{
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.notifyPromptBtn{
+  background: #1d9bf0;
+  color: #fff;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.notifyPromptClose{
+  background: transparent;
+  color: #1c4f7a;
+  border: 1px solid #b7ddff;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.notifyPromptStatus{
+  font-size: 0.85rem;
+}
 @media (max-width: 1024px){
   .HeaderDashContain{
-    flex-direction: column;
     padding-top: 1rem;
+  }
+  .headerDashMain{
+    flex-direction: column;
+    gap: 8px;
   }
   .deFlexHeader{
  

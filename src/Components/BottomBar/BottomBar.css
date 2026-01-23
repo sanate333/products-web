@@ -1,0 +1,151 @@
+.bottomBar{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: var(--blanco);
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0px -6px 20px rgba(0, 0, 0, 0.12);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 10px 8px 14px;
+    z-index: 1005;
+}
+
+.bottomBarItem{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-color2);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.bottomBarItem svg{
+    font-size: 18px;
+    color: var(--color1);
+}
+
+.bottomBarWppIcon{
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.bottomBarCenter{
+    width: 54px;
+    height: 54px;
+    border-radius: 100%;
+    border: none;
+    background-color: var(--color1);
+    color: var(--blanco);
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: -32px;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.overlayWpp{
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.35);
+    z-index: 1006;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modalWpp{
+    width: min(92vw, 420px);
+    background-color: var(--blanco);
+    border-radius: 16px;
+    overflow: hidden;
+    border: none;
+}
+
+.modalWppHeader{
+    background-color: var(--green-vivid);
+    color: var(--blanco);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+}
+
+.modalWppHeader h4{
+    font-weight: 600;
+}
+
+.modalWppHeader button{
+    background: transparent;
+    border: none;
+    color: var(--blanco);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.modalWppBody{
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modalWppBubble{
+    background-color: var(--gris2);
+    padding: 12px 14px;
+    border-radius: 12px;
+    color: var(--text-color2);
+}
+
+.modalWppInput{
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background-color: var(--gris);
+    padding: 12px 14px;
+    border-radius: 12px;
+    min-height: 48px;
+}
+
+.modalWppInput input{
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: var(--text-color2);
+    font-size: 15px;
+}
+
+.modalWppInput button{
+    border: none;
+    background: transparent;
+    color: var(--green-vivid);
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.bottomBarItemMuted svg{
+    color: #9a9a9a;
+}
+
+.bottomBarItemMuted span{
+    color: #9a9a9a;
+}
+
+.bottomBarItemMuted .bottomBarWppIcon{
+    filter: grayscale(1) brightness(0.7);
+}
+
+@media (min-width: 901px){
+    .bottomBar{
+        display: flex;
+    }
+}

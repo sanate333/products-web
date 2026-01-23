@@ -1,0 +1,56 @@
+.floatingMenuDashboard{
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 10px 16px;
+    background: #f7f7f7;
+    border-radius: 999px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    z-index: 1200;
+}
+.floatingMenuItem{
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #7a7a7a;
+    font-size: 20px;
+    position: relative;
+}
+.floatingMenuButton{
+    border: none;
+    cursor: pointer;
+}
+.floatingMenuItemActive{
+    background: #f0f0f0;
+    color: #2b2b2b;
+}
+.floatingMenuDot{
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background: #e53935;
+    border-radius: 50%;
+}
+@media (max-width: 768px){
+    .floatingMenuDashboard{
+        bottom: 18px;
+        width: calc(100% - 32px);
+        justify-content: center;
+        padding: 10px 12px;
+    }
+    .floatingMenuItem{
+        width: 44px;
+        height: 44px;
+    }
+}

@@ -3,6 +3,11 @@ import logo from '../../images/logo.png'
 import './Profile.css'
 import { Link as Anchor } from 'react-router-dom';
 import baseURL from '../url';
+
+const INSTAGRAM_URL = 'https://www.instagram.com/sanate.col/';
+const FACEBOOK_URL = 'https://www.facebook.com/SanateColombia';
+const WHATSAPP_NUMBER = '573234549614';
+const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMBER}`;
 export default function Profile() {
     const [contactos, setContactos] = useState([]);
 
@@ -29,14 +34,9 @@ export default function Profile() {
             <img src={logo} alt="" />
             <h2>{contactos.nombre}</h2>
             <div className='socials'>
-                <Anchor to={contactos.instagram} target="_blank"><i className='fa fa-instagram'></i></Anchor>
-                <Anchor to={`tel:${contactos.telefono}`} target="_blank"><i className='fa fa-whatsapp'></i></Anchor>
-                <Anchor to={contactos.facebook} target="_blank"><i className='fa fa-facebook'></i></Anchor>
-            </div>
-            <div className='profileText'>
-                <Anchor to={`mailto:${contactos.email}`} target="_blank">{contactos.email}</Anchor>
-                <Anchor to={`https://www.google.com/maps?q=${encodeURIComponent(contactos.direccion)}`} target="_blank">{contactos.direccion}</Anchor>
-
+                <a href={INSTAGRAM_URL} target="_blank" rel="noreferrer"><i className='fa fa-instagram'></i></a>
+                <a href={WHATSAPP_URL} target="_blank" rel="noreferrer"><i className='fa fa-whatsapp'></i></a>
+                <a href={FACEBOOK_URL} target="_blank" rel="noreferrer"><i className='fa fa-facebook'></i></a>
             </div>
         </div>
     )

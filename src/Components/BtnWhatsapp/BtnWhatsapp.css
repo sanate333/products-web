@@ -4,10 +4,10 @@
 
 .btnWhatsapp{
     position: fixed;
-    bottom: 120px;
+    bottom: 150px;
     right: 0;
     left: 92%;
-    background-color: rgb(30, 184, 30);
+    background-color: var(--green-vivid);
     color: var(--blanco);
     padding: 25px;
     border-radius: 100%;
@@ -55,7 +55,7 @@
 }
 
 .headerWpp{
-    background-color: rgb(30, 184, 30);
+    background-color: var(--green-vivid);
     width: 100%;
     color: var(--blanco);
     border: none;
@@ -88,7 +88,7 @@
 }
  
 .btnsWpp::-webkit-scrollbar-thumb {
-    background-color: rgb(30, 184, 30);
+    background-color: var(--green-vivid);
     border-radius: 10px;
   
   }
@@ -108,7 +108,7 @@
     margin-top: 1vh;
 }
 .sendWpp button{
-    color: rgb(30, 184, 30);
+    color: var(--green-vivid);
     border: none;
     background-color: transparent;
     font-size: 25px;
@@ -127,7 +127,7 @@
 @media (max-width: 900px) {
     .btnWhatsapp{
         position: fixed;
-         bottom: 100px;
+         bottom: 140px;
         right: 0;
         left: 80%;
        
@@ -159,3 +159,4 @@
 
 }
 }
+

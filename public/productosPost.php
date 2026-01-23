@@ -23,6 +23,21 @@ try {
     $dsn = "mysql:host=$servidor;dbname=$dbname";
     $conexion = new PDO($dsn, $usuario, $contrasena);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $stmt = $conexion->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = :dbname AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'stock'");
+    $stmt->execute([':dbname' => $dbname]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conexion->exec("ALTER TABLE `productos` ADD COLUMN stock INT(11) NULL DEFAULT NULL");
+    }
+    $stmt = $conexion->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = :dbname AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'estadoProducto'");
+    $stmt->execute([':dbname' => $dbname]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conexion->exec("ALTER TABLE `productos` ADD COLUMN estadoProducto VARCHAR(20) NULL DEFAULT 'Activo'");
+    }
+    $stmt = $conexion->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = :dbname AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'tieneVariantes'");
+    $stmt->execute([':dbname' => $dbname]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conexion->exec("ALTER TABLE `productos` ADD COLUMN tieneVariantes TINYINT(1) NULL DEFAULT 0");
+    }
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $descripcion = $_POST['descripcion'];
@@ -36,11 +51,14 @@ try {
         $item4 = $_POST['item4'];
         $item5 = $_POST['item5'];
         $item6 = $_POST['item6'];
-        $item7 = $_POST['item7'];
-        $item8 = $_POST['item8'];
-        $item9 = $_POST['item9'];
-        $item10 = $_POST['item10'];
+        $item7 = isset($_POST['item7']) ? $_POST['item7'] : null;
+        $item8 = isset($_POST['item8']) ? $_POST['item8'] : null;
+        $item9 = isset($_POST['item9']) ? $_POST['item9'] : null;
+        $item10 = isset($_POST['item10']) ? $_POST['item10'] : null;
         $precioAnterior = $_POST['precioAnterior'];
+        $stock = isset($_POST['stock']) && $_POST['stock'] !== '' ? (int)$_POST['stock'] : null;
+        $estadoProducto = isset($_POST['estadoProducto']) ? $_POST['estadoProducto'] : 'Activo';
+        $tieneVariantes = isset($_POST['tieneVariantes']) ? (int)$_POST['tieneVariantes'] : 0;
         if ( !empty($titulo) && !empty($precio) &&  !empty($idCategoria) &&  !empty($masVendido)) {
 
             // Verificar si se enviaron imágenes
@@ -97,9 +115,9 @@ try {
 
                 // Almacenar enlaces completos en la base de datos
                 $sqlInsert = "INSERT INTO `productos` (descripcion, titulo, precio, idCategoria, masVendido, imagen1, imagen2 , imagen3, imagen4,
-                 item1, item2, item3, item4, item5, item6, item7, item8, item9, item10,precioAnterior) 
+                 item1, item2, item3, item4, item5, item6, item7, item8, item9, item10, precioAnterior, stock, estadoProducto, tieneVariantes) 
                  VALUES (:descripcion, :titulo, :precio, :idCategoria,:masVendido, :imagen1, :imagen2, :imagen3 , :imagen4,
-                 :item1, :item2, :item3, :item4, :item5, :item6, :item7, :item8, :item9, :item10, :precioAnterior)";
+                 :item1, :item2, :item3, :item4, :item5, :item6, :item7, :item8, :item9, :item10, :precioAnterior, :stock, :estadoProducto, :tieneVariantes)";
                 $stmt = $conexion->prepare($sqlInsert);
                 $stmt->bindParam(':descripcion', $descripcion);
                 $stmt->bindParam(':titulo', $titulo);
@@ -121,6 +139,9 @@ try {
                 $stmt->bindParam(':item9', $item9);
                 $stmt->bindParam(':item10', $item10);
                 $stmt->bindParam(':precioAnterior', $precioAnterior);
+                $stmt->bindParam(':stock', $stock);
+                $stmt->bindParam(':estadoProducto', $estadoProducto);
+                $stmt->bindParam(':tieneVariantes', $tieneVariantes);
                 $stmt->execute();
 
                 // Obtener el ID de la última inserción

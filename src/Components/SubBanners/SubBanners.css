@@ -1,0 +1,54 @@
+.SubBannerContain{
+    width: 100%;
+    padding: 4px 0 0 0;
+    margin-top: 6px;
+}
+
+#swiper_container_subbanners{
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+#swiper_container_subbanners .swiper-pagination{
+    display: none !important;
+}
+
+.swiperSlideSubbanner{
+    display: flex;
+    justify-content: flex-start;
+}
+
+.subBannerCard{
+    width: 100%;
+    margin-left: 0;
+    height: 7.8rem;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: transparent;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.subBannerCard img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (max-width: 900px){
+    .SubBannerContain{
+        padding: 2px 0 0 0;
+        margin-top: 4px;
+    }
+    .subBannerCard{
+        height: 7.1rem;
+        border-radius: 10px;
+    }
+}
+
+@media (max-width: 480px){
+    .subBannerCard{
+        height: 6.7rem;
+        border-radius: 10px;
+    }
+}

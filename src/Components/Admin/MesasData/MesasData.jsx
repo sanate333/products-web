@@ -23,7 +23,7 @@ export default function MesasData() {
     const [selectedSection, setSelectedSection] = useState('texto');
     const [pedidos, setPedidos] = useState([]);
     const [pedido, setPedido] = useState({});
-
+    const [numeroTelefono, setNumeroTelefono] = useState('');
     useEffect(() => {
         cargarMesas();
         cargarPedidos();
@@ -201,7 +201,7 @@ export default function MesasData() {
         // Agregar detalles del pedido al PDF
         const pedidoData = [
             [`ID Pedido:`, `${pedidoActual.idPedido}`],
-            [`Mesa:`, `${mesaFiltrada[0]?.mesa}`],
+            [`Pedido:`, `${mesaFiltrada[0]?.mesa}`],
             [`Estado:`, `${pedidoActual.estado}`],
             [`Nombre:`, `${pedidoActual.nombre}`],
             [`Nota:`, `${pedidoActual.nota}`],
@@ -280,6 +280,41 @@ export default function MesasData() {
         cargarPedidos();
     };
 
+    const handleEnviarWhatsApp = (pedido) => {
+        if (numeroTelefono) {
+            const url = `https://api.whatsapp.com/send?phone=${numeroTelefono}&text=${encodeURIComponent(generarMensajePedido(pedido))}`;
+            window.open(url, '_blank');
+        } else {
+            alert('Por favor, ingrese un número de teléfono.');
+        }
+    };
+
+    const generarMensajePedido = (pedido) => {
+        let mensaje = `Estimado cliente  ${pedido?.nombre}\nle dejamos el detalle de su pedido:\n\nID Pedido: ${pedido?.idPedido}\n`;
+
+
+        // Asegurarse de que `pedido.productos` sea un arreglo
+        const productos = typeof pedido?.productos === 'string' ? JSON.parse(pedido?.productos) : pedido?.productos;
+
+        if (Array.isArray(productos)) {
+            mensaje += `----------------------->\n`;
+            productos?.forEach((producto, index) => {
+                mensaje += `*${producto?.titulo}*\n${moneda} ${producto?.precio} - x ${producto?.cantidad}\n${producto?.item} \n\n`;
+
+            });
+            mensaje += `----------------------->\n`;
+            mensaje += `*Total:  ${moneda} ${pedido?.total}*`;
+        } else {
+            mensaje += `No se encontraron productos.\n`;
+        }
+
+        return mensaje;
+    };
+
+
+
+
+
     return (
         <div className='BannerContainer'>
             <ToastContainer />
@@ -318,7 +353,7 @@ export default function MesasData() {
                         <div className='sectiontext' style={{ display: selectedSection === 'texto' ? 'flex' : 'none' }}>
                             <div className='flexGrap'>
                                 <fieldset>
-                                    <legend>Mesa</legend>
+                                    <legend>Pedido</legend>
                                     <input
                                         type="text"
                                         value={nuevaMesa !== '' ? nuevaMesa : mesa.mesa}
@@ -354,7 +389,7 @@ export default function MesasData() {
                                                     />
                                                 </fieldset>
                                                 <fieldset>
-                                                    <legend>Mesa </legend>
+                                                    <legend>Pedido </legend>
                                                     {
                                                         mesas.filter(mesa => mesa?.idMesa === pedido?.idMesa).map(mapeomesa => (
                                                             <input
@@ -426,10 +461,29 @@ export default function MesasData() {
                                                 </div>
 
                                             </div>
+                                            <div className='InputsBtns'>
+                                                <input
+                                                    type="number"
+                                                    placeholder="Teléfono"
+                                                    value={numeroTelefono}
+                                                    onChange={(e) => setNumeroTelefono(e.target.value)}
+                                                    className='inputNumber'
+                                                />
+                                                <button
+                                                    className='btnPost'
+                                                    onClick={() => handleEnviarWhatsApp(pedido)}
+                                                >
+                                                    Enviar por<i className='fa fa-whatsapp'></i>
+                                                </button>
+                                            </div>
                                             <div className='deFlexBtns'>
+
+
                                                 <button onClick={handleDownloadPDF} className='btnPost'>Descargar PDF</button>
                                                 <button className='btnPost' onClick={() => handleUpdateTextPedido(pedido.idPedido)} >Guardar </button>
+
                                             </div>
+
                                         </>
                                     ))
                                     : <div className='noHay'><p>No hay pedidos</p></div>

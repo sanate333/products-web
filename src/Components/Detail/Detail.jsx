@@ -5,13 +5,12 @@ import Modal from 'react-responsive-modal';
 import ModalCart from 'react-modal';
 import 'react-responsive-modal/styles.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faShoppingCart, faExternalLinkAlt, faStar, faTrash, faHeart } from '@fortawesome/free-solid-svg-icons';
-import whatsappIcon from '../../images/wpp.png';
+import { faArrowLeft, faExternalLinkAlt, faStar, faTrash, faHeart } from '@fortawesome/free-solid-svg-icons';
 import { Link as Anchor, useNavigate, useLocation } from "react-router-dom";
 import SwiperCore, { Navigation, Pagination, Autoplay } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
-import baseURL from '../url';
+import baseURL, { resolveImg } from '../url';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import DetailLoading from "../DetailLoading/DetailLoading";
@@ -28,17 +27,21 @@ export default function Detail() {
     const [cantidad, setCantidad] = useState(1);
     const [productos, setProductos] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [contactos, setContactos] = useState([]);
     const [favoritos, setFavoritos] = useState([]);
-    const items = [producto?.item1, producto?.item2, producto?.item3, producto?.item4, producto?.item5, producto?.item6, producto?.item7, producto?.item8, producto?.item9, producto?.item10]
+    const items = [producto?.item1, producto?.item2, producto?.item3, producto?.item4, producto?.item5, producto?.item6]
     const [categorias, setCategorias] = useState([]);
     // const [selectedItem, setSelectedItem] = useState(items[0] || "");
     const [selectedItemIndex, setSelectedItemIndex] = useState(0);
     const location = useLocation();
+    const hasVariants = String(producto?.tieneVariantes).toLowerCase() === 'si'
+        || producto?.tieneVariantes === true
+        || producto?.tieneVariantes === 1;
+    const variantItems = hasVariants
+        ? items.filter((item) => item && String(item).trim() !== '0')
+        : [];
 
     useEffect(() => {
         cargarProductos();
-        cargarContacto();
         cargarFavoritos();
         cargarCategoria()
         if (items.length > 0) {
@@ -49,6 +52,16 @@ export default function Detail() {
     const handleSelectionChange = (index) => {
         setSelectedItemIndex(index);
     };
+
+    const getVariantMultiplier = (item) => {
+        if (!item) return 1;
+        const match = String(item).match(/\d+/);
+        const value = match ? parseInt(match[0], 10) : 1;
+        if (Number.isNaN(value) || value <= 0) {
+            return 1;
+        }
+        return value;
+    };
     const cargarCategoria = () => {
         fetch(`${baseURL}/categoriasGet.php`, {
             method: 'GET',
@@ -57,16 +70,6 @@ export default function Detail() {
             .then(data => {
                 setCategorias(data.categorias || []);
                 console.log(data.categorias)
-            })
-            .catch(error => console.error('Error al cargar contactos:', error));
-    };
-    const cargarContacto = () => {
-        fetch(`${baseURL}/contactoGet.php`, {
-            method: 'GET',
-        })
-            .then(response => response.json())
-            .then(data => {
-                setContactos(data.contacto.reverse()[0] || []);
             })
             .catch(error => console.error('Error al cargar contactos:', error));
     };
@@ -118,20 +121,34 @@ export default function Detail() {
         }
     }
 
-    const handleWhatsappMessage = () => {
-        const phoneNumber = contactos?.telefono;
-        const title = encodeURIComponent(producto?.titulo?.replace(/\s+/g, '-'));
-        const formattedPrice = Number(producto?.precio).toLocaleString('es-ES', {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        });
-        const item = items[selectedItemIndex];
+    const handleOpenCheckout = () => {
+        addToCartForCheckout(variantItems[selectedItemIndex]);
+    };
 
-        const message = `Hola 🌟, quisiera más información sobre\n\n✅ *${title}*\n     ${item}\n     ${moneda} ${formattedPrice}`;
+    const addToCartForCheckout = (selectedItem) => {
+        if (!producto) {
+            return;
+        }
+        if (producto.stock < 1) {
+            toast.error('No hay stock', { autoClose: 400 });
+            return;
+        }
+        const variantMultiplier = hasVariants ? getVariantMultiplier(selectedItem) : 1;
+        const cantidadFinal = cantidad * variantMultiplier;
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const existingItemIndex = cart.findIndex(item =>
+            item.idProducto === producto.idProducto
+        );
+        if (existingItemIndex !== -1) {
+            const existingItem = cart[existingItemIndex];
+            const updatedSabores = [...existingItem.item, selectedItem];
+            const updatedCantidad = existingItem.cantidad + cantidadFinal;
+            cart[existingItemIndex] = { ...existingItem, item: updatedSabores, cantidad: updatedCantidad };
+        } else {
+            cart.push({ idProducto: producto.idProducto, item: [selectedItem], cantidad: cantidadFinal });
+        }
+        localStorage.setItem('cart', JSON.stringify(cart));
 
-        const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
-
-        window.open(whatsappUrl, '_blank');
     };
 
     const goBack = () => {
@@ -151,6 +168,8 @@ export default function Detail() {
                 toast.error('No hay stock', { autoClose: 400 });
                 return;
             }
+            const variantMultiplier = hasVariants ? getVariantMultiplier(selectedItem) : 1;
+            const cantidadFinal = cantidad * variantMultiplier;
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
             const existingItemIndex = cart.findIndex(item =>
                 item.idProducto === producto.idProducto
@@ -158,18 +177,15 @@ export default function Detail() {
             if (existingItemIndex !== -1) {
                 const existingItem = cart[existingItemIndex];
                 const updatedSabores = [...existingItem.item, selectedItem];
-                const updatedCantidad = existingItem.cantidad + cantidad;
+                const updatedCantidad = existingItem.cantidad + cantidadFinal;
                 cart[existingItemIndex] = { ...existingItem, item: updatedSabores, cantidad: updatedCantidad };
             } else {
-                cart.push({ idProducto: producto.idProducto, item: [selectedItem], cantidad });
+                cart.push({ idProducto: producto.idProducto, item: [selectedItem], cantidad: cantidadFinal });
             }
             localStorage.setItem('cart', JSON.stringify(cart));
             cargarProductos();
-            toast.success('Producto agregado', { autoClose: 400 });
-            setTimeout(() => {
-                window.location.reload();
-
-            }, 600);
+            window.dispatchEvent(new Event('cartUpdated'));
+    
         }
     };
 
@@ -247,15 +263,15 @@ export default function Detail() {
                     >
 
                         {
-                            producto.imagen1 ?
+                            resolveImg(producto.imagen1) ?
                                 (
                                     <SwiperSlide  >
                                         <img
-                                            src={producto.imagen1}
+                                            src={resolveImg(producto.imagen1)}
                                             alt={producto.titulo}
                                             className="imagen1"
                                             onClick={() => {
-                                                setModalImage(producto.imagen1);
+                                                setModalImage(resolveImg(producto.imagen1));
                                                 setIsModalOpen(true);
                                             }}
                                         />
@@ -267,15 +283,15 @@ export default function Detail() {
                         }
 
                         {
-                            producto.imagen2 ?
+                            resolveImg(producto.imagen2) ?
                                 (
                                     <SwiperSlide  >
                                         <img
-                                            src={producto.imagen2}
+                                            src={resolveImg(producto.imagen2)}
                                             alt={producto.titulo}
                                             className="imagen2"
                                             onClick={() => {
-                                                setModalImage(producto.imagen2);
+                                                setModalImage(resolveImg(producto.imagen2));
                                                 setIsModalOpen(true);
                                             }}
                                         />
@@ -286,15 +302,15 @@ export default function Detail() {
                                 )
                         }
                         {
-                            producto.imagen3 ?
+                            resolveImg(producto.imagen3) ?
                                 (
                                     <SwiperSlide  >
                                         <img
-                                            src={producto.imagen3}
+                                            src={resolveImg(producto.imagen3)}
                                             alt={producto.titulo}
                                             className="img"
                                             onClick={() => {
-                                                setModalImage(producto.imagen3);
+                                                setModalImage(resolveImg(producto.imagen3));
                                                 setIsModalOpen(true);
                                             }}
                                         />
@@ -305,15 +321,15 @@ export default function Detail() {
                                 )
                         }
                         {
-                            producto.imagen4 ?
+                            resolveImg(producto.imagen4) ?
                                 (
                                     <SwiperSlide  >
                                         <img
-                                            src={producto.imagen4}
+                                            src={resolveImg(producto.imagen4)}
                                             alt={producto.titulo}
                                             className="imagen4"
                                             onClick={() => {
-                                                setModalImage(producto.imagen4);
+                                                setModalImage(resolveImg(producto.imagen4));
                                                 setIsModalOpen(true);
                                             }}
                                         />
@@ -337,14 +353,6 @@ export default function Detail() {
 
                                 ))
                         }
-                        {producto.stock >= 1 ? (
-                            <h4 style={{ color: 'green', backgroundColor: '#ccffcc', padding: '0px 10px', borderRadius: '6px' }}>Stock {producto.stock}</h4>
-                        ) : producto.stock <= 0 ? (
-                            <h4 style={{ color: 'red', backgroundColor: '#ffc1c1', padding: '0px 10px', borderRadius: '6px' }}>Agotado</h4>
-                        ) : (
-
-                            <h4>{producto.stock}</h4>
-                        )}
                     </div>
 
                     <div className='deFLexPrice'>
@@ -361,37 +369,35 @@ export default function Detail() {
 
 
                     </div>
-                    <p>{producto.descripcion}</p>
-                    <div className='itemsDetail'>
-                        {producto && items.length > 0 && items.map((item, index) => (
-                            item && (
-                                <label key={index}>
-                                    <input
-                                        type="radio"
-                                        name="talle"
-                                        value={item}
-                                        checked={selectedItemIndex === index}
-                                        onChange={() => handleSelectionChange(index)}
-                                    />
-                                    {item}
-                                </label>
-                            )
-                        ))}
-                    </div>
-
-
                     <div className='deFlexCart'>
                         <button onClick={decrementCantidad}>-</button>
-                        <span>{cantidad}</span>
+                        <span>{Math.max(cantidad, 1)}</span>
                         <button onClick={incrementCantidad}>+</button>
                     </div>
                     <div className='deFlexGoTocart'>
-                        <button onClick={() => addToCart(items[selectedItemIndex])} className='btnAdd'>Agregar  <FontAwesomeIcon icon={faShoppingCart} />  </button>
-                        <button className="wpp" onClick={handleWhatsappMessage}>
-                            WhatsApp
-                            <img src={whatsappIcon} alt="whatsappIcon" />
+                        <button onClick={() => addToCart(variantItems[selectedItemIndex])} className='btnAdd'>
+                            Agregar al carrito 🛒
                         </button>
                     </div>
+                    <p className='detailDescription'>{producto.descripcion}</p>
+                    {hasVariants && variantItems.length > 0 && (
+                        <div className='itemsDetail'>
+                            {variantItems.map((item, index) => (
+                                item && (
+                                    <label key={index}>
+                                        <input
+                                            type="radio"
+                                            name="talle"
+                                            value={item}
+                                            checked={selectedItemIndex === index}
+                                            onChange={() => handleSelectionChange(index)}
+                                        />
+                                        {item}
+                                    </label>
+                                )
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
             <Modal
@@ -408,6 +414,12 @@ export default function Detail() {
 
     )
 }
+
+
+
+
+
+
 
 
 

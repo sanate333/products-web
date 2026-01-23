@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit, faArrowUp, faArrowDown, faSync, faEye } from '@fortawesome/free-solid-svg-icons';
+import { faTrash, faEdit, faArrowUp, faArrowDown, faSync, faEye, faCopy } from '@fortawesome/free-solid-svg-icons';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Swal from 'sweetalert2';
@@ -45,10 +45,17 @@ export default function ProductosData() {
     const [item4, setItem4] = useState('');
     const [item5, setItem5] = useState('');
     const [item6, setItem6] = useState('');
-    const [item7, setItem7] = useState('');
-    const [item8, setItem8] = useState('');
-    const [item9, setItem9] = useState('');
-    const [item10, setItem10] = useState('');
+    const [nuevoStock, setNuevoStock] = useState('');
+    const [estadoProducto, setEstadoProducto] = useState('Activo');
+    const [tieneVariantes, setTieneVariantes] = useState(false);
+    const [estadoFiltro, setEstadoFiltro] = useState('all');
+    const [imageOrder, setImageOrder] = useState([]);
+    const [dragIndex, setDragIndex] = useState(null);
+    const [dragPointerId, setDragPointerId] = useState(null);
+    const [aiImages, setAiImages] = useState([]);
+    const [aiSlots, setAiSlots] = useState([]);
+    const AI_BASE = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
+    const AI_PREFIX = AI_BASE ? `${AI_BASE}/api` : '/api';
 
     const cerrarModalImagen = () => {
         setModalImagenVisible(false);
@@ -65,6 +72,15 @@ export default function ProductosData() {
     }, []);
 
     useEffect(() => {
+        if (modalVisible || modalImagenVisible) {
+            document.body.classList.add('dashboard-modal-open');
+        } else {
+            document.body.classList.remove('dashboard-modal-open');
+        }
+        return () => document.body.classList.remove('dashboard-modal-open');
+    }, [modalVisible, modalImagenVisible]);
+
+    useEffect(() => {
         // Actualiza el valor del select cuando cambia el estado nuevoEstado
         setNuevoTitulo(producto.titulo);
         setNuevaDescripcion(producto.descripcion);
@@ -77,15 +93,19 @@ export default function ProductosData() {
         setItem4(producto.item4);
         setItem5(producto.item5);
         setItem6(producto.item6);
-        setItem7(producto.item7);
-        setItem8(producto.item8);
-        setItem9(producto.item9);
-        setItem10(producto.item10);
         setNuevoPrecioAnterior(producto.precioAnterior)
+        setNuevoStock(producto.stock ?? '')
+        setEstadoProducto(producto.estadoProducto || 'Activo');
+        setTieneVariantes(Boolean(producto.tieneVariantes));
+        setImageOrder(
+            [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean)
+        );
+        const savedSlots = JSON.parse(localStorage.getItem(`landingSlots_${producto.idProducto}`) || '[]');
+        setAiSlots(Array.isArray(savedSlots) ? savedSlots : []);
     }, [producto]);
 
     const cargarProductos = () => {
-        fetch(`${baseURL}/productosGet.php`, {
+        fetch(`${baseURL}/productosGet.php?includeOutOfStock=1`, {
             method: 'GET',
         })
             .then(response => response.json())
@@ -129,6 +149,56 @@ export default function ProductosData() {
         });
     };
 
+    const cargarAiImages = () => {
+        if (!producto?.idProducto) {
+            return;
+        }
+        const url = new URL(`${AI_PREFIX}/ai-images`, window.location.origin);
+        url.searchParams.set('userId', 'admin');
+        url.searchParams.set('productId', String(producto.idProducto));
+        fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+                if (data?.ok) {
+                    const sorted = (data.images || []).sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+                    setAiImages(sorted);
+                }
+            })
+            .catch(() => {});
+    };
+
+    const duplicarProducto = (idProducto) => {
+        Swal.fire({
+            title: 'Duplicar producto',
+            text: 'Se creara una copia del producto seleccionado.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Duplicar',
+            cancelButtonText: 'Cancelar',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`${baseURL}/productDuplicate.php?idProducto=${idProducto}`, {
+                    method: 'POST',
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data?.error) {
+                            Swal.fire('Error!', data.error, 'error');
+                            return;
+                        }
+                        Swal.fire('Duplicado!', data.mensaje || 'Producto duplicado.', 'success');
+                        cargarProductos();
+                    })
+                    .catch(error => {
+                        console.error('Error al duplicar producto:', error);
+                        toast.error('Error al duplicar producto.');
+                    });
+            }
+        });
+    };
+
     const abrirModal = (item) => {
         setProducto(item);
         setNuevoTitulo(item.titulo);
@@ -141,13 +211,30 @@ export default function ProductosData() {
         setModalVisible(false);
     };
 
+    const getEstadoLabel = (item) => {
+        const estado = (item?.estadoProducto || 'Activo').toLowerCase();
+        if (estado === 'desactivado') return 'Desactivado';
+        if (estado === 'variante') return 'Variante';
+        const stockValue = item?.stock;
+        const hasStock = stockValue === null || stockValue === undefined || Number(stockValue) > 0;
+        return hasStock ? 'Activo' : 'Sin stock';
+    };
+
     const productosFiltrados = productos.filter(item => {
         const idMatch = item.idProducto.toString().includes(filtroId);
         const tituloMatch = !filtroTitulo || item.titulo.includes(filtroTitulo);
         const categoriaMatch = item.idCategoria.toString().includes(filtroCategoria);
         const masVendidoMatch = !filtroMasVendido || item.masVendido.includes(filtroMasVendido);
+        const stockValue = item?.stock;
+        const hasStock = stockValue === null || stockValue === undefined || Number(stockValue) > 0;
+        const estadoValue = (item?.estadoProducto || 'Activo').toLowerCase();
+        const estadoMatch = estadoFiltro === 'all'
+            || (estadoFiltro === 'active' && estadoValue === 'activo')
+            || (estadoFiltro === 'disabled' && estadoValue === 'desactivado')
+            || (estadoFiltro === 'variant' && estadoValue === 'variante')
+            || (estadoFiltro === 'out' && !hasStock);
 
-        return idMatch && tituloMatch && categoriaMatch && masVendidoMatch;
+        return idMatch && tituloMatch && categoriaMatch && masVendidoMatch && estadoMatch;
     });
 
     const descargarExcel = () => {
@@ -210,8 +297,98 @@ export default function ProductosData() {
         setOrdenInvertido(!ordenInvertido);
     };
 
+    const handleDragStart = (event, index) => {
+        if (event?.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(index));
+        }
+        setDragIndex(index);
+    };
+
+    const handleDragOver = (event) => {
+        event.preventDefault();
+        if (event?.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+    };
+
+    const handleDrop = (event, index) => {
+        event.preventDefault();
+        if (dragIndex === null || dragIndex === index) {
+            setDragIndex(null);
+            return;
+        }
+        const next = [...imageOrder];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(index, 0, moved);
+        setImageOrder(next);
+        setDragIndex(null);
+    };
+
+    const handlePointerDown = (event, index) => {
+        event.preventDefault();
+        setDragIndex(index);
+        setDragPointerId(event.pointerId);
+        if (event.currentTarget?.setPointerCapture) {
+            event.currentTarget.setPointerCapture(event.pointerId);
+        }
+    };
+
+    const handlePointerMove = (event) => {
+        if (dragIndex === null) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY);
+        const item = target?.closest?.('.imageOrderItem');
+        if (!item) return;
+        const targetIndex = Number(item.dataset.index);
+        if (Number.isNaN(targetIndex) || targetIndex === dragIndex) return;
+        const next = [...imageOrder];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(targetIndex, 0, moved);
+        setImageOrder(next);
+        setDragIndex(targetIndex);
+    };
+
+    const handlePointerUp = (event) => {
+        if (dragPointerId !== null && event.currentTarget?.releasePointerCapture) {
+            try {
+                event.currentTarget.releasePointerCapture(dragPointerId);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        setDragIndex(null);
+        setDragPointerId(null);
+    };
+
+    const guardarOrdenImagenes = () => {
+        if (!producto?.idProducto || imageOrder.length === 0) {
+            return;
+        }
+        fetch(`${baseURL}/productImageOrderPut.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                idProducto: producto.idProducto,
+                imagenes: imageOrder,
+            }),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data?.error) {
+                    Swal.fire('Error!', data.error, 'error');
+                    return;
+                }
+                Swal.fire('Guardado!', data.mensaje || 'Orden de imagenes actualizado.', 'success');
+                cargarProductos();
+            })
+            .catch(() => {
+                Swal.fire('Error!', 'No se pudo actualizar el orden.', 'error');
+            });
+    };
+
 
     const handleUpdateText = (idProducto) => {
+        const parsedStock = nuevoStock === '' ? null : Number(nuevoStock);
         const payload = {
 
             nuevoTitulo: nuevoTitulo !== '' ? nuevoTitulo : producto.titulo,
@@ -225,11 +402,10 @@ export default function ProductosData() {
             item4: item4 !== undefined ? item4 : producto.item4,
             item5: item5 !== undefined ? item5 : producto.item5,
             item6: item6 !== undefined ? item6 : producto.item6,
-            item7: item7 !== undefined ? item7 : producto.item7,
-            item8: item8 !== undefined ? item8 : producto.item8,
-            item9: item9 !== undefined ? item9 : producto.item9,
-            item10: item10 !== undefined ? item10 : producto.item10,
             precioAnterior: nuevoPrecioAnterior !== 0 ? nuevoPrecioAnterior : producto.precioAnterior,
+            stock: parsedStock,
+            estadoProducto: estadoProducto || 'Activo',
+            tieneVariantes: tieneVariantes ? 1 : 0,
         };
 
         fetch(`${baseURL}/productoTextPut.php?idProducto=${idProducto}`, {
@@ -330,6 +506,39 @@ export default function ProductosData() {
     };
 
     useEffect(() => {
+        if (modalVisible) {
+            cargarAiImages();
+        }
+    }, [modalVisible, producto?.idProducto]);
+
+    const persistAiSlots = (nextSlots) => {
+        setAiSlots(nextSlots);
+        if (producto?.idProducto) {
+            localStorage.setItem(`landingSlots_${producto.idProducto}`, JSON.stringify(nextSlots));
+        }
+    };
+
+    const handlePickAiSlot = (index) => {
+        const usedIds = new Set(aiSlots.filter(Boolean));
+        const nextImage = aiImages.find((img) => !usedIds.has(img.id));
+        if (!nextImage) {
+            toast.info('No hay imagenes disponibles en la galeria IA.');
+            return;
+        }
+        const nextSlots = [...aiSlots];
+        nextSlots[index] = nextImage.id;
+        persistAiSlots(nextSlots);
+    };
+
+    const handleClearAiSlot = (index) => {
+        const nextSlots = [...aiSlots];
+        nextSlots[index] = null;
+        persistAiSlots(nextSlots);
+    };
+
+    const getSlotImage = (id) => aiImages.find((img) => img.id === id) || null;
+
+    useEffect(() => {
         cargarCategoria();
 
     }, []);
@@ -356,6 +565,53 @@ export default function ProductosData() {
                     <NewProduct />
                     <button className='excel' onClick={descargarExcel}><FontAwesomeIcon icon={faArrowDown} /> Excel</button>
                     <button className='pdf' onClick={descargarPDF}><FontAwesomeIcon icon={faArrowDown} /> PDF</button>
+                </div>
+                <div className='filtrosContain'>
+                    <div className='inputsColumn'>
+                        <button
+                            type="button"
+                            className={estadoFiltro === 'all' ? 'btnFilterActive' : 'btnFilter'}
+                            onClick={() => setEstadoFiltro('all')}
+                        >
+                            Todas
+                        </button>
+                    </div>
+                    <div className='inputsColumn'>
+                        <button
+                            type="button"
+                            className={estadoFiltro === 'active' ? 'btnFilterActive' : 'btnFilter'}
+                            onClick={() => setEstadoFiltro('active')}
+                        >
+                            Activo
+                        </button>
+                    </div>
+                    <div className='inputsColumn'>
+                        <button
+                            type="button"
+                            className={estadoFiltro === 'disabled' ? 'btnFilterActive' : 'btnFilter'}
+                            onClick={() => setEstadoFiltro('disabled')}
+                        >
+                            Desactivado
+                        </button>
+                    </div>
+                    <div className='inputsColumn'>
+                        <button
+                            type="button"
+                            className={estadoFiltro === 'variant' ? 'btnFilterActive' : 'btnFilter'}
+                            onClick={() => setEstadoFiltro('variant')}
+                        >
+                            Variante
+                        </button>
+                    </div>
+                    <div className='inputsColumn'>
+                        <button
+                            type="button"
+                            className={estadoFiltro === 'out' ? 'btnFilterActive' : 'btnFilter'}
+                            onClick={() => setEstadoFiltro('out')}
+                        >
+                            Sin stock
+                        </button>
+                    </div>
                 </div>
                 <div className='filtrosContain'>
                     <div className='inputsColumn'>
@@ -411,7 +667,7 @@ export default function ProductosData() {
 
             {modalVisible && (
                 <div className="modal">
-                    <div className="modal-content">
+                    <div className="modal-content productosModalContent">
                         <div className='deFlexBtnsModal'>
 
                             <div className='deFlexBtnsModal'>
@@ -433,6 +689,62 @@ export default function ProductosData() {
                             </span>
                         </div>
                         <div className='sectiontext' style={{ display: selectedSection === 'texto' ? 'flex' : 'none' }}>
+                            {(() => {
+                                const statusText = getEstadoLabel(producto);
+                                const stockValue = producto?.stock;
+                                const statusClass = statusText === 'Activo'
+                                    ? 'statusActive'
+                                    : statusText === 'Sin stock'
+                                        ? 'statusOut'
+                                        : statusText === 'Desactivado'
+                                            ? 'statusDisabled'
+                                            : 'statusVariant';
+                                const mediaItems = [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
+                                const previewItems = mediaItems.slice(0, 4);
+                                return (
+                                    <div className='productOverviewCard'>
+                                        <div className='productOverviewHeader'>
+                                            <div>
+                                                <span className='productOverviewLabel'>Estado del producto</span>
+                                                <h4>{statusText}</h4>
+                                            </div>
+                                            <span className={`statusBadge ${statusClass}`}>{statusText}</span>
+                                        </div>
+                                        <div className='productOverviewMedia'>
+                                            <div className='productOverviewMediaHeader'>
+                                                <h4>Elementos multimedia ({mediaItems.length})</h4>
+                                                <button type="button" onClick={() => handleSectionChange('imagenes')}>Ver todo</button>
+                                            </div>
+                                            <div className='productOverviewThumbs'>
+                                                {previewItems.length === 0 ? (
+                                                    <span className='productOverviewEmpty'>Sin imagenes</span>
+                                                ) : (
+                                                    previewItems.map((img, index) => (
+                                                        <img
+                                                            key={`preview-${img}-${index}`}
+                                                            src={img}
+                                                            alt={`Vista previa ${index + 1}`}
+                                                        />
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className='productOverviewInfo'>
+                                            <h3>{producto?.titulo || 'Producto'}</h3>
+                                            <p>{(producto?.descripcion || '').split('\n')[0]}</p>
+                                            <div className='productOverviewPrices'>
+                                                <span>{moneda} {producto?.precio}</span>
+                                                {producto?.precioAnterior ? (
+                                                    <span className='productOverviewPrev'>{moneda} {producto?.precioAnterior}</span>
+                                                ) : null}
+                                            </div>
+                                            <div className='productOverviewStock'>
+                                                Disponible: {stockValue === null || stockValue === undefined ? '-' : stockValue}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
                             <div className='flexGrap'>
                                 <fieldset>
                                     <legend>Titulo</legend>
@@ -484,7 +796,7 @@ export default function ProductosData() {
                                 </fieldset>
 
                                 <fieldset>
-                                    <legend>Más vendido</legend>
+                                    <legend>Mas vendido</legend>
                                     <select
                                         value={nuevoMasVendido !== '' ? nuevoMasVendido : producto.masVendido}
                                         onChange={(e) => setNuevoMasVendido(e.target.value)}
@@ -503,6 +815,39 @@ export default function ProductosData() {
                                         onChange={(e) => setNuevoPrecioAnterior(e.target.value)}
                                     />
                                 </fieldset>
+                                <fieldset>
+                                    <legend>Stock disponible</legend>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="1"
+                                        value={nuevoStock !== '' ? nuevoStock : (producto.stock ?? '')}
+                                        onChange={(e) => setNuevoStock(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Estado</legend>
+                                    <select
+                                        value={estadoProducto}
+                                        onChange={(e) => setEstadoProducto(e.target.value)}
+                                    >
+                                        <option value="Activo">Activo</option>
+                                        <option value="Desactivado">Desactivado</option>
+                                        <option value="Variante">Variante</option>
+                                    </select>
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Variantes</legend>
+                                    <label className='variantToggle'>
+                                        <input
+                                            type="checkbox"
+                                            checked={tieneVariantes}
+                                            onChange={(e) => setTieneVariantes(e.target.checked)}
+                                        />
+                                        Habilitar selector en producto
+                                    </label>
+                                </fieldset>
+                                {tieneVariantes && (
                                 <div className='items'>
                                     <fieldset>
                                         <legend>Item 1</legend>
@@ -576,56 +921,8 @@ export default function ProductosData() {
                                         />
                                     </fieldset>
 
-                                    <fieldset>
-                                        <legend>Item 7</legend>
-                                        <input
-                                            type="text"
-                                            id="item7"
-                                            name="item7"
-                                            required
-                                            value={item7}
-                                            onChange={(e) => setItem7(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 8</legend>
-                                        <input
-                                            type="text"
-                                            id="item8"
-                                            name="item8"
-                                            required
-                                            value={item8}
-                                            onChange={(e) => setItem8(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 9</legend>
-                                        <input
-                                            type="text"
-                                            id="item9"
-                                            name="item9"
-                                            required
-                                            value={item9}
-                                            onChange={(e) => setItem9(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 10</legend>
-                                        <input
-                                            type="text"
-                                            id="item10"
-                                            name="item10"
-                                            required
-                                            value={item10}
-                                            onChange={(e) => setItem10(e.target.value)}
-                                        />
-                                    </fieldset>
-
-
                                 </div>
+                                )}
                             </div>
 
 
@@ -636,6 +933,67 @@ export default function ProductosData() {
                         </div>
 
                         <div className='sectionImg' style={{ display: selectedSection === 'imagenes' ? 'flex' : 'none' }}>
+                            <div className='imageOrderCard'>
+                                <h4>Orden de imagenes</h4>
+                                <p className='imageOrderHint'>Arrastra para cambiar el orden. La primera es la imagen principal.</p>
+                                {imageOrder.length === 0 ? (
+                                    <p className='imageOrderEmpty'>No hay imagenes para ordenar.</p>
+                                ) : (
+                                    <div className='imageOrderList'>
+                                        {imageOrder.map((img, index) => (
+                                            <div
+                                                key={`${img}-${index}`}
+                                                className={`imageOrderItem ${dragIndex === index ? 'imageOrderDragging' : ''}`}
+                                                data-index={index}
+                                                draggable
+                                                onDragStart={(event) => handleDragStart(event, index)}
+                                                onDragOver={handleDragOver}
+                                                onDrop={(event) => handleDrop(event, index)}
+                                                onPointerDown={(event) => handlePointerDown(event, index)}
+                                                onPointerMove={handlePointerMove}
+                                                onPointerUp={handlePointerUp}
+                                                onPointerCancel={handlePointerUp}
+                                            >
+                                                <span className='imageOrderHandle'>:::</span>
+                                                <img src={img} alt={`Imagen ${index + 1}`} className='imageOrderThumb' />
+                                                <span className='imageOrderLabel'>
+                                                    Imagen {index + 1}
+                                                    {index === 0 && <span className='imageOrderPrimary'>Principal</span>}
+                                                </span>
+                                                <div className='imageOrderActions'>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const target = Math.max(0, index - 1);
+                                                            if (target === index) return;
+                                                            const next = [...imageOrder];
+                                                            const [moved] = next.splice(index, 1);
+                                                            next.splice(target, 0, moved);
+                                                            setImageOrder(next);
+                                                        }}
+                                                    >
+                                                        ↑
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const target = Math.min(imageOrder.length - 1, index + 1);
+                                                            if (target === index) return;
+                                                            const next = [...imageOrder];
+                                                            const [moved] = next.splice(index, 1);
+                                                            next.splice(target, 0, moved);
+                                                            setImageOrder(next);
+                                                        }}
+                                                    >
+                                                        ↓
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <button className='btnPost' onClick={guardarOrdenImagenes}>Guardar orden</button>
+                            </div>
                             <div className='previevProduct'>
 
                                 {imagenPreview ? (
@@ -720,6 +1078,34 @@ export default function ProductosData() {
 
                             <button className='btnPost' onClick={() => handleEditarImagenBanner(producto.idProducto)}>Guardar </button>
 
+                            <div className='landingSlotsCard'>
+                                <h4>Landings IA (10 espacios)</h4>
+                                <p className='landingSlotsHint'>Selecciona imagenes generadas para usarlas en el producto.</p>
+                                <div className='landingSlotsGrid'>
+                                    {Array.from({ length: 10 }, (_, idx) => {
+                                        const slotId = aiSlots[idx] || null;
+                                        const slotImage = slotId ? getSlotImage(slotId) : null;
+                                        return (
+                                            <div key={`slot-${idx}`} className='landingSlot'>
+                                                <span className='landingSlotLabel'>Slot {idx + 1}</span>
+                                                {slotImage ? (
+                                                    <img src={slotImage.files?.[0]?.url} alt={`Slot ${idx + 1}`} />
+                                                ) : (
+                                                    <div className='landingSlotEmpty'>Vacio</div>
+                                                )}
+                                                <div className='landingSlotActions'>
+                                                    <button type="button" onClick={() => handlePickAiSlot(idx)}>
+                                                        Elegir de galeria
+                                                    </button>
+                                                    <button type="button" onClick={() => handleClearAiSlot(idx)}>
+                                                        Reemplazar
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
                         </div>
 
 
@@ -728,12 +1114,62 @@ export default function ProductosData() {
                 </div>
             )}
             <div className='table-container'>
+                <div className='productList'>
+                    {productosFiltrados.map(item => {
+                        const stockValue = item?.stock;
+                        const hasStock = stockValue === null || stockValue === undefined || Number(stockValue) > 0;
+                        const statusText = getEstadoLabel(item);
+                        const statusClass = statusText === 'Activo'
+                            ? 'statusActive'
+                            : statusText === 'Sin stock'
+                                ? 'statusOut'
+                                : statusText === 'Desactivado'
+                                    ? 'statusDisabled'
+                                    : 'statusVariant';
+                        return (
+                            <div
+                                className='productRowCard'
+                                key={`card-${item.idProducto}`}
+                                onClick={() => abrirModal(item)}
+                            >
+                                <img src={item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || ''} alt={item.titulo} />
+                                <div className='productRowInfo'>
+                                    <h4>{item.titulo}</h4>
+                                    <span>{hasStock ? `${item?.stock ?? '-'} disponibles` : 'Sin stock'}</span>
+                                </div>
+                                <span className={`statusBadge ${statusClass}`}>
+                                    {statusText}
+                                </span>
+                                <div className='productRowActions'>
+                                    <button className='editar' onClick={(event) => { event.stopPropagation(); duplicarProducto(item.idProducto); }}>
+                                        <FontAwesomeIcon icon={faCopy} />
+                                    </button>
+                                    <button className='editar' onClick={(event) => { event.stopPropagation(); abrirModal(item); }}>
+                                        <FontAwesomeIcon icon={faEdit} />
+                                    </button>
+                                    <Anchor
+                                        className='editar'
+                                        to={`/producto/${item?.idProducto}/${item?.titulo?.replace(/\s+/g, '-')}`}
+                                        onClick={(event) => event.stopPropagation()}
+                                    >
+                                        <FontAwesomeIcon icon={faEye} />
+                                    </Anchor>
+                                    <button className='eliminar' onClick={(event) => { event.stopPropagation(); eliminarProducto(item.idProducto); }}>
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
                 <table className='table'>
                     <thead>
                         <tr>
                             <th>Id Producto</th>
                             <th>Titulo</th>
                             <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Estado</th>
                             <th>Categoria</th>
                             <th>Imagen</th>
                             <th>Imagen 2</th>
@@ -743,8 +1179,19 @@ export default function ProductosData() {
                         </tr>
                     </thead>
                     <tbody>
-                        {productosFiltrados.map(item => (
-                            <tr key={item.idProducto}>
+                        {productosFiltrados.map(item => {
+                            const stockValue = item?.stock;
+                            const hasStock = stockValue === null || stockValue === undefined || Number(stockValue) > 0;
+                            const statusText = getEstadoLabel(item);
+                            const statusClass = statusText === 'Activo'
+                                ? 'statusActive'
+                                : statusText === 'Sin stock'
+                                    ? 'statusOut'
+                                    : statusText === 'Desactivado'
+                                        ? 'statusDisabled'
+                                        : 'statusVariant';
+                            return (
+                                <tr key={item.idProducto}>
                                 <td>{item.idProducto}</td>
                                 <td>{item.titulo}</td>
 
@@ -752,6 +1199,12 @@ export default function ProductosData() {
                                     color: '#008000',
                                 }}>
                                     {moneda} {`${item?.precio}`}
+                                </td>
+                                <td>{item?.stock === null || item?.stock === undefined ? '-' : item.stock}</td>
+                                <td>
+                                    <span className={`statusBadge ${statusClass}`}>
+                                        {statusText}
+                                    </span>
                                 </td>
 
                                 {categorias
@@ -808,6 +1261,9 @@ export default function ProductosData() {
                                     <button className='eliminar' onClick={() => eliminarProducto(item.idProducto)}>
                                         <FontAwesomeIcon icon={faTrash} />
                                     </button>
+                                    <button className='editar' onClick={() => duplicarProducto(item.idProducto)}>
+                                        <FontAwesomeIcon icon={faCopy} />
+                                    </button>
                                     <button className='editar' onClick={() => abrirModal(item)}>
                                         <FontAwesomeIcon icon={faEdit} />
                                     </button>
@@ -816,7 +1272,8 @@ export default function ProductosData() {
                                     </Anchor>
                                 </td>
                             </tr>
-                        ))}
+                            );
+                        })}
                     </tbody>
 
                 </table>
@@ -824,3 +1281,5 @@ export default function ProductosData() {
         </div>
     );
 };
+
+

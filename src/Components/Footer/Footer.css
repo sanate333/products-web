@@ -36,6 +36,12 @@
     display: flex;
     gap: 2rem;
 }
+.androidInfo{
+    color: var(--blanco);
+    font-size: 18px;
+    display: inline-flex;
+    align-items: center;
+}
 .btnAnch{
     background-color: var(--blanco);
     color: var(--color1)!important;
@@ -48,10 +54,20 @@
     text-align: center;
     justify-content: center;
 }
+
+.btnInstall{
+    border: none;
+    cursor: pointer;
+}
+
+.btnInstallDisabled{
+    opacity: 0.6;
+    cursor: not-allowed;
+}
 @media (max-width: 700px){
     .FooterContain{
     margin: 0;
-    padding: 20px 4%;
+    padding: 20px 4% 60px;
     border-radius: 20px 20px 0 0;
     flex-direction: column;
 }

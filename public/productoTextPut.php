@@ -27,6 +27,21 @@ try {
     $dsn = "mysql:host=$servidor;dbname=$dbname";
     $conexion = new PDO($dsn, $usuario, $contrasena);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $stmt = $conexion->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = :dbname AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'stock'");
+    $stmt->execute([':dbname' => $dbname]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conexion->exec("ALTER TABLE `productos` ADD COLUMN stock INT(11) NULL DEFAULT NULL");
+    }
+    $stmt = $conexion->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = :dbname AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'estadoProducto'");
+    $stmt->execute([':dbname' => $dbname]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conexion->exec("ALTER TABLE `productos` ADD COLUMN estadoProducto VARCHAR(20) NULL DEFAULT 'Activo'");
+    }
+    $stmt = $conexion->prepare("SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = :dbname AND TABLE_NAME = 'productos' AND COLUMN_NAME = 'tieneVariantes'");
+    $stmt->execute([':dbname' => $dbname]);
+    if ((int)$stmt->fetchColumn() === 0) {
+        $conexion->exec("ALTER TABLE `productos` ADD COLUMN tieneVariantes TINYINT(1) NULL DEFAULT 0");
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         $idProducto = isset($_REQUEST['idProducto']) ? $_REQUEST['idProducto'] : null;
         $data = json_decode(file_get_contents("php://input"), true);
@@ -49,6 +64,9 @@ try {
          $item9 = isset($data['item9']) ? $data['item9'] : null;
          $item10 = isset($data['item10']) ? $data['item10'] : null;
          $precioAnterior = isset($data['precioAnterior']) ? $data['precioAnterior'] : null;
+         $stock = array_key_exists('stock', $data) ? $data['stock'] : null;
+         $estadoProducto = isset($data['estadoProducto']) ? $data['estadoProducto'] : 'Activo';
+         $tieneVariantes = isset($data['tieneVariantes']) ? (int)$data['tieneVariantes'] : 0;
  
         if (empty($nuevaCategoria)) {
             $sqlSelect = "SELECT idCategoria FROM productos WHERE idProducto = :idProducto";
@@ -60,8 +78,8 @@ try {
         }
 
         $sqlUpdate = "UPDATE productos SET descripcion = :descripcion, titulo = :titulo, idCategoria = :idCategoria, precio = :precio, masVendido = :masVendido, 
-        item1 = :item1, item2 = :item2, item3 = :item3, item4 = :item4, item5 = :item5, item6 = :item6, item7 = :item7, item8 = :item8, 
-        item9 = :item9, item10 = :item10, precioAnterior = :precioAnterior
+       item1 = :item1, item2 = :item2, item3 = :item3, item4 = :item4, item5 = :item5, item6 = :item6, item7 = :item7, item8 = :item8, 
+       item9 = :item9, item10 = :item10, precioAnterior = :precioAnterior, stock = :stock, estadoProducto = :estadoProducto, tieneVariantes = :tieneVariantes
         WHERE idProducto = :idProducto";
         $sentenciaUpdate = $conexion->prepare($sqlUpdate);
         $sentenciaUpdate->bindParam(':descripcion', $nuevaDescripcion);
@@ -80,6 +98,9 @@ try {
         $sentenciaUpdate->bindParam(':item9', $item9); 
         $sentenciaUpdate->bindParam(':item10', $item10);  
         $sentenciaUpdate->bindParam(':precioAnterior', $precioAnterior);  
+        $sentenciaUpdate->bindParam(':stock', $stock);
+        $sentenciaUpdate->bindParam(':estadoProducto', $estadoProducto);
+        $sentenciaUpdate->bindParam(':tieneVariantes', $tieneVariantes);
         $sentenciaUpdate->bindParam(':idProducto', $idProducto, PDO::PARAM_INT);
 
         if ($sentenciaUpdate->execute()) {

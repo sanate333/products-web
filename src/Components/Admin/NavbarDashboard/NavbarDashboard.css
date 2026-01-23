@@ -53,24 +53,26 @@
 }
 
 @media (max-width: 1024px) {
-   
-   
-   
     .navbarDashboard{
-        width: 100%;
-        min-height:  4rem;
-        max-height: 4rem;
+        width: 78%;
+        min-height: 100vh;
+        max-height: 100vh;
         padding: 20px 0rem 0% 6px;
-        transition: max-height 0.5s;
-        padding: 0px ;
-        border-radius: 0;
+        transition: transform 0.3s ease;
+        border-radius: 0 16px 16px 0;
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 1100;
+        transform: translateX(-110%);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
         
 }
-    .navbarDashboard:hover {
-        width: 100%;
-        max-height: 100%;
-        transition: max-height 0.5s;
-        
+.navbarDashboardOpen{
+    transform: translateX(0);
+}
+.navbarDashboardClosed{
+    transform: translateX(-110%);
 }
 .navbarDashboard a{
    

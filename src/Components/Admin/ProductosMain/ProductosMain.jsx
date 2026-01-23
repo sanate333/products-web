@@ -6,10 +6,8 @@ import moneda from '../../moneda';
 import contador from '../../contador'
 export default function ProductosMain() {
     const [pedidos, setPedidos] = useState([]);
-    const [mesas, setMesas] = useState([]);
     useEffect(() => {
         cargarPedidos();
-        cargarMesas()
     }, []);
 
 
@@ -24,17 +22,6 @@ export default function ProductosMain() {
                 console.log(data.pedidos)
             })
             .catch(error => console.error('Error al cargar pedidos:', error));
-    };
-    const cargarMesas = () => {
-        fetch(`${baseURL}/mesaGet.php`, {
-            method: 'GET',
-        })
-            .then(response => response.json())
-            .then(data => {
-                setMesas(data.mesas || []);
-                console.log(data.mesas)
-            })
-            .catch(error => console.error('Error al cargar mesas:', error));
     };
     const [counter, setCounter] = useState(contador);
     const [isPaused, setIsPaused] = useState(false);
@@ -59,7 +46,6 @@ export default function ProductosMain() {
 
 
     const recargar = () => {
-        cargarMesas();
         cargarPedidos();
     };
 
@@ -77,9 +63,9 @@ export default function ProductosMain() {
                 <thead>
                     <tr>
                         <th>Id Pedido</th>
-                        <th>Mesa</th>
                         <th>Estado</th>
                         <th>Nombre</th>
+                        <th>WhatsApp</th>
                         <th>Total</th>
                         <th>Fecha</th>
                     </tr>
@@ -88,11 +74,6 @@ export default function ProductosMain() {
                     {pedidos.map(item => (
                         <tr key={item.idPedido}>
                             <td>{item.idPedido}</td>
-                            {
-                                mesas.filter(mesa => mesa?.idMesa === item?.idMesa).map(mapeomesa => (
-                                    <td>{mapeomesa?.mesa}</td>
-                                ))
-                            }
 
                             <td style={{
                                 color: item?.estado === 'Pendiente' ? '#DAA520' :
@@ -104,6 +85,7 @@ export default function ProductosMain() {
                                 {item?.estado}
                             </td>
                             <td>{item.nombre}</td>
+                            <td>{item.whatsapp}</td>
                             <td style={{ color: '#008000', }}>{moneda} {item.total}</td>
                             <td>{item.createdAt}</td>
 

@@ -53,14 +53,31 @@
     margin-top: 3rem;
   }
 
-  .previevCategori img{
+.previevCategori img{
     width: 250px;
     height: 130px;
     object-fit: cover;
     border-radius: 10px;
     
-   
+  
   }
+.previewItem{
+    position: relative;
+}
+.previewRemove{
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background-color: var(--blanco);
+    color: var(--text-color2);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+}
 @media (max-width: 824px){
     #crearForm{
         flex-direction: column;

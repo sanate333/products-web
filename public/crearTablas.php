@@ -83,6 +83,9 @@ try {
         item9 VARCHAR(255),
         item10 VARCHAR(255),
         precioAnterior DECIMAL(10,2) NOT NULL,
+        stock INT(11) NULL DEFAULT NULL,
+        estadoProducto VARCHAR(20) NULL DEFAULT 'Activo',
+        tieneVariantes TINYINT(1) NULL DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     crearTablaSiNoExiste($conexion, 'productos', $consultaProductos);
@@ -127,9 +130,33 @@ $consultaPedidos = "CREATE TABLE IF NOT EXISTS `pedidos` (
     nota VARCHAR(255) NOT NULL,
     nombre VARCHAR(50) NOT NULL,
     codigo VARCHAR(50) NOT NULL,
+    whatsapp VARCHAR(30) NULL,
+    direccion VARCHAR(255) NULL,
+    ciudad VARCHAR(100) NULL,
+    departamento VARCHAR(100) NULL,
+    adicionales VARCHAR(255) NULL,
+    formaPago VARCHAR(100) NULL,
+    ip VARCHAR(64) NULL,
+    userAgent VARCHAR(255) NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )";
 crearTablaSiNoExiste($conexion, 'pedidos', $consultaPedidos);
+
+// Crear tabla 'clientes' si no existe
+$consultaClientes = "CREATE TABLE IF NOT EXISTS `clientes` (
+    idCliente INT(11) AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NULL,
+    whatsapp VARCHAR(30) NOT NULL UNIQUE,
+    direccion VARCHAR(255) NULL,
+    ciudad VARCHAR(100) NULL,
+    departamento VARCHAR(100) NULL,
+    totalPedidos INT(11) NOT NULL DEFAULT 0,
+    totalGastado DECIMAL(10,2) NOT NULL DEFAULT 0,
+    ultimoPedido TIMESTAMP NULL,
+    createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)";
+crearTablaSiNoExiste($conexion, 'clientes', $consultaClientes);
 
 
 

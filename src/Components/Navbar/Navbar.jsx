@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link as Anchor, useLocation } from 'react-router-dom';
 import Modal from 'react-modal';
 import logo from '../../images/logo.png';
-import baseURL from '../url';
+import baseURL, { resolveImg } from '../url';
 import 'swiper/swiper-bundle.css';
 import Profile from '../Profile/Profile';
 import './Navbar.css';
-import Favoritos from '../Favoritos/Favoritos';
 import InputSerach from '../InputSerach/InputSearchs';
 import Logout from '../Admin/Logout/Logout';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faShoppingCart } from '@fortawesome/free-solid-svg-icons';
 export default function Navbar() {
     const [isOpen, setIsOpen] = useState(false);
     const [images, setImages] = useState([]);
@@ -26,7 +27,7 @@ export default function Navbar() {
         })
             .then(response => response.json())
             .then(data => {
-                const bannerImages = data.banner.map(banner => banner.imagen);
+                const bannerImages = data.banner.map(banner => resolveImg(banner.imagen));
                 setImages(bannerImages);
                 setLoading(false);
             })
@@ -63,7 +64,9 @@ export default function Navbar() {
                 </Anchor>
 
                 <div className='deFLexNavs'>
-                    <Favoritos />
+                    <button className='cartIcon' onClick={() => window.dispatchEvent(new Event('openCheckout'))}>
+                        <FontAwesomeIcon icon={faShoppingCart} />
+                    </button>
                     <InputSerach />
 
                     <div className={`nav_toggle  ${isOpen && "open"}`} onClick={() => setIsOpen(!isOpen)}>
@@ -89,6 +92,13 @@ export default function Navbar() {
                                     <img src={images[0]} alt={`imagen`} />
                                 </div>
                                 <Profile />
+                                <div className='menuLinks'>
+                                    <Anchor to='/' onClick={() => setIsOpen(false)}>Inicio</Anchor>
+                                    <Anchor to='/' onClick={() => setIsOpen(false)}>Contacto</Anchor>
+                                </div>
+                                <div className='menuFooter'>
+                                    <Anchor to='/dashboard' onClick={() => setIsOpen(false)}>Iniciar sesion</Anchor>
+                                </div>
                                 {loading ? (
                                     <div></div>
                                 ) : usuario.idUsuario ? (
