@@ -1,8 +1,6 @@
 node_modules/
-mi-proyecto-openai/node_modules/
 .env
-public/.env
-mi-proyecto-openai/.env
+**/.env
 public/server/firebase-adminsdk.json
 server.pid
-build/
+.DS_Store
