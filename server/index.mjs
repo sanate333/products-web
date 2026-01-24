@@ -1,450 +1,225 @@
-import path from "path";
-import { fileURLToPath } from "url";
-import fs from "fs";
 import express from "express";
+import cors from "cors";
 import multer from "multer";
-import dotenv from "dotenv";
-import { OpenAI } from "openai";
-import { GoogleGenAI } from "@google/genai";
-import { randomUUID } from "crypto";
+import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { fileURLToPath } from "url";
+
+const app = express();
+
+/** =======================
+ *  CORS (producción)
+ *  ======================= */
+const ALLOWED_ORIGINS = [
+  "https://sanate.store",
+  "https://www.sanate.store",
+  "https://products-web-j7ji.onrender.com",
+  // opcional: localhost para pruebas
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+];
+
+app.use(
+  cors({
+    origin(origin, cb) {
+      // permite requests sin origin (curl, server-to-server)
+      if (!origin) return cb(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS blocked for origin: ${origin}`), false);
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+app.options("*", cors());
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+/** =======================
+ *  Upload (multer)
+ *  ======================= */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+});
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const publicDir = path.resolve(__dirname, "..", "public");
+const generatedDir = path.join(publicDir, "generated");
 
-dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
-
-const storageDir = path.resolve(__dirname, "..", "public", "ai-images");
-const metadataDir = path.resolve(__dirname, "..", "data");
-const metadataFile = path.resolve(metadataDir, "ai-images.json");
-const MAX_IMAGES_PER_SLOT = 10;
-
-if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
-if (!fs.existsSync(metadataDir)) fs.mkdirSync(metadataDir, { recursive: true });
-if (!fs.existsSync(metadataFile)) fs.writeFileSync(metadataFile, JSON.stringify({ images: [] }, null, 2));
-
-const app = express();
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-  next();
-});
-app.use(express.json({ limit: "5mb" }));
-app.use("/ai-images", express.static(storageDir));
-
-const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const sanitizeArray = (arr) => Array.isArray(arr) ? arr : [];
-const analyzeModel = "gpt-4o-mini";
-const recommendModel = "gpt-4.1";
-const uploadMemory = multer({ storage: multer.memoryStorage(), limits: { files: 3 } });
-const mockMode = process.env.OPENAI_MOCK === "1";
-const placeholderBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAABlBMVEUAAAD///+l2Z/dAAAACklEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=";
-
-function extractJson(raw) {
-  if (!raw) return null;
-  const trimmed = String(raw).trim();
-  const markdown = trimmed.match(/```json\s*([\s\S]*?)\s*```/i);
-  const candidate = markdown?.[1] ?? trimmed;
-  const start = candidate.indexOf("{");
-  const end = candidate.lastIndexOf("}");
-  if (start === -1 || end === -1 || end <= start) return null;
-  const payload = candidate.slice(start, end + 1);
-  try {
-    return JSON.parse(payload);
-  } catch {
-    return null;
-  }
+function ensureDir(dir) {
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
-function buildIndex(images) {
-  const map = new Map();
-  for (const image of images) {
-    const key = `${image.userId}:${image.productId}`;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key).push(image);
-  }
-  return map;
-}
+ensureDir(publicDir);
+ensureDir(generatedDir);
 
-function readMetadata() {
-  const raw = fs.readFileSync(metadataFile, "utf-8") || "";
-  const data = JSON.parse(raw || "{}");
-  data.images = Array.isArray(data.images) ? data.images : [];
-  const index = buildIndex(data.images);
-  return { data, index };
-}
+app.use(express.static(publicDir));
 
-function writeMetadataAtomic(payload) {
-  const temp = `${metadataFile}.tmp`;
-  fs.writeFileSync(temp, JSON.stringify(payload, null, 2));
-  fs.renameSync(temp, metadataFile);
-}
-
-function ensureLimit(index, userId, productId, extra = 1) {
-  const key = `${userId}:${productId}`;
-  const current = index.get(key)?.length ?? 0;
-  if (current + extra > MAX_IMAGES_PER_SLOT) {
-    return { ok: false, error: "max_10_images" };
-  }
-  return { ok: true, available: MAX_IMAGES_PER_SLOT - (current + extra) };
-}
-
-function removeFiles(files = []) {
-  for (const file of sanitizeArray(files)) {
-    const filepath = path.resolve(storageDir, file.filename);
-    if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
-  }
-}
-
-function createMockImage(filename) {
-  const filepath = path.resolve(storageDir, filename);
-  if (!fs.existsSync(filepath)) {
-    const buffer = Buffer.from(placeholderBase64, "base64");
-    fs.writeFileSync(filepath, buffer);
-  }
-  return filepath;
-}
-
-function getSortedImages(list) {
-  return [...list].sort((a, b) => {
-    const diff = (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
-    if (diff !== 0) return diff;
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
-}
+/** =======================
+ *  OpenAI
+ *  ======================= */
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const PORT = process.env.PORT || 5055;
 
-app.get("/", (_req, res) => res.send("SERVER ACTIVO DESDE SERVER/INDEX.MJS"));
-app.get("/health", (_req, res) => res.json({ ok: true }));
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+/** =======================
+ *  Health
+ *  ======================= */
+app.get("/api/health", (req, res) => {
+  res.json({
+    ok: true,
+    ts: Date.now(),
+    model: (process.env.OPENAI_IMAGE_MODEL || "gpt-image-1").trim(),
+    mock: String(process.env.OPENAI_MOCK || "false"),
+    has_key: Boolean(process.env.OPENAI_API_KEY),
+  });
+});
 
-app.use("/api/ai-images", express.static(storageDir));
-
-const handleAiImagesList = (req, res) => {
-  const { userId, productId } = req.query;
-  const { data, index } = readMetadata();
-  const key = userId && productId ? `${userId}:${productId}` : null;
-  let images = key ? (index.get(key) ?? []) : data.images;
-  if (userId && !productId) {
-    images = data.images.filter((img) => img.userId === userId);
-  }
-  if (productId && !userId) {
-    images = data.images.filter((img) => img.productId === productId);
-  }
-  res.json({ ok: true, images: getSortedImages(images) });
-};
-
-const handleAiImagesReorder = (req, res) => {
-  const { userId, productId, order } = req.body;
-  if (!userId || !productId || !Array.isArray(order)) {
-    return res.status(400).json({ ok: false, error: "invalid_payload" });
-  }
-  const { data } = readMetadata();
-  const target = data.images.filter((img) => img.userId === userId && img.productId === productId);
-  if (!target.length) {
-    return res.status(404).json({ ok: false, error: "no_images" });
-  }
-  const orderMap = Object.fromEntries(order.map((item) => [item.id, Number(item.orderIndex)]));
-  for (const image of data.images) {
-    if (image.userId === userId && image.productId === productId && orderMap[image.id] != null) {
-      image.orderIndex = orderMap[image.id];
-    }
-  }
-  writeMetadataAtomic(data);
-  res.json({ ok: true });
-};
-
-const handleAiImagesDelete = (req, res) => {
-  const { userId, imageId } = req.body;
-  if (!userId || !imageId) {
-    return res.status(400).json({ ok: false, error: "invalid_payload" });
-  }
-  const { data } = readMetadata();
-  const idx = data.images.findIndex((img) => img.id === imageId);
-  if (idx === -1) {
-    return res.status(404).json({ ok: false, error: "image_not_found" });
-  }
-  const image = data.images[idx];
-  if (image.userId !== userId) {
-    return res.status(403).json({ ok: false, error: "forbidden" });
-  }
-  removeFiles(image.files);
-  data.images.splice(idx, 1);
-  writeMetadataAtomic(data);
-  res.json({ ok: true });
-};
-
-app.get("/ai-images", handleAiImagesList);
-app.get("/api/ai-images", handleAiImagesList);
-app.post("/ai-images/reorder", handleAiImagesReorder);
-app.post("/api/ai-images/reorder", handleAiImagesReorder);
-app.post("/ai-images/delete", handleAiImagesDelete);
-app.post("/api/ai-images/delete", handleAiImagesDelete);
-
-const variantTemplates = [
-  { label: "hero_studio", detail: "hero shot con iluminacion de estudio" },
-  { label: "lifestyle", detail: "escena lifestyle que muestre al cliente" },
-  { label: "close_up", detail: "primer plano del producto resaltando detalles" },
-  { label: "flatlay", detail: "flat lay premium sobre fondo limpio" },
-];
-
-const handleImageAnalyze = async (req, res) => {
-  const { userId, country, productName, productDetails } = req.body;
-  const files = req.files ?? [];
-  if (!userId || !country || !productName) {
-    return res.status(400).json({ ok: false, error: "missing_required_fields" });
-  }
-
-  if (mockMode) {
-    return res.json({
-      ok: true,
-      category: "producto personalizado",
-      visualIdentity: "realismo comercial + luz natural",
-      angles: [
-        "Hero shot emocional",
-        "Detalle de textura",
-        "Uso lifestyle",
-        "Comparativa funcional",
-        "Beneficio respaldo",
-        "Storytelling natural",
-      ],
-      benefits: [
-        "Apariencia radiante",
-        "Duración extendida",
-        "Textura premium",
-        "Respeto al medio ambiente",
-        "Fácil de usar",
-        "Alta conversión",
-        "Confianza médica",
-        "Garantía oficial",
-      ],
-      doNotClaim: ["no diga curar", "no mencione milagros"],
-      recommendedTemplates: ["Hero", "Offer", "Benefits"],
-      castingSuggestion: `Casting diverso inspirado en ${country}`,
-    });
-  }
-
-  const base = `Describe el producto ${productName} (${productDetails ?? "sin detalles adicionales"}) y su posible uso en ${country}.`;
-  const attachments = files.map((file) => ({
-    type: "input_image",
-    image_url: `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
-  }));
-
+/** =======================
+ *  Logo upload
+ *  ======================= */
+app.post("/api/logo/upload", upload.single("logo"), (req, res) => {
   try {
-    const response = await openaiClient.responses.create({
-      model: analyzeModel,
-      input: [
-        {
-          role: "user",
-          content: [
-            { type: "input_text", text: `${base} Proporciona categoría, identidad visual, 6 ángulos de venta, 8 beneficios, 5 estilos visuales y qué no afirmar (do not claim). Devuelve solo JSON con keys: category, visualIdentity, angles, benefits, doNotClaim, recommendedTemplates.` },
-            ...attachments,
-          ],
-        },
-      ],
-      temperature: 0.2,
-    });
-    const rawText = getResponseText(response);
-    const parsed = extractJson(rawText);
-    if (!parsed) {
-      return res.status(502).json({ ok: false, error: "analysis_json_failed", raw: rawText });
-    }
-    const result = {
-      category: parsed.category ?? "general",
-      visualIdentity: parsed.visualIdentity ?? "fotografía realista",
-      angles: Array.isArray(parsed.angles) ? parsed.angles : [],
-      benefits: Array.isArray(parsed.benefits) ? parsed.benefits : [],
-      doNotClaim: Array.isArray(parsed.doNotClaim) ? parsed.doNotClaim : [],
-      recommendedTemplates: Array.isArray(parsed.recommendedTemplates) ? parsed.recommendedTemplates : [],
-      castingSuggestion: parsed.castingSuggestion ?? `Casting natural y diverso inspirado en ${country}`,
-    };
-    return res.json({ ok: true, ...result });
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: String(error?.message ?? error) });
-  }
-};
-
-app.post("/image-analyze", uploadMemory.array("files", 3), handleImageAnalyze);
-app.post("/api/image-analyze", uploadMemory.array("files", 3), handleImageAnalyze);
-
-const handleImageGenerate = async (req, res) => {
-  const {
-    prompt,
-    size,
-    template,
-    templateType,
-    language,
-    productName,
-    productId,
-  } = req.body || {};
-
-  const safeTemplate = (template || templateType || "hero").toString();
-  const safeLanguage = (language || "es").toString();
-  const safeProductName = (productName || "Producto").toString();
-  const safeProductId = (productId || "producto").toString();
-  const safeSize = (size && String(size).trim()) || "1024x1024";
-  const safePrompt =
-    (prompt && String(prompt).trim()) ||
-    `Foto profesional del producto ${safeProductName}, fondo blanco, iluminacion de estudio, alta calidad. Estilo ${safeTemplate}. Idioma ${safeLanguage}.`;
-
-  try {
-    if (mockMode) {
-      const image_url = `data:image/png;base64,${placeholderBase64}`;
-      return res.json({ ok: true, image_url });
+    if (!req.file?.buffer) {
+      return res.status(400).json({ ok: false, error: "missing_logo" });
     }
 
-    const result = await openaiClient.images.generate({
-      model: "gpt-image-1",
-      prompt: safePrompt,
-      size: safeSize,
-    });
+    ensureDir(publicDir);
 
-    const image_url =
-      result?.data?.[0]?.url ||
-      (result?.data?.[0]?.b64_json ? `data:image/png;base64,${result.data[0].b64_json}` : null);
+    const logoPath = path.join(publicDir, "logo.png");
+    const logo192Path = path.join(publicDir, "logo192.png");
+    const logo512Path = path.join(publicDir, "logo512.png");
 
-    if (!image_url) {
-      return res.status(500).json({ ok: false, error: "image_generation_failed" });
-    }
+    fs.writeFileSync(logoPath, req.file.buffer);
+    fs.writeFileSync(logo192Path, req.file.buffer);
+    fs.writeFileSync(logo512Path, req.file.buffer);
 
-    return res.json({ ok: true, image_url, productId: safeProductId });
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: String(error?.message ?? error) });
-  }
-};
-
-app.post("/image-generate", handleImageGenerate);
-app.post("/api/image-generate", handleImageGenerate);
-
-const handleImageRecommend = async (req, res) => {
-  const { userId, productId, imageIds = [], imageUrls = [], context = "" } = req.body;
-  if (!userId || !productId || ((!imageIds.length) && (!imageUrls.length))) {
-    return res.status(400).json({ ok: false, error: "missing_required_fields" });
-  }
-  const { data } = readMetadata();
-  const candidates = data.images.filter(
-    (img) =>
-      img.userId === userId &&
-      img.productId === productId &&
-      (imageIds.includes(img.id) || imageUrls.includes(img.files?.[0]?.url ?? ""))
-  );
-  if (!candidates.length) {
-    return res.status(404).json({ ok: false, error: "no_images_found" });
-  }
-  if (mockMode) {
-    const ranking = candidates.map((img, idx) => ({
-      id: img.id,
-      score: candidates.length - idx,
-      reasons: ["Buena iluminación", "Composición clara", "Sensación premium"],
-    }));
-    const whereToUse = Object.fromEntries(ranking.map((entry, idx) => [entry.id, idx % 4 === 0 ? "hero" : "product"]));
-    const bestImageId = ranking[0]?.id;
-    for (const image of data.images) {
-      const match = ranking.find((r) => r.id === image.id);
-      if (match) {
-        image.rankScore = match.score;
-        image.recommendedFor = whereToUse[image.id];
-      }
-    }
-    writeMetadataAtomic(data);
-    const reasons = ranking.reduce((acc, curr) => {
-      acc[curr.id] = curr.reasons;
-      return acc;
-    }, {});
-    return res.json({ ok: true, bestImageId, ranking, reasons, whereToUse });
-  }
-  const details = candidates
-    .map(
-      (img, idx) =>
-        `${idx + 1}) ${img.id} - ${img.files?.[0]?.url ?? "sin URL"} - etiquetas: ${img.tags?.join(
-          ", "
-        ) ?? "sin tags"}`
-    )
-    .join("\n");
-  const prompt = `Rankea estas imágenes para el cierre de ventas del producto ${productId}. Usa criterios de claridad, credibilidad, ausencia de look IA, composición y espacio negativo. Contexto: ${
-    context || "convierte sin perder naturalidad"
-  }.\nImágenes:\n${details}\nDevuelve solo JSON con: bestImageId, ranking[{id, score, reasons}], whereToUse{[id]:hero|product|benefits|offer}.`;
-  try {
-    const response = await openaiClient.responses.create({
-      model: recommendModel,
-      input: [
-        {
-          role: "user",
-          content: [{ type: "input_text", text: prompt }],
-        },
-      ],
-      temperature: 0.2,
-    });
-    const rawText = getResponseText(response);
-    const parsed = extractJson(rawText);
-    if (!parsed || !Array.isArray(parsed.ranking)) {
-      return res.status(502).json({ ok: false, error: "recommend_json_invalid", raw: rawText });
-    }
-    const ranking = parsed.ranking.map((entry, idx) => ({
-      id: entry.id ?? candidates[idx]?.id,
-      score: Number(entry.score ?? (candidates.length - idx)),
-      reasons: Array.isArray(entry.reasons) ? entry.reasons : [],
-    }));
-    const whereToUse = parsed.whereToUse ?? {};
-    const bestImageId = parsed.bestImageId ?? ranking[0]?.id;
-    const reasons = ranking.reduce((acc, curr) => {
-      acc[curr.id] = curr.reasons;
-      return acc;
-    }, {});
-    for (const image of data.images) {
-      const ranked = ranking.find((item) => item.id === image.id);
-      if (ranked) {
-        image.rankScore = ranked.score;
-        image.recommendedFor =
-          whereToUse[image.id] ??
-          (image.id === bestImageId ? parsed.recommendedFor ?? "closing" : image.recommendedFor ?? null);
-      }
-    }
-    writeMetadataAtomic(data);
-    return res.json({ ok: true, bestImageId, ranking, reasons, whereToUse });
-  } catch (error) {
-    return res.status(500).json({ ok: false, error: String(error?.message ?? error) });
-  }
-};
-
-app.post("/image-recommend", handleImageRecommend);
-app.post("/api/image-recommend", handleImageRecommend);
-
-const sanitizeQuotes = (value) =>
-  String(value ?? "").replace(/^[\uFEFF]+/, "").replace(/[\u2018\u2019\u201C\u201D]/g, '"').trim();
-
-const getResponseText = (resp) =>
-  resp?.response?.text?.()?.trim?.() ?? resp?.text?.()?.trim?.() ?? resp?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-app.post("/landing-plan", async (req, res) => {
-  const product = sanitizeQuotes(req.body?.product);
-  if (!product) {
-    return res.status(400).json({ ok: false, error: "Falta product" });
-  }
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ ok: false, error: "Missing GEMINI_API_KEY" });
-  }
-  const client = new GoogleGenAI({ apiKey });
-  const prompt = "RESPONDE EXACTAMENTE CON EL BLOQUE JSON...";
-  try {
-    const response = await client.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
-    });
-    const rawText = getResponseText(response);
-    const parsed = JSON.parse(rawText);
-    return res.json({ ok: true, product, ...parsed });
+    return res.json({ ok: true, url: "/logo.png" });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: String(err?.message ?? err) });
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
   }
 });
 
+/** =======================
+ *  Prompt builder (ALTO IMPACTO ecommerce sin texto)
+ *  ======================= */
+function buildHighImpactPrompt({
+  productName = "Producto",
+  template = "Hero",
+  language = "es",
+  size = "1024x1024",
+  extraInstructions = "",
+}) {
+  const lang = String(language || "es").toLowerCase().startsWith("es") ? "Spanish" : "English";
+  const safeExtra = extraInstructions ? `Extra instructions: ${extraInstructions}.` : "";
+
+  return [
+    `Language: ${lang}. Output size: ${size}.`,
+    "Create an ultra-realistic professional e-commerce product photograph.",
+    "The product must look 100% real, physically accurate, commercially viable, and not AI-generated.",
+    "Studio environment with premium commercial lighting, realistic shadows/reflections, natural colors.",
+    "DSLR/mirrorless look, shallow depth of field (f/2.8–f/4), crisp details, clean background suitable for e-commerce.",
+    "Composition: product clearly visible, centered, clean framing; optional natural props/ingredients around it (subtle, not cluttered).",
+    "STRICT RULES: NO text, NO words, NO captions, NO banners, NO typography, NO badges, NO logos added by AI.",
+    "NO poster/flyer/graphic-design look. NO artificial glow. NO fantasy effects.",
+    "NO distorted packaging, NO weird hands/faces. If a model is present, it must be realistic and natural.",
+    `Template: ${template}. Product name: ${productName}.`,
+    safeExtra,
+  ]
+    .filter(Boolean)
+    .join(" ");
+}
+
+/** =======================
+ *  Utils: save base64 png to /public/generated
+ *  ======================= */
+function saveBase64PngToPublic(b64) {
+  ensureDir(generatedDir);
+  const id = crypto.randomBytes(12).toString("hex");
+  const filename = `${Date.now()}-${id}.png`;
+  const filepath = path.join(generatedDir, filename);
+  fs.writeFileSync(filepath, Buffer.from(b64, "base64"));
+  return `/generated/${filename}`;
+}
+
+/** =======================
+ *  Generate image
+ *  - Soporta JSON y FormData (multer.none)
+ *  - Devuelve URL pública (mejor que data-uri)
+ *  ======================= */
+app.post("/api/images/generate", upload.none(), async (req, res) => {
+  try {
+    const body = req.body || {};
+
+    const productName = body.productName || body.nombreProducto || "Producto";
+    const template = body.template || "Hero";
+    const size = body.size || "1024x1024";
+    const language = body.language || "es";
+    const extraInstructions = body.extraInstructions || "";
+
+    // MOCK opcional (para validar flujo sin gastar)
+    const isMock = String(process.env.OPENAI_MOCK || "false").toLowerCase() === "true";
+    const model = (process.env.OPENAI_IMAGE_MODEL || "gpt-image-1").trim();
+
+    const prompt_used = buildHighImpactPrompt({
+      productName,
+      template,
+      size,
+      language,
+      extraInstructions,
+    });
+
+    console.log("IMAGE MODEL:", model);
+    console.log("MOCK:", process.env.OPENAI_MOCK);
+    console.log("PROMPT_CHARS:", prompt_used.length);
+    console.log("IMAGE SIZE:", size);
+
+    if (isMock) {
+      // Devuelve una imagen placeholder local si quieres (si existe), o solo un ok
+      return res.json({
+        ok: true,
+        image_url: "/logo.png",
+        prompt_used,
+        mock: true,
+        model,
+      });
+    }
+
+    const result = await openai.images.generate({
+      model,
+      prompt: prompt_used,
+      size,
+    });
+
+    const data0 = result?.data?.[0];
+
+    // Preferimos b64 (para guardarla y devolver URL pública)
+    if (data0?.b64_json) {
+      const publicUrl = saveBase64PngToPublic(data0.b64_json);
+      return res.json({ ok: true, image_url: publicUrl, prompt_used, model });
+    }
+
+    // Si el proveedor retorna url directa, la devolvemos
+    if (data0?.url) {
+      return res.json({ ok: true, image_url: data0.url, prompt_used, model });
+    }
+
+    return res.status(500).json({ ok: false, error: "no_image_returned", prompt_used, model });
+  } catch (err) {
+    const msg = err?.message || String(err);
+    console.error("IMAGE ERROR:", msg);
+    return res.status(500).json({ ok: false, error: msg });
+  }
+});
+
+/** =======================
+ *  Start
+ *  ======================= */
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("SERVER ACTIVO EN http://localhost:" + PORT);
+  console.log(`SERVER ON :${PORT}`);
 });
