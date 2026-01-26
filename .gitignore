@@ -1,6 +1,5 @@
-node_modules/
-.env
+build/
+**/firebase-adminsdk*.json
 **/.env
-public/server/firebase-adminsdk.json
-server.pid
-.DS_Store
+**/.env.*
+!**/.env.example
