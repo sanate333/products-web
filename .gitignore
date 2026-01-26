@@ -1,4 +1,7 @@
 build/
+vendor/
+node_modules/
+**/node_modules/
 **/firebase-adminsdk*.json
 **/.env
 **/.env.*
