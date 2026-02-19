@@ -11,6 +11,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require __DIR__ . '/config.php';
 
+function normalizeCode(string $code): string {
+    $code = strtoupper(trim($code));
+    $code = preg_replace('/[^A-Z0-9_-]/', '', $code);
+    return substr($code, 0, 30);
+}
+
 function resolveStoreIdBySlugForCodes(string $slug): int {
     try {
         $principal = conectarPrincipal();
@@ -27,20 +33,38 @@ try {
         throw new Exception('Metodo no permitido');
     }
 
+    $rawCode = (string)($_GET['codigo'] ?? '');
+    $codigo = normalizeCode($rawCode);
+    if ($codigo === '') {
+        throw new Exception('Codigo invalido');
+    }
+
     $tiendaSlug = getTiendaActual();
     $storeId = resolveStoreIdBySlugForCodes($tiendaSlug);
     $conexion = conectarTienda($tiendaSlug);
     ensureCoreTables($conexion);
 
-    $stmt = $conexion->prepare("\n        SELECT idCodigo, codigo, descuento\n        FROM codigos\n        WHERE store_id <=> :store_id\n        ORDER BY idCodigo DESC\n    ");
+    $stmt = $conexion->prepare('SELECT idCodigo, codigo, descuento FROM codigos WHERE codigo = :codigo AND store_id <=> :store_id LIMIT 1');
+    $stmt->bindValue(':codigo', $codigo, PDO::PARAM_STR);
     $stmt->bindValue(':store_id', $storeId ?: null, $storeId ? PDO::PARAM_INT : PDO::PARAM_NULL);
     $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$row) {
+        http_response_code(404);
+        echo json_encode(['ok' => false, 'error' => 'Codigo no valido']);
+        exit;
+    }
+
+    $descuento = max(0, min(100, (float)($row['descuento'] ?? 0)));
 
     echo json_encode([
-        'codigos' => $stmt->fetchAll(PDO::FETCH_ASSOC),
+        'ok' => true,
+        'codigo' => (string)$row['codigo'],
+        'descuento' => $descuento,
     ]);
 } catch (Throwable $error) {
-    http_response_code(500);
-    echo json_encode(['error' => $error->getMessage()]);
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'error' => $error->getMessage()]);
 }
 ?>

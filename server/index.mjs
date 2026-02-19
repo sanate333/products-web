@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import multer from "multer";
@@ -6,12 +7,9 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
-import dotenv from "dotenv";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 app.use(cors());
@@ -280,9 +278,13 @@ app.get("/api/health", (req, res) => {
   const model = (process.env.OPENAI_IMAGE_MODEL || "gpt-image-1").trim();
   const vision_model = (process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini").trim();
   const edit_model = (process.env.OPENAI_EDIT_MODEL || "dall-e-2").trim();
+  const renderCommit = process.env.RENDER_GIT_COMMIT || "";
+  const renderService = process.env.RENDER_SERVICE_ID || "";
   res.json({
     ok: true,
     build: SERVER_BUILD,
+    render_commit: renderCommit,
+    render_service_id: renderService,
     ts: Date.now(),
     model,
     edit_model,

@@ -2,54 +2,53 @@
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, X-Tienda');
 
-// Manejo de solicitudes OPTIONS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-// Cargar variables de entorno desde el archivo .env
-require __DIR__.'/vendor/autoload.php';
-use Dotenv\Dotenv;
+require __DIR__ . '/config.php';
 
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-// Obtener los valores de las variables de entorno
-$servidor = $_ENV['DB_HOST'] . ':' . $_ENV['DB_PORT'];
-$usuario = $_ENV['DB_USER'];
-$contrasena = $_ENV['DB_PASS'];
-$dbname = $_ENV['DB_NAME'];
-
-try {
-    $dsn = "mysql:host=$servidor;dbname=$dbname";
-    $conexion = new PDO($dsn, $usuario, $contrasena);
-    $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
-        $idCodigo = isset($_GET['idCodigo']) ? $_GET['idCodigo'] : null;
-
-        if (!$idCodigo) {
-            echo json_encode(["error" => "Se requiere proporcionar un ID de código para eliminarlo."]);
-            exit;
-        }
-
-        // Eliminar el código de la base de datos
-        $sqlDelete = "DELETE FROM codigos WHERE idCodigo = :idCodigo";
-        $sentenciaDelete = $conexion->prepare($sqlDelete);
-        $sentenciaDelete->bindParam(':idCodigo', $idCodigo, PDO::PARAM_INT);
-
-        if ($sentenciaDelete->execute()) {
-            echo json_encode(["mensaje" => "Código eliminado correctamente"]);
-        } else {
-            echo json_encode(["error" => "Error al eliminar el código"]);
-        }
-
-        exit;
+function resolveStoreIdBySlugForCodes(string $slug): int {
+    try {
+        $principal = conectarPrincipal();
+        $stmt = $principal->prepare('SELECT id FROM stores WHERE slug = :slug LIMIT 1');
+        $stmt->execute([':slug' => $slug]);
+        return (int)($stmt->fetchColumn() ?: 0);
+    } catch (Throwable $e) {
+        return 0;
     }
-} catch (PDOException $error) {
-    echo json_encode(["error" => "Error de conexión: " . $error->getMessage()]);
 }
 
+try {
+    if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
+        throw new Exception('Metodo no permitido');
+    }
+
+    $idCodigo = isset($_GET['idCodigo']) ? (int)$_GET['idCodigo'] : 0;
+    if ($idCodigo <= 0) {
+        throw new Exception('Se requiere un ID de codigo valido.');
+    }
+
+    $tiendaSlug = getTiendaActual();
+    $storeId = resolveStoreIdBySlugForCodes($tiendaSlug);
+    $conexion = conectarTienda($tiendaSlug);
+    ensureCoreTables($conexion);
+
+    $delete = $conexion->prepare('DELETE FROM codigos WHERE idCodigo = :idCodigo AND store_id <=> :store_id');
+    $delete->bindValue(':idCodigo', $idCodigo, PDO::PARAM_INT);
+    $delete->bindValue(':store_id', $storeId ?: null, $storeId ? PDO::PARAM_INT : PDO::PARAM_NULL);
+    $delete->execute();
+
+    if ($delete->rowCount() <= 0) {
+        throw new Exception('No se encontro el codigo para eliminar.');
+    }
+
+    echo json_encode(['mensaje' => 'Codigo eliminado correctamente']);
+} catch (Throwable $error) {
+    http_response_code(400);
+    echo json_encode(['error' => $error->getMessage()]);
+}
 ?>

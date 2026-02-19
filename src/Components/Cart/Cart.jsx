@@ -1,13 +1,16 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from 'react-modal';
 import baseURL, { resolveImg } from '../url';
 import './Cart.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faShoppingCart, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faEye, faShoppingCart, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Link as Anchor } from "react-router-dom";
 import moneda from '../moneda';
+import { formatCOP } from '../../utils/price';
+import { buildProductPath } from '../../utils/publicLinks';
 
 const WHATSAPP_NUMBER = '573234549614';
+const INSTAGRAM_URL = 'https://www.instagram.com/sanate.col/';
 const COLOMBIA_DEPARTMENTS = [
     { name: 'Amazonas', cities: ['Leticia'] },
     { name: 'Antioquia', cities: ['Medellin', 'Bello', 'Itagui', 'Envigado', 'Rionegro', 'Apartado'] },
@@ -60,10 +63,20 @@ export default function Cart() {
     const [codigo, setCodigo] = useState('');
     const [nota, setNota] = useState('');
     const [totalPrice, setTotalPrice] = useState(0);
+    const [codigoAplicado, setCodigoAplicado] = useState('');
+    const [codigoDescuentoPct, setCodigoDescuentoPct] = useState(0);
+    const [codigoStatus, setCodigoStatus] = useState('');
+    const [validandoCodigo, setValidandoCodigo] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState('efectivo');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formError, setFormError] = useState('');
     const [cartVersion, setCartVersion] = useState(0);
+    const [ofertasCarrito, setOfertasCarrito] = useState([]);
+    const [offerPreviewOpen, setOfferPreviewOpen] = useState(false);
+    const [cartAddMsg, setCartAddMsg] = useState('');
+    const [shopifyDiscountApplied, setShopifyDiscountApplied] = useState(false);
+    const [shopifyDiscountMsg, setShopifyDiscountMsg] = useState('');
+    const [exitOfferOpen, setExitOfferOpen] = useState(false);
 
     useEffect(() => {
         let totalPriceCalc = 0;
@@ -77,24 +90,65 @@ export default function Cart() {
     const departmentCities = selectedDepartment?.cities || [];
     const usesManualCity = ciudad === 'Otro';
     const cityValue = usesManualCity ? ciudadManual.trim() : ciudad;
-    const discountRate = paymentMethod === 'transferencia' ? 0.08 : 0;
-    const discountAmount = totalPrice * discountRate;
-    const finalTotal = totalPrice - discountAmount;
+    const transferDiscountRate = paymentMethod === 'transferencia' ? 0.08 : 0;
+    const transferDiscountAmount = totalPrice * transferDiscountRate;
+    const popupDiscountRate = shopifyDiscountApplied ? 0.05 : 0;
+    const popupDiscountAmount = totalPrice * popupDiscountRate;
+    const subtotalConOfertas = Math.max(0, totalPrice - transferDiscountAmount - popupDiscountAmount);
+    const codigoDiscountAmount = subtotalConOfertas * (codigoDescuentoPct / 100);
+    const finalTotal = Math.max(0, subtotalConOfertas - codigoDiscountAmount);
 
     useEffect(() => {
         cargarProductos();
     }, [isFocused]);
 
+    useEffect(() => {
+        const savedOffers = [
+            {
+                idProducto: localStorage.getItem('ofertaCarritoId1') || '',
+                precioOferta: localStorage.getItem('ofertaCarritoPrecio1') || '',
+                activa: localStorage.getItem('ofertaCarritoActiva1') === null
+                    ? true
+                    : localStorage.getItem('ofertaCarritoActiva1') === '1',
+            },
+            {
+                idProducto: localStorage.getItem('ofertaCarritoId2') || '',
+                precioOferta: localStorage.getItem('ofertaCarritoPrecio2') || '',
+                activa: localStorage.getItem('ofertaCarritoActiva2') === '1',
+            },
+        ].filter((item) => item.idProducto && item.activa);
+        setOfertasCarrito(savedOffers);
+    }, [cartVersion]);
+
+    const persistCart = (items) => {
+        const normalizedItems = items.map((item) => ({
+            idProducto: item.idProducto,
+            cantidad: item.cantidad,
+            item: item.item || [],
+            precio: item.precio,
+            variantLabel: item.variantLabel || '',
+            cartTitle: item.cartTitle || item.titulo || '',
+            gananciaAprox: item.gananciaAprox ?? null,
+        }));
+        localStorage.setItem('cart', JSON.stringify(normalizedItems));
+        window.dispatchEvent(new Event('cartUpdated'));
+    };
+
     const fetchCartItems = async () => {
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         const items = cart.map((cartItem) => {
             const producto = productos.find(producto => producto.idProducto === cartItem.idProducto);
+            if (!producto) return null;
             return {
                 ...producto,
+                precio: Number(cartItem.precio ?? producto.precio),
                 cantidad: cartItem.cantidad,
                 item: cartItem.item,
+                variantLabel: cartItem.variantLabel || '',
+                cartTitle: cartItem.cartTitle || '',
+                gananciaAprox: cartItem.gananciaAprox ?? producto?.gananciaAprox ?? null,
             };
-        });
+        }).filter(Boolean);
 
         setCartItems(items);
         setLoading(false);
@@ -113,6 +167,15 @@ export default function Cart() {
         };
         window.addEventListener('cartUpdated', handleCartUpdated);
         return () => window.removeEventListener('cartUpdated', handleCartUpdated);
+    }, []);
+
+    useEffect(() => {
+        const handleCartItemAdded = () => {
+            setCartAddMsg('Agregado al carrito');
+            setTimeout(() => setCartAddMsg(''), 1800);
+        };
+        window.addEventListener('cartItemAdded', handleCartItemAdded);
+        return () => window.removeEventListener('cartItemAdded', handleCartItemAdded);
     }, []);
 
     useEffect(() => {
@@ -137,6 +200,53 @@ export default function Cart() {
             .catch(error => console.error('Error al cargar productos:', error));
     };
 
+    const normalizeCodigo = (value) => String(value || '').trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 30);
+
+    const handleAplicarCodigo = async () => {
+        const normalized = normalizeCodigo(codigo);
+        if (!normalized) {
+            setCodigoDescuentoPct(0);
+            setCodigoAplicado('');
+            setCodigoStatus('Escribe un codigo valido.');
+            return;
+        }
+
+        setValidandoCodigo(true);
+        setCodigoStatus('Validando codigo...');
+
+        try {
+            const response = await fetch(`${baseURL}/codigosValidate.php?codigo=${encodeURIComponent(normalized)}`, {
+                method: 'GET',
+            });
+            const data = await response.json();
+            if (!response.ok || !data?.ok) {
+                setCodigoDescuentoPct(0);
+                setCodigoAplicado('');
+                setCodigoStatus(data?.error || 'Codigo no valido');
+                return;
+            }
+
+            const pct = Math.max(0, Math.min(100, Number(data.descuento || 0)));
+            if (pct <= 0) {
+                setCodigoDescuentoPct(0);
+                setCodigoAplicado('');
+                setCodigoStatus('El codigo no tiene descuento activo.');
+                return;
+            }
+
+            setCodigo(normalized);
+            setCodigoAplicado(data.codigo || normalized);
+            setCodigoDescuentoPct(pct);
+            setCodigoStatus(`Codigo aplicado: ${pct.toFixed(2)}%`);
+        } catch (error) {
+            setCodigoDescuentoPct(0);
+            setCodigoAplicado('');
+            setCodigoStatus('No se pudo validar el codigo.');
+        } finally {
+            setValidandoCodigo(false);
+        }
+    };
+
     const obtenerImagen = (item) => {
         const src = item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || null;
         return resolveImg(src);
@@ -152,6 +262,7 @@ export default function Cart() {
         setModalIsOpen(false);
         setIsFocused(false);
         setDetailsOpen(false);
+        setOfferPreviewOpen(false);
     };
 
     const openDetails = () => {
@@ -160,24 +271,52 @@ export default function Cart() {
 
     const closeDetails = () => {
         setDetailsOpen(false);
+        setExitOfferOpen(false);
     };
 
-    const removeFromCart = (id) => {
-        const updatedCart = cartItems.filter(item => item.idProducto !== id);
+    const applyShopifyCloseDiscount = () => {
+        if (shopifyDiscountApplied) {
+            setShopifyDiscountMsg('El 5% ya esta aplicado.');
+            return;
+        }
+        setShopifyDiscountApplied(true);
+        setShopifyDiscountMsg('Se aplico 5% de descuento al total.');
+    };
+
+    const handleOpenExitOffer = () => {
+        setExitOfferOpen(true);
+    };
+
+    const handleAcceptExitOffer = () => {
+        applyShopifyCloseDiscount();
+        setExitOfferOpen(false);
+    };
+
+    const handleDeclineExitOffer = () => {
+        setExitOfferOpen(false);
+        setDetailsOpen(false);
+        setModalIsOpen(false);
+        setIsFocused(false);
+        window.location.href = INSTAGRAM_URL;
+    };
+
+    const removeFromCart = (indexToRemove) => {
+        const updatedCart = cartItems.filter((_, index) => index !== indexToRemove);
         setCartItems(updatedCart);
-        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        persistCart(updatedCart);
     };
 
     const clearCart = () => {
         setCartItems([]);
         localStorage.removeItem('cart');
+        window.dispatchEvent(new Event('cartUpdated'));
     };
 
     const increaseQuantity = (index) => {
         const updatedCartItems = [...cartItems];
         updatedCartItems[index].cantidad += 1;
         setCartItems(updatedCartItems);
-        localStorage.setItem('cart', JSON.stringify(updatedCartItems));
+        persistCart(updatedCartItems);
     };
 
     const decreaseQuantity = (index) => {
@@ -185,8 +324,56 @@ export default function Cart() {
         if (updatedCartItems[index].cantidad > 1) {
             updatedCartItems[index].cantidad -= 1;
             setCartItems(updatedCartItems);
-            localStorage.setItem('cart', JSON.stringify(updatedCartItems));
+            persistCart(updatedCartItems);
         }
+    };
+
+    const ofertasConfiguradas = ofertasCarrito
+        .map((oferta) => {
+            const producto = productos.find((item) => String(item.idProducto) === String(oferta.idProducto));
+            if (!producto) return null;
+            const precioOferta =
+                oferta.precioOferta !== '' && !Number.isNaN(Number(oferta.precioOferta))
+                    ? Number(oferta.precioOferta)
+                    : Number(producto.precio);
+            return {
+                ...producto,
+                precioOferta,
+            };
+        })
+        .filter(Boolean)
+        .filter((item, idx, arr) => arr.findIndex((x) => String(x.idProducto) === String(item.idProducto)) === idx);
+
+    const ofertaSugerida =
+        ofertasConfiguradas.find(
+            (oferta) => !cartItems.some((cartItem) => String(cartItem.idProducto) === String(oferta.idProducto))
+        ) || ofertasConfiguradas[0] || null;
+
+    const ofertaYaEnCarrito = ofertaSugerida
+        ? cartItems.some((cartItem) => String(cartItem.idProducto) === String(ofertaSugerida.idProducto))
+        : false;
+
+    const agregarOfertaAlCarrito = (oferta) => {
+        if (!oferta) return;
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const idx = cart.findIndex((item) => String(item.idProducto) === String(oferta.idProducto));
+        if (idx >= 0) {
+            cart[idx].cantidad = Number(cart[idx].cantidad || 1) + 1;
+            cart[idx].precio = Number(oferta.precioOferta);
+        } else {
+            cart.push({
+                idProducto: oferta.idProducto,
+                cantidad: 1,
+                item: [],
+                precio: Number(oferta.precioOferta),
+                variantLabel: '',
+                cartTitle: oferta.titulo || '',
+                gananciaAprox: oferta.gananciaAprox ?? null,
+            });
+        }
+        localStorage.setItem('cart', JSON.stringify(cart));
+        setCartVersion((prev) => prev + 1);
+        window.dispatchEvent(new Event('cartUpdated'));
     };
 
     const handleConfirmPedido = async () => {
@@ -213,9 +400,14 @@ export default function Cart() {
 
         const productosPedido = cartItems.map(item => ({
             idProducto: item.idProducto,
-            titulo: item.titulo,
+            titulo: item.cartTitle || item.titulo,
+            tituloBase: item.titulo,
+            variante: item.variantLabel || '',
             cantidad: item.cantidad,
             precio: item.precio,
+            total: Number((item.precio * item.cantidad).toFixed(2)),
+            gananciaAprox: item.gananciaAprox ?? null,
+            gananciaTotal: item.gananciaAprox ? Number(item.gananciaAprox) * Number(item.cantidad || 1) : null,
             imagen: obtenerImagen(item),
         }));
 
@@ -230,7 +422,7 @@ export default function Cart() {
             ciudad: cityValue,
             departamento,
             adicionales: adicionales.trim(),
-            codigo: codigo.trim(),
+            codigo: codigoAplicado || normalizeCodigo(codigo),
             nota: nota.trim(),
             formaPago: paymentMethod,
             total: Number(finalTotal.toFixed(2)),
@@ -248,7 +440,7 @@ export default function Cart() {
             formData.append('ciudad', cityValue);
             formData.append('departamento', departamento);
             formData.append('adicionales', adicionales.trim());
-            formData.append('codigo', codigo.trim());
+            formData.append('codigo', codigoAplicado || normalizeCodigo(codigo));
             formData.append('nota', nota.trim());
             formData.append('formaPago', paymentMethod);
             formData.append('total', Number(finalTotal.toFixed(2)));
@@ -271,7 +463,7 @@ export default function Cart() {
         }
 
         const cartDetails = productosPedido.map((item) => (
-            `- ${item.titulo} x${item.cantidad} - ${moneda} ${item.precio}`
+            `- ${item.titulo}${item.variante ? ` (${item.variante})` : ''} x${item.cantidad} - ${moneda} ${formatCOP(item.precio)}`
         ));
 
         const messageParts = [];
@@ -287,8 +479,8 @@ export default function Cart() {
         if (adicionales.trim()) {
             messageParts.push(`Adicionales: ${adicionales.trim()}`);
         }
-        if (codigo.trim()) {
-            messageParts.push(`Codigo: ${codigo.trim()}`);
+        if (codigoAplicado) {
+            messageParts.push(`Codigo: ${codigoAplicado} (${codigoDescuentoPct.toFixed(2)}%)`);
         }
         if (nota.trim()) {
             messageParts.push(`Nota: ${nota.trim()}`);
@@ -296,10 +488,16 @@ export default function Cart() {
         messageParts.push(`Forma de pago: ${paymentMethod === 'efectivo' ? 'Efectivo' : 'Transferencia'}`);
         messageParts.push('Productos:');
         messageParts.push(cartDetails.join('\n'));
-        if (discountRate > 0) {
-            messageParts.push(`Descuento transferencia: -${moneda} ${discountAmount.toFixed(2)}`);
+        if (transferDiscountRate > 0) {
+            messageParts.push(`Descuento transferencia: -${moneda} ${formatCOP(transferDiscountAmount)}`);
         }
-        messageParts.push(`Total: ${moneda} ${finalTotal.toFixed(2)}`);
+        if (popupDiscountRate > 0) {
+            messageParts.push(`Descuento popup: -${moneda} ${formatCOP(popupDiscountAmount)}`);
+        }
+        if (codigoDescuentoPct > 0) {
+            messageParts.push(`Descuento codigo: -${moneda} ${formatCOP(codigoDiscountAmount)}`);
+        }
+        messageParts.push(`Total: ${moneda} ${formatCOP(finalTotal)}`);
 
         const messageText = messageParts.join('\n');
         const encodedMessage = encodeURIComponent(messageText);
@@ -319,10 +517,15 @@ export default function Cart() {
         setCiudadManual('');
         setAdicionales('');
         setCodigo('');
+        setCodigoAplicado('');
+        setCodigoDescuentoPct(0);
+        setCodigoStatus('');
         setNota('');
         setModalIsOpen(false);
         setDetailsOpen(false);
         setIsSubmitting(false);
+        setShopifyDiscountApplied(false);
+        setShopifyDiscountMsg('');
         clearCart();
     };
 
@@ -366,22 +569,22 @@ export default function Cart() {
                             ) : (
                                 <div>
                                     {cartItems.map((item, index) => (
-                                        <div key={item?.idProducto} className='cardProductCart' >
-                                            <Anchor to={`/producto/${item?.idProducto}/${item?.titulo?.replace(/\s+/g, '-')}`} onClick={closeModal} className="cardProductCartImage">
+                                        <div key={`${item?.idProducto}-${item?.variantLabel || 'base'}-${index}`} className='cardProductCart' >
+                                            <Anchor to={buildProductPath(item?.idProducto, item?.titulo)} onClick={closeModal} className="cardProductCartImage">
                                                 <img src={obtenerImagen(item)} alt="imagen" />
                                             </Anchor>
                                             <div className='cardProductCartText'>
-                                                <h3>{item.titulo}</h3>
+                                                <h3>{item.cartTitle || item.titulo}</h3>
                                                 <span>
                                                     {item?.item?.map((sabor, saborIndex) => (
                                                         <span key={saborIndex}> {sabor}</span>
                                                     ))}
                                                 </span>
-                                                <strong>{moneda} {item?.precio}</strong>
-                                                <span className='cartSubtotal'>Subtotal: {moneda} {(item?.precio * item.cantidad).toFixed(2)}</span>
+                                                <strong>{moneda} {formatCOP(item?.precio)}</strong>
+                                                <span className='cartSubtotal'>Subtotal: {moneda} {formatCOP(item?.precio * item.cantidad)}</span>
                                             </div>
                                             <div className='deColumn'>
-                                                <button onClick={() => removeFromCart(item.idProducto)} className='deleteCart'>  <FontAwesomeIcon icon={faTrash} /></button>
+                                                <button onClick={() => removeFromCart(index)} className='deleteCart'>  <FontAwesomeIcon icon={faTrash} /></button>
                                                 <div className='deFlexCantidad'>
                                                     <button onClick={() => decreaseQuantity(index)}>-</button>
                                                     <span>{item.cantidad}</span>
@@ -394,13 +597,58 @@ export default function Cart() {
                             )}
                         </div>
                         <div className='deColumnCart'>
+                            {ofertaSugerida && (
+                                <div className='cartOfferCard'>
+                                    <div className='cartOfferHeader'>
+                                        <span>Oferta de locura</span>
+                                    </div>
+                                    <div className='cartOfferBody'>
+                                        <img src={obtenerImagen(ofertaSugerida)} alt={ofertaSugerida.titulo} />
+                                        <div className='cartOfferInfo'>
+                                            <strong>{ofertaSugerida.titulo}</strong>
+                                            <span>{moneda} {formatCOP(ofertaSugerida.precioOferta)}</span>
+                                        </div>
+                                        <div className='cartOfferActions'>
+                                            <button type='button' className='cartOfferViewBtn' onClick={() => setOfferPreviewOpen(true)}>
+                                                <FontAwesomeIcon icon={faEye} /> Ver
+                                            </button>
+                                            <button
+                                                type='button'
+                                                className={`cartOfferBtn ${ofertaYaEnCarrito ? 'added' : ''}`}
+                                                onClick={() => agregarOfertaAlCarrito(ofertaSugerida)}
+                                                disabled={ofertaYaEnCarrito}
+                                            >
+                                                {ofertaYaEnCarrito ? 'Agregado :)' : 'Super oferta'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                             <div className='cartTotals'>
                                 <span>Subtotal</span>
-                                <strong>{moneda} {totalPrice.toFixed(2)}</strong>
+                                <strong>{moneda} {formatCOP(totalPrice)}</strong>
                             </div>
+                            {transferDiscountRate > 0 && (
+                                <div className='cartTotals'>
+                                    <span>Desc. transferencia</span>
+                                    <strong>-{moneda} {formatCOP(transferDiscountAmount)}</strong>
+                                </div>
+                            )}
+                            {popupDiscountRate > 0 && (
+                                <div className='cartTotals'>
+                                    <span>Desc. popup</span>
+                                    <strong>-{moneda} {formatCOP(popupDiscountAmount)}</strong>
+                                </div>
+                            )}
+                            {codigoDescuentoPct > 0 && (
+                                <div className='cartTotals'>
+                                    <span>Desc. codigo ({codigoDescuentoPct.toFixed(2)}%)</span>
+                                    <strong>-{moneda} {formatCOP(codigoDiscountAmount)}</strong>
+                                </div>
+                            )}
                             <div className='cartTotals total'>
                                 <span>Total</span>
-                                <strong>{moneda} {totalPrice.toFixed(2)}</strong>
+                                <strong>{moneda} {formatCOP(finalTotal)}</strong>
                             </div>
                             <button className='btnConfirm' onClick={openDetails}>
                                 INICIAR COMPRA
@@ -416,8 +664,12 @@ export default function Cart() {
                             <div className='deFLex'>
                                 <button onClick={closeDetails} ><FontAwesomeIcon icon={faArrowLeft} />  </button>
                                 <h4 className='cartHeaderTitle'>COMPLETA TU PEDIDO ⬇️</h4>
+                                <button type="button" className='shopifyCloseBtn' onClick={handleOpenExitOffer}>X</button>
                             </div>
                             <div className="modal-send-form">
+                                {shopifyDiscountMsg && (
+                                    <p className='shopifyDiscountMsg'>{shopifyDiscountMsg}</p>
+                                )}
                                 <p className='formNotice'>Por Favor Ingrese los Datos de envio</p>
                                 <input
                                     type="text"
@@ -491,9 +743,22 @@ export default function Cart() {
                                     type="text"
                                     id="codigo"
                                     value={codigo}
-                                    onChange={(e) => setCodigo(e.target.value)}
+                                    onChange={(e) => {
+                                        const next = normalizeCodigo(e.target.value);
+                                        setCodigo(next);
+                                        if (next !== codigoAplicado) {
+                                            setCodigoAplicado('');
+                                            setCodigoDescuentoPct(0);
+                                        }
+                                    }}
                                     placeholder='Codigo de descuento (opcional)'
                                 />
+                                <button type='button' className='btnApplyCode' onClick={handleAplicarCodigo} disabled={validandoCodigo}>
+                                    {validandoCodigo ? 'Validando...' : 'Aplicar codigo'}
+                                </button>
+                                {codigoStatus && (
+                                    <p className={`codeStatus ${codigoDescuentoPct > 0 ? 'ok' : ''}`}>{codigoStatus}</p>
+                                )}
                                 <textarea
                                     placeholder="Nota (opcional)"
                                     value={nota}
@@ -531,30 +796,40 @@ export default function Cart() {
                                     <h5>Resumen del pedido</h5>
                                     <div className='summaryItems'>
                                         {cartItems.map((item) => (
-                                            <div className='summaryRow' key={`${item.idProducto}-${item?.item?.join('-') || 'base'}`}>
-                                                <span className='summaryName'>{item.titulo}</span>
+                                            <div className='summaryRow' key={`${item.idProducto}-${item.variantLabel || 'base'}-${item.cantidad}`}>
+                                                <span className='summaryName'>{item.cartTitle || item.titulo}</span>
                                                 <span className='summaryQty'>x{item.cantidad}</span>
-                                                <span className='summaryPrice'>{moneda} {(item.precio * item.cantidad).toFixed(2)}</span>
+                                                <span className='summaryPrice'>{moneda} {formatCOP(item.precio * item.cantidad)}</span>
                                             </div>
                                         ))}
                                     </div>
                                     <div className='summaryTotals'>
                                         <div className='summaryRow'>
                                             <span>Subtotal</span>
-                                            <strong>{moneda} {totalPrice.toFixed(2)}</strong>
+                                            <strong>{moneda} {formatCOP(totalPrice)}</strong>
                                         </div>
-                                    {discountRate > 0 && (
+                                    {transferDiscountRate > 0 && (
                                         <div className='summaryRow discountRow'>
                                             <span>Descuento transferencia</span>
-                                            <strong>-{moneda} {discountAmount.toFixed(2)}</strong>
+                                            <strong>-{moneda} {formatCOP(transferDiscountAmount)}</strong>
                                         </div>
                                     )}
-                                    {discountRate > 0 && (
-                                        <div className='summaryRow totalRow'>
-                                            <span>Total</span>
-                                            <strong>{moneda} {finalTotal.toFixed(2)}</strong>
+                                    {popupDiscountRate > 0 && (
+                                        <div className='summaryRow discountRow'>
+                                            <span>Descuento popup</span>
+                                            <strong>-{moneda} {formatCOP(popupDiscountAmount)}</strong>
                                         </div>
                                     )}
+                                    {codigoDescuentoPct > 0 && (
+                                        <div className='summaryRow discountRow'>
+                                            <span>Descuento codigo ({codigoDescuentoPct.toFixed(2)}%)</span>
+                                            <strong>-{moneda} {formatCOP(codigoDiscountAmount)}</strong>
+                                        </div>
+                                    )}
+                                    <div className='summaryRow totalRow'>
+                                        <span>Total</span>
+                                        <strong>{moneda} {formatCOP(finalTotal)}</strong>
+                                    </div>
                                 </div>
                                 </div>
 
@@ -567,14 +842,72 @@ export default function Cart() {
                                         {isSubmitting ? 'Procesando...' : (
                                             <>
                                                 <span className="btnConfirmTitle">Finaliza tu compra ✅</span>
-                                                <span className="btnConfirmTotal">💰 {moneda} {finalTotal.toFixed(2)}</span>
+                                                <span className="btnConfirmTotal">💰 {moneda} {formatCOP(finalTotal)}</span>
                                             </>
                                         )}
                                     </button>
                                 </div>
                             </div>
                         </Modal>
+                        <Modal
+                            isOpen={exitOfferOpen}
+                            onRequestClose={() => setExitOfferOpen(false)}
+                            className="cartExitOfferModal"
+                            overlayClassName="cartExitOfferOverlay"
+                        >
+                            <div className='cartExitOfferContent'>
+                                <h3>iEspera!</h3>
+                                <p className='cartExitOfferSubtitle'>iTenemos una oferta para ti!</p>
+                                <h4>OBTEN UN DESCUENTO EXTRA EN TU PEDIDO:</h4>
+                                <div className='cartExitOfferBadge'>5%</div>
+                                <p className='cartExitOfferQuestion'>iQuieres completar tu pedido?</p>
+                                <button
+                                    type='button'
+                                    className='cartExitOfferAccept'
+                                    onClick={handleAcceptExitOffer}
+                                >
+                                    COMPLETA TU PEDIDO CON 5% DE DESCUENTO
+                                </button>
+                                <button
+                                    type='button'
+                                    className='cartExitOfferDecline'
+                                    onClick={handleDeclineExitOffer}
+                                >
+                                    No gracias
+                                </button>
+                            </div>
+                        </Modal>
                     </>
+                )}
+            </Modal>
+            {cartAddMsg && !modalIsOpen && (
+                <div className='cartAddedToast'>{cartAddMsg}</div>
+            )}
+            <Modal
+                isOpen={offerPreviewOpen && Boolean(ofertaSugerida)}
+                onRequestClose={() => setOfferPreviewOpen(false)}
+                className="cartOfferPreviewModal"
+                overlayClassName="overlay-cart"
+            >
+                {ofertaSugerida && (
+                    <div className='cartOfferPreviewContent'>
+                        <button type='button' className='cartOfferPreviewClose' onClick={() => setOfferPreviewOpen(false)}>X</button>
+                        <img src={obtenerImagen(ofertaSugerida)} alt={ofertaSugerida.titulo} />
+                        <h4>{ofertaSugerida.titulo}</h4>
+                        <p>{ofertaSugerida.descripcion || 'Producto recomendado para completar tu compra.'}</p>
+                        <strong>{moneda} {formatCOP(ofertaSugerida.precioOferta)}</strong>
+                        <button
+                            type='button'
+                            className={`cartOfferBtn ${ofertaYaEnCarrito ? 'added' : ''}`}
+                            onClick={() => {
+                                agregarOfertaAlCarrito(ofertaSugerida);
+                                setOfferPreviewOpen(false);
+                            }}
+                            disabled={ofertaYaEnCarrito}
+                        >
+                            {ofertaYaEnCarrito ? 'Agregado :)' : 'Agregar super oferta al carrito'}
+                        </button>
+                    </div>
                 )}
             </Modal>
         </div >

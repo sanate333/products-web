@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import Swal from 'sweetalert2';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import baseURL from '../../url';
 import NewCodigo from '../NewCodigo/NewCodigo';
-import moneda from '../../moneda';
+
 export default function CodigosData() {
     const [codigos, setCodigos] = useState([]);
 
@@ -22,18 +22,18 @@ export default function CodigosData() {
             .then(data => {
                 setCodigos(data.codigos || []);
             })
-            .catch(error => console.error('Error al cargar códigos:', error));
+            .catch(error => console.error('Error al cargar codigos:', error));
     };
 
     const eliminarCodigo = (idCodigo) => {
         Swal.fire({
-            title: '¿Estás seguro?',
-            text: '¡No podrás revertir esto!',
+            title: 'Estas seguro?',
+            text: 'No podras revertir esto',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
-            confirmButtonText: 'Sí, eliminar',
+            confirmButtonText: 'Si, eliminar',
             cancelButtonText: 'Cancelar',
         }).then((result) => {
             if (result.isConfirmed) {
@@ -42,37 +42,33 @@ export default function CodigosData() {
                 })
                     .then(response => response.json())
                     .then(data => {
-                        Swal.fire(
-                            '¡Eliminado!',
-                            data.mensaje,
-                            'success'
-                        );
+                        if (data?.error) {
+                            toast.error(data.error);
+                            return;
+                        }
+                        Swal.fire('Eliminado', data.mensaje, 'success');
                         cargarCodigos();
                     })
                     .catch(error => {
-                        console.error('Error al eliminar código:', error);
-                        toast.error(error);
+                        console.error('Error al eliminar codigo:', error);
+                        toast.error('No se pudo eliminar el codigo');
                     });
             }
         });
     };
-
-
-
 
     return (
         <div>
             <ToastContainer />
             <NewCodigo />
 
-
             <div className='table-container'>
                 <table className='table'>
                     <thead>
                         <tr>
-                            <th>Id Código</th>
-                            <th>Código</th>
-                            <th>Descuento</th>
+                            <th>Id Codigo</th>
+                            <th>Codigo</th>
+                            <th>Descuento (%)</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
@@ -81,12 +77,11 @@ export default function CodigosData() {
                             <tr key={item.idCodigo}>
                                 <td>{item.idCodigo}</td>
                                 <td>{item.codigo}</td>
-                                <td style={{ color: 'green' }}>{moneda} {item.descuento?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")}</td>
+                                <td style={{ color: 'green' }}>{Number(item.descuento || 0).toFixed(2)}%</td>
                                 <td>
                                     <button className='eliminar' onClick={() => eliminarCodigo(item.idCodigo)}>
                                         <FontAwesomeIcon icon={faTrash} />
                                     </button>
-
                                 </td>
                             </tr>
                         ))}
@@ -95,4 +90,4 @@ export default function CodigosData() {
             </div>
         </div>
     );
-};
+}

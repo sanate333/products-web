@@ -8,13 +8,14 @@ import ProductosLoading from '../ProductosLoading/ProductosLoading';
 import { Link as Anchor } from "react-router-dom";
 import moneda from '../moneda';
 import { registerFcmToken } from '../../firebase';
+import { formatCOP, parseCOP } from '../../utils/price';
+import { buildProductPath } from '../../utils/publicLinks';
 
 SwiperCore.use([Navigation, Pagination, Autoplay]);
 
-export default function Products() {
+export default function Products({ viewMode = 'home' }) {
     const [categorias, setCategorias] = useState([]);
     const [loading, setLoading] = useState(true);
-    const categoriasRefs = useRef([]);
     const swiperRef = useRef(null);
     const [productos, setProductos] = useState([]);
     const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('Todo');
@@ -27,6 +28,8 @@ export default function Products() {
     const [registerName, setRegisterName] = useState('');
     const [registerPhone, setRegisterPhone] = useState('');
     const [registerStatus, setRegisterStatus] = useState('');
+    const [catalogoBanners, setCatalogoBanners] = useState([]);
+    const isCatalogView = viewMode === 'catalogo';
     const ua = navigator.userAgent || '';
     const isAndroid = /Android/i.test(ua);
     const isInAppBrowser = /(Instagram|FBAN|FBAV|FB_IAB|FB4A|FB4B|TikTok|Bytedance|Line|Snapchat|Twitter)/i.test(ua);
@@ -60,6 +63,7 @@ export default function Products() {
     useEffect(() => {
         cargarProductos();
         cargarCategorias();
+        cargarBannersCatalogo();
         return () => {};
     }, []);
 
@@ -179,70 +183,147 @@ export default function Products() {
 
     const isVisibleProduct = (item) => {
         const estado = (item?.estadoProducto || '').toLowerCase();
-        return estado !== 'desactivado';
+        const hasImage = Boolean(item?.imagen1 || item?.imagen2 || item?.imagen3 || item?.imagen4 || item?.imagen || item?.image);
+        return estado !== 'desactivado' && hasImage;
     };
 
-    const cargarProductos = () => {
-        fetch(`${baseURL}/productosGet.php`, {
-            method: 'GET',
-        })
-            .then(response => response.json())
-            .then(data => {
-                const loadedProducts = data.productos || [];
+    const normalizeProducto = (item, index) => {
+        const idProducto = item.idProducto || item.id || `prod-${index}`;
+        const idCategoria = item.idCategoria || item.categoria || item.category || 'general';
+        return {
+            idProducto,
+            idCategoria,
+            titulo: item.titulo || item.nombre || item.name || `Producto ${index + 1}`,
+            descripcion: item.descripcion || '',
+            precio: item.precio ?? item.price ?? 0,
+            precioAnterior: item.precioAnterior ?? item.previousPrice,
+            imagen1: item.imagen1 || item.imagen || item.image || null,
+            imagen2: item.imagen2 || null,
+            imagen3: item.imagen3 || null,
+            imagen4: item.imagen4 || null,
+            masVendido: item.masVendido || 'no',
+            estadoProducto: item.estadoProducto || 'activo',
+        };
+    };
+
+    const normalizeCategoria = (item, index) => ({
+        idCategoria: item.idCategoria || item.id || item.slug || `cat-${index}`,
+        categoria: item.categoria || item.nombre || item.name || `Categoria ${index + 1}`,
+    });
+
+    const buildShowcase = (loadedProducts) => {
+        const availableProducts = loadedProducts.filter(isVisibleProduct);
+        const pool = availableProducts.length ? availableProducts : loadedProducts;
+        const shuffled = [...pool];
+        for (let i = shuffled.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        let showcase = shuffled;
+        if (showcase.length > 0 && showcase.length < 6) {
+            const repeats = Math.ceil(6 / showcase.length);
+            showcase = Array.from({ length: repeats }, () => showcase).flat().slice(0, 6);
+        }
+        return showcase;
+    };
+
+    const cargarProductos = async () => {
+        const endpoints = [`${baseURL}/productosGet.php`];
+
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint, { method: 'GET' });
+                if (!response.ok) continue;
+                const data = await response.json();
+                const loadedProducts = (data.productos || data.data || []).map(normalizeProducto);
+                if (!loadedProducts.length) continue;
                 setProductos(loadedProducts);
-                const availableProducts = loadedProducts.filter(isVisibleProduct);
-                const pool = availableProducts.length ? availableProducts : loadedProducts;
-                const shuffled = [...pool];
-                for (let i = shuffled.length - 1; i > 0; i -= 1) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-                let showcase = shuffled;
-                if (showcase.length > 0 && showcase.length < 6) {
-                    const repeats = Math.ceil(6 / showcase.length);
-                    showcase = Array.from({ length: repeats }, () => showcase).flat().slice(0, 6);
-                }
-                setRandomProducts(showcase);
+                setRandomProducts(buildShowcase(loadedProducts));
                 setLoading(false);
-            })
-            .catch(error => console.error('Error al cargar productos:', error));
+                return;
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+            }
+        }
+
+        setProductos([]);
+        setRandomProducts([]);
+        setLoading(false);
     };
 
-    const cargarCategorias = () => {
-        fetch(`${baseURL}/categoriasGet.php`, {
-            method: 'GET',
-        })
-            .then(response => response.json())
-            .then(data => {
-                setCategorias(data.categorias || []);
-            })
-            .catch(error => console.error('Error al cargar categorías:', error));
+    const cargarCategorias = async () => {
+        const endpoints = [`${baseURL}/categoriasGet.php`];
+
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint, { method: 'GET' });
+                if (!response.ok) continue;
+                const data = await response.json();
+                const loadedCategorias = (data.categorias || data.data || []).map(normalizeCategoria);
+                if (!loadedCategorias.length) continue;
+                setCategorias(loadedCategorias);
+                return;
+            } catch (error) {
+                console.error('Error al cargar categorias:', error);
+            }
+        }
+
+        setCategorias([]);
     };
-
-
+    const cargarBannersCatalogo = async () => {
+        try {
+            const response = await fetch(`${baseURL}/bannersGet.php?tipo=catalogo`, { method: 'GET' });
+            if (!response.ok) {
+                setCatalogoBanners([]);
+                return;
+            }
+            const data = await response.json();
+            const banners = (data?.banner || []).map((item, index) => ({
+                id: item.idBanner || `catalogo-${index}`,
+                imagen: resolveImg(item.imagen || item.image || ''),
+            })).filter((item) => item.imagen);
+            setCatalogoBanners(banners);
+        } catch (error) {
+            console.error('Error al cargar banner catalogo:', error);
+            setCatalogoBanners([]);
+        }
+    };
     const obtenerImagen = (item) => {
         const src = item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || null;
         return resolveImg(src);
     };
-    const tituloCorto = (titulo) => {
-        if (!titulo) return '';
-        return titulo.split(' ').slice(0, 3).join(' ');
+    const tituloConDosPalabras = (titulo) => {
+        const words = String(titulo || '').trim().split(/\s+/).filter(Boolean);
+        if (!words.length) return '';
+        if (words.length <= 4) return words.join(' ');
+        return words.slice(0, 4).join(' ');
     };
+    const ahorroReal = (item) => {
+        const precio = parseCOP(item?.precio);
+        const anterior = parseCOP(item?.precioAnterior);
+        const diff = anterior - precio;
+        return diff > 0 ? diff : 0;
+    };
+    const ahorroLabel = (item) => ahorroReal(item);
 
-    const categoriasConProductos = categorias.filter(categoria =>
-        productos?.some(producto => producto?.idCategoria === categoria?.idCategoria && isVisibleProduct(producto))
+    const categoriasBase = categorias.length
+        ? categorias
+        : Array.from(new Set(productos.map((p) => String(p.idCategoria))))
+            .filter(Boolean)
+            .map((idCategoria) => ({ idCategoria, categoria: String(idCategoria) }));
+
+    const categoriasConProductos = categoriasBase.filter(categoria =>
+        productos?.some(producto => String(producto?.idCategoria) === String(categoria?.idCategoria) && isVisibleProduct(producto))
     );
+    const productosVisibles = productos.filter(isVisibleProduct);
+    const productosMasVendidos = productosVisibles.filter((item) => item.masVendido === 'si');
+    const cardsCatalogoHero = (productosMasVendidos.length ? productosMasVendidos : productosVisibles).slice(0, 2);
+    const bannersCatalogoActivos = catalogoBanners.length ? catalogoBanners : [{ id: 'fallback-catalogo', imagen: '' }];
 
 
     return (
         <div className='ProductsContain'>
-            {isInAppBrowser && (
-                <div className='installBanner'>
-                    <span>Estas en navegador de redes. Abre en Chrome para instalar.</span>
-                    <button type="button" onClick={handleOpenInChrome}>Copiar link</button>
-                </div>
-            )}
-            {productos?.length > 0 && (
+            {!isCatalogView && productos?.length > 0 && (
                 <div className='categoriasInputs'>
                     <input
                         type="button"
@@ -259,7 +340,7 @@ export default function Products() {
                             value={categoria}
                             onClick={() => handleClickCategoria(idCategoria)}
                             style={{
-                                ...(categoriaSeleccionada === idCategoria ? selectedButtonStyle : unselectedButtonStyle)
+                                ...(String(categoriaSeleccionada) === String(idCategoria) ? selectedButtonStyle : unselectedButtonStyle)
                             }}
                         />
                     ))}
@@ -273,7 +354,7 @@ export default function Products() {
                 <div className='Products'>
                     {categoriaSeleccionada === 'Todo' && (
                         <>
-                            {productos?.some(item => item.masVendido === "si" && isVisibleProduct(item)) && (
+                            {!isCatalogView && productos?.some(item => item.masVendido === "si" && isVisibleProduct(item)) && (
                                 <div className='categoriSection'>
                                     <Swiper
                                         effect={'coverflow'}
@@ -284,16 +365,15 @@ export default function Products() {
                                     >
                                         {productos?.filter(item => item.masVendido === "si" && isVisibleProduct(item)).map(item => (
                                             <SwiperSlide key={item.idProducto} className='swiperSlideProductsMasvendido'>
-                                                <Anchor className='cardProdcutmasVendido' to={`/producto/${item.idProducto}/${item.titulo.replace(/\s+/g, '-')}`}>
+                                                <Anchor className='cardProdcutmasVendido' to={buildProductPath(item.idProducto, item.titulo)}>
                                                     <img src={obtenerImagen(item)} alt="imagen" />
-                                                    <h6 className='masVendido'>Más Vendido</h6>
+                                                    <h6 className='masVendido'>Mas Vendido</h6>
                                                     <div className='cardText'>
-                                                        <h4>{item.titulo}</h4>
-                                                        <span>{item.descripcion}</span>
+                                                        <h4>{tituloConDosPalabras(item.titulo)}</h4>
                                                         <div className='deFLexPrice'>
-                                                            <h5> {moneda} {item?.precio}</h5>
+                                                            <h5> {moneda} {formatCOP(item?.precio)}</h5>
                                                             {(item.precioAnterior >= 1 && item.precioAnterior !== undefined) && (
-                                                                <h5 className='precioTachado'>{moneda} {item?.precioAnterior}</h5>
+                                                                <h5 className='precioTachado'>{moneda} {formatCOP(item?.precioAnterior)}</h5>
                                                             )}
                                                         </div>
                                                     </div>
@@ -303,7 +383,7 @@ export default function Products() {
                                     </Swiper>
                                 </div>
                             )}
-                            {randomProducts.length > 0 && (
+                            {!isCatalogView && randomProducts.length > 0 && (
                                 <div className='categoriSection showcaseSection'>
                                     <Swiper
                                         slidesPerView={'auto'}
@@ -322,19 +402,17 @@ export default function Products() {
                                             <SwiperSlide key={`showcase-${item.idProducto}`} className='randomShowcaseSlide'>
                                                 <Anchor
                                                     className='showcaseCard'
-                                                    to={`/producto/${item.idProducto}/${item.titulo.replace(/\s+/g, '-')}`}
+                                                    to={buildProductPath(item.idProducto, item.titulo)}
                                                     tabIndex={-1}
                                                 >
                                                     <div className='showcaseBody'>
                                                         <img src={obtenerImagen(item)} alt={item.titulo} />
                                                         <span className='showcaseArrow'>{'>>'}</span>
                                                         <div className='showcaseOverlay'>
-                                                            <h4>{tituloCorto(item.titulo)}</h4>
+                                                            <h4>{tituloConDosPalabras(item.titulo)}</h4>
                                                             <div className='showcasePrices'>
-                                                                <h5>{moneda} {item?.precio}</h5>
-                                                                {(item.precioAnterior >= 1 && item.precioAnterior !== undefined) && (
-                                                                    <h6 className='precioTachado'>{moneda} {item?.precioAnterior}</h6>
-                                                                )}
+                                                                <h5>{moneda} {formatCOP(item?.precio)}</h5>
+                                                                <h6 className='showcaseSaving'>Ahorra {moneda} {formatCOP(ahorroLabel(item))}</h6>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -344,65 +422,163 @@ export default function Products() {
                                     </Swiper>
                                 </div>
                             )}
-
-                            {categoriasConProductos?.map(({ categoria, idCategoria }) => (
-                                <div key={idCategoria} className='categoriSection' ref={ref => categoriasRefs.current[categorias.findIndex(cat => cat.idCategoria === idCategoria)] = ref}>
+                            {!isCatalogView && categoriasConProductos?.map(({ categoria, idCategoria }) => (
+                                <div key={idCategoria} className='categoriSection'>
                                     <div className='deFlexTitlesection'>
                                         <h3>{categoria}</h3>
                                         <button onClick={() => handleClickCategoria(idCategoria)}>
-                                            Ver más
+                                            Ver mas
                                         </button>
                                     </div>
-
                                     <Swiper
                                         effect={'coverflow'}
                                         grabCursor={true}
                                         slidesPerView={'auto'}
                                         className='swiperContainerProducts'
                                     >
-
-
-                                        {productos?.filter(item => item.idCategoria === idCategoria && isVisibleProduct(item)).map(item => (
+                                        {productos?.filter(item => String(item.idCategoria) === String(idCategoria) && isVisibleProduct(item)).map(item => (
                                             <SwiperSlide className='swiperSlideProducts' key={item.idProducto}>
-                                                <Anchor className='cardProdcut' key={item.idProducto} to={`/producto/${item.idProducto}/${item.titulo.replace(/\s+/g, '-')}`}>
-
+                                                <Anchor className='cardProdcut' key={item.idProducto} to={buildProductPath(item.idProducto, item.titulo)}>
                                                     <img src={obtenerImagen(item)} alt="imagen" />
                                                     <div className='cardText'>
-                                                        <h4>{item.titulo}</h4>
+                                                        <h4>{tituloConDosPalabras(item.titulo)}</h4>
                                                         <span>{item.descripcion}</span>
                                                         <div className='deFLexPrice'>
-                                                            <h5> {moneda} {item?.precio}</h5>
+                                                            <h5> {moneda} {formatCOP(item?.precio)}</h5>
                                                             {(item.precioAnterior >= 1 && item.precioAnterior !== undefined) && (
-                                                                <h5 className='precioTachado'>{moneda} {item?.precioAnterior}</h5>
+                                                                <h5 className='precioTachado'>{moneda} {formatCOP(item?.precioAnterior)}</h5>
                                                             )}
                                                         </div>
                                                     </div>
-
                                                 </Anchor>
                                             </SwiperSlide>
                                         ))}
-
                                     </Swiper>
                                 </div>
-
                             ))}
+                            {isCatalogView && (
+                            <>
+                            <div id='catalogo-home' className='catalogoHeroSection'>
+                                <Swiper
+                                    slidesPerView={1}
+                                    loop={bannersCatalogoActivos.length > 1}
+                                    autoplay={bannersCatalogoActivos.length > 1 ? { delay: 3000, disableOnInteraction: false } : false}
+                                    speed={700}
+                                    pagination={{ clickable: true }}
+                                    className='catalogoHeroSwiper'
+                                >
+                                    {bannersCatalogoActivos.map((bannerItem) => (
+                                        <SwiperSlide key={`catalogo-banner-${bannerItem.id}`}>
+                                            <div
+                                                className={bannerItem.imagen ? 'catalogoHeroBanner' : 'catalogoHeroBanner noImage'}
+                                                style={bannerItem.imagen ? { backgroundImage: `url(${bannerItem.imagen})` } : undefined}
+                                            >
+                                                <div className='catalogoHeroShade' />
+                                                <div className='catalogoHeroCards'>
+                                                    {cardsCatalogoHero.map((item) => (
+                                                        <Anchor
+                                                            key={`catalogo-hero-${bannerItem.id}-${item.idProducto}`}
+                                                            className='catalogoHeroCard'
+                                                            to={buildProductPath(item.idProducto, item.titulo)}
+                                                        >
+                                                            <span className='catalogoHeroTag'>Mas Vendido</span>
+                                                            <img src={obtenerImagen(item)} alt={item.titulo} />
+                                                            <h4>{tituloConDosPalabras(item.titulo)}</h4>
+                                                            <div className='deFLexPrice'>
+                                                                <h5>{moneda} {formatCOP(item?.precio)}</h5>
+                                                                {(item.precioAnterior >= 1 && item.precioAnterior !== undefined) && (
+                                                                    <h5 className='precioTachado'>{moneda} {formatCOP(item?.precioAnterior)}</h5>
+                                                                )}
+                                                            </div>
+                                                        </Anchor>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </SwiperSlide>
+                                    ))}
+                                </Swiper>
+                            </div>
+                            {randomProducts.length > 0 && (
+                                <div className='categoriSection showcaseSection'>
+                                    <div className='deFlexTitlesection'>
+                                        <h3>Recien agregados</h3>
+                                    </div>
+                                    <Swiper
+                                        slidesPerView={'auto'}
+                                        spaceBetween={10}
+                                        slidesOffsetBefore={8}
+                                        slidesOffsetAfter={8}
+                                        centeredSlides={false}
+                                        slidesPerGroup={1}
+                                        autoplay={{ delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true, stopOnLastSlide: false }}
+                                        loop={randomProducts.length > 1}
+                                        watchOverflow={true}
+                                        speed={500}
+                                        className='randomShowcase'
+                                    >
+                                        {randomProducts.map(item => (
+                                            <SwiperSlide key={`catalog-showcase-${item.idProducto}`} className='randomShowcaseSlide'>
+                                                <Anchor
+                                                    className='showcaseCard'
+                                                    to={buildProductPath(item.idProducto, item.titulo)}
+                                                    tabIndex={-1}
+                                                >
+                                                    <div className='showcaseBody'>
+                                                        <img src={obtenerImagen(item)} alt={item.titulo} />
+                                                        <span className='showcaseArrow'>{'>>'}</span>
+                                                        <div className='showcaseOverlay'>
+                                                            <h4>{tituloConDosPalabras(item.titulo)}</h4>
+                                                            <div className='showcasePrices'>
+                                                                <h5>{moneda} {formatCOP(item?.precio)}</h5>
+                                                                <h6 className='showcaseSaving'>Ahorra {moneda} {formatCOP(ahorroLabel(item))}</h6>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </Anchor>
+                                            </SwiperSlide>
+                                        ))}
+                                    </Swiper>
+                                </div>
+                            )}
+                            <div className='categoriSection'>
+                                <div className='deFlexTitlesection'>
+                                    <h3>Catalogo</h3>
+                                </div>
+                                <div className='catalogoGrid'>
+                                    {productosVisibles.map((item) => (
+                                        <Anchor
+                                            className='catalogoGridCard'
+                                            key={`catalogo-grid-${item.idProducto}`}
+                                            to={buildProductPath(item.idProducto, item.titulo)}
+                                        >
+                                            <img src={obtenerImagen(item)} alt={item.titulo} />
+                                            <div className='catalogoGridText'>
+                                                <h4>{tituloConDosPalabras(item.titulo)}</h4>
+                                                <h5>{moneda} {formatCOP(item?.precio)}</h5>
+                                            </div>
+                                        </Anchor>
+                                    ))}
+                                </div>
+                            </div>
+                            </>
+                            )}
                         </>
                     )}
 
                     <div className='categoriSectionSelected'>
                         {productos
-                            ?.filter(item => categoriaSeleccionada !== 'Todo' && item.idCategoria === categoriaSeleccionada && isVisibleProduct(item))
+                            ?.filter(item => categoriaSeleccionada !== 'Todo' && String(item.idCategoria) === String(categoriaSeleccionada) && isVisibleProduct(item))
                             ?.map(item => (
-                                <Anchor key={item.idProducto} to={`/producto/${item.idProducto}/${item.titulo.replace(/\s+/g, '-')}`}>
+                                <Anchor key={item.idProducto} to={buildProductPath(item.idProducto, item.titulo)}>
                                     <div className='cardProdcutSelected'>
                                         <img src={obtenerImagen(item)} alt="imagen" />
                                         <div className='cardTextSelected'>
-                                            <h4>{item.titulo}</h4>
+                                            <h4>{tituloConDosPalabras(item.titulo)}</h4>
                                             <span>{item.descripcion}</span>
                                             <div className='deFLexPrice'>
-                                                <h5> {moneda} {item?.precio}</h5>
+                                                <h5> {moneda} {formatCOP(item?.precio)}</h5>
                                                 {(item.precioAnterior >= 1 && item.precioAnterior !== undefined) && (
-                                                    <h5 className='precioTachado'>{moneda} {item?.precioAnterior}</h5>
+                                                    <h5 className='precioTachado'>{moneda} {formatCOP(item?.precioAnterior)}</h5>
                                                 )}
                                             </div>
                                         </div>
@@ -440,4 +616,3 @@ export default function Products() {
         </div>
     );
 }
-

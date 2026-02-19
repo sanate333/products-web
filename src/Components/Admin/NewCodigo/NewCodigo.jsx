@@ -9,10 +9,14 @@ export default function NewCodigo() {
     const [modalOpen, setModalOpen] = useState(false);
     const [descuento, setDescuento] = useState(0);
     const [codigo, setCodigo] = useState('');
+    const [modoManual, setModoManual] = useState(true);
+    const [codigoAuto, setCodigoAuto] = useState('');
     const toggleModal = () => {
         setCodigo('');
         setMensaje('');
         setDescuento(0);
+        setCodigoAuto(generarCodigoAleatorio());
+        setModoManual(true);
         setModalOpen(!modalOpen);
     };
 
@@ -27,11 +31,20 @@ export default function NewCodigo() {
     };
 
     const crear = async () => {
-        const codigoAleatorio = generarCodigoAleatorio();
+        const codigoFinal = (modoManual ? codigo : codigoAuto).trim().toUpperCase();
+        const descuentoNum = Number(descuento);
+        if (!codigoFinal) {
+            toast.error('Escribe un codigo valido');
+            return;
+        }
+        if (Number.isNaN(descuentoNum) || descuentoNum <= 0 || descuentoNum > 100) {
+            toast.error('El descuento debe estar entre 1% y 100%');
+            return;
+        }
 
         const formData = new FormData();
-        formData.append('codigo', codigoAleatorio);
-        formData.append('descuento', descuento);
+        formData.append('codigo', codigoFinal);
+        formData.append('descuento', descuentoNum);
 
         setMensaje('Procesando...');
 
@@ -55,7 +68,7 @@ export default function NewCodigo() {
         } catch (error) {
             console.error('Error:', error);
             setMensaje('');
-            toast.error('Error de conexión. Por favor, inténtelo de nuevo.');
+            toast.error('Error de conexion. Por favor, intentalo de nuevo.');
         }
     };
     return (
@@ -81,17 +94,40 @@ export default function NewCodigo() {
                                 <input
                                     type='text'
                                     name='codigo'
-                                    value={generarCodigoAleatorio()}
-                                    readOnly
+                                    value={modoManual ? codigo : codigoAuto}
+                                    onChange={(e) => setCodigo(e.target.value.toUpperCase())}
+                                    readOnly={!modoManual}
+                                    maxLength={30}
                                 />
                             </fieldset>
+                            <div className='deFlexBtnsModal'>
+                                <button
+                                    type='button'
+                                    className={modoManual ? 'selected' : ''}
+                                    onClick={() => setModoManual(true)}
+                                >
+                                    Personalizado
+                                </button>
+                                <button
+                                    type='button'
+                                    className={!modoManual ? 'selected' : ''}
+                                    onClick={() => {
+                                        setModoManual(false);
+                                        setCodigoAuto(generarCodigoAleatorio());
+                                    }}
+                                >
+                                    Automatico
+                                </button>
+                            </div>
                             <fieldset>
-                                <legend>Descuento</legend>
+                                <legend>Descuento (%)</legend>
                                 <input
                                     type='number'
                                     name='descuento'
                                     value={descuento}
                                     onChange={(e) => setDescuento(e.target.value)}
+                                    min={1}
+                                    max={100}
                                 />
                             </fieldset>
                             {mensaje ? (
