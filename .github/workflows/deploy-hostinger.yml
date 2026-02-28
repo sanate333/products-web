@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -24,7 +24,10 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: Build app and sync public_html
-        run: CI=false npm run build
+        shell: pwsh
+        run: |
+          $env:CI = "false"
+          npm run build
 
       - name: Deploy via FTP to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
