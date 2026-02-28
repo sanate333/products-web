@@ -890,7 +890,7 @@ async function initWhatsApp() {
     const sock = makeWASocket({
       version,
       auth: state,
-      printQRInTerminal: true,
+      printQRInTerminal: false,
       logger: pino({ level: "silent" }),
       browser: ["Sanate Bot", "Chrome", "1.0"],
     });
