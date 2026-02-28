@@ -701,6 +701,15 @@ export default function WhatsAppBot() {
                       <span>4️⃣ Escanea el código QR</span>
                     </div>
                   )}
+                  {status === 'connected' && (
+                    <button
+                      className="wbv5-btn wbv5-btn-red"
+                      onClick={disconnectWA}
+                      style={{ marginTop: '1rem', width: '100%' }}
+                    >
+                      🔌 Desvincular WhatsApp
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="wbv5-card">
@@ -937,25 +946,50 @@ export default function WhatsAppBot() {
 
                   {/* API & Tokens */}
                   {cfgTab === 'api' && (
-                    <div className="wbv5-card">
-                      <div className="wbv5-card-hd"><div className="wbv5-card-title">🔑 API & Tokens</div></div>
-                      <div className="wbv5-card-bd">
-                        <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>Variables necesarias en n8n → Settings → n8n variables:</div>
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">WA_PHONE_ID (Meta Business)</div>
-                          <div className="wbv5-code-box" onClick={() => tip('📋 Copia desde Meta Developer Portal')}>Tu Phone Number ID de Meta <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                    <>
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🔑 Baileys (Railway)</div>
+                          <span className={`wbv5-badge ${status === 'connected' ? 'badge-green' : 'badge-amber'}`}>{status === 'connected' ? '✅ Activo' : '⏳ Conectando'}</span>
                         </div>
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">WA_TOKEN (acceso WhatsApp API)</div>
-                          <div className="wbv5-code-box" onClick={() => tip('📋 Copia desde Meta Developer Portal')}>Tu Access Token permanente <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>Backend principal WhatsApp vía Baileys (Railway)</div>
+                          <div className="wbv5-form-row"><div className="wbv5-form-lbl">BAILEYS_SECRET</div>
+                            <div className="wbv5-code-box" onClick={() => copyText('sanate_secret_2025')}>sanate_secret_2025 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                          </div>
+                          <div className="wbv5-form-row"><div className="wbv5-form-lbl">N8N_WEBHOOK</div>
+                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                          </div>
+                          <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ↗</button>
                         </div>
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">BAILEYS_SECRET</div>
-                          <div className="wbv5-code-box" onClick={() => copyText('sanate_secret_2025')}>sanate_secret_2025 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
-                        </div>
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">N8N_WEBHOOK</div>
-                          <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
-                        </div>
-                        <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ↗</button>
                       </div>
-                    </div>
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🌐 WASP API (ascendentinc.studio)</div>
+                          <span className="wbv5-badge badge-amber">⚠️ Secundario</span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>
+                            Servicio externo WhatsApp. <strong>Nota:</strong> No conectar al mismo número que Baileys — causaría conflicto de sesión.
+                          </div>
+                          <div className="wbv5-form-row"><div className="wbv5-form-lbl">Base URL</div>
+                            <div className="wbv5-code-box" onClick={() => copyText('https://ascendentinc.studio/wasp/api/v1')}>https://ascendentinc.studio/wasp/api/v1 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                          </div>
+                          <div className="wbv5-form-row"><div className="wbv5-form-lbl">API Key</div>
+                            <div className="wbv5-code-box" onClick={() => copyText('wasp_d8b3da5d3c823924505e5afa974b1999')}>wasp_d8b3da5d3c823924505e5afa974b1999 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                          </div>
+                          <div className="wbv5-form-row"><div className="wbv5-form-lbl">Edit Token</div>
+                            <div className="wbv5-code-box" onClick={() => copyText('edt_bc6fc6f2517e1541')}>edt_bc6fc6f2517e1541 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                          </div>
+                          <div className="wbv5-form-row"><div className="wbv5-form-lbl">Auth Header</div>
+                            <div className="wbv5-code-box" onClick={() => copyText('Authorization: Bearer wasp_d8b3da5d3c823924505e5afa974b1999')}>Authorization: Bearer wasp_d8b3da5d3c823924505e5afa974b1999 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://ascendentinc.studio/wasp/', '_blank')}>Abrir panel WASP ↗</button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* Comportamiento bot */}

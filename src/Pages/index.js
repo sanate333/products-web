@@ -1,4 +1,5 @@
 import IndexLayout from "../Layouts/IndexLayout";
+import ComingSoon from './ComingSoon/ComingSoon';
 import MainLayout from "../Layouts/MainLayout";
 import PagesLayaut from '../Layouts/PagesLayaut'
 import { createBrowserRouter } from "react-router-dom";
@@ -90,6 +91,38 @@ export const router = createBrowserRouter([
             {
                 path: `/dashboard/whatsapp-bot`,
                 element: <WhatsAppBot />,
+            },
+            {
+                path: `/dashboard/tiendas`,
+                element: <ComingSoon title="Tiendas" />,
+            },
+            {
+                path: `/dashboard/landing-pages`,
+                element: <ComingSoon title="Landing Pages" />,
+            },
+            {
+                path: `/dashboard/monitor`,
+                element: <ComingSoon title="Monitor-Global-AI" />,
+            },
+            {
+                path: `/dashboard/wallet`,
+                element: <ComingSoon title="Wallet" />,
+            },
+            {
+                path: `/dashboard/dropshipping`,
+                element: <ComingSoon title="Dropshipping" />,
+            },
+            {
+                path: `/dashboard/calendario`,
+                element: <ComingSoon title="Calendario Tributario" />,
+            },
+            {
+                path: `/dashboard/tutoriales`,
+                element: <ComingSoon title="Tutoriales" />,
+            },
+            {
+                path: `/dashboard/ajustes`,
+                element: <ComingSoon title="Ajustes" />,
             },
         ],
     },

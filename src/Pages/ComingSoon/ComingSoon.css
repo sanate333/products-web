@@ -1,0 +1,35 @@
+.comingSoonSection {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    padding: 2rem;
+}
+
+.comingSoonCard {
+    text-align: center;
+    background: #fff;
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+    max-width: 420px;
+    width: 100%;
+}
+
+.comingSoonIcon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+}
+
+.comingSoonCard h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.comingSoonCard p {
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}

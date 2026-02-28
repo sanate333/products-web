@@ -864,6 +864,64 @@ let waQR       = null;           // data-url PNG
 let waPhone    = "";
 let waIniting  = false;
 
+// ── Chat store en memoria ───────────────────────────────────────────────────
+const WA_HISTORY_DAYS = 15;
+const waChats    = new Map(); // jid → { id, name, phone, lastMsg, lastMsgTime, unread }
+const waMessages = new Map(); // jid → [{ id, dir, txt, time, ts }]
+
+function extractText(msg) {
+  const m = msg?.message;
+  if (!m) return "[Mensaje]";
+  return (
+    m.conversation ||
+    m.extendedTextMessage?.text ||
+    m.imageMessage?.caption ||
+    (m.imageMessage    ? "[Imagen]" : "") ||
+    (m.audioMessage    ? "[Audio]" : "") ||
+    (m.videoMessage    ? "[Video]" : "") ||
+    (m.stickerMessage  ? "[Sticker]" : "") ||
+    (m.documentMessage ? "[Documento]" : "") ||
+    "[Mensaje]"
+  );
+}
+
+function storeMsg(msg) {
+  const jid = msg?.key?.remoteJid;
+  if (!jid || jid === "status@broadcast") return;
+
+  const ts      = Number(msg.messageTimestamp || 0) * 1000 || Date.now();
+  const cutoff  = Date.now() - WA_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+  if (ts < cutoff) return;
+
+  const text    = extractText(msg);
+  const fromMe  = Boolean(msg.key?.fromMe);
+  const name    = (!fromMe && msg.pushName) ? msg.pushName : (waChats.get(jid)?.name || jid.split("@")[0]);
+
+  // Actualizar/crear chat
+  const chat = waChats.get(jid) || { id: jid, name, phone: jid.split("@")[0], unread: 0, lastMsg: "", lastMsgTime: 0 };
+  chat.name        = name;
+  chat.lastMsg     = text;
+  chat.lastMsgTime = ts;
+  if (!fromMe) chat.unread = (chat.unread || 0) + 1;
+  waChats.set(jid, chat);
+
+  // Guardar mensaje
+  const msgs  = waMessages.get(jid) || [];
+  const msgId = msg.key?.id || `${ts}`;
+  if (!msgs.find(m => m.id === msgId)) {
+    msgs.push({
+      id:   msgId,
+      dir:  fromMe ? "s" : "r",
+      txt:  text,
+      time: new Date(ts).toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }),
+      ts,
+    });
+    // Máximo 300 mensajes por chat
+    if (msgs.length > 300) msgs.splice(0, msgs.length - 300);
+    waMessages.set(jid, msgs);
+  }
+}
+
 function checkWaSecret(req, res) {
   if (req.headers["x-secret"] !== WA_SECRET) {
     res.status(401).json({ error: "unauthorized" });
@@ -915,6 +973,49 @@ async function initWhatsApp() {
       }
     });
 
+    // ── Almacenar mensajes entrantes/salientes ─────────────────────────────
+    sock.ev.on("messages.upsert", ({ messages: msgs, type }) => {
+      for (const m of msgs) storeMsg(m);
+    });
+
+    // ── Historial inicial: últimos 15 días al reconectar ──────────────────
+    sock.ev.on("messaging-history.set", ({ chats: histChats, messages: histMsgs }) => {
+      console.log("[WA] Historial recibido: chats:", histChats?.length, "msgs:", histMsgs?.length);
+      if (Array.isArray(histMsgs)) {
+        for (const m of histMsgs) storeMsg(m);
+      }
+      if (Array.isArray(histChats)) {
+        for (const c of histChats) {
+          if (!waChats.has(c.id)) {
+            waChats.set(c.id, {
+              id:          c.id,
+              name:        c.name || c.id.split("@")[0],
+              phone:       c.id.split("@")[0],
+              unread:      c.unreadCount || 0,
+              lastMsg:     "",
+              lastMsgTime: 0,
+            });
+          }
+        }
+      }
+    });
+
+    // ── Upsert de chats (lista inicial) ───────────────────────────────────
+    sock.ev.on("chats.upsert", (chats) => {
+      for (const c of chats) {
+        if (!waChats.has(c.id)) {
+          waChats.set(c.id, {
+            id:          c.id,
+            name:        c.name || c.id.split("@")[0],
+            phone:       c.id.split("@")[0],
+            unread:      c.unreadCount || 0,
+            lastMsg:     "",
+            lastMsgTime: 0,
+          });
+        }
+      }
+    });
+
     waSocket = sock;
   } catch (err) {
     console.error("[WA] Error init:", err?.message || err);
@@ -952,12 +1053,33 @@ app.post("/api/whatsapp/logout", async (req, res) => {
 
 app.get("/api/whatsapp/chats", (req, res) => {
   if (!checkWaSecret(req, res)) return;
-  res.json({ chats: [] });
+  const cutoff = Date.now() - WA_HISTORY_DAYS * 24 * 60 * 60 * 1000;
+  const chats = Array.from(waChats.values())
+    .filter(c => c.lastMsgTime > cutoff || c.lastMsgTime === 0)
+    .sort((a, b) => b.lastMsgTime - a.lastMsgTime)
+    .slice(0, 150)
+    .map(c => ({
+      id:          c.id,
+      name:        c.name,
+      phone:       c.phone,
+      lastMsg:     c.lastMsg,
+      lastMsgTime: c.lastMsgTime,
+      unread:      c.unread || 0,
+    }));
+  res.json({ chats });
 });
 
 app.get("/api/whatsapp/messages/:id", (req, res) => {
   if (!checkWaSecret(req, res)) return;
-  res.json({ messages: [] });
+  const jid  = req.params.id;
+  const msgs = waMessages.get(jid)
+             || waMessages.get(jid + "@s.whatsapp.net")
+             || waMessages.get(jid + "@g.us")
+             || [];
+  // Marcar como leído
+  const chat = waChats.get(jid) || waChats.get(jid + "@s.whatsapp.net");
+  if (chat) chat.unread = 0;
+  res.json({ messages: msgs.slice(-100) });
 });
 
 app.post("/api/whatsapp/send", async (req, res) => {
