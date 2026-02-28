@@ -854,6 +854,127 @@ app.delete('/api/tiendaDelete', (req, res) => {
   res.json({ success: true });
 });
 
+// ── WhatsApp Bot (Baileys) ──────────────────────────────────────────────────
+const WA_SECRET = process.env.WA_SECRET || "sanate_secret_2025";
+const waAuthDir = path.join(generatedDir, "wa-auth");
+
+let waSocket   = null;
+let waStatus   = "disconnected"; // 'disconnected' | 'connecting' | 'connected'
+let waQR       = null;           // data-url PNG
+let waPhone    = "";
+let waIniting  = false;
+
+function checkWaSecret(req, res) {
+  if (req.headers["x-secret"] !== WA_SECRET) {
+    res.status(401).json({ error: "unauthorized" });
+    return false;
+  }
+  return true;
+}
+
+async function initWhatsApp() {
+  if (waIniting) return;
+  waIniting = true;
+  try {
+    const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } =
+      await import("@whiskeysockets/baileys");
+    const { default: pino } = await import("pino");
+    const { toDataURL }     = await import("qrcode");
+
+    if (!fs.existsSync(waAuthDir)) fs.mkdirSync(waAuthDir, { recursive: true });
+
+    const { state, saveCreds } = await useMultiFileAuthState(waAuthDir);
+    const { version }          = await fetchLatestBaileysVersion();
+
+    waStatus = "connecting";
+    const sock = makeWASocket({
+      version,
+      auth: state,
+      printQRInTerminal: true,
+      logger: pino({ level: "silent" }),
+      browser: ["Sanate Bot", "Chrome", "1.0"],
+    });
+
+    sock.ev.on("creds.update", saveCreds);
+    sock.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
+      if (qr) {
+        try { waQR = await toDataURL(qr); } catch {}
+        waStatus = "connecting";
+        console.log("[WA] QR generado");
+      }
+      if (connection === "close") {
+        const code = lastDisconnect?.error?.output?.statusCode;
+        const loggedOut = code === DisconnectReason.loggedOut;
+        console.log("[WA] Conexion cerrada, loggedOut:", loggedOut, "code:", code);
+        waStatus = "disconnected"; waQR = null; waPhone = ""; waSocket = null; waIniting = false;
+        if (!loggedOut) setTimeout(initWhatsApp, 6000);
+      } else if (connection === "open") {
+        waStatus = "connected"; waQR = null;
+        waPhone  = sock.user?.id?.split(":")[0] || sock.user?.id || "";
+        console.log("[WA] Conectado:", waPhone);
+      }
+    });
+
+    waSocket = sock;
+  } catch (err) {
+    console.error("[WA] Error init:", err?.message || err);
+    waStatus = "disconnected"; waIniting = false;
+    setTimeout(initWhatsApp, 10000);
+  }
+}
+
+// Arrancar WhatsApp al iniciar
+initWhatsApp();
+
+// ── Rutas API WhatsApp ─────────────────────────────────────────────────────
+app.get("/api/whatsapp/status", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  res.json({ status: waStatus, phone: waPhone });
+});
+
+app.get("/api/whatsapp/qr", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  res.json({ qr: waQR || null });
+});
+
+app.post("/api/whatsapp/logout", async (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  try {
+    if (waSocket) { try { await waSocket.logout(); } catch {} }
+    waSocket = null; waStatus = "disconnected"; waQR = null; waPhone = ""; waIniting = false;
+    if (fs.existsSync(waAuthDir)) fs.rmSync(waAuthDir, { recursive: true, force: true });
+    setTimeout(initWhatsApp, 1500);
+    res.json({ ok: true });
+  } catch (e) {
+    res.json({ ok: false, error: e?.message });
+  }
+});
+
+app.get("/api/whatsapp/chats", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  res.json({ chats: [] });
+});
+
+app.get("/api/whatsapp/messages/:id", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  res.json({ messages: [] });
+});
+
+app.post("/api/whatsapp/send", async (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  const { to, message } = req.body || {};
+  if (!to || !message || !waSocket || waStatus !== "connected") {
+    return res.status(400).json({ ok: false, error: "not_ready" });
+  }
+  try {
+    const jid = to.includes("@") ? to : `${to}@s.whatsapp.net`;
+    await waSocket.sendMessage(jid, { text: message });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e?.message });
+  }
+});
+
 // fallback SPA cuando hay build
 if (fs.existsSync(buildDir)) {
   app.get("*", (req, res) => {

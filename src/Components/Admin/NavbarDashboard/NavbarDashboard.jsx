@@ -14,6 +14,7 @@ import {
   faBell,
   faUsers,
   faRobot,
+  faComments,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
@@ -40,6 +41,7 @@ export default function Navbar({ isOpen = false, onClose }) {
                 <Anchor onClick={handleClose} to={`/dashboard/notificaciones`} className={location.pathname === '/dashboard/notificaciones' ? 'activeLink' : ''}><FontAwesomeIcon icon={faBell} /> Notificaciones</Anchor>
                 <Anchor onClick={handleClose} to={`/dashboard/imagenes-ia`} className={location.pathname === '/dashboard/imagenes-ia' ? 'activeLink' : ''}><FontAwesomeIcon icon={faRobot} /> Imágenes IA</Anchor>
                 <Anchor onClick={handleClose} to={`/dashboard/clientes`} className={location.pathname === '/dashboard/clientes' ? 'activeLink' : ''}><FontAwesomeIcon icon={faUsers} /> Clientes</Anchor>
+                <Anchor onClick={handleClose} to={`/dashboard/whatsapp-bot`} className={location.pathname === '/dashboard/whatsapp-bot' ? 'activeLink' : ''}><FontAwesomeIcon icon={faComments} /> WhatsApp Bot</Anchor>
                 <Anchor onClick={handleClose} to={`/dashboard/productos`} className={location.pathname === '/dashboard/productos' ? 'activeLink' : ''} ><FontAwesomeIcon icon={faBook} /> Productos</Anchor>
                 <Anchor onClick={handleClose} to={`/dashboard/categorias`} className={location.pathname === '/dashboard/categorias' ? 'activeLink' : ''}><FontAwesomeIcon icon={faTachometerAlt} /> Categorias</Anchor>
                 <Anchor onClick={handleClose} to={`/dashboard/banners`} className={location.pathname === '/dashboard/banners' ? 'activeLink' : ''}><FontAwesomeIcon icon={faImage} /> Banners</Anchor>

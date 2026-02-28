@@ -14,6 +14,7 @@ import Pedidos from "./Pedidos/Pedidos";
 import Notificaciones from "./Notificaciones/Notificaciones";
 import Clientes from "./Clientes/Clientes";
 import ImagenesIA from "./ImagenesIA/ImagenesIA";
+import WhatsAppBot from "./WhatsAppBot/WhatsAppBot";
 import PageDetail from '../Pages/PageDetail/PageDetail';
 export const router = createBrowserRouter([
 
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
             {
                 path: `/dashboard/clientes`,
                 element: <Clientes />,
+            },
+            {
+                path: `/dashboard/whatsapp-bot`,
+                element: <WhatsAppBot />,
             },
         ],
     },
