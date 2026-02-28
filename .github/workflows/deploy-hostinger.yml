@@ -61,7 +61,7 @@ jobs:
           port: ${{ secrets.HOSTINGER_FTP_PORT }}
           protocol: ftps
           local-dir: ./public_html/
-          server-dir: /public_html/
+          server-dir: /
 
       - name: Retry deploy via FTP
         if: steps.deploy_ftps.outcome == 'failure'
@@ -73,4 +73,4 @@ jobs:
           port: ${{ secrets.HOSTINGER_FTP_PORT }}
           protocol: ftp
           local-dir: ./public_html/
-          server-dir: /public_html/
+          server-dir: /
