@@ -23,11 +23,14 @@ jobs:
       - name: Install deps
         run: npm install --include=dev --no-audit --no-fund
 
-      - name: Build app and sync public_html
+      - name: Build React app
         shell: pwsh
         run: |
           $env:CI = "false"
-          npm run build
+          npx react-scripts build
+
+      - name: Sync public_html
+        run: node post-build.js
 
       - name: Deploy via FTP to Hostinger
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
