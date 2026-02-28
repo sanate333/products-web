@@ -50,12 +50,39 @@ jobs:
       - name: Sync public_html
         run: node post-build.js
 
-      - name: Deploy via FTP to Hostinger
+      - name: Preflight FTP connection
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_SERVER }}")) { throw "Missing secret: HOSTINGER_FTP_SERVER" }
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_USERNAME }}")) { throw "Missing secret: HOSTINGER_FTP_USERNAME" }
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_PASSWORD }}")) { throw "Missing secret: HOSTINGER_FTP_PASSWORD" }
+          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_PORT }}")) { throw "Missing secret: HOSTINGER_FTP_PORT" }
+          $port = [int]"${{ secrets.HOSTINGER_FTP_PORT }}"
+          $test = Test-NetConnection -ComputerName "${{ secrets.HOSTINGER_FTP_SERVER }}" -Port $port -WarningAction SilentlyContinue
+          if (-not $test.TcpTestSucceeded) { throw "Hostinger FTP endpoint not reachable (${{ secrets.HOSTINGER_FTP_SERVER }}:$port)" }
+          Write-Output "FTP endpoint reachable."
+
+      - name: Deploy via FTPS to Hostinger
+        id: deploy_ftps
+        continue-on-error: true
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.HOSTINGER_FTP_SERVER }}
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           port: ${{ secrets.HOSTINGER_FTP_PORT }}
+          protocol: ftps
+          local-dir: ./public_html/
+          server-dir: /public_html/
+
+      - name: Retry deploy via FTP
+        if: steps.deploy_ftps.outcome == 'failure'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          port: ${{ secrets.HOSTINGER_FTP_PORT }}
+          protocol: ftp
           local-dir: ./public_html/
           server-dir: /public_html/
