@@ -951,6 +951,7 @@ async function initWhatsApp() {
       printQRInTerminal: false,
       logger: pino({ level: "silent" }),
       browser: ["Sanate Bot", "Chrome", "1.0"],
+      syncFullHistory: true,
     });
 
     sock.ev.on("creds.update", saveCreds);
