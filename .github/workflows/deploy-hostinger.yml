@@ -23,6 +23,9 @@ jobs:
       - name: Install deps
         run: npm install --include=dev --no-audit --no-fund
 
+      - name: Ensure react-scripts
+        run: npm install react-scripts@5.0.1 --no-save --no-audit --no-fund
+
       - name: Build React app
         shell: pwsh
         run: |
