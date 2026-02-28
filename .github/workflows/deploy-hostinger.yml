@@ -50,25 +50,6 @@ jobs:
       - name: Sync public_html
         run: node post-build.js
 
-      - name: Preflight FTP connection
-        shell: pwsh
-        run: |
-          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_SERVER }}")) { throw "Missing secret: HOSTINGER_FTP_SERVER" }
-          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_USERNAME }}")) { throw "Missing secret: HOSTINGER_FTP_USERNAME" }
-          if ([string]::IsNullOrWhiteSpace("${{ secrets.HOSTINGER_FTP_PASSWORD }}")) { throw "Missing secret: HOSTINGER_FTP_PASSWORD" }
-          $server = "${{ secrets.HOSTINGER_FTP_SERVER }}".Trim()
-          $server = $server -replace '^ftps?://', ''
-          $server = $server.Split('/')[0]
-          if ([string]::IsNullOrWhiteSpace($server)) { throw "Invalid HOSTINGER_FTP_SERVER format" }
-          $rawPort = "${{ secrets.HOSTINGER_FTP_PORT }}".Trim()
-          if ([string]::IsNullOrWhiteSpace($rawPort)) { $rawPort = "21" }
-          $parsedPort = 0
-          if (-not [int]::TryParse($rawPort, [ref]$parsedPort)) { throw "Invalid HOSTINGER_FTP_PORT: $rawPort" }
-          $port = $parsedPort
-          $test = Test-NetConnection -ComputerName $server -Port $port -WarningAction SilentlyContinue
-          if (-not $test.TcpTestSucceeded) { throw "Hostinger FTP endpoint not reachable ($server:$port)" }
-          Write-Output "FTP endpoint reachable."
-
       - name: Deploy via FTPS to Hostinger
         id: deploy_ftps
         continue-on-error: true
