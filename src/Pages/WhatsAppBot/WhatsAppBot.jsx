@@ -106,7 +106,7 @@ export default function WhatsAppBot() {
 
   // Polling QR agresivo cuando estamos en página conexion esperando QR
   useEffect(() => { // eslint-disable-line
-    if (page !== 'conexion' || status !== 'connecting') return
+    if (page !== 'conexion' || (status !== 'connecting' && status !== 'qr')) return
     const t = setInterval(loadQR, 2500)
     return () => clearInterval(t)
   }, [page, status]) // eslint-disable-line
@@ -144,7 +144,7 @@ export default function WhatsAppBot() {
       setStatus(d.status)
       setPhone(d.phone || '')
       if (d.status === 'connected') { try { await loadC() } catch {} }
-      else if (d.status === 'connecting') loadQR()
+      else if (d.status === 'connecting' || d.status === 'qr') { setStatus('connecting'); loadQR() }
     } catch { setStatus('disconnected') }
   }
 
@@ -284,7 +284,7 @@ export default function WhatsAppBot() {
     setPage(id)
     setBuilderOpen(false)
     if (id === 'conexion') {
-      if (status === 'connecting') setTimeout(loadQR, 100)
+      if (status === 'connecting' || status === 'qr') setTimeout(loadQR, 100)
       else if (status === 'disconnected') setTimeout(regenerateQR, 200)
       // if connected: nada que mostrar
     }
