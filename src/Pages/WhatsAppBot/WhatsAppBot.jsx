@@ -32,14 +32,25 @@ function normMsg(m) {
   }
 }
 
+// ── limpiar JID de Baileys → número legible ───────────────────
+function cleanPhone(phone, id) {
+  if (phone && phone.startsWith('+')) return phone
+  if (phone && /^\d{7,}$/.test(phone)) return '+' + phone
+  const raw = String(id || '').replace(/@s\.whatsapp\.net|@g\.us|@c\.us/g, '')
+  if (/^\d{7,}$/.test(raw)) return '+' + raw
+  return phone || id || ''
+}
+
 // ── campo: normalizar chats del backend ────────────────────────
 function normChat(c) {
   const ts = c.lastMessageAt || c.updatedAt || ''
   const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return '' } })() : ''
+  const chatId = c.chatId || c.id || ''
+  const phone  = cleanPhone(c.phone, chatId)
   return {
-    id:       c.chatId || c.id || '',
+    id:       chatId,
     name:     c.name || '',
-    phone:    c.phone || '',
+    phone,
     photoUrl: c.photoUrl || '',
     preview:  c.lastMessagePreview || c.preview || '',
     time:     hhmm,
@@ -199,10 +210,12 @@ export default function WhatsAppBot() {
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
-      setStatus(d.status || d.ok === false ? 'disconnected' : d.status)
+      // IMPORTANTE: evaluar correctamente; sin paréntesis la precedencia es incorrecta
+      const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
+      setStatus(s)
       setPhone(d.phone || '')
-      if (d.status === 'connected') { try { await loadC() } catch {} }
-      else if (d.status === 'connecting' || d.status === 'qr') { setStatus('connecting'); loadQR() }
+      if (s === 'connected') { try { await loadC() } catch {} }
+      else if (s === 'connecting' || s === 'qr') { loadQR() }
     } catch { setStatus('disconnected') }
   }
 
@@ -379,9 +392,20 @@ export default function WhatsAppBot() {
     setPage(id)
     setBuilderOpen(false)
     if (id === 'conexion') {
-      if (status === 'connecting' || status === 'qr') setTimeout(loadQR, 100)
-      else if (status === 'disconnected') setTimeout(regenerateQR, 200)
-      // if connected: nada que mostrar
+      // Solo cargar QR si está en modo connecting (no llamar logout automáticamente)
+      if (status === 'connecting' || status === 'qr') setTimeout(loadQR, 150)
+      else if (status === 'disconnected') {
+        // Intentar obtener QR sin desconectar — puede que el backend ya tenga uno
+        setTimeout(async () => {
+          const d = await fetch(BU + '/status', { headers: H }).then(r => r.json()).catch(() => ({}))
+          const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
+          setStatus(s); setPhone(d.phone || '')
+          if (s === 'connecting' || s === 'qr') { loadQR() }
+          else if (s === 'connected') { loadC().catch(() => {}) }
+          // si sigue disconnected, mostrar estado sin conectar
+        }, 100)
+      }
+      // si connected: mostrar estado conectado sin hacer nada
     }
   }
 
@@ -579,8 +603,11 @@ export default function WhatsAppBot() {
                         </div>
                       )}
                       <div className="wbv5-ci-body">
-                        <div className="wbv5-ci-name">{c.name || c.phone}</div>
-                        <div className="wbv5-ci-prev">{c.preview || 'Sin mensajes'}</div>
+                        <div className="wbv5-ci-name">{c.name || c.phone || c.id}</div>
+                        <div className="wbv5-ci-prev">
+                          {!c.name && c.phone && <span style={{ color: '#6b7280', fontSize: '.65rem', marginRight: '4px' }}>{c.phone}</span>}
+                          {c.preview || 'Sin mensajes'}
+                        </div>
                       </div>
                       <div className="wbv5-ci-meta">
                         <div className="wbv5-ci-time">{c.time || ''}</div>
@@ -607,8 +634,8 @@ export default function WhatsAppBot() {
                         <div className="wbv5-cw-ava">{(active.name || '?').substring(0, 2).toUpperCase()}</div>
                       )}
                       <div>
-                        <div className="wbv5-cw-name">{active.name || active.phone}</div>
-                        <div className="wbv5-cw-sub">🟢 WhatsApp · {active.phone || '+' + active.id}</div>
+                        <div className="wbv5-cw-name">{active.name || active.phone || active.id}</div>
+                        <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
                       </div>
                       <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
@@ -833,31 +860,45 @@ export default function WhatsAppBot() {
               <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>📱 Conexión WhatsApp</div>
               <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Vincula tu WhatsApp al bot para recibir y enviar mensajes automáticamente</div>
               <div className="wbv5-qr-card">
-                <div className="wbv5-qr-box">
-                  <canvas ref={qrRef} width="200" height="200" />
-                </div>
+                {/* Canvas QR — solo visible cuando NO está conectado */}
+                {status !== 'connected' && (
+                  <div className="wbv5-qr-box">
+                    <canvas ref={qrRef} width="200" height="200" />
+                    {status === 'connecting' && !qrDataUrl && (
+                      <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: '.65rem', color: '#9ca3af' }}>
+                        Generando QR...
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="wbv5-qr-info">
-                  <h3>{status === 'connected' ? '✅ WhatsApp Conectado' : qrDataUrl ? '📱 Escanea con WhatsApp' : '📱 Vincula tu WhatsApp'}</h3>
-                  <p>{status === 'connected'
-                    ? 'Tu WhatsApp está vinculado. Los mensajes se procesan automáticamente.'
-                    : 'Escanea el código QR con tu WhatsApp para conectar el bot y recibir mensajes en tiempo real.'
-                  }</p>
-                  {status !== 'connected' && (
-                    <div className="wbv5-qr-steps">
-                      <span>1️⃣ Abre WhatsApp en tu teléfono</span>
-                      <span>2️⃣ Ve a Dispositivos vinculados</span>
-                      <span>3️⃣ Toca "Vincular un dispositivo"</span>
-                      <span>4️⃣ Escanea el código QR</span>
-                    </div>
-                  )}
-                  {status === 'connected' && (
-                    <button
-                      className="wbv5-btn wbv5-btn-red"
-                      onClick={disconnectWA}
-                      style={{ marginTop: '1rem', width: '100%' }}
-                    >
-                      🔌 Desvincular WhatsApp
-                    </button>
+                  {status === 'connected' ? (
+                    <>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '.4rem' }}>✅</div>
+                      <h3 style={{ color: '#16a34a', margin: '0 0 .3rem' }}>WhatsApp Conectado</h3>
+                      <p style={{ color: '#374151', margin: '0 0 .6rem' }}>
+                        Tu WhatsApp está vinculado. Los mensajes se procesan automáticamente.
+                      </p>
+                      {phone && (
+                        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.6rem 1rem', marginBottom: '.8rem', fontSize: '.82rem', color: '#166534' }}>
+                          📱 <strong>{phone}</strong>
+                        </div>
+                      )}
+                      <button className="wbv5-btn wbv5-btn-red" onClick={disconnectWA} style={{ width: '100%' }}>
+                        🔌 Desvincular WhatsApp
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <h3>{qrDataUrl ? '📱 Escanea con WhatsApp' : '📱 Vincula tu WhatsApp'}</h3>
+                      <p>Escanea el código QR con tu WhatsApp para conectar el bot y recibir mensajes en tiempo real.</p>
+                      <div className="wbv5-qr-steps">
+                        <span>1️⃣ Abre WhatsApp en tu teléfono</span>
+                        <span>2️⃣ Ve a Dispositivos vinculados</span>
+                        <span>3️⃣ Toca "Vincular un dispositivo"</span>
+                        <span>4️⃣ Escanea el código QR</span>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
