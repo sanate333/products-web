@@ -3,8 +3,49 @@ import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
 const BU = 'http://localhost:5055/api/whatsapp'
-const H = { 'x-secret': 'sanate_secret_2025', 'Content-Type': 'application/json' }
+const H  = { 'x-secret': 'sanate_secret_2025' }
+const HJ = { ...H, 'Content-Type': 'application/json' }
 const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
+
+// ── localStorage helpers ───────────────────────────────────────
+const MSGS_KEY   = 'wb_msgs_'
+const ACTIVE_KEY = 'wb_active_chat'
+function cacheGet(chatId)        { try { return JSON.parse(localStorage.getItem(MSGS_KEY + chatId) || '[]') } catch { return [] } }
+function cachePut(chatId, msgs)  { try { localStorage.setItem(MSGS_KEY + chatId, JSON.stringify(msgs.slice(-200))) } catch {} }
+function activeGet()             { try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || 'null') } catch { return null } }
+function activePut(c)            { try { localStorage.setItem(ACTIVE_KEY, c ? JSON.stringify(c) : 'null') } catch {} }
+
+// ── campo: normalizar mensajes del backend ─────────────────────
+function normMsg(m) {
+  const ts = m.timestamp || m.time || ''
+  const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return ts.substring(11, 16) } })() : ''
+  return {
+    id:       m.providerMessageId || m.id || Math.random().toString(36).slice(2),
+    dir:      (m.direction === 'outgoing' || m.dir === 's') ? 's' : 'r',
+    txt:      m.text || m.txt || '',
+    time:     hhmm,
+    type:     m.type || 'text',
+    mediaUrl: m.mediaUrl || '',
+    mimeType: m.mimeType || '',
+    fileName: m.fileName || '',
+    status:   m.status || '',
+  }
+}
+
+// ── campo: normalizar chats del backend ────────────────────────
+function normChat(c) {
+  const ts = c.lastMessageAt || c.updatedAt || ''
+  const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return '' } })() : ''
+  return {
+    id:       c.chatId || c.id || '',
+    name:     c.name || '',
+    phone:    c.phone || '',
+    photoUrl: c.photoUrl || '',
+    preview:  c.lastMessagePreview || c.preview || '',
+    time:     hhmm,
+    unread:   c.unreadCount ?? c.unread ?? 0,
+  }
+}
 
 const FLOW_NODES = {
   bienvenida: [
@@ -83,9 +124,15 @@ export default function WhatsAppBot() {
   const [pan,         setPan]         = useState({ x: 30, y: 18 })
   const [cfgTab,      setCfgTab]      = useState('conn')
 
+  const [attachOpen,   setAttachOpen]   = useState(false)
+  const [sending,      setSending]      = useState(false)
+
   const msgsRef    = useRef(null)
   const qrRef      = useRef(null)
   const dragRef    = useRef({})
+  const fileImgRef = useRef(null)
+  const fileAudRef = useRef(null)
+  const fileDocRef = useRef(null)
 
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
@@ -100,9 +147,20 @@ export default function WhatsAppBot() {
   // Polling mensajes cuando hay chat activo
   useEffect(() => { // eslint-disable-line
     if (!active || status !== 'connected') return
-    const t = setInterval(() => loadM(active.id, false), 3000)
+    const t = setInterval(() => loadM(active.id, false), 3500)
     return () => clearInterval(t)
-  }, [active, status]) // eslint-disable-line
+  }, [active?.id, status]) // eslint-disable-line
+
+  // Restaurar chat activo desde localStorage cuando se conecta
+  useEffect(() => { // eslint-disable-line
+    if (status !== 'connected') return
+    const saved = activeGet()
+    if (saved && !active) {
+      setActive(saved)
+      setShowContact(true)
+      loadM(saved.id, false)
+    }
+  }, [status]) // eslint-disable-line
 
   // Polling QR agresivo cuando estamos en página conexion esperando QR
   useEffect(() => { // eslint-disable-line
@@ -141,7 +199,7 @@ export default function WhatsAppBot() {
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
-      setStatus(d.status)
+      setStatus(d.status || d.ok === false ? 'disconnected' : d.status)
       setPhone(d.phone || '')
       if (d.status === 'connected') { try { await loadC() } catch {} }
       else if (d.status === 'connecting' || d.status === 'qr') { setStatus('connecting'); loadQR() }
@@ -190,33 +248,70 @@ export default function WhatsAppBot() {
 
   async function loadC() {
     const d = await (await fetch(BU + '/chats', { headers: H })).json()
-    setChats(d.chats || [])
+    setChats((d.chats || []).map(normChat))
   }
 
-  async function loadM(id, sc = true) {
+  async function loadM(chatId, sc = true) {
+    // Mostrar caché inmediatamente
+    const cached = cacheGet(chatId)
+    if (cached.length) { setMsgs(cached); if (sc) scroll() }
     try {
-      const d = await (await fetch(BU + '/messages/' + id, { headers: H })).json()
-      setMsgs(d.messages || [])
-      if (sc) scroll()
+      const d = await (await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/messages`, { headers: H })).json()
+      if (d.ok && Array.isArray(d.messages)) {
+        const norm = d.messages.map(normMsg)
+        cachePut(chatId, norm)
+        setMsgs(norm)
+        if (sc) scroll()
+      }
     } catch {}
   }
 
   async function openChat(c) {
     setActive(c); setShowContact(true)
+    activePut(c)
     await loadM(c.id)
     setChats(p => p.map(x => x.id === c.id ? { ...x, unread: 0 } : x))
+    // Marcar como leído en backend
+    fetch(`${BU}/chats/${encodeURIComponent(c.id)}/read`, { method: 'POST', headers: H }).catch(() => {})
   }
 
   async function send() {
     if (!inp.trim() || !active || status !== 'connected') return
+    setSending(true)
     try {
-      await fetch(BU + '/send', {
-        method: 'POST', headers: H,
-        body: JSON.stringify({ to: active.phone || '+' + active.id, message: inp })
-      })
-      const t = new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })
-      setMsgs(p => [...p, { dir: 's', txt: inp, time: t }]); setInp(''); scroll()
+      const fd = new FormData()
+      fd.append('text', inp)
+      const r = await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/send`, { method: 'POST', headers: H, body: fd })
+      const d = await r.json()
+      const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+      const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: inp, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
+      setInp(''); scroll()
     } catch { tip('⚠️ Error al enviar') }
+    setSending(false)
+  }
+
+  async function sendFile(file, type) {
+    if (!file || !active || status !== 'connected') return
+    setSending(true); setAttachOpen(false)
+    tip('📤 Enviando archivo...')
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      if (type) fd.append('type', type)
+      const r  = await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/send`, { method: 'POST', headers: H, body: fd })
+      const d  = await r.json()
+      if (d.ok) {
+        const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        const mime = file.type || ''
+        const mediaUrl = d.message?.mediaUrl || URL.createObjectURL(file)
+        const ft = type || (mime.startsWith('image') ? 'image' : mime.startsWith('audio') ? 'audio' : mime.startsWith('video') ? 'video' : 'document')
+        const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: '', time: t, type: ft, mediaUrl, mimeType: mime, fileName: file.name, status: 'sent' }
+        setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
+        scroll(); tip('✅ Archivo enviado')
+      } else { tip('⚠️ Error: ' + (d.error || 'no se pudo enviar')) }
+    } catch { tip('⚠️ Error al enviar archivo') }
+    setSending(false)
   }
 
   async function regenerateQR() {
@@ -475,9 +570,14 @@ export default function WhatsAppBot() {
                     </div>
                   ) : filteredChats.map((c, i) => (
                     <div key={c.id} className={`wbv5-conv-itm ${active?.id === c.id ? 'active' : ''}`} onClick={() => openChat(c)}>
-                      <div className="wbv5-ci-ava" style={{ background: COLORS_AV[i % 5], color: COLORS_TXT[i % 5] }}>
-                        {(c.name || '?').substring(0, 2).toUpperCase()}
-                      </div>
+                      {c.photoUrl && c.photoUrl.startsWith('http') ? (
+                        <img src={c.photoUrl} alt={c.name} className="wbv5-ci-ava-img"
+                          onError={e => { e.target.style.display='none' }} />
+                      ) : (
+                        <div className="wbv5-ci-ava" style={{ background: COLORS_AV[i % 5], color: COLORS_TXT[i % 5] }}>
+                          {(c.name || c.phone || '?').substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
                       <div className="wbv5-ci-body">
                         <div className="wbv5-ci-name">{c.name || c.phone}</div>
                         <div className="wbv5-ci-prev">{c.preview || 'Sin mensajes'}</div>
@@ -490,6 +590,8 @@ export default function WhatsAppBot() {
                   ))}
                 </div>
               </div>
+
+              {/* ── ventana de chat ── */}
               <div className="wbv5-chat-win">
                 {!active ? (
                   <div className="wbv5-chat-empty">
@@ -499,41 +601,88 @@ export default function WhatsAppBot() {
                 ) : (
                   <>
                     <div className="wbv5-cw-header">
-                      <div className="wbv5-cw-ava">{(active.name || '?').substring(0, 2).toUpperCase()}</div>
+                      {active.photoUrl && active.photoUrl.startsWith('http') ? (
+                        <img src={active.photoUrl} alt={active.name} className="wbv5-ci-ava-img" onError={e => e.target.style.display='none'} />
+                      ) : (
+                        <div className="wbv5-cw-ava">{(active.name || '?').substring(0, 2).toUpperCase()}</div>
+                      )}
                       <div>
                         <div className="wbv5-cw-name">{active.name || active.phone}</div>
-                        <div className="wbv5-cw-sub">🟢 WhatsApp</div>
+                        <div className="wbv5-cw-sub">🟢 WhatsApp · {active.phone || '+' + active.id}</div>
                       </div>
                       <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
-                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm">🤖 Bot</button>
                       </div>
                     </div>
+
                     <div className="wbv5-cw-msgs" ref={msgsRef}>
                       {msgs.length === 0 ? (
                         <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '.72rem', padding: '2rem 0' }}>Sin mensajes aún</div>
-                      ) : msgs.map((m, i) => (
-                        <div key={i} className={`wbv5-msg ${m.dir}`}>
-                          <div className="wbv5-msg-txt">{m.txt}</div>
-                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? ' ✓✓' : ''}</div>
+                      ) : msgs.map((m) => (
+                        <div key={m.id} className={`wbv5-msg ${m.dir}`}>
+                          {/* texto */}
+                          {m.txt ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
+                          {/* imagen */}
+                          {m.type === 'image' && m.mediaUrl ? (
+                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer">
+                              <img src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} alt="img" className="wbv5-msg-img" />
+                            </a>
+                          ) : null}
+                          {/* video */}
+                          {m.type === 'video' && m.mediaUrl ? (
+                            <video src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-video" />
+                          ) : null}
+                          {/* audio */}
+                          {m.type === 'audio' && m.mediaUrl ? (
+                            <audio src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-audio" />
+                          ) : null}
+                          {/* documento */}
+                          {m.type === 'document' && m.mediaUrl ? (
+                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer" className="wbv5-msg-doc">
+                              📄 {m.fileName || 'Documento'}
+                            </a>
+                          ) : null}
+                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ✓✓' : ' ✓') : ''}</div>
                         </div>
                       ))}
                     </div>
-                    <div className="wbv5-cw-input-bar">
+
+                    {/* inputs ocultos para adjuntos */}
+                    <input ref={fileImgRef} type="file" accept="image/*,video/*" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f, f.type.startsWith('video') ? 'video' : 'image'); e.target.value='' }} />
+                    <input ref={fileAudRef} type="file" accept="audio/*" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f,'audio'); e.target.value='' }} />
+                    <input ref={fileDocRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f,'document'); e.target.value='' }} />
+
+                    <div className="wbv5-cw-input-bar" style={{ position: 'relative' }}>
+                      {attachOpen && (
+                        <div className="wbv5-attach-menu">
+                          <button onClick={() => { setAttachOpen(false); fileImgRef.current?.click() }}>🖼️ Imagen / Video</button>
+                          <button onClick={() => { setAttachOpen(false); fileAudRef.current?.click() }}>🎵 Audio</button>
+                          <button onClick={() => { setAttachOpen(false); fileDocRef.current?.click() }}>📄 Documento</button>
+                        </div>
+                      )}
+                      <button className="wbv5-cw-attach" title="Adjuntar" onClick={() => setAttachOpen(o => !o)}>📎</button>
                       <input
-                        className="wbv5-cw-input" value={inp}
+                        className="wbv5-cw-input" value={inp} disabled={sending}
                         onChange={e => setInp(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && send()}
-                        placeholder="Escribe un mensaje..."
+                        onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+                        placeholder={sending ? 'Enviando...' : 'Escribe un mensaje...'}
                       />
-                      <button className="wbv5-cw-send" onClick={send}>➤</button>
+                      <button className="wbv5-cw-send" onClick={send} disabled={sending}>
+                        {sending ? '⏳' : '➤'}
+                      </button>
                     </div>
                   </>
                 )}
               </div>
+
               {showContact && active && (
                 <div className="wbv5-contact-pnl">
                   <div className="wbv5-cp-title">👤 Contacto</div>
+                  {active.photoUrl && active.photoUrl.startsWith('http') && (
+                    <div style={{ textAlign: 'center', marginBottom: '.75rem' }}>
+                      <img src={active.photoUrl} alt={active.name} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e5e7eb' }} />
+                    </div>
+                  )}
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Nombre</div><div className="wbv5-cp-val">{active.name || '—'}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Teléfono</div><div className="wbv5-cp-val">{active.phone || '+' + active.id}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Último mensaje</div><div className="wbv5-cp-val">{active.preview || '—'}</div></div>
