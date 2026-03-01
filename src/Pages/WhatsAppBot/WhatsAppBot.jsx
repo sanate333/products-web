@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Header from '../Header/Header';
 import './WhatsAppBot.css';
 
-const API = '/api/whatsapp';
+// Intenta usar el backend local (puerto 5055) si está disponible, o fallback a relativo
+const LOCAL_BACKEND = 'http://localhost:5055/api/whatsapp';
+const API = LOCAL_BACKEND;
 
 function getInitials(name) {
   const safe = String(name || '').trim();
@@ -93,11 +95,12 @@ export default function WhatsAppBot() {
       setChats((prev) => (append ? [...prev, ...(data.chats || [])] : (data.chats || [])));
       setChatsCursor(data.nextCursor || null);
     } catch (err) {
-      showToast(`Error chats: ${err.message || err}`);
+      // Si el backend no responde, ir directo a Configuración para mostrar estado
+      setTab('config');
     } finally {
       setLoadingChats(false);
     }
-  }, [showToast]);
+  }, []);
 
   const loadMessages = useCallback(async (chatId, cursor = null, appendOlder = false) => {
     if (!chatId) return;
@@ -356,10 +359,13 @@ export default function WhatsAppBot() {
     }
   }, [showToast]);
 
+  const [backendOnline, setBackendOnline] = useState(true);
+
   const pollWaStatus = useCallback(async () => {
     try {
       const r = await fetch(`${API}/status`);
       const d = await r.json();
+      setBackendOnline(true);
       if (!d.ok) return;
       setWaStatus(d.status || 'disconnected');
       setWaPhone(d.phone || '');
@@ -370,7 +376,9 @@ export default function WhatsAppBot() {
       } else {
         setWaQR(null);
       }
-    } catch {}
+    } catch {
+      setBackendOnline(false);
+    }
   }, []);
 
   const connectWa = useCallback(async () => {
@@ -626,33 +634,45 @@ export default function WhatsAppBot() {
               <h2>Conexión WhatsApp</h2>
 
               {/* Estado de conexión */}
-              <div className={`wb-status-badge wb-status-${waStatus}`}>
-                {waStatus === 'connected' && `✅ Conectado${waPhone ? ` — ${waPhone}` : ''}`}
-                {waStatus === 'connecting' && '🔄 Conectando...'}
-                {waStatus === 'disconnected' && '❌ Desconectado'}
-              </div>
+              {backendOnline ? (
+                <>
+                  <div className={`wb-status-badge wb-status-${waStatus}`}>
+                    {waStatus === 'connected' && `✅ Conectado${waPhone ? ` — ${waPhone}` : ''}`}
+                    {waStatus === 'connecting' && '🔄 Conectando...'}
+                    {waStatus === 'disconnected' && '❌ Desconectado'}
+                  </div>
 
-              {/* QR code */}
-              {waStatus !== 'connected' && waQR && (
-                <div className="wb-qr-wrap">
-                  <p className="wb-qr-hint">Escanea el QR desde WhatsApp → Dispositivos vinculados</p>
-                  <img src={waQR} alt="QR WhatsApp" className="wb-qr-img" />
+                  {/* QR code */}
+                  {waStatus !== 'connected' && waQR && (
+                    <div className="wb-qr-wrap">
+                      <p className="wb-qr-hint">Escanea el QR desde WhatsApp → Dispositivos vinculados</p>
+                      <img src={waQR} alt="QR WhatsApp" className="wb-qr-img" />
+                    </div>
+                  )}
+                  {waStatus === 'connecting' && !waQR && (
+                    <div className="wb-qr-loading">Generando código QR... espera unos segundos.</div>
+                  )}
+
+                  <div className="wb-actions">
+                    {waStatus !== 'connected' && (
+                      <button type="button" className="wb-primary" onClick={connectWa}>
+                        {waStatus === 'connecting' ? '🔄 Conectando...' : '📱 Conectar WhatsApp'}
+                      </button>
+                    )}
+                    {waStatus === 'connected' && (
+                      <button type="button" className="wb-danger" onClick={disconnectWa}>Desvincular</button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <div className="wb-backend-offline">
+                  <div className="wb-status-badge wb-status-disconnected">⚠️ Servidor WhatsApp no disponible</div>
+                  <p>El servidor Node.js del WhatsApp Bot no está corriendo en <strong>localhost:5055</strong>.</p>
+                  <p>Para activar el bot, abre una terminal en el proyecto y ejecuta:</p>
+                  <pre className="wb-code-block">npm start</pre>
+                  <p>Luego recarga esta página para ver el código QR y conectar WhatsApp.</p>
                 </div>
               )}
-              {waStatus === 'connecting' && !waQR && (
-                <div className="wb-qr-loading">Generando código QR... espera unos segundos.</div>
-              )}
-
-              <div className="wb-actions">
-                {waStatus !== 'connected' && (
-                  <button type="button" className="wb-primary" onClick={connectWa}>
-                    {waStatus === 'connecting' ? '🔄 Conectando...' : '📱 Conectar WhatsApp'}
-                  </button>
-                )}
-                {waStatus === 'connected' && (
-                  <button type="button" className="wb-danger" onClick={disconnectWa}>Desvincular</button>
-                )}
-              </div>
 
               <hr className="wb-divider" />
               <h2>Sincronización</h2>

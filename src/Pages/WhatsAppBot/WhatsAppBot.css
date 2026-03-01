@@ -583,3 +583,27 @@
   border-top: 1px solid #e2e8f0;
   margin: 20px 0;
 }
+
+/* ── Backend offline ─────────────────────────────────────────────── */
+.wb-backend-offline {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 10px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.wb-backend-offline p {
+  margin: 8px 0;
+  color: #555;
+  font-size: 0.92rem;
+}
+.wb-code-block {
+  background: #1e1e2e;
+  color: #a6e3a1;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.95rem;
+  margin: 10px 0;
+  display: inline-block;
+}
