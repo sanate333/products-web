@@ -180,14 +180,14 @@ export default function WhatsAppBot() {
     return () => clearInterval(t)
   }, [page, status]) // eslint-disable-line
 
-  // Redibujar QR en canvas cuando cambia la URL o la página
+  // Redibujar QR en canvas cuando cambia la URL, la página o el status
   useEffect(() => {
-    if (page !== 'conexion') return
+    if (page !== 'conexion' || status === 'connected') return
     setTimeout(() => {
       if (qrDataUrl) drawQR(qrDataUrl)
       else drawQRWaiting()
-    }, 60)
-  }, [page, qrDataUrl]) // eslint-disable-line
+    }, 80)
+  }, [page, qrDataUrl, status]) // eslint-disable-line
 
   // Drag nodes
   useEffect(() => {
@@ -329,11 +329,13 @@ export default function WhatsAppBot() {
 
   async function regenerateQR() {
     setQrDataUrl(null); setStatus('connecting')
-    drawQRWaiting()
+    // drawQRWaiting después de que React renderice el canvas (si no estaba visible)
+    setTimeout(drawQRWaiting, 80)
     try { await fetch(BU + '/logout', { method: 'POST', headers: H }) } catch {}
     tip('🔄 Generando QR...')
     setTimeout(loadQR, 2000)
     setTimeout(loadQR, 4500)
+    setTimeout(loadQR, 7000)
   }
 
   async function disconnectWA() {
@@ -395,14 +397,14 @@ export default function WhatsAppBot() {
       // Solo cargar QR si está en modo connecting (no llamar logout automáticamente)
       if (status === 'connecting' || status === 'qr') setTimeout(loadQR, 150)
       else if (status === 'disconnected') {
-        // Intentar obtener QR sin desconectar — puede que el backend ya tenga uno
+        // Verificar estado real del backend antes de actuar
         setTimeout(async () => {
           const d = await fetch(BU + '/status', { headers: H }).then(r => r.json()).catch(() => ({}))
           const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
           setStatus(s); setPhone(d.phone || '')
           if (s === 'connecting' || s === 'qr') { loadQR() }
           else if (s === 'connected') { loadC().catch(() => {}) }
-          // si sigue disconnected, mostrar estado sin conectar
+          else { regenerateQR() } // confirmado disconnected: auto-iniciar generación QR
         }, 100)
       }
       // si connected: mostrar estado conectado sin hacer nada
@@ -890,14 +892,29 @@ export default function WhatsAppBot() {
                     </>
                   ) : (
                     <>
-                      <h3>{qrDataUrl ? '📱 Escanea con WhatsApp' : '📱 Vincula tu WhatsApp'}</h3>
-                      <p>Escanea el código QR con tu WhatsApp para conectar el bot y recibir mensajes en tiempo real.</p>
+                      <h3>{qrDataUrl ? '📱 Escanea con WhatsApp' : status === 'connecting' ? '⏳ Generando QR...' : '📱 Vincula tu WhatsApp'}</h3>
+                      <p>
+                        {qrDataUrl
+                          ? 'Escanea el código QR con tu WhatsApp para conectar el bot.'
+                          : status === 'connecting'
+                          ? 'El servidor está generando el código QR, espera un momento...'
+                          : 'Genera un código QR y escanéalo con WhatsApp para conectar el bot.'}
+                      </p>
                       <div className="wbv5-qr-steps">
                         <span>1️⃣ Abre WhatsApp en tu teléfono</span>
                         <span>2️⃣ Ve a Dispositivos vinculados</span>
                         <span>3️⃣ Toca "Vincular un dispositivo"</span>
                         <span>4️⃣ Escanea el código QR</span>
                       </div>
+                      {!qrDataUrl && status === 'disconnected' && (
+                        <button
+                          className="wbv5-btn wbv5-btn-green"
+                          style={{ marginTop: '1rem', width: '100%', fontSize: '.9rem', padding: '.6rem 1rem' }}
+                          onClick={regenerateQR}
+                        >
+                          🔄 Generar código QR
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
