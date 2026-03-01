@@ -18,21 +18,7 @@ import Clientes from './Clientes/Clientes';
 import ImagenesIA from './ImagenesIA/ImagenesIA';
 import PageDetail from '../Pages/PageDetail/PageDetail';
 
-import WhatsappIA, {
-    WhatsappRedirect,
-    WhatsappPanel,
-    WhatsappSimple,
-    WhatsappChat,
-    WhatsappTemplates,
-    WhatsappAutomation,
-    WhatsappFlows,
-    WhatsappConfig,
-    WhatsappOpenAI,
-    WhatsappSchedules,
-    WhatsappTags,
-    WhatsappFacebook,
-    WhatsappInstagram,
-} from './WhatsappIA/WhatsappIA';
+import WhatsAppBot from './WhatsAppBot/WhatsAppBot';
 import Tiendas from './Tiendas/Tiendas';
 import Ajustes from './Ajustes/Ajustes';
 import AjustesLogo from './AjustesLogo/AjustesLogo';
@@ -66,6 +52,9 @@ const dashboardChildren = [
     { path: 'ofertas-carrito', element: <OfertasCarrito /> },
     { path: 'landing-pages', element: <LandingPages /> },
     { path: 'pedidos/landing-pages', element: <LandingPages /> },
+    { path: 'whatsapp-bot', element: <WhatsAppBot /> },
+    { path: 'whastapp-bot', element: <WhatsAppBot /> },
+    { path: 'whatsapp', element: <WhatsAppBot /> },
     { path: 'monitor-global-ai', element: <MonitorGlobalAI /> },
     { path: 'monitor', element: <MonitorGlobalAI /> },
     { path: 'wallet', element: <Wallet /> },
@@ -99,26 +88,6 @@ const storeDashboardChildren = [
     { path: 'tutoriales', element: <Tutoriales /> },
     { path: 'ajustes', element: <Ajustes /> },
     { path: 'ajustes/logo', element: <AjustesLogo /> },
-];
-
-const whatsappChildren = [
-    { index: true, element: <WhatsappRedirect /> },
-    { path: 'panel', element: <WhatsappPanel /> },
-    { path: 'contactos', element: <WhatsappSimple title="Panel de Contactos" subtitle="Vista general de conversaciones y rendimiento" /> },
-    { path: 'campanas', element: <WhatsappSimple title="Panel de Campanas" subtitle="Vista general de conversaciones y rendimiento" /> },
-    { path: 'transmision', element: <WhatsappSimple title="Panel de Transmision" subtitle="Vista general de conversaciones y rendimiento" /> },
-    { path: 'chat', element: <WhatsappChat /> },
-    { path: 'inbox', element: <WhatsappChat /> },
-    { path: 'plantillas', element: <WhatsappTemplates /> },
-    { path: 'automatizacion', element: <WhatsappAutomation /> },
-    { path: 'flows', element: <WhatsappFlows /> },
-    { path: 'flujos', element: <WhatsappFlows /> },
-    { path: 'configuraciones', element: <WhatsappConfig /> },
-    { path: 'openai', element: <WhatsappOpenAI /> },
-    { path: 'schedules', element: <WhatsappSchedules /> },
-    { path: 'tags', element: <WhatsappTags /> },
-    { path: 'facebook', element: <WhatsappFacebook /> },
-    { path: 'instagram', element: <WhatsappInstagram /> },
 ];
 
 export const router = createBrowserRouter([
@@ -173,24 +142,6 @@ export const router = createBrowserRouter([
             { path: 'producto/:productoSlug', element: <PageDetail /> },
             { path: 'producto/:idProducto/:producto', element: <PageDetail /> },
         ],
-    },
-    // WhatsApp Bot — layout propio con menú lateral estilo TiqueChat
-    {
-        path: '/dashboard/whatsapp-bot',
-        element: <Navigate to="/dashboard/whatsapp-bot/chat" replace />,
-    },
-    {
-        path: '/dashboard/whastapp-bot',
-        element: <Navigate to="/dashboard/whatsapp-bot/chat" replace />,
-    },
-    {
-        path: '/dashboard/whatsapp',
-        element: <Navigate to="/dashboard/whatsapp-bot/chat" replace />,
-    },
-    {
-        path: '/dashboard/whatsapp-bot/*',
-        element: <WhatsappIA />,
-        children: whatsappChildren,
     },
     {
         path: '/dashboard',
