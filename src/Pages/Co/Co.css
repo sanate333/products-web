@@ -1,0 +1,528 @@
+.coLanding {
+  min-height: 100vh;
+  background: #070707;
+  color: #f8f4ea;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  width: 100%;
+  overflow-x: hidden;
+  overscroll-behavior-x: none;
+  touch-action: pan-y;
+}
+
+.coHero {
+  position: relative;
+  min-height: 82vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  overflow: hidden;
+}
+
+.coHeroMotionLayer {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-repeat: repeat-x;
+  background-position: center center;
+  filter: saturate(1.05) brightness(0.95);
+  animation: coHeroPan 36s linear infinite;
+}
+
+.coHeroVideo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  will-change: transform;
+}
+
+.coHeroVignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(215, 161, 55, 0.35), transparent 40%),
+    radial-gradient(circle at 80% 30%, rgba(255, 205, 98, 0.25), transparent 45%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0.8) 80%);
+}
+
+.coHeroInner {
+  position: relative;
+  z-index: 1;
+  width: min(940px, 100%);
+  text-align: center;
+}
+
+.coHeroBadge {
+  display: inline-flex;
+  margin-bottom: 16px;
+  border: 1px solid rgba(250, 211, 124, 0.45);
+  border-radius: 999px;
+  padding: 7px 14px;
+  background: rgba(250, 211, 124, 0.12);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.coHeroTitle {
+  margin: 0;
+  font-size: clamp(40px, 7vw, 64px);
+  line-height: 1.06;
+  position: relative;
+}
+
+.coSmoke {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  width: 58%;
+  height: 72px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0) 70%);
+  filter: blur(18px);
+  animation: coSmokeDrift 6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+
+@keyframes coSmokeDrift {
+  from { opacity: 0.44; transform: translate(-52%, -52%) scale(1); }
+  to { opacity: 0.7; transform: translate(-48%, -44%) scale(1.09); }
+}
+
+@keyframes coHeroPan {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-18%, 0, 0); }
+}
+
+.coHeroSubtitle {
+  margin: 18px auto 0;
+  max-width: 760px;
+  font-size: clamp(16px, 2vw, 21px);
+  color: rgba(248, 244, 234, 0.92);
+}
+
+.coHeroBullets {
+  list-style: none;
+  margin: 20px auto 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+  max-width: 580px;
+  font-size: 15px;
+}
+
+.coHeroBullets li::before {
+  content: "\2022 ";
+  color: #f9d07f;
+  font-weight: 700;
+}
+
+.coHeroCtas {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.coHeroStatus {
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(248, 244, 234, 0.78);
+}
+
+.coHeroInlineLink {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 13px;
+  color: #f9d07f;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.coBtn {
+  border-radius: 14px;
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.18s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.coBtn:focus-visible {
+  outline: 2px solid #ffd68a;
+  outline-offset: 2px;
+}
+
+.coBtn:hover {
+  transform: translateY(-1px);
+}
+
+.coBtnPrimary {
+  background: linear-gradient(135deg, #f8ce7a, #d29f3e);
+  color: #231600;
+  box-shadow: 0 10px 30px rgba(210, 159, 62, 0.35);
+}
+
+.coBtnGhost {
+  background: rgba(255, 255, 255, 0.04);
+  color: #fbf5e8;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+.coSection {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+  padding: 56px 20px 0;
+}
+
+.coSectionTitle {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 46px);
+  line-height: 1.1;
+}
+
+.coSectionSubtitle {
+  margin-top: 10px;
+  color: rgba(248, 244, 234, 0.82);
+}
+
+.coProofSection {
+  padding-top: 38px;
+}
+
+.coMetricsGrid {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.coMetricCard {
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+}
+
+.coMetricCard strong {
+  font-size: 26px;
+  color: #f9d07f;
+}
+
+.coMetricCard span {
+  font-size: 13px;
+  color: rgba(248, 244, 234, 0.82);
+}
+
+.coTrustRow {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.coTrustChip {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 6px 10px;
+  font-size: 12px;
+  color: rgba(248, 244, 234, 0.82);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.coTemplateGrid {
+  margin-top: 18px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.coTemplateCard {
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.01));
+  box-shadow: inset 0 0 40px rgba(205, 149, 52, 0.08);
+}
+
+.coTemplateCard h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.coTemplateHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.coTemplateBadge {
+  border-radius: 999px;
+  border: 1px solid rgba(249, 208, 127, 0.45);
+  background: rgba(249, 208, 127, 0.12);
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.coTemplateCard p {
+  margin: 8px 0 10px;
+  font-size: 13px;
+  line-height: 1.38;
+  color: rgba(248, 244, 234, 0.8);
+}
+
+.coTemplateCard ul {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: rgba(248, 244, 234, 0.78);
+}
+
+.coCarousel {
+  margin-top: 14px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 8px;
+}
+
+.coCarouselItem {
+  flex: 0 0 min(320px, 78vw);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  scroll-snap-align: start;
+}
+
+.coCarouselItem img {
+  display: block;
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.coCarouselDots {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+
+.coCarouselDots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.coCarouselDots .isActive {
+  background: #f9d07f;
+}
+
+.coWhyGrid,
+.coStepsGrid,
+.coFaqGrid {
+  margin-top: 16px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.coMiniCard,
+.coStepCard,
+.coFaqItem,
+.coPriceCard {
+  margin: 0;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 14px;
+}
+
+.coMiniCard,
+.coStepCard p,
+.coFaqItem p {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.coStepIndex {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #f9d07f;
+}
+
+.coPriceCard {
+  background: linear-gradient(145deg, rgba(214, 158, 65, 0.16), rgba(255, 255, 255, 0.04));
+}
+
+.coPriceCard ul {
+  margin: 12px 0 14px;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.coFaqItem summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.coFaqItem p {
+  margin: 8px 0 0;
+  color: rgba(248, 244, 234, 0.82);
+}
+
+.coFooter {
+  width: min(1120px, 100%);
+  margin: 56px auto 0;
+  padding: 28px 20px 52px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  color: rgba(248, 244, 234, 0.78);
+  display: grid;
+  gap: 8px;
+}
+
+.coFooter a {
+  color: #f9d07f;
+}
+
+.coModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(3, 3, 4, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+}
+
+.coModal {
+  width: min(540px, 100%);
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0c0c0d;
+  box-shadow: 0 18px 56px rgba(0, 0, 0, 0.45);
+}
+
+.coModalHeader,
+.coModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.coModalFooter {
+  border-bottom: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.coIconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.coModalForm {
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+
+.coModalForm label {
+  display: grid;
+  gap: 6px;
+}
+
+.coModalForm span {
+  font-size: 12px;
+  color: rgba(248, 244, 234, 0.8);
+}
+
+.coModalForm input,
+.coModalForm select {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.03);
+  color: #fff;
+  padding: 11px;
+  font-size: 14px;
+}
+
+.coModalForm input:focus,
+.coModalForm select:focus {
+  border-color: #f9d07f;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(249, 208, 127, 0.25);
+}
+
+.coModalForm small {
+  font-size: 11px;
+  color: rgba(248, 244, 234, 0.65);
+}
+
+.coError {
+  margin: 6px 0 0;
+  color: #ff9b9b;
+  font-size: 12px;
+}
+
+@media (max-width: 980px) {
+  html, body, #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .coTemplateGrid,
+  .coMetricsGrid,
+  .coWhyGrid,
+  .coStepsGrid,
+  .coFaqGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .coSection {
+    padding-top: 44px;
+  }
+
+  .coHero {
+    min-height: 72vh;
+    padding-top: 68px;
+  }
+
+  .coHeroVideo {
+    width: 132%;
+    left: -16%;
+    right: auto;
+    animation: coHeroPan 20s linear infinite;
+  }
+
+  .coHeroMotionLayer {
+    animation-duration: 22s;
+  }
+}

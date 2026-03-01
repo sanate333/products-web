@@ -1,0 +1,246 @@
+/* UrlShortenerAdmin.css */
+
+.url-shortener-admin {
+  padding: 2rem;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.url-shortener-admin h2 {
+  margin-top: 0;
+  color: #333;
+  margin-bottom: 2rem;
+}
+
+/* Estadísticas */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.stat-card h3 {
+  margin: 0;
+  font-size: 2rem;
+  color: #25d366;
+}
+
+.stat-card p {
+  margin: 0.5rem 0 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Filtros */
+.filters {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.filters select,
+.filters input {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.filters input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.btn-export {
+  padding: 0.5rem 1rem;
+  background: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn-export:hover {
+  background: #45a049;
+}
+
+/* Tabla */
+.table-container {
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.urls-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.urls-table thead {
+  background: #f9f9f9;
+  border-bottom: 2px solid #ddd;
+}
+
+.urls-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+}
+
+.urls-table td {
+  padding: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.urls-table tbody tr:hover {
+  background: #f5f5f5;
+}
+
+.urls-table code {
+  background: #f0f0f0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: monospace;
+  color: #25d366;
+}
+
+.urls-table .clicks {
+  font-weight: 600;
+  color: #25d366;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-guia {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-producto {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.badge-pedido {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.badge-oferta {
+  background: #fff3e0;
+  color: #f57c00;
+}
+
+/* Estados */
+.status {
+  display: inline-block;
+  padding: 0.3rem 0.6rem;
+  border-radius: 3px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status.active {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status.inactive {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.urls-table tbody tr.inactive {
+  opacity: 0.7;
+  background: #fafafa;
+}
+
+/* Botones */
+.btn-toggle {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.btn-toggle.activate {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.btn-toggle.activate:hover {
+  background: #2e7d32;
+  color: white;
+}
+
+.btn-toggle.deactivate {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.btn-toggle.deactivate:hover {
+  background: #c62828;
+  color: white;
+}
+
+/* Estados */
+.loading,
+.empty {
+  padding: 2rem;
+  text-align: center;
+  color: #999;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .url-shortener-admin {
+    padding: 1rem;
+  }
+
+  .filters {
+    flex-direction: column;
+  }
+
+  .filters select,
+  .filters input {
+    width: 100%;
+  }
+
+  .urls-table {
+    font-size: 0.9rem;
+  }
+
+  .urls-table th,
+  .urls-table td {
+    padding: 0.75rem;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+}

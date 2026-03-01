@@ -1,0 +1,97 @@
+.dropshippingPage { display: flex; flex-direction: column; gap: 12px; }
+.dropshippingHero { border: 1px solid #dbe3ef; border-radius: 14px; background: linear-gradient(140deg,#f8fbff,#e0f2fe 58%,#e6fffb); padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.dropshippingHero h1 { margin: 0; color: #0f172a; font-size: 24px; }
+.dropshippingHero p { margin: 6px 0 0; color: #475569; font-size: 13px; }
+.dropshippingPrimaryBtn { border: 1px solid #1d4ed8; border-radius: 10px; background: linear-gradient(135deg,#0ea5e9,#2563eb); color: #fff; font-size: 12px; font-weight: 700; padding: 10px 13px; }
+.dropshippingStatusMsg { margin: 0; padding: 8px 12px; border: 1px solid #dbeafe; border-radius: 10px; background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 700; }
+.dropshippingStatusMsg.success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.dropshippingStatusMsg.error { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+.dropshippingSelectionHint { margin: 0; padding: 8px 12px; border: 1px solid #86efac; border-radius: 10px; background: #ecfdf3; color: #166534; font-size: 12px; font-weight: 700; }
+.dropshippingLogisticsCard { border: 1px solid #dbe3ef; border-radius: 12px; background: linear-gradient(180deg,#ffffff,#f8fbff); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.dropshippingLogisticsHead h3 { margin: 0; color: #0f172a; font-size: 17px; }
+.dropshippingLogisticsHead p { margin: 4px 0 0; color: #475569; font-size: 12px; }
+.dropshippingLogisticsGrid { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 10px; }
+.dropshippingLogisticsStats { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.dropshippingLogisticsStats article { border: 1px solid #dbe3ef; border-radius: 10px; background: #fff; padding: 9px; display: flex; flex-direction: column; gap: 4px; }
+.dropshippingLogisticsStats span { color: #64748b; font-size: 11px; font-weight: 700; }
+.dropshippingLogisticsStats strong { color: #0f172a; font-size: 14px; font-weight: 800; }
+.tonePositive { color: #166534 !important; }
+.toneNegative { color: #b91c1c !important; }
+.dropshippingToolbar { border: 1px solid #dbe3ef; border-radius: 12px; background: #fff; padding: 10px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.dropshippingFilters { display: flex; flex-direction: column; gap: 6px; }
+.dropshippingFilters label { font-size: 12px; font-weight: 700; color: #334155; }
+.dropshippingFilters input, .dropshippingFilters select, .dropshippingModal input, .dropshippingModal textarea, .drawerItem input, .drawerItem select { border: 1px solid #dbe3ef; border-radius: 10px; background: #fff; color: #0f172a; font-size: 12px; padding: 9px 10px; width: 100%; }
+.dropshippingTabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.dropshippingTabBtn { border: 1px solid #dbe3ef; border-radius: 10px; background: #fff; color: #475569; font-size: 12px; font-weight: 700; padding: 8px 12px; }
+.dropshippingTabBtn.active { border-color: #0ea5e9; background: linear-gradient(135deg,#0ea5e9,#2563eb); color: #fff; }
+.dropshippingPanel { border: 1px solid #dbe3ef; border-radius: 12px; background: #fff; overflow: auto; }
+.dropshippingTable { width: 100%; min-width: 760px; border-collapse: collapse; }
+.dropshippingTable th, .dropshippingTable td { border-bottom: 1px solid #eef2f7; padding: 10px; font-size: 12px; color: #334155; text-align: left; vertical-align: middle; }
+.dropshippingTable th { background: #f8fafc; font-weight: 800; color: #0f172a; }
+.dropshippingTable button, .modalActions button, .drawerActions button, .drawerHead button, .dropshippingCardActions button { border: 1px solid #dbe3ef; border-radius: 9px; background: #f8fafc; color: #334155; font-size: 12px; font-weight: 700; padding: 7px 10px; }
+.dropshippingThumb { width: 52px; height: 52px; object-fit: cover; border-radius: 8px; border: 1px solid #dbe3ef; }
+.dropshippingGrid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.dropshippingCard { border: 1px solid #dbe3ef; border-radius: 12px; background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.dropshippingCard.selected { border-color: #86efac; background: #f0fdf4; }
+.cardHeader { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.dropshippingCard h3 { margin: 0; color: #0f172a; font-size: 15px; }
+.dropshippingCard p { margin: 0; color: #475569; font-size: 12px; min-height: 32px; }
+.dropshippingCardImage { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; border: 1px solid #dbe3ef; }
+.dropshippingCardActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dropshippingCardActions button { margin-right: 0; }
+.selectedBtn { border-color: #22c55e; color: #166534; background: #dcfce7; cursor: not-allowed; }
+.toggleActive { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #1e293b; font-weight: 700; }
+.toggleActive input { width: auto; }
+.dropshippingMineGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.dropshippingMineCard { border: 1px solid #dbe3ef; border-radius: 12px; background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mineMetaGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; font-size: 12px; color: #334155; }
+.mineMetaGrid strong { color: #0f172a; margin-right: 4px; }
+.mineMarginEditor { display: grid; grid-template-columns: 130px 1fr auto; gap: 8px; align-items: center; }
+.mineMarginEditor select, .mineMarginEditor input { border: 1px solid #dbe3ef; border-radius: 10px; background: #fff; color: #0f172a; font-size: 12px; padding: 8px 10px; width: 100%; }
+.stateActive, .stateInactive { border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 800; }
+.stateActive { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+.stateInactive { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.dropshippingEmptyState { border: 1px dashed #bae6fd; border-radius: 12px; background: #f0f9ff; padding: 24px 16px; text-align: center; grid-column: 1 / -1; }
+.dropshippingModalBackdrop { position: fixed; inset: 0; background: rgba(15,23,42,.45); z-index: 2200; display: grid; place-items: center; padding: 12px; }
+.dropshippingModal { width: min(96vw,560px); background: #fff; border-radius: 12px; border: 1px solid #dbe3ef; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.assignListTableWrap { max-height: 42vh; overflow: auto; border: 1px solid #e2e8f0; border-radius: 10px; }
+.assignListTableWrap .dropshippingTable { min-width: 100%; }
+.modalActions { display: flex; justify-content: flex-end; gap: 8px; }
+.dropshippingDrawer { position: fixed; top: 70px; right: 12px; width: min(96vw,760px); max-height: calc(100vh - 90px); z-index: 2150; background: #fff; border: 1px solid #dbe3ef; border-radius: 12px; box-shadow: 0 20px 50px rgba(2,20,36,.25); display: flex; flex-direction: column; }
+.drawerHead { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding: 10px 12px; }
+.drawerHead h3 { margin: 0; font-size: 15px; color: #0f172a; }
+.drawerHead p { margin: 4px 0 0; color: #64748b; font-size: 11px; }
+.drawerBody { overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.drawerItem { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; display: grid; grid-template-columns: minmax(220px,1fr) 120px 140px 130px; gap: 10px; align-items: center; }
+.drawerItem strong { color: #0f172a; font-size: 12px; display: block; }
+.drawerItem span { color: #64748b; font-size: 11px; display: block; }
+.drawerSwitchWrap { display: flex; align-items: center; justify-content: center; }
+.drawerStateBtn { width: 100%; border-radius: 999px !important; border: 1px solid #dbe3ef !important; background: #f8fafc !important; color: #334155 !important; font-size: 12px !important; font-weight: 800 !important; padding: 8px 10px !important; }
+.drawerStateBtn.on { border-color: #86efac !important; background: #dcfce7 !important; color: #166534 !important; }
+.drawerStateBtn.off { border-color: #fecaca !important; background: #fee2e2 !important; color: #991b1b !important; }
+.drawerMarginWrap { display: flex; flex-direction: column; gap: 6px; }
+.drawerMarginWrap label { color: #334155; font-size: 11px; font-weight: 700; }
+.drawerFinalWrap { border: 1px solid #dbe3ef; border-radius: 10px; background: #f8fafc; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.drawerFinalWrap span { color: #64748b; font-size: 11px; font-weight: 700; }
+.drawerFinalWrap strong { color: #0f172a; font-size: 13px; font-weight: 800; }
+.drawerActions { border-top: 1px solid #e2e8f0; padding: 10px 12px; display: flex; justify-content: flex-end; gap: 8px; }
+.dropshippingOrdersBlock { border-top: 1px solid #e2e8f0; margin-top: 8px; padding: 12px 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+.dropshippingOrdersBlock h3 { margin: 0; color: #0f172a; font-size: 16px; }
+.dropshippingOrdersBlock p { margin: 0; color: #475569; font-size: 12px; }
+@media (max-width: 980px) {
+  .dropshippingHero { flex-direction: column; align-items: flex-start; }
+  .dropshippingLogisticsGrid { grid-template-columns: 1fr 1fr; }
+  .dropshippingLogisticsStats { grid-template-columns: 1fr 1fr; }
+  .dropshippingToolbar { grid-template-columns: 1fr; }
+  .dropshippingGrid { grid-template-columns: 1fr; }
+  .dropshippingMineGrid { grid-template-columns: 1fr; }
+  .mineMetaGrid { grid-template-columns: 1fr; }
+  .mineMarginEditor { grid-template-columns: 1fr; }
+  .drawerItem { grid-template-columns: 1fr; }
+  .dropshippingDrawer { top: 10px; right: 10px; left: 10px; width: auto; max-height: calc(100vh - 20px); }
+}
+
+@media (max-width: 640px) {
+  .dropshippingLogisticsGrid { grid-template-columns: 1fr; }
+  .dropshippingLogisticsStats { grid-template-columns: 1fr; }
+}

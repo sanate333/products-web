@@ -1,0 +1,664 @@
+.tiendasShell {
+  background: radial-gradient(circle at 80% -20%, rgba(59, 130, 246, 0.22), transparent 40%), #070b13;
+  border: 1px solid #1c2738;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(4, 10, 21, 0.45);
+  color: #e5edf8;
+}
+
+.tiendasToolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.tiendasEyebrow {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7dd3fc;
+}
+
+.tiendasToolbar h3 {
+  margin: 4px 0;
+  font-size: 28px;
+}
+
+.tiendasToolbar span {
+  color: #93a4bf;
+  font-size: 14px;
+}
+
+.tiendasPrimaryBtn {
+  border: 1px solid #1f8fd5;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #fff;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-weight: 700;
+}
+
+.tiendasToolbarActions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tiendasDangerBtn {
+  border: 1px solid #8a2534;
+  background: linear-gradient(135deg, #7f1d1d, #be123c);
+  color: #fff;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font-weight: 700;
+}
+
+.tiendasGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.tiendasModeTabs {
+  margin-top: 14px;
+  display: inline-flex;
+  gap: 8px;
+  border: 1px solid #22344d;
+  background: #0e1828;
+  padding: 6px;
+  border-radius: 12px;
+}
+
+.tiendasModeTabs button {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #9cb1ce;
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tiendasModeTabs button.active {
+  border-color: #57bfff;
+  background: #132d4a;
+  color: #dff2ff;
+}
+
+.alertsPanel {
+  margin-top: 16px;
+  border: 1px solid #263850;
+  border-radius: 16px;
+  background: #0b1421;
+  padding: 14px;
+}
+
+.alertsPanelHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.alertsPanelHead h4 {
+  margin: 4px 0;
+}
+
+.alertsPanelHead span {
+  color: #8fa5c4;
+  font-size: 13px;
+}
+
+.alertsPanelActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.alertsPanelActions select,
+.alertsPanelActions button,
+.recipientDraftRow select,
+.recipientDraftRow input,
+.recipientDraftRow button,
+.rulesGrid label,
+.templatesStack textarea {
+  border: 1px solid #2f4563;
+  background: #101c2d;
+  color: #d5e3f6;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+.alertsPanelActions select,
+.alertsPanelActions button,
+.recipientDraftRow select,
+.recipientDraftRow input,
+.recipientDraftRow button {
+  padding: 9px 11px;
+}
+
+.runAlertsBtn {
+  border-color: #1f8fd5 !important;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb) !important;
+  color: #fff !important;
+}
+
+.alertsKpiGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.alertsKpiGrid article {
+  border: 1px solid #294162;
+  border-radius: 12px;
+  background: #0f1b2d;
+  padding: 10px;
+}
+
+.alertsKpiGrid h5 {
+  margin: 0;
+  color: #93a4bf;
+  font-size: 12px;
+}
+
+.alertsKpiGrid strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+  color: #dff2ff;
+}
+
+.alertsCardsGrid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.alertsCard {
+  border: 1px solid #243851;
+  border-radius: 12px;
+  background: #0f1a2b;
+  padding: 12px;
+}
+
+.alertsCardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.alertsCardHead h5 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.accessToggle {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: #9eb3cf;
+}
+
+.recipientDraftRow {
+  display: grid;
+  grid-template-columns: 130px 1fr auto;
+  gap: 8px;
+}
+
+.recipientList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recipientItem {
+  border: 1px solid #2a3f5d;
+  border-radius: 10px;
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.recipientItem span {
+  color: #d7e6fb;
+  font-size: 12px;
+}
+
+.recipientItem div {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.recipientItem button {
+  border: 1px solid #2f4563;
+  background: #132238;
+  color: #d5e3f6;
+  border-radius: 8px;
+  font-size: 11px;
+  padding: 6px 8px;
+}
+
+.recipientItem .dangerBtn {
+  border-color: #8a2534;
+  background: #2a111a;
+  color: #fecdd3;
+}
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rulesGrid label {
+  padding: 8px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.templatesStack {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.templatesStack textarea {
+  width: 100%;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.alertsLogCard {
+  margin-top: 12px;
+}
+
+.alertsLogList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.alertsLogItem {
+  border: 1px solid #294162;
+  border-radius: 10px;
+  background: #0c1726;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.alertsLogItem strong {
+  font-size: 12px;
+}
+
+.alertsLogItem span {
+  font-size: 13px;
+  color: #e4eefc;
+}
+
+.alertsLogItem small {
+  font-size: 11px;
+  color: #8fa5c4;
+}
+
+.storeCard {
+  border: 1px solid #223146;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0d1625;
+}
+
+.storeCover {
+  min-height: 110px;
+  display: grid;
+  place-items: center;
+  border-bottom: 1px solid #213149;
+  background: linear-gradient(135deg, rgba(14,165,233,.2), rgba(15,23,42,.95));
+}
+
+.storeCover span {
+  width: 52px;
+  height: 52px;
+  border: 1px solid #3b587b;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #dbe9ff;
+}
+
+.storeCover img {
+  width: 100%;
+  height: 110px;
+  object-fit: cover;
+}
+
+.storeBody {
+  padding: 12px;
+}
+
+.storeBody h4 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.storeSlug {
+  margin: 8px 0;
+  color: #7dd3fc;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.storeMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.storeStatus {
+  border: 1px solid #2f5e6d;
+  background: #173f3c;
+  color: #e2fffb;
+  border-radius: 999px;
+  font-size: 11px;
+  padding: 3px 8px;
+  text-transform: lowercase;
+}
+
+.storeMeta small {
+  color: #7e93b0;
+  font-size: 12px;
+}
+
+.storeKpiMini {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.storeKpiMini span {
+  font-size: 12px;
+  font-weight: 700;
+  color: #dbeafe;
+}
+
+.storeKpiMini small {
+  font-size: 11px;
+  color: #8ca4c4;
+}
+
+.storeActions {
+  display: grid;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+.storeActions.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.storeActions a {
+  text-align: center;
+  border-radius: 9px;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.storeActions a:nth-child(1) {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.storeActions a:nth-child(2),
+.storeActions a:nth-child(3) {
+  background: #172435;
+  border: 1px solid #2c425f;
+  color: #d3def0;
+}
+
+.storeDangerZone {
+  padding: 0 12px 12px;
+}
+
+.storeDeleteBtn {
+  width: 100%;
+  border: 1px solid #8a2534;
+  background: #2a111a;
+  color: #fecdd3;
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.storeDeleteBtn:disabled,
+.tiendasDangerBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.storeEmpty {
+  border: 1px dashed #2d425f;
+  border-radius: 12px;
+  padding: 18px;
+  text-align: center;
+  color: #93a4bf;
+}
+
+.templatesGrid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.templateStoreCard {
+  border: 1px solid #223146;
+  border-radius: 14px;
+  background: #0d1625;
+  padding: 12px;
+}
+
+.templateStoreCover {
+  height: 116px;
+  border-radius: 10px;
+  border: 1px solid #2e435f;
+  overflow: hidden;
+  background: linear-gradient(135deg, rgba(14,165,233,.18), rgba(15,23,42,.96));
+}
+
+.templateStoreCover img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 14px;
+}
+
+.templateStoreCard h4 {
+  margin: 10px 0 4px;
+}
+
+.templateStoreCard p {
+  margin: 0;
+  color: #9ab0cf;
+  font-size: 12px;
+}
+
+.templateStoreCard ul {
+  margin: 10px 0 0;
+  padding-left: 16px;
+  color: #b4c5dd;
+  font-size: 12px;
+  min-height: 60px;
+}
+
+.templateStoreCard button {
+  margin-top: 10px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #3a4f6f;
+  background: #1a2940;
+  color: #cbd9ec;
+  font-weight: 700;
+  padding: 10px;
+}
+
+.tiendasMarketHead {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+}
+
+.tiendasMarketHead h4 {
+  margin: 4px 0;
+  font-size: 21px;
+}
+
+.tiendasMarketHead span {
+  color: #8fa5c4;
+  font-size: 13px;
+}
+
+.tiendasMarketHead select {
+  border: 1px solid #2f4563;
+  background: #101c2d;
+  color: #d5e3f6;
+  border-radius: 10px;
+  padding: 10px 12px;
+  min-width: 210px;
+}
+
+.tiendasModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 14, 0.78);
+  display: grid;
+  place-items: center;
+  z-index: 1200;
+}
+
+.tiendasModal {
+  width: min(460px, calc(100vw - 30px));
+  background: #0b1422;
+  border: 1px solid #23344e;
+  border-radius: 14px;
+  padding: 16px;
+  color: #e5edf8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tiendasModal h3 {
+  margin: 0 0 4px;
+}
+
+.tiendasModal label {
+  font-size: 13px;
+  color: #9ab0cf;
+}
+
+.tiendasModal input,
+.tiendasModal select {
+  border: 1px solid #2a3d59;
+  background: #0f1a2c;
+  color: #eaf3ff;
+  border-radius: 10px;
+  padding: 10px 11px;
+}
+
+.tiendasModal small {
+  color: #8ca4c4;
+  font-size: 12px;
+}
+
+.modalError {
+  color: #ffb2b2;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.modalActions button {
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 700;
+}
+
+.modalActions .cancel {
+  border: 1px solid #334a6b;
+  background: #112033;
+  color: #d1deef;
+}
+
+.modalActions .create {
+  border: 1px solid #1f8fd5;
+  background: linear-gradient(135deg, #0ea5e9, #2563eb);
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .tiendasToolbar {
+    flex-direction: column;
+  }
+
+  .tiendasToolbarActions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .tiendasMarketHead {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tiendasPrimaryBtn,
+  .tiendasDangerBtn {
+    width: 100%;
+  }
+
+  .storeActions.three {
+    grid-template-columns: 1fr;
+  }
+
+  .tiendasModeTabs {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .alertsKpiGrid,
+  .alertsCardsGrid,
+  .rulesGrid,
+  .recipientDraftRow {
+    grid-template-columns: 1fr;
+  }
+}

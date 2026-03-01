@@ -1,0 +1,180 @@
+.logoCard {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 600px;
+}
+
+.logoCard h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.logoCard h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.logoCard p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.logoPreview {
+  background: #f9fafb;
+  border: 2px dashed #e5e7eb;
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 120px;
+  transition: all 0.3s ease;
+}
+
+.logoPreview:hover {
+  border-color: #0ea5e9;
+  background: #f0f9ff;
+}
+
+.logoPreview img {
+  max-width: 200px;
+  max-height: 100px;
+  object-fit: contain;
+}
+
+.logoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.logoSection:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.logoCard label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 14px;
+}
+
+.logoCard input[type="text"] {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.logoCard input[type="text"]:focus {
+  outline: none;
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.logoSave {
+  background: #0ea5e9;
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.logoSave:hover:not(:disabled) {
+  background: #0284c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+}
+
+.logoSave:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fileInputLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px;
+  background: #f0f9ff;
+  border: 2px dashed #0ea5e9;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #0ea5e9;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.fileInputLabel:hover {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0284c7;
+}
+
+.fileInput {
+  display: none;
+}
+
+.logoTip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #92400e;
+}
+
+.logoTip span {
+  font-weight: 600;
+}
+
+.logoTip a {
+  color: #0ea5e9;
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.logoTip a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .logoCard {
+    padding: 16px;
+  }
+
+  .logoCard h3 {
+    font-size: 20px;
+  }
+
+  .logoPreview {
+    min-height: 100px;
+  }
+
+  .logoPreview img {
+    max-width: 150px;
+    max-height: 80px;
+  }
+}
+

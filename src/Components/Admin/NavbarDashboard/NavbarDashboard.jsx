@@ -14,9 +14,66 @@ import {
   faBell,
   faUsers,
   faRobot,
+  faComments,
+  faStore,
+  faGlobe,
+  faEye,
+  faWallet,
+  faTruck,
+  faCalendarAlt,
+  faVideo,
+  faCog,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
+
+const SECTIONS = [
+  {
+    label: 'PRINCIPAL',
+    items: [
+      { to: '/dashboard',              icon: faHome,         text: 'Inicio' },
+      { to: '/dashboard/pedidos',      icon: faClipboardList, text: 'Pedidos' },
+      { to: '/dashboard/productos',    icon: faBook,         text: 'Productos' },
+      { to: '/dashboard/clientes',     icon: faUsers,        text: 'Clientes' },
+      { to: '/dashboard/tiendas',      icon: faStore,        text: 'Tiendas' },
+    ],
+  },
+  {
+    label: 'CATALOGO',
+    items: [
+      { to: '/dashboard/categorias',   icon: faTachometerAlt, text: 'Categorias' },
+      { to: '/dashboard/sub-banners',  icon: faImage,        text: 'Sub-Banners' },
+      { to: '/dashboard/codigos',      icon: faCode,         text: 'Codigos' },
+      { to: '/dashboard/contacto',     icon: faAddressBook,  text: 'Contacto' },
+    ],
+  },
+  {
+    label: 'MARKETING',
+    items: [
+      { to: '/dashboard/imagenes-ia',  icon: faRobot,        text: 'Imagenes IA' },
+      { to: '/dashboard/landing-pages',icon: faGlobe,        text: 'Landing Pages' },
+      { to: '/dashboard/whatsapp-bot', icon: faComments,     text: 'WhatsApp Bot' },
+    ],
+  },
+  {
+    label: 'OPERACION',
+    items: [
+      { to: '/dashboard/notificaciones',    icon: faBell,          text: 'Notificaciones' },
+      { to: '/dashboard/monitor',           icon: faEye,           text: 'Monitor-Global-AI' },
+      { to: '/dashboard/wallet',            icon: faWallet,        text: 'Wallet' },
+      { to: '/dashboard/dropshipping',      icon: faTruck,         text: 'Dropshipping' },
+      { to: '/dashboard/calendario',        icon: faCalendarAlt,   text: 'Calendario Tributario' },
+    ],
+  },
+  {
+    label: 'SISTEMA',
+    items: [
+      { to: '/dashboard/usuarios',     icon: faUser,         text: 'Usuarios' },
+      { to: '/dashboard/tutoriales',   icon: faVideo,        text: 'Tutoriales' },
+      { to: '/dashboard/ajustes',      icon: faCog,          text: 'Ajustes' },
+    ],
+  },
+];
 
 export default function Navbar({ isOpen = false, onClose }) {
     const location = useLocation();
@@ -26,32 +83,29 @@ export default function Navbar({ isOpen = false, onClose }) {
         }
     };
 
-
     return (
-
-        <div className={`navbarDashboard ${isOpen ? 'navbarDashboardOpen' : 'navbarDashboardClosed'}`} >
+        <div className={`navbarDashboard ${isOpen ? 'navbarDashboardOpen' : 'navbarDashboardClosed'}`}>
             <Anchor className='logo'>
                 <img src={logo} alt="logo" />
-
             </Anchor>
             <div className='links'>
-                <Anchor onClick={handleClose} to={`/dashboard`} className={location.pathname === '/dashboard' ? 'activeLink' : ''}><FontAwesomeIcon icon={faHome} /> Inicio</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/pedidos`} className={location.pathname === '/dashboard/pedidos' ? 'activeLink' : ''}><FontAwesomeIcon icon={faClipboardList} /> Pedidos</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/notificaciones`} className={location.pathname === '/dashboard/notificaciones' ? 'activeLink' : ''}><FontAwesomeIcon icon={faBell} /> Notificaciones</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/imagenes-ia`} className={location.pathname === '/dashboard/imagenes-ia' ? 'activeLink' : ''}><FontAwesomeIcon icon={faRobot} /> Imágenes IA</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/clientes`} className={location.pathname === '/dashboard/clientes' ? 'activeLink' : ''}><FontAwesomeIcon icon={faUsers} /> Clientes</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/productos`} className={location.pathname === '/dashboard/productos' ? 'activeLink' : ''} ><FontAwesomeIcon icon={faBook} /> Productos</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/categorias`} className={location.pathname === '/dashboard/categorias' ? 'activeLink' : ''}><FontAwesomeIcon icon={faTachometerAlt} /> Categorias</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/banners`} className={location.pathname === '/dashboard/banners' ? 'activeLink' : ''}><FontAwesomeIcon icon={faImage} /> Banners</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/sub-banners`} className={location.pathname === '/dashboard/sub-banners' ? 'activeLink' : ''}><FontAwesomeIcon icon={faImage} /> Sub-Banners</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/contacto`} className={location.pathname === '/dashboard/contacto' ? 'activeLink' : ''}><FontAwesomeIcon icon={faAddressBook} /> Contacto</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/usuarios`} className={location.pathname === '/dashboard/usuarios' ? 'activeLink' : ''}><FontAwesomeIcon icon={faUser} /> Usuarios</Anchor>
-                <Anchor onClick={handleClose} to={`/dashboard/codigos`} className={location.pathname === '/dashboard/codigos' ? 'activeLink' : ''}><FontAwesomeIcon icon={faCode} /> Codigos</Anchor>
+                {SECTIONS.map(section => (
+                    <React.Fragment key={section.label}>
+                        <div className="nav-section-label">{section.label}</div>
+                        {section.items.map(item => (
+                            <Anchor
+                                key={item.to}
+                                onClick={handleClose}
+                                to={item.to}
+                                className={location.pathname === item.to ? 'activeLink' : ''}
+                            >
+                                <FontAwesomeIcon icon={item.icon} /> {item.text}
+                            </Anchor>
+                        ))}
+                    </React.Fragment>
+                ))}
             </div>
-
             <Logout />
-
         </div>
-
     );
 }

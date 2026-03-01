@@ -1,0 +1,339 @@
+.landingShell {
+  background: radial-gradient(circle at 82% -14%, rgba(99, 102, 241, 0.26), transparent 38%), #070b13;
+  border: 1px solid #1d2738;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(4, 10, 21, 0.45);
+  color: #e4ecf8;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.landingHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.landingHead p {
+  margin: 8px 0 0;
+  color: #8fa6c7;
+  font-size: 14px;
+}
+
+.landingHead h3 {
+  margin: 4px 0 0;
+  font-size: 28px;
+}
+
+.landingHead button {
+  border: 1px solid #2f53a5;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: #fff;
+  border-radius: 12px;
+  font-weight: 700;
+  padding: 11px 14px;
+}
+
+.landingBodyLayout {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.landingSideMenu {
+  position: sticky;
+  top: 10px;
+  border: 1px solid #22344d;
+  border-radius: 12px;
+  background: #0d1625;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.landingSideMenu a {
+  border: 1px solid transparent;
+  border-radius: 9px;
+  color: #a8bdd9;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 9px 10px;
+}
+
+.landingSideMenu a:hover {
+  background: #13223a;
+  border-color: #2b4566;
+  color: #e6efff;
+}
+
+.landingSideMenu a.active {
+  background: linear-gradient(130deg, #12334c, #173f3c);
+  border-color: #2f5e6d;
+  color: #ecfbff;
+}
+
+.landingMainSections {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.landingSectionHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.landingSectionHead h4 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.landingSectionHead span {
+  color: #8ea3c1;
+  font-size: 13px;
+}
+
+.landingGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 12px;
+}
+
+.projectCard {
+  border: 1px solid #22344d;
+  border-radius: 14px;
+  background: #0d1625;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.projectCard img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.projectCard div {
+  padding: 0 10px;
+}
+
+.projectCard h5 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.projectCard small {
+  color: #91a5c3;
+}
+
+.projectCard .status {
+  margin: 0 10px 10px;
+  width: fit-content;
+  background: #1f2b3f;
+  border: 1px solid #324862;
+  border-radius: 999px;
+  color: #d3ddef;
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+.projectEmpty {
+  border: 1px dashed #304766;
+  border-radius: 12px;
+  padding: 16px;
+  color: #93a7c4;
+}
+
+.benefitsSection h4 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.benefitsGrid {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.benefitsGrid article {
+  border: 1px solid #2b3f59;
+  border-radius: 14px;
+  padding: 14px;
+  background: linear-gradient(140deg, rgba(31, 41, 55, 0.65), rgba(12, 21, 36, 0.95));
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.15), inset 0 0 30px rgba(59, 130, 246, 0.08);
+}
+
+.benefitsGrid h5 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.benefitsGrid p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #c4d2e5;
+}
+
+.wizardOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(4, 9, 17, 0.8);
+  display: grid;
+  place-items: center;
+}
+
+.wizardCard {
+  width: min(760px, calc(100vw - 34px));
+  background: #0b1422;
+  border: 1px solid #243651;
+  border-radius: 16px;
+  color: #e6edf8;
+  padding: 16px;
+}
+
+.wizardSteps {
+  font-size: 12px;
+  color: #8ea3c1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.wizardBody {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wizardBody h4 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.wizardBody input {
+  border: 1px solid #2a3f5c;
+  background: #0f1b2d;
+  color: #e9f1ff;
+  border-radius: 10px;
+  padding: 11px;
+}
+
+.imageChoices {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.imageChoices button {
+  border: 1px solid #2d4563;
+  border-radius: 10px;
+  padding: 0;
+  overflow: hidden;
+  background: #101b2d;
+}
+
+.imageChoices button.active {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.6);
+}
+
+.imageChoices img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+}
+
+.progressBar {
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid #2f4562;
+  background: #101a2a;
+  overflow: hidden;
+}
+
+.progressBar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5, #22d3ee);
+}
+
+.editorMock {
+  border: 1px solid #2b3f59;
+  border-radius: 12px;
+  padding: 10px;
+  background: #0e1828;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editorTop {
+  color: #9db3cf;
+  font-size: 12px;
+}
+
+.editorBlock {
+  border: 1px solid #304866;
+  border-radius: 10px;
+  background: #111e31;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.wizardActions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.wizardActions button {
+  border-radius: 9px;
+  border: 1px solid #34506f;
+  background: #132338;
+  color: #e2eaf7;
+  padding: 9px 11px;
+  font-weight: 700;
+}
+
+.wizardActions button:last-child {
+  border-color: #2f53a5;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+}
+
+@media (max-width: 768px) {
+  .landingHead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .landingBodyLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .landingSideMenu {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .landingSideMenu a {
+    white-space: nowrap;
+  }
+
+  .imageChoices {
+    grid-template-columns: 1fr;
+  }
+}

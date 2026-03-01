@@ -1,0 +1,139 @@
+.ofertasNote {
+  margin-top: 12px;
+  color: #6b7280;
+}
+
+.ofertasCard {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 10px 24px rgba(31, 41, 55, 0.08);
+}
+
+.ofertasCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ofertasCardHeader h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.ofertasCardHeader p {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.ofertasBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.ofertasBack {
+  background: #e5e7eb;
+  color: #111827;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.ofertasGroup {
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ofertasGroup h4 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: #111827;
+}
+
+.ofertasBody label {
+  font-weight: 600;
+  color: #374151;
+}
+.ofertaToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 8px 10px;
+  width: fit-content;
+}
+
+.ofertasBody select,
+.ofertasBody input {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ofertasSave {
+  margin-top: 6px;
+  background: #2aaae2;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.ofertasSave:disabled {
+  opacity: 0.6;
+}
+
+.ofertasSaved {
+  font-size: 12px;
+  color: #16a34a;
+}
+
+.ofertasPreview {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  position: relative;
+}
+
+.ofertasPreview img {
+  width: 70px;
+  height: 70px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.ofertasPreview span {
+  display: block;
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 4px;
+}
+.ofertasRemove {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #ef4444;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}

@@ -1,0 +1,38 @@
+.dashboardQuickBackBtn {
+    position: fixed;
+    top: 14px;
+    left: 66px;
+    z-index: 1202;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1px solid #bde0ff;
+    background: rgba(239, 248, 255, 0.96);
+    color: #0c4a6e;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(3, 23, 45, 0.18);
+    backdrop-filter: blur(2px);
+}
+
+.dashboardQuickBackBtn:hover {
+    background: #dff2ff;
+    border-color: #7cc9ff;
+}
+
+@media (max-width: 768px) {
+    .dashboardQuickBackBtn {
+        top: 12px;
+        left: 64px;
+        min-width: 44px;
+        padding: 10px 12px;
+        border-radius: 11px;
+    }
+
+    .dashboardQuickBackBtn span {
+        display: none;
+    }
+}
