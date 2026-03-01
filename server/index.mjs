@@ -6,6 +6,7 @@ import OpenAI from "openai";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import crypto from "crypto";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -47,8 +48,203 @@ if (process.env.OPENAI_API_KEY) {
 }
 
 const PORT = process.env.PORT || 5055;
-const SERVER_BUILD = process.env.SERVER_BUILD || "2026-02-18-edit-http-fallback";
+const SERVER_BUILD = process.env.SERVER_BUILD || "2026-02-20-edit-fallback-dalle2";
 const aiImagesStoreFile = path.join(generatedDir, "ai-images-store.json");
+const whatsappDbFile = path.join(generatedDir, "whatsapp-db.json");
+const whatsappUploadsDir = path.join(publicDir, "uploads", "whatsapp");
+const whatsappSyncJobs = new Map();
+
+if (!fs.existsSync(whatsappUploadsDir)) {
+  fs.mkdirSync(whatsappUploadsDir, { recursive: true });
+}
+app.use("/uploads", express.static(path.join(publicDir, "uploads")));
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function toSafeString(value, max = 400) {
+  const s = String(value ?? "").trim();
+  if (!s) return "";
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+function randomId(prefix = "id") {
+  return `${prefix}_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+}
+
+function defaultWhatsAppDb() {
+  return {
+    chats: [],
+    messages: [],
+    templates: [
+      {
+        id: "tpl_welcome",
+        name: "Bienvenida",
+        body: "Hola {{nombre}}, bienvenido a sanate.store. ¿En qué te ayudo?",
+        quickButtons: ["Catálogo", "Estado pedido", "Soporte"],
+        createdAt: nowIso(),
+      },
+    ],
+    triggers: [],
+    sync: {
+      lastRunAt: null,
+      lastStartDate: null,
+      runningJobId: null,
+    },
+  };
+}
+
+function readWhatsAppDb() {
+  try {
+    if (!fs.existsSync(whatsappDbFile)) return defaultWhatsAppDb();
+    const raw = fs.readFileSync(whatsappDbFile, "utf-8");
+    const parsed = JSON.parse(raw);
+    const base = defaultWhatsAppDb();
+    return {
+      ...base,
+      ...parsed,
+      chats: Array.isArray(parsed?.chats) ? parsed.chats : [],
+      messages: Array.isArray(parsed?.messages) ? parsed.messages : [],
+      templates: Array.isArray(parsed?.templates) ? parsed.templates : base.templates,
+      triggers: Array.isArray(parsed?.triggers) ? parsed.triggers : [],
+      sync: {
+        ...base.sync,
+        ...(parsed?.sync || {}),
+      },
+    };
+  } catch {
+    return defaultWhatsAppDb();
+  }
+}
+
+function writeWhatsAppDb(db) {
+  fs.writeFileSync(whatsappDbFile, JSON.stringify(db, null, 2), "utf-8");
+}
+
+function normalizePhoneLike(value) {
+  return String(value || "").replace(/[^\d+]/g, "");
+}
+
+function getChatDisplayName(chatId, fallback = "") {
+  const cleaned = String(fallback || "").trim();
+  if (cleaned) return cleaned;
+  const id = String(chatId || "");
+  if (id.includes("@")) return id.split("@")[0];
+  return id || "Contacto";
+}
+
+function buildAvatarFallback(nameOrPhone = "") {
+  const safe = encodeURIComponent(toSafeString(nameOrPhone || "Contacto", 40));
+  return `https://ui-avatars.com/api/?name=${safe}&background=e5f3ff&color=1b4d7a&size=128`;
+}
+
+function ensureChat(db, incoming = {}) {
+  const chatId = toSafeString(incoming.chatId || incoming.id || "", 140);
+  if (!chatId) return null;
+  const idx = db.chats.findIndex((c) => String(c.chatId) === String(chatId));
+  const base = {
+    chatId,
+    name: getChatDisplayName(chatId, incoming.name || incoming.phone || ""),
+    phone: normalizePhoneLike(incoming.phone || chatId),
+    photoUrl: toSafeString(incoming.photoUrl || "", 800) || "",
+    updatedAt: nowIso(),
+    unreadCount: 0,
+    lastMessagePreview: "",
+    lastMessageAt: null,
+  };
+  if (idx < 0) {
+    db.chats.push(base);
+    return db.chats[db.chats.length - 1];
+  }
+  const chat = db.chats[idx];
+  const merged = {
+    ...chat,
+    ...base,
+    name: toSafeString(incoming.name || chat.name || base.name, 120) || base.name,
+    phone: normalizePhoneLike(incoming.phone || chat.phone || base.phone),
+    photoUrl: toSafeString(incoming.photoUrl || chat.photoUrl || "", 800),
+    updatedAt: nowIso(),
+  };
+  db.chats[idx] = merged;
+  return db.chats[idx];
+}
+
+function messageSortAsc(a, b) {
+  return new Date(a?.timestamp || 0).getTime() - new Date(b?.timestamp || 0).getTime();
+}
+
+function messageSortDesc(a, b) {
+  return new Date(b?.timestamp || 0).getTime() - new Date(a?.timestamp || 0).getTime();
+}
+
+function saveMessage(db, payload = {}) {
+  const providerMessageId = toSafeString(payload.providerMessageId || payload.id || "", 200);
+  if (!providerMessageId) {
+    return { ok: false, reason: "missing_providerMessageId" };
+  }
+  const dedup = db.messages.find((m) => String(m.providerMessageId) === String(providerMessageId));
+  if (dedup) {
+    return { ok: true, dedup: true, message: dedup };
+  }
+  const chatId = toSafeString(payload.chatId || "", 140);
+  if (!chatId) {
+    return { ok: false, reason: "missing_chatId" };
+  }
+  const timestamp = payload.timestamp ? new Date(payload.timestamp).toISOString() : nowIso();
+  const normalized = {
+    id: providerMessageId,
+    providerMessageId,
+    chatId,
+    from: toSafeString(payload.from || "", 140),
+    to: toSafeString(payload.to || "", 140),
+    timestamp,
+    type: toSafeString(payload.type || "text", 40) || "text",
+    text: toSafeString(payload.text || "", 4000),
+    mediaUrl: toSafeString(payload.mediaUrl || "", 1200),
+    mimeType: toSafeString(payload.mimeType || "", 160),
+    fileName: toSafeString(payload.fileName || "", 240),
+    status: toSafeString(payload.status || "sent", 40) || "sent",
+    direction: toSafeString(payload.direction || "incoming", 40) || "incoming",
+    rawPayload: payload.rawPayload ?? null,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  db.messages.push(normalized);
+  const chat = ensureChat(db, {
+    chatId,
+    phone: normalized.from || normalized.to || chatId,
+    name: payload.chatName || "",
+    photoUrl: payload.photoUrl || "",
+  });
+  if (chat) {
+    chat.lastMessageAt = normalized.timestamp;
+    chat.lastMessagePreview = normalized.text || normalized.type || "media";
+    chat.updatedAt = nowIso();
+    if (normalized.direction === "incoming") {
+      chat.unreadCount = Number(chat.unreadCount || 0) + 1;
+    }
+    if (!chat.photoUrl) {
+      chat.photoUrl = buildAvatarFallback(chat.name || chat.phone || chat.chatId);
+    }
+  }
+  console.log("[WA][saveMessage]", {
+    providerMessageId: normalized.providerMessageId,
+    chatId: normalized.chatId,
+    type: normalized.type,
+    status: normalized.status,
+    direction: normalized.direction,
+  });
+  return { ok: true, dedup: false, message: normalized };
+}
+
+function paginateByCursor(items, cursor, limit) {
+  const safeLimit = Math.max(1, Math.min(200, Number(limit) || 50));
+  const offset = Math.max(0, Number(cursor) || 0);
+  const slice = items.slice(offset, offset + safeLimit);
+  const nextCursor = offset + safeLimit < items.length ? String(offset + safeLimit) : null;
+  return { items: slice, nextCursor, limit: safeLimit };
+}
 
 // --- helpers
 function boolEnv(v) {
@@ -223,6 +419,139 @@ async function callOpenAIImageEditHttp({
   return data;
 }
 
+async function generateWithEditFallback({
+  apiKey,
+  preferredModel,
+  imageBuffer,
+  imageMime,
+  prompt,
+  size,
+}) {
+  const candidates = [];
+  const seen = new Set();
+  const pushCandidate = (m) => {
+    const clean = String(m || "").trim();
+    if (!clean || seen.has(clean)) return;
+    seen.add(clean);
+    candidates.push(clean);
+  };
+
+  pushCandidate(preferredModel);
+  pushCandidate(process.env.OPENAI_EDIT_MODEL || "dall-e-2");
+  pushCandidate("dall-e-2");
+
+  let lastErr = null;
+  for (const model of candidates) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await callOpenAIImageEditHttp({
+        apiKey,
+        model,
+        imageBuffer,
+        imageMime,
+        prompt,
+        size,
+      });
+      return { result, modelUsed: model, attempts: candidates };
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw new Error(lastErr?.message || "Fallo al editar imagen con todos los modelos probados");
+}
+
+async function imageBufferToDataUrl(buffer, mime = "image/png") {
+  if (!buffer) return "";
+  return `data:${mime};base64,${Buffer.from(buffer).toString("base64")}`;
+}
+
+async function fetchImageUrlAsDataUrl(rawUrl) {
+  try {
+    const clean = String(rawUrl || "").trim();
+    if (!/^https?:\/\//i.test(clean)) return "";
+    const resp = await fetch(clean);
+    if (!resp.ok) return "";
+    const mime = resp.headers.get("content-type") || "image/png";
+    const arr = await resp.arrayBuffer();
+    return `data:${mime};base64,${Buffer.from(arr).toString("base64")}`;
+  } catch {
+    return "";
+  }
+}
+
+async function analyzeProductTypeHint({ imageDataUrl, fallback = "producto" }) {
+  const mock = boolEnv(process.env.OPENAI_MOCK);
+  if (!openai || mock || !imageDataUrl) return "";
+  try {
+    const visionModel = (process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini").trim();
+    const response = await openai.responses.create({
+      model: visionModel,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: [
+                "Identify the MAIN product category in this image for e-commerce generation.",
+                "Return STRICT JSON only with keys: product_type, key_visual_traits.",
+                "Examples product_type: shoe, sneaker, cream, bottle, supplement, soap.",
+                "No markdown.",
+              ].join(" "),
+            },
+            { type: "input_image", image_url: imageDataUrl },
+          ],
+        },
+      ],
+      max_output_tokens: 180,
+    });
+    const txt = String(response?.output_text || "").trim();
+    if (!txt) return "";
+    const parsed = JSON.parse(txt);
+    const productType = safeText(parsed?.product_type || "", 60);
+    const traits = safeText(parsed?.key_visual_traits || "", 220);
+    if (!productType) return "";
+    return [productType, traits ? `traits: ${traits}` : ""].filter(Boolean).join("; ");
+  } catch {
+    return safeText(fallback, 80);
+  }
+}
+
+async function analyzeTemplateStyleHint({ imageDataUrl, template = "Hero" }) {
+  const mock = boolEnv(process.env.OPENAI_MOCK);
+  if (!openai || mock || !imageDataUrl) return "";
+  try {
+    const visionModel = (process.env.OPENAI_VISION_MODEL || "gpt-4.1-mini").trim();
+    const response = await openai.responses.create({
+      model: visionModel,
+      input: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_text",
+              text: [
+                `Analyze this ${template} template style for product creatives.`,
+                "Return STRICT JSON only with keys: style_rules.",
+                "style_rules must be one concise sentence with layout, lighting, background, color mood.",
+                "No markdown.",
+              ].join(" "),
+            },
+            { type: "input_image", image_url: imageDataUrl },
+          ],
+        },
+      ],
+      max_output_tokens: 220,
+    });
+    const txt = String(response?.output_text || "").trim();
+    if (!txt) return "";
+    const parsed = JSON.parse(txt);
+    return safeText(parsed?.style_rules || "", 320);
+  } catch {
+    return "";
+  }
+}
+
 // ---- PROMPT ï¿½alto impactoï¿½ (sin texto)
 function buildHighImpactPrompt({
   productName = "Producto",
@@ -233,6 +562,8 @@ function buildHighImpactPrompt({
   angle = "",
   avatar = "",
   extraInstructions = "",
+  templateStyleHint = "",
+  productTypeHint = "",
   // cuando hay imagen de referencia, fuerza preservaciï¿½n
   useReferenceImage = false,
 }) {
@@ -242,11 +573,16 @@ function buildHighImpactPrompt({
   const angleS = safeText(angle, 200);
   const avatarS = safeText(avatar, 200);
   const extra = safeText(extraInstructions, 500);
+  const templateHint = safeText(templateStyleHint, 320);
+  const productHint = safeText(productTypeHint, 220);
 
   const preserveBlock = useReferenceImage
     ? [
         "IMPORTANT: Use the uploaded reference photo as the source of truth.",
         "Preserve the product identity: same shape, materials, colorway, proportions, unique details, seams, textures, and silhouette.",
+        productHint
+          ? `The generated subject MUST stay in the same product category: ${productHint}. Never replace with another product category.`
+          : "",
         "Do NOT change the brand marks that exist on the real product; do NOT invent new logos; do NOT add any text.",
         "Keep it photorealistic; remove AI artifacts; keep natural physics and lighting.",
       ].join(" ")
@@ -263,6 +599,7 @@ function buildHighImpactPrompt({
     "NO graphic-design poster/flyer look. NO artificial glow. NO fantasy effects.",
     "NO distorted packaging. NO weird hands/faces. No plastic-looking skin.",
     preserveBlock,
+    templateHint ? `Template style reference to follow: ${templateHint}.` : "",
     `Template: ${template}. Product name: ${productName}.`,
     details ? `Product details: ${details}.` : "",
     angleS ? `Suggested sales angle: ${angleS}.` : "",
@@ -294,6 +631,415 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// --- WhatsApp Bot API (persistencia local en generated/whatsapp-db.json)
+app.get("/api/whatsapp/chats", (req, res) => {
+  try {
+    const db = readWhatsAppDb();
+    const sorted = [...db.chats].sort((a, b) => {
+      return new Date(b?.lastMessageAt || b?.updatedAt || 0).getTime()
+        - new Date(a?.lastMessageAt || a?.updatedAt || 0).getTime();
+    });
+    const { items, nextCursor, limit } = paginateByCursor(sorted, req.query?.cursor, req.query?.limit);
+    return res.json({
+      ok: true,
+      chats: items.map((chat) => ({
+        ...chat,
+        photoUrl: chat.photoUrl || buildAvatarFallback(chat.name || chat.phone || chat.chatId),
+      })),
+      nextCursor,
+      limit,
+      total: sorted.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.get("/api/whatsapp/chats/:chatId/messages", (req, res) => {
+  try {
+    const chatId = toSafeString(req.params?.chatId || "", 140);
+    if (!chatId) return res.status(400).json({ ok: false, error: "chatId requerido" });
+    const db = readWhatsAppDb();
+    const chat = db.chats.find((c) => String(c.chatId) === String(chatId));
+    if (chat && !chat.photoUrl) {
+      chat.photoUrl = buildAvatarFallback(chat.name || chat.phone || chat.chatId);
+      writeWhatsAppDb(db);
+    }
+    const all = db.messages
+      .filter((m) => String(m.chatId) === String(chatId))
+      .sort(messageSortDesc);
+    const { items, nextCursor, limit } = paginateByCursor(all, req.query?.cursor, req.query?.limit || 50);
+    const asc = [...items].sort(messageSortAsc);
+    return res.json({
+      ok: true,
+      chat: chat || null,
+      messages: asc,
+      nextCursor,
+      limit,
+      total: all.length,
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.post("/api/whatsapp/chats/:chatId/read", (req, res) => {
+  try {
+    const chatId = toSafeString(req.params?.chatId || "", 140);
+    const db = readWhatsAppDb();
+    const idx = db.chats.findIndex((c) => String(c.chatId) === String(chatId));
+    if (idx >= 0) {
+      db.chats[idx].unreadCount = 0;
+      db.chats[idx].updatedAt = nowIso();
+      writeWhatsAppDb(db);
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.post("/api/whatsapp/chats/:chatId/send", upload.single("file"), async (req, res) => {
+  try {
+    const chatId = toSafeString(req.params?.chatId || "", 140);
+    if (!chatId) return res.status(400).json({ ok: false, error: "chatId requerido" });
+    const body = req.body || {};
+    const text = toSafeString(body.text || body.message || "", 4000);
+    let type = toSafeString(body.type || (text ? "text" : ""), 40).toLowerCase();
+    let mediaUrl = toSafeString(body.mediaUrl || "", 1400);
+    let mimeType = toSafeString(body.mimeType || "", 160);
+    let fileName = toSafeString(body.fileName || "", 240);
+
+    if (req.file?.buffer) {
+      const ext = path.extname(req.file.originalname || "") || ".bin";
+      const fname = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`;
+      const fullPath = path.join(whatsappUploadsDir, fname);
+      fs.writeFileSync(fullPath, req.file.buffer);
+      mediaUrl = `/uploads/whatsapp/${fname}`;
+      mimeType = req.file.mimetype || mimeType || "application/octet-stream";
+      fileName = req.file.originalname || fname;
+      if (!type) {
+        if (mimeType.startsWith("image/")) type = "image";
+        else if (mimeType.startsWith("video/")) type = "video";
+        else if (mimeType.startsWith("audio/")) type = "audio";
+        else type = "document";
+      }
+    }
+    if (!type) type = "text";
+
+    const db = readWhatsAppDb();
+    const providerMessageId = toSafeString(body.providerMessageId || randomId("msg_out"), 220);
+    const outgoing = {
+      providerMessageId,
+      chatId,
+      from: "agent@sanate.store",
+      to: chatId,
+      timestamp: nowIso(),
+      type,
+      text,
+      mediaUrl,
+      mimeType,
+      fileName,
+      status: "queued",
+      direction: "outgoing",
+      rawPayload: body.rawPayload ?? null,
+    };
+    const saved = saveMessage(db, outgoing);
+    if (!saved.ok) {
+      return res.status(400).json({ ok: false, error: saved.reason || "no se pudo guardar mensaje" });
+    }
+    const msg = saved.message;
+    msg.status = "sent";
+    msg.updatedAt = nowIso();
+    const idx = db.messages.findIndex((m) => String(m.providerMessageId) === String(msg.providerMessageId));
+    if (idx >= 0) db.messages[idx] = msg;
+    writeWhatsAppDb(db);
+    console.log("[WA][sendMessage]", {
+      chatId,
+      providerMessageId: msg.providerMessageId,
+      type: msg.type,
+      status: msg.status,
+      hasMedia: Boolean(msg.mediaUrl),
+    });
+    return res.json({ ok: true, message: msg });
+  } catch (err) {
+    console.log("[WA][sendMessage][error]", err?.message || err);
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.post("/api/whatsapp/messages/:messageId/retry", (req, res) => {
+  try {
+    const messageId = toSafeString(req.params?.messageId || "", 220);
+    const db = readWhatsAppDb();
+    const idx = db.messages.findIndex((m) => String(m.providerMessageId) === String(messageId));
+    if (idx < 0) return res.status(404).json({ ok: false, error: "mensaje no encontrado" });
+    db.messages[idx].status = "sent";
+    db.messages[idx].updatedAt = nowIso();
+    writeWhatsAppDb(db);
+    return res.json({ ok: true, message: db.messages[idx] });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.post("/api/whatsapp/webhook", (req, res) => {
+  try {
+    const body = req.body || {};
+    console.log("[WA][incomingWebhook]", {
+      type: body?.type || "message",
+      hasMessagesArray: Array.isArray(body?.messages),
+    });
+    const db = readWhatsAppDb();
+    const sourceMessages = Array.isArray(body?.messages) ? body.messages : [body];
+    const accepted = [];
+    const deduped = [];
+    for (const item of sourceMessages) {
+      const payload = {
+        providerMessageId: toSafeString(item?.providerMessageId || item?.id || item?.key?.id || "", 220),
+        chatId: toSafeString(item?.chatId || item?.from || item?.remoteJid || "", 140),
+        from: toSafeString(item?.from || item?.sender || "", 140),
+        to: toSafeString(item?.to || item?.recipient || "", 140),
+        timestamp: item?.timestamp || nowIso(),
+        type: toSafeString(item?.type || (item?.mediaUrl ? "document" : "text"), 40),
+        text: toSafeString(item?.text || item?.body || item?.message || "", 4000),
+        mediaUrl: toSafeString(item?.mediaUrl || "", 1200),
+        mimeType: toSafeString(item?.mimeType || "", 160),
+        status: toSafeString(item?.status || "delivered", 40),
+        direction: "incoming",
+        chatName: toSafeString(item?.chatName || item?.name || "", 120),
+        photoUrl: toSafeString(item?.photoUrl || "", 800),
+        rawPayload: item,
+      };
+      const saved = saveMessage(db, payload);
+      if (saved.ok && saved.dedup) deduped.push(payload.providerMessageId);
+      if (saved.ok && !saved.dedup) accepted.push(payload.providerMessageId);
+    }
+    writeWhatsAppDb(db);
+    return res.json({ ok: true, accepted, deduped });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+function generateSyncSeed(startAt, endAt) {
+  const rows = [];
+  const names = ["Laura", "Mateo", "Carlos", "Ana", "Sofia", "Diego", "Paola", "Camilo", "Valentina", "Nicolas"];
+  const totalChats = 28;
+  const span = endAt.getTime() - startAt.getTime();
+  for (let i = 0; i < totalChats; i += 1) {
+    const phone = `57${3000000000 + i}`;
+    const chatId = `${phone}@s.whatsapp.net`;
+    const baseTs = new Date(startAt.getTime() + Math.floor(((i + 1) / (totalChats + 1)) * span));
+    rows.push({
+      chatId,
+      name: `${names[i % names.length]} ${i + 1}`,
+      phone,
+      photoUrl: i % 3 === 0 ? "" : `https://i.pravatar.cc/120?img=${(i % 70) + 1}`,
+      messages: [
+        {
+          providerMessageId: randomId("sync_in"),
+          timestamp: new Date(baseTs.getTime() + 60 * 1000).toISOString(),
+          direction: "incoming",
+          type: "text",
+          text: "Hola, necesito info del producto",
+          status: "read",
+        },
+        {
+          providerMessageId: randomId("sync_out"),
+          timestamp: new Date(baseTs.getTime() + 3 * 60 * 1000).toISOString(),
+          direction: "outgoing",
+          type: "text",
+          text: "Claro, te comparto detalles y precio.",
+          status: "delivered",
+        },
+      ],
+    });
+  }
+  return rows;
+}
+
+function runSyncJob({ startDate }) {
+  const jobId = randomId("sync");
+  const db = readWhatsAppDb();
+  const job = {
+    jobId,
+    status: "running",
+    startedAt: nowIso(),
+    canceled: false,
+    progress: 0,
+    processedChats: 0,
+    totalChats: 0,
+    messageCount: 0,
+    startDate,
+  };
+  whatsappSyncJobs.set(jobId, job);
+  db.sync.runningJobId = jobId;
+  db.sync.lastStartDate = startDate;
+  writeWhatsAppDb(db);
+
+  const fromDate = new Date(startDate);
+  const toDate = new Date();
+  const seed = generateSyncSeed(fromDate, toDate);
+  job.totalChats = seed.length;
+
+  let idx = 0;
+  function tick() {
+    const current = whatsappSyncJobs.get(jobId);
+    if (!current || current.canceled) {
+      const local = readWhatsAppDb();
+      local.sync.runningJobId = null;
+      writeWhatsAppDb(local);
+      whatsappSyncJobs.set(jobId, {
+        ...current,
+        status: "canceled",
+        finishedAt: nowIso(),
+      });
+      return;
+    }
+    if (idx >= seed.length) {
+      const local = readWhatsAppDb();
+      local.sync.runningJobId = null;
+      local.sync.lastRunAt = nowIso();
+      writeWhatsAppDb(local);
+      whatsappSyncJobs.set(jobId, {
+        ...current,
+        status: "done",
+        progress: 100,
+        finishedAt: nowIso(),
+      });
+      return;
+    }
+    const chunk = seed.slice(idx, idx + 3);
+    const local = readWhatsAppDb();
+    for (const row of chunk) {
+      const chat = ensureChat(local, row);
+      if (chat && !chat.photoUrl) {
+        chat.photoUrl = buildAvatarFallback(chat.name || chat.phone || chat.chatId);
+      }
+      for (const msg of row.messages) {
+        const saved = saveMessage(local, {
+          providerMessageId: msg.providerMessageId,
+          chatId: row.chatId,
+          from: msg.direction === "incoming" ? row.chatId : "agent@sanate.store",
+          to: msg.direction === "incoming" ? "agent@sanate.store" : row.chatId,
+          timestamp: msg.timestamp,
+          type: msg.type,
+          text: msg.text,
+          status: msg.status,
+          direction: msg.direction,
+          chatName: row.name,
+          photoUrl: row.photoUrl,
+          rawPayload: { source: "sync15d" },
+        });
+        if (saved.ok && !saved.dedup) current.messageCount += 1;
+      }
+    }
+    writeWhatsAppDb(local);
+    idx += chunk.length;
+    current.processedChats = Math.min(seed.length, idx);
+    current.progress = Math.round((current.processedChats / seed.length) * 100);
+    current.updatedAt = nowIso();
+    whatsappSyncJobs.set(jobId, current);
+    console.log("[WA][syncProgress]", {
+      jobId,
+      processedChats: current.processedChats,
+      totalChats: current.totalChats,
+      progress: current.progress,
+    });
+    setTimeout(tick, 250);
+  }
+  setTimeout(tick, 0);
+  return job;
+}
+
+app.post("/api/whatsapp/sync", (req, res) => {
+  try {
+    const inputDate = req.body?.startDate ? new Date(req.body.startDate) : null;
+    const defaultStart = new Date(Date.now() - (15 * 24 * 60 * 60 * 1000));
+    const startDate = Number.isFinite(inputDate?.getTime()) ? inputDate.toISOString() : defaultStart.toISOString();
+    const db = readWhatsAppDb();
+    if (db.sync?.runningJobId && whatsappSyncJobs.get(db.sync.runningJobId)?.status === "running") {
+      return res.status(409).json({ ok: false, error: "Ya existe una sincronizacion en curso", jobId: db.sync.runningJobId });
+    }
+    const job = runSyncJob({ startDate });
+    return res.json({ ok: true, job });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.get("/api/whatsapp/sync/status", (req, res) => {
+  const jobId = toSafeString(req.query?.jobId || "", 120);
+  if (!jobId) return res.status(400).json({ ok: false, error: "jobId requerido" });
+  const job = whatsappSyncJobs.get(jobId);
+  if (!job) return res.status(404).json({ ok: false, error: "job no encontrado" });
+  return res.json({ ok: true, job });
+});
+
+app.post("/api/whatsapp/sync/cancel", (req, res) => {
+  const jobId = toSafeString(req.body?.jobId || "", 120);
+  if (!jobId) return res.status(400).json({ ok: false, error: "jobId requerido" });
+  const job = whatsappSyncJobs.get(jobId);
+  if (!job) return res.status(404).json({ ok: false, error: "job no encontrado" });
+  job.canceled = true;
+  job.updatedAt = nowIso();
+  whatsappSyncJobs.set(jobId, job);
+  return res.json({ ok: true, jobId, status: "canceling" });
+});
+
+app.get("/api/whatsapp/triggers", (req, res) => {
+  const db = readWhatsAppDb();
+  const triggers = [...db.triggers].sort((a, b) => {
+    return new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime();
+  });
+  return res.json({ ok: true, triggers });
+});
+
+app.post("/api/whatsapp/triggers", (req, res) => {
+  try {
+    const body = req.body || {};
+    const db = readWhatsAppDb();
+    const trigger = {
+      id: randomId("trg"),
+      name: toSafeString(body.name || "Nuevo disparador", 120) || "Nuevo disparador",
+      isActive: Boolean(body.isActive ?? true),
+      conditions: body.conditions && typeof body.conditions === "object" ? body.conditions : {},
+      actions: body.actions && typeof body.actions === "object" ? body.actions : {},
+      createdAt: nowIso(),
+    };
+    db.triggers.push(trigger);
+    writeWhatsAppDb(db);
+    return res.json({ ok: true, trigger });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.put("/api/whatsapp/triggers/:id", (req, res) => {
+  try {
+    const id = toSafeString(req.params?.id || "", 120);
+    const body = req.body || {};
+    const db = readWhatsAppDb();
+    const idx = db.triggers.findIndex((t) => String(t.id) === String(id));
+    if (idx < 0) return res.status(404).json({ ok: false, error: "trigger no encontrado" });
+    db.triggers[idx] = {
+      ...db.triggers[idx],
+      ...body,
+      id,
+    };
+    writeWhatsAppDb(db);
+    return res.json({ ok: true, trigger: db.triggers[idx] });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.get("/api/whatsapp/templates", (req, res) => {
+  const db = readWhatsAppDb();
+  return res.json({ ok: true, templates: db.templates });
+});
+
 // --- logo upload
 app.post("/api/logo/upload", upload.single("logo"), (req, res) => {
   try {
@@ -322,6 +1068,7 @@ app.post(
   upload.fields([
     { name: "images", maxCount: 3 },
     { name: "image", maxCount: 1 },
+    { name: "templateImage", maxCount: 1 },
   ]),
   async (req, res) => {
     const started = Date.now();
@@ -352,6 +1099,24 @@ app.post(
       const modelForEdit = /^dall-e-3$/i.test(model) || /^gpt-image-1$/i.test(model)
         ? editModelFallback
         : model;
+      const templateFile = Array.isArray(req.files?.templateImage) ? req.files.templateImage[0] : null;
+      const templateImageUrl = safeText(body.templateImageUrl || "", 600);
+
+      const productImageDataUrl = used_edit
+        ? await imageBufferToDataUrl(file0.buffer, file0.mimetype || "image/png")
+        : "";
+      const templateImageDataUrl = templateFile?.buffer
+        ? await imageBufferToDataUrl(templateFile.buffer, templateFile.mimetype || "image/png")
+        : (templateImageUrl ? await fetchImageUrlAsDataUrl(templateImageUrl) : "");
+
+      const productTypeHint = await analyzeProductTypeHint({
+        imageDataUrl: productImageDataUrl,
+        fallback: productName,
+      });
+      const templateStyleHint = await analyzeTemplateStyleHint({
+        imageDataUrl: templateImageDataUrl,
+        template,
+      });
 
       const prompt_used = buildHighImpactPrompt({
         productName,
@@ -362,6 +1127,8 @@ app.post(
         angle,
         avatar,
         extraInstructions,
+        productTypeHint,
+        templateStyleHint,
         useReferenceImage: used_edit,
       });
 
@@ -409,28 +1176,20 @@ app.post(
               .json({ error: "OpenAI no configurado. Configure OPENAI_API_KEY." });
           }
           editMode = "http-edits";
-          result = await callOpenAIImageEditHttp({
+          const editRun = await generateWithEditFallback({
             apiKey: process.env.OPENAI_API_KEY,
-            model: modelForEdit,
+            preferredModel: modelForEdit,
             imageBuffer: file0.buffer,
             imageMime: file0.mimetype || "image/png",
             prompt: prompt_used,
             size,
           });
+          result = editRun.result;
+          editMode = `http-edits:${editRun.modelUsed}`;
         } catch (editErr) {
-          console.warn("[IMG] edit fallback:", editErr?.message || editErr);
-          try {
-            editFallback = true;
-            editMode = "generate-fallback";
-            result = await openai.images.generate({
-              model,
-              prompt: `${prompt_used} Keep product identity from uploaded image as closely as possible.`,
-              size,
-            });
-          } catch (genErr) {
-            const detail = genErr?.message || String(genErr);
-            throw new Error(`Edit failed (${editErr?.message || editErr}) | Generate fallback failed (${detail})`);
-          }
+          throw new Error(
+            `No se pudo editar con imagen de referencia (${modelForEdit}): ${editErr?.message || editErr}`
+          );
         } finally {
           try {
             fs.unlinkSync(tmpPath);
@@ -507,6 +1266,8 @@ app.post(
         files_count: filesCount,
         model,
         model_used: used_edit ? modelForEdit : model,
+        product_type_hint: productTypeHint || "",
+        template_style_hint: templateStyleHint || "",
         image_url: finalUrl,
         image_id: record.id,
         analysis: generatedAnalysis,
@@ -676,12 +1437,18 @@ app.post("/api/image/auto-generate", upload.single("image"), async (req, res) =>
     const language = safeText(req.body?.language || "es", 10) || "es";
     const size = safeText(req.body?.size || "1024x1024", 20) || "1024x1024";
     const template = safeText(req.body?.template || "Hero", 40) || "Hero";
+    const productImageDataUrl = await imageBufferToDataUrl(req.file.buffer, req.file.mimetype || "image/png");
+    const productTypeHint = await analyzeProductTypeHint({
+      imageDataUrl: productImageDataUrl,
+      fallback: productName,
+    });
 
     const prompt_used = buildHighImpactPrompt({
       productName,
       template,
       language,
       size,
+      productTypeHint,
       useReferenceImage: true,
     });
 
@@ -710,32 +1477,23 @@ app.post("/api/image/auto-generate", upload.single("image"), async (req, res) =>
 
     try {
       let result;
-      let editFallback = false;
       let editMode = "none";
       try {
         editMode = "http-edits";
-        result = await callOpenAIImageEditHttp({
+        const editRun = await generateWithEditFallback({
           apiKey: process.env.OPENAI_API_KEY,
-          model: modelForEdit,
+          preferredModel: modelForEdit,
           imageBuffer: req.file.buffer,
           imageMime: req.file.mimetype || "image/png",
           prompt: prompt_used,
           size,
         });
+        result = editRun.result;
+        editMode = `http-edits:${editRun.modelUsed}`;
       } catch (editErr) {
-        console.warn("[AUTO-IMG] edit fallback:", editErr?.message || editErr);
-        try {
-          editFallback = true;
-          editMode = "generate-fallback";
-          result = await openai.images.generate({
-            model,
-            prompt: `${prompt_used} Keep product identity from uploaded image as closely as possible.`,
-            size,
-          });
-        } catch (genErr) {
-          const detail = genErr?.message || String(genErr);
-          throw new Error(`Edit failed (${editErr?.message || editErr}) | Generate fallback failed (${detail})`);
-        }
+        throw new Error(
+          `No se pudo editar con imagen de referencia (${modelForEdit}): ${editErr?.message || editErr}`
+        );
       }
 
       const data0 = result?.data?.[0];
@@ -760,8 +1518,8 @@ app.post("/api/image/auto-generate", upload.single("image"), async (req, res) =>
         ok: true,
         auto_generated: true,
         template,
-        model_used: editFallback ? model : modelForEdit,
-        edit_fallback: editFallback,
+        model_used: modelForEdit,
+        edit_fallback: false,
         edit_mode: editMode,
         image_url: finalUrl,
         prompt_used,
