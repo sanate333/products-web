@@ -1,0 +1,50 @@
+.tiendaSelectorContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #f3f4f6;
+    border-radius: 8px;
+    margin: 0 12px;
+}
+
+.tiendaSelectorContainer label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+}
+
+.tiendaSelect {
+    padding: 6px 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #1f2937;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.tiendaSelect:hover {
+    border-color: #2aaae2;
+}
+
+.tiendaSelect:focus {
+    outline: none;
+    border-color: #2aaae2;
+    box-shadow: 0 0 0 3px rgba(42, 170, 226, 0.1);
+}
+
+@media (max-width: 768px) {
+    .tiendaSelectorContainer {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        margin: 8px 0;
+    }
+
+    .tiendaSelect {
+        width: 100%;
+    }
+}

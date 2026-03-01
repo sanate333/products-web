@@ -1,0 +1,623 @@
+.tributarioPage {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+}
+
+.tributarioHero {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #d8e4f2;
+  min-height: 260px;
+}
+
+.tributarioHero img {
+  width: 100%;
+  min-height: 260px;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tributarioHeroOverlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 19, 30, 0.16) 0%, rgba(10, 19, 30, 0.76) 74%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 18px;
+}
+
+.tributarioHeroOverlay p {
+  margin: 0;
+  color: #bbdefb;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.tributarioHeroOverlay h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 32px;
+  line-height: 1.05;
+}
+
+.tributarioHeroOverlay span {
+  color: #ecf6ff;
+  font-size: 13px;
+}
+
+.tributarioKpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tributarioKpis article {
+  background: #fff;
+  border: 1px solid #dbe7f4;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 9px 20px rgba(16, 40, 66, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tributarioKpis strong {
+  color: #0f2438;
+  font-size: 26px;
+}
+
+.tributarioKpis span {
+  color: #3f5a74;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tributarioGrid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 10px;
+  align-items: start;
+}
+
+.tributarioCard {
+  background: #fff;
+  border: 1px solid #dbe7f4;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 24px rgba(17, 40, 66, 0.08);
+}
+
+.tributarioCard h3 {
+  margin: 0 0 8px;
+  color: #11293f;
+}
+
+.tributarioCard h4 {
+  margin: 10px 0 8px;
+  color: #183550;
+  font-size: 13px;
+}
+
+.tributarioCard p,
+.tributarioCard li {
+  color: #38526d;
+}
+
+.tributarioCard ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.tributarioMonthToolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tributarioMonthToolbar select {
+  border: 1px solid #d6e5f4;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f6fbff;
+}
+
+.tributarioMonthToolbar span {
+  font-size: 12px;
+  color: #4c6783;
+  font-weight: 700;
+}
+
+.tributarioCalendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tributarioCalendar > i {
+  font-size: 11px;
+  text-align: center;
+  color: #4d6782;
+  font-style: normal;
+  font-weight: 700;
+  padding: 4px 0;
+}
+
+.tributarioCalendar .calendarEmpty {
+  min-height: 64px;
+}
+
+.tributarioCalendar .cell {
+  min-height: 64px;
+  border: 1px solid #deebf8;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  width: 100%;
+  border-width: 1px;
+  border-style: solid;
+  font-family: inherit;
+  outline: none;
+}
+
+.tributarioCalendar .cell.today {
+  border-color: #0ea5e9;
+  box-shadow: inset 0 0 0 1px #7dd3fc;
+}
+
+.tributarioCalendar .cell.selected {
+  border-color: #2563eb;
+  box-shadow: inset 0 0 0 1px #93c5fd;
+}
+
+.tributarioCalendar .cell strong {
+  font-size: 12px;
+  color: #1f344a;
+}
+
+.tributarioCalendar .cell span {
+  font-size: 10px;
+  border-radius: 8px;
+  padding: 3px 6px;
+  line-height: 1.2;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tributarioCalendar .cell span.pdf {
+  background: #0f172a;
+}
+
+.tributarioCalendar .cell span.manual {
+  background: #0c84d8;
+}
+
+.tributarioCalendar .cell small {
+  color: #536d87;
+  font-size: 10px;
+}
+
+.tributarioBars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: 132px 1fr 38px;
+  align-items: center;
+  gap: 8px;
+}
+
+.barRow span {
+  font-size: 11px;
+  color: #3f5975;
+  font-weight: 700;
+}
+
+.barRow div {
+  height: 10px;
+  border-radius: 999px;
+  background: #ebf3fb;
+  overflow: hidden;
+}
+
+.barRow b {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #0ea5e9, #22c55e);
+}
+
+.barRow strong {
+  font-size: 11px;
+  color: #1f374f;
+  text-align: right;
+}
+
+.tributarioTableWrap {
+  overflow: auto;
+  border: 1px solid #e3edf8;
+  border-radius: 10px;
+}
+
+.tributarioTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 700px;
+}
+
+.tributarioTable th,
+.tributarioTable td {
+  border-bottom: 1px solid #ebf2f9;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+  color: #2a445f;
+}
+
+.tributarioTable th {
+  background: #f5f9ff;
+  font-weight: 800;
+}
+
+.tributarioFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tributarioFormGrid label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #31506a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tributarioFormGrid label.full {
+  grid-column: 1 / -1;
+}
+
+.tributarioFormGrid input,
+.tributarioFormGrid select,
+.tributarioFormGrid textarea,
+.tributarioAlerts input[type="number"] {
+  border: 1px solid #d8e7f4;
+  border-radius: 10px;
+  padding: 9px 10px;
+  background: #f9fcff;
+  color: #20394f;
+}
+
+.tributarioFormGrid textarea {
+  min-height: 78px;
+  resize: vertical;
+}
+
+.tributarioActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.tributarioActions button,
+.tributarioAlerts button,
+.taskActions button,
+.pdfPageBlock button {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: #0c84d8;
+  color: #fff;
+}
+
+.tributarioActions button.secondary,
+.tributarioAlerts button.secondary {
+  background: #0f172a;
+}
+
+.tributarioAlerts {
+  margin-top: 10px;
+  border: 1px solid #e3edf8;
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.tributarioRuleFilters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.tributarioRuleFilters label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.tributarioDateActions {
+  margin-top: 10px;
+  border: 1px solid #e3edf8;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.tributarioQuickConfig p {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+
+.tributarioAlerts label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #36516b;
+  font-weight: 700;
+}
+
+.tributarioAlerts label select {
+  border: 1px solid #d8e7f4;
+  border-radius: 10px;
+  padding: 8px 10px;
+  background: #f9fcff;
+  color: #20394f;
+}
+
+.tributarioMeta {
+  font-size: 11px;
+  color: #3f5b74;
+  font-weight: 700;
+}
+
+.tributarioStatus {
+  margin: 10px 0 0;
+  color: #0f766e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tributarioHint {
+  margin: 0;
+  color: #3f5b74;
+  font-size: 12px;
+}
+
+.tributarioGuide {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.guideRow {
+  border: 1px solid #deebf8;
+  border-radius: 10px;
+  padding: 9px;
+  background: #f8fbff;
+}
+
+.guideRow strong {
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.guideRow p {
+  margin: 4px 0;
+  color: #1f344a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.guideRow small {
+  color: #48637d;
+  font-size: 11px;
+}
+
+.tributarioTasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task {
+  border: 1px solid #deebf8;
+  border-radius: 10px;
+  padding: 9px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task.done {
+  background: #f0fdf4;
+  opacity: 0.8;
+}
+
+.task strong {
+  display: block;
+  color: #11293f;
+}
+
+.task span {
+  font-size: 12px;
+  color: #506c87;
+}
+
+.task p {
+  margin: 5px 0 0;
+  font-size: 12px;
+}
+
+.taskActions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.taskActions button.danger {
+  background: #dc2626;
+}
+
+.taskActions button.secondary {
+  background: #0f172a;
+}
+
+.complianceRows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.complianceRow {
+  border: 1px solid #deebf8;
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: 1fr 180px 46px;
+  align-items: center;
+  gap: 8px;
+}
+
+.complianceRow span {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #506c87;
+}
+
+.complianceBar {
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #ebf3fb;
+}
+
+.complianceBar b {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e, #0ea5e9);
+}
+
+.pdfPages {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdfPageBlock {
+  border: 1px solid #e1ebf7;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.pdfPageBlock button {
+  width: 100%;
+  text-align: left;
+  border-radius: 0;
+  background: #0f172a;
+}
+
+.pdfPageBlock pre {
+  margin: 0;
+  padding: 10px;
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  font-size: 12px;
+  color: #213c56;
+  max-height: 360px;
+  overflow: auto;
+  background: #f8fbff;
+}
+
+@media (max-width: 1024px) {
+  .tributarioKpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tributarioGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .tributarioHeroOverlay h1 {
+    font-size: 25px;
+  }
+
+  .tributarioKpis {
+    grid-template-columns: 1fr;
+  }
+
+  .tributarioFormGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .task {
+    flex-direction: column;
+  }
+
+  .taskActions {
+    flex-direction: row;
+  }
+
+  .complianceRow {
+    grid-template-columns: 1fr;
+  }
+
+  .tributarioCalendar {
+    gap: 4px;
+  }
+
+  .tributarioCalendar > i {
+    font-size: 10px;
+    padding: 2px 0;
+  }
+
+  .tributarioCalendar .calendarEmpty {
+    min-height: 36px;
+  }
+
+  .tributarioCalendar .cell {
+    min-height: 52px;
+    padding: 4px;
+    gap: 2px;
+  }
+
+  .tributarioCalendar .cell strong {
+    font-size: 11px;
+  }
+
+  .tributarioCalendar .cell span {
+    display: none;
+  }
+
+  .tributarioCalendar .cell small {
+    font-size: 9px;
+  }
+}

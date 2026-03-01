@@ -1,0 +1,147 @@
+.blockedGateWrap {
+    min-height: 100vh;
+    width: 100%;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 85% 10%, rgba(255, 193, 7, 0.28), rgba(255, 193, 7, 0) 35%),
+        radial-gradient(circle at 10% 80%, rgba(255, 64, 64, 0.38), rgba(255, 64, 64, 0) 40%),
+        linear-gradient(135deg, #3d0000 0%, #8b0000 38%, #a30f0f 100%);
+}
+
+.blockedGateNoise {
+    position: absolute;
+    inset: -80%;
+    pointer-events: none;
+    opacity: 0.28;
+    background: repeating-linear-gradient(
+        125deg,
+        rgba(255, 229, 100, 0.8) 0,
+        rgba(255, 229, 100, 0.8) 10px,
+        rgba(255, 62, 62, 0.75) 10px,
+        rgba(255, 62, 62, 0.75) 20px
+    );
+    animation: blockedNoiseMove 6s linear infinite;
+}
+
+.blockedGateCard {
+    position: relative;
+    z-index: 1;
+    width: min(720px, 100%);
+    border-radius: 18px;
+    padding: 26px;
+    background: linear-gradient(150deg, #220707 0%, #3d0a0a 100%);
+    border: 2px solid rgba(255, 216, 88, 0.55);
+    box-shadow:
+        0 24px 58px rgba(0, 0, 0, 0.42),
+        0 0 0 8px rgba(255, 204, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    color: #fff;
+}
+
+.blockedGateBadge {
+    width: fit-content;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 7px 12px;
+    background: linear-gradient(120deg, #facc15 0%, #f97316 100%);
+    color: #2b1700;
+    animation: blockedBadgePulse 1.4s ease-in-out infinite;
+}
+
+.blockedGateCard h1 {
+    margin: 0;
+    font-size: 42px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+.blockedGateCard p {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.5;
+    color: #ffe8a3;
+}
+
+.blockedGateTags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.blockedGateTags span {
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 999px;
+    padding: 6px 10px;
+    background: rgba(255, 255, 255, 0.13);
+    border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.blockedGateActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.blockedGateCard button {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 16px;
+    width: fit-content;
+    font-size: 14px;
+    font-weight: 800;
+    color: #2e1800;
+    background: linear-gradient(120deg, #fde047 0%, #f97316 100%);
+    cursor: pointer;
+}
+
+.blockedGateCard button.secondary {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+@keyframes blockedNoiseMove {
+    from {
+        transform: translate3d(-5%, -5%, 0) rotate(0deg);
+    }
+    to {
+        transform: translate3d(5%, 5%, 0) rotate(360deg);
+    }
+}
+
+@keyframes blockedBadgePulse {
+    0%,
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.6);
+    }
+    50% {
+        transform: scale(1.03);
+        box-shadow: 0 0 0 10px rgba(250, 204, 21, 0);
+    }
+}
+
+@media (max-width: 700px) {
+    .blockedGateCard {
+        padding: 18px;
+        border-radius: 14px;
+    }
+
+    .blockedGateCard h1 {
+        font-size: 32px;
+    }
+
+    .blockedGateCard p {
+        font-size: 15px;
+    }
+}

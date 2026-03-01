@@ -1,0 +1,779 @@
+.shopDash {
+    width: 100%;
+}
+
+.shopUnifiedPanel {
+    width: 100%;
+    border-radius: 18px;
+    border: 1px solid #d9e4ef;
+    background: linear-gradient(180deg, #ffffff 0%, #f6faff 100%);
+    box-shadow: 0 18px 34px rgba(15, 23, 42, 0.08);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.shopDashHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.shopDashHeader > div:first-child {
+    min-width: min(520px, 100%);
+}
+
+.shopDashEyebrow {
+    margin: 0;
+    font-size: 11px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: #6a7d94;
+    font-weight: 800;
+}
+
+.shopDashHeader h2 {
+    margin: 6px 0 0;
+    font-size: 26px;
+    line-height: 1.22;
+    letter-spacing: -0.03em;
+    color: #111827;
+    text-wrap: balance;
+}
+
+.shopDashFilters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    align-items: stretch;
+}
+
+.shopDashFiltersInline {
+    margin-top: 8px;
+    justify-content: flex-end;
+}
+
+.shopDashFilter {
+    border: 1px solid #cfdae7;
+    border-radius: 999px;
+    padding: 9px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #334155;
+    background: #ffffff;
+    cursor: pointer;
+    min-height: 40px;
+    white-space: nowrap;
+}
+
+.shopDashFilter.active {
+    color: #ffffff;
+    border-color: #0f172a;
+    background: #0f172a;
+}
+
+.shopDashLoading,
+.shopDashError {
+    margin: 0;
+    border-radius: 12px;
+    padding: 11px 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.shopDashLoading {
+    background: #ecf8ff;
+    border: 1px solid #cfe8f7;
+    color: #0f4c75;
+}
+
+.shopDashError {
+    background: #fff3f3;
+    border: 1px solid #f4c5c5;
+    color: #b91c1c;
+}
+
+.shopUnifiedMetrics {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.shopKpiCard {
+    border-radius: 14px;
+    border: 1px solid #dbe5ef;
+    background: #ffffff;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.shopKpiCard.primary {
+    border-color: #0f172a;
+    background: linear-gradient(145deg, #0f172a 0%, #1e3a5f 100%);
+}
+
+.shopKpiTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.shopKpiCard span {
+    color: #51657f;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.shopKpiCard strong {
+    color: #111827;
+    font-size: 30px;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.shopKpiCard small {
+    font-size: 12px;
+}
+
+.shopKpiCard.primary span,
+.shopKpiCard.primary strong,
+.shopKpiCard.primary .shopTrend {
+    color: #f8fafc;
+}
+
+.shopOnlineBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 800;
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+}
+
+.shopOnlineBadge i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #94a3b8;
+    display: inline-block;
+}
+
+.shopOnlineBadge.online {
+    color: #dcfce7;
+    background: rgba(34, 197, 94, 0.2);
+}
+
+.shopOnlineBadge.online i {
+    background: #22c55e;
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.17);
+}
+
+.shopTrend {
+    font-weight: 700;
+    color: #64748b;
+}
+
+.shopTrend.up {
+    color: #15803d;
+}
+
+.shopTrend.down {
+    color: #b91c1c;
+}
+
+.shopUnifiedChartPanel {
+    border: 1px solid #dbe5ef;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.shopChartHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.shopChartHead h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #0f172a;
+}
+
+.shopChartHint {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: right;
+}
+
+.shopChartHint span {
+    color: #64748b;
+    font-size: 12px;
+}
+
+.shopChartHint strong {
+    color: #0f172a;
+    font-size: 13px;
+}
+
+@media (max-width: 768px) {
+    .shopDashFiltersInline {
+        justify-content: flex-start;
+    }
+}
+
+.shopChartWrap {
+    position: relative;
+    min-height: 220px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.shopChartSvg {
+    width: 100%;
+    height: 220px;
+    background: linear-gradient(180deg, rgba(14, 165, 233, 0.08), rgba(14, 165, 233, 0));
+    border-radius: 12px;
+}
+
+.gridLine {
+    stroke: #e5edf5;
+    stroke-width: 1;
+}
+
+.gridLabel {
+    fill: #8a9aad;
+    font-size: 12px;
+    font-family: inherit;
+}
+
+.sessionsLine {
+    fill: none;
+    stroke: #0ea5e9;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ordersLine {
+    fill: none;
+    stroke: #0f172a;
+    stroke-width: 3;
+    stroke-dasharray: 10 8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.activeGuide {
+    stroke: rgba(15, 23, 42, 0.18);
+    stroke-width: 1;
+    stroke-dasharray: 4 4;
+}
+
+.sessionDot {
+    fill: #0284c7;
+}
+
+.orderDot {
+    fill: #0f172a;
+}
+
+.shopChartOverlay {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(var(--points, 1), minmax(0, 1fr));
+}
+
+.shopChartHoverPoint {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.shopChartHoverPoint.active {
+    background: rgba(14, 165, 233, 0.07);
+}
+
+.shopChartLegend {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.shopChartLegend span {
+    display: inline-flex;
+    align-items: center;
+}
+
+.shopChartLegend .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.shopChartLegend .dot.sessions {
+    background: #0ea5e9;
+}
+
+.shopChartLegend .dot.orders {
+    background: #0f172a;
+}
+
+.shopInsightsGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.shopDonutPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.shopDonutWrap {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+}
+
+.shopDonutChart {
+    width: 100%;
+    height: 100%;
+}
+
+.shopDonutTrack {
+    fill: none;
+    stroke: #e6edf5;
+    stroke-width: 20;
+}
+
+.shopDonutArc {
+    fill: none;
+    stroke-width: 20;
+    stroke-linecap: butt;
+}
+
+.shopDonutCenter {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.shopDonutCenter strong {
+    font-size: 24px;
+    color: #0f172a;
+    line-height: 1;
+    letter-spacing: -0.03em;
+}
+
+.shopDonutCenter span {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.shopDonutLegend {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.shopDonutLegend li {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #334155;
+    font-weight: 700;
+}
+
+.shopDonutLegend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+}
+
+.shopDonutLegend strong {
+    color: #0f172a;
+}
+
+.shopInsightPanel {
+    border: 1px solid #dbe5ef;
+    border-radius: 14px;
+    background: #ffffff;
+    padding: 11px;
+}
+
+.shopInsightHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px 14px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.shopInsightHead h3 {
+    margin: 0;
+    font-size: 15px;
+    color: #0f172a;
+}
+
+.shopInsightHead span {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 700;
+    max-width: 100%;
+}
+
+.shopImpactPanel {
+    border-color: #1f3d65;
+    background: radial-gradient(circle at 90% -20%, rgba(14, 165, 233, 0.2), transparent 45%), #0b1524;
+}
+
+.shopImpactPanel .shopInsightHead {
+    align-items: center;
+}
+
+.shopImpactPanel .shopInsightHead h3 {
+    color: #e5f3ff;
+    font-size: 16px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.shopImpactPanel .shopInsightHead span {
+    color: #7dd3fc;
+    white-space: normal;
+}
+
+.shopImpactScoreBar {
+    width: 100%;
+    height: 10px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.2);
+    overflow: hidden;
+    margin: 6px 0 10px;
+}
+
+.shopImpactScoreBar i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #22d3ee 0%, #3b82f6 50%, #0ea5e9 100%);
+    box-shadow: 0 0 14px rgba(14, 165, 233, 0.55);
+}
+
+.shopImpactList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.shopImpactList li {
+    border: 1px solid rgba(125, 211, 252, 0.25);
+    border-radius: 10px;
+    padding: 9px;
+    background: rgba(15, 23, 42, 0.32);
+}
+
+.shopImpactTop {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.shopImpactTop strong {
+    font-size: 13px;
+    color: #f8fbff;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.shopImpactTop span {
+    font-size: 11px;
+    color: #93c5fd;
+    white-space: nowrap;
+}
+
+.shopImpactBars {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.shopImpactTrack {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.2);
+    overflow: hidden;
+}
+
+.shopImpactTrack i {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+}
+
+.shopImpactTrack.sold i {
+    background: linear-gradient(90deg, #38bdf8, #2563eb);
+}
+
+.shopImpactTrack.visited i {
+    background: linear-gradient(90deg, #22c55e, #15803d);
+}
+
+.shopImpactFoot {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: #bfdbfe;
+    font-weight: 700;
+}
+
+.shopRankList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.shopRankItem {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.shopRankIndex {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #0f172a;
+    background: #e2e8f0;
+}
+
+.shopRankBody {
+    min-width: 0;
+}
+
+.shopRankTop {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.shopRankTop strong {
+    font-size: 13px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shopRankTop span {
+    font-size: 11px;
+    color: #475569;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.shopRankBar {
+    width: 100%;
+    height: 6px;
+    border-radius: 999px;
+    background: #e5eef6;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.shopRankBar i {
+    display: block;
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0ea5e9 0%, #0f172a 100%);
+}
+
+.shopRankBar.views i {
+    background: linear-gradient(90deg, #22c55e 0%, #166534 100%);
+}
+
+.shopRankBody small {
+    display: block;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+.shopEmptyInsight {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 700;
+}
+
+@media (max-width: 1200px) {
+    .shopDashHeader h2 {
+        font-size: 23px;
+    }
+
+    .shopUnifiedMetrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .shopInsightsGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    .shopUnifiedPanel {
+        padding: 11px;
+        border-radius: 12px;
+    }
+
+    .shopDashHeader {
+        gap: 12px;
+    }
+
+    .shopDashHeader > div:first-child {
+        min-width: 100%;
+    }
+
+    .shopDashHeader h2 {
+        font-size: 19px;
+        line-height: 1.25;
+    }
+
+    .shopDashFilters {
+        width: 100%;
+        justify-content: flex-start;
+        gap: 8px;
+    }
+
+    .shopDashFilter {
+        padding: 8px 11px;
+        font-size: 11px;
+        min-height: 36px;
+        white-space: normal;
+    }
+
+    .shopUnifiedMetrics {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(180px, 1fr);
+        grid-template-columns: none;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        gap: 7px;
+    }
+
+    .shopKpiCard strong {
+        font-size: 28px;
+    }
+
+    .shopChartHead {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .shopChartHint {
+        text-align: left;
+    }
+
+    .shopChartWrap,
+    .shopChartSvg {
+        min-height: 176px;
+        height: 176px;
+    }
+
+    .shopInsightPanel {
+        padding: 10px;
+    }
+
+    .shopDonutWrap {
+        width: 164px;
+        height: 164px;
+    }
+
+    .shopInsightHead h3 {
+        font-size: 14px;
+    }
+
+    .shopImpactTop {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .shopImpactTop span {
+        white-space: normal;
+    }
+
+    .shopRankItem {
+        grid-template-columns: 22px minmax(0, 1fr);
+        gap: 7px;
+    }
+
+    .shopRankIndex {
+        width: 22px;
+        height: 22px;
+    }
+
+    .shopRankTop strong {
+        font-size: 12px;
+    }
+}

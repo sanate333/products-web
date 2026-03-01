@@ -1,0 +1,214 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Sora:wght@600;700&display=swap');
+
+:root {
+    --oasis-bg: #f3f5f9;
+    --oasis-bg-soft: #eef2f8;
+    --oasis-surface: #ffffff;
+    --oasis-surface-2: #f8fafd;
+    --oasis-border: #dde4ee;
+    --oasis-border-strong: #c8d3e1;
+    --oasis-text: #0f172a;
+    --oasis-muted: #5b6b83;
+    --oasis-primary: #0ea5e9;
+    --oasis-primary-strong: #0369a1;
+    --oasis-success: #16a34a;
+    --oasis-shadow-sm: 0 8px 20px rgba(18, 34, 61, 0.08);
+    --oasis-shadow-md: 0 16px 36px rgba(14, 25, 44, 0.1);
+}
+
+.oasis-shell {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 292px 1fr;
+    background:
+        radial-gradient(circle at 88% 5%, rgba(14, 165, 233, 0.08), transparent 32%),
+        radial-gradient(circle at 3% 95%, rgba(16, 185, 129, 0.06), transparent 34%),
+        var(--oasis-bg);
+    color: var(--oasis-text);
+    font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
+.oasis-sidebar {
+    background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+    border-right: 1px solid var(--oasis-border);
+    padding: 1.35rem 1rem 1.1rem;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.6), var(--oasis-shadow-sm);
+}
+
+.oasis-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.8rem 1rem;
+    border-radius: 0.95rem;
+    border: 1px solid #ebf0f7;
+    background: linear-gradient(125deg, #f8fbff 0%, #f5f9ff 55%, #f3fff9 100%);
+    margin-bottom: 1rem;
+}
+
+.oasis-brand-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(120deg, #14b8a6, #0ea5e9);
+    box-shadow: 0 0 0 5px rgba(14, 165, 233, 0.15);
+}
+
+.oasis-brand h2 {
+    margin: 0;
+    font-size: 1.03rem;
+    line-height: 1;
+    font-weight: 800;
+    font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.oasis-brand p {
+    margin: 0.28rem 0 0;
+    font-size: 0.78rem;
+    color: var(--oasis-muted);
+    font-weight: 600;
+}
+
+.oasis-main-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.oasis-main-menu-link {
+    color: #3c4f69;
+    display: flex;
+    align-items: center;
+    gap: 0.72rem;
+    font-size: 0.89rem;
+    font-weight: 700;
+    padding: 0.67rem 0.75rem;
+    border-radius: 0.78rem;
+    border: 1px solid transparent;
+}
+
+.oasis-main-menu-link svg {
+    width: 14px;
+}
+
+.oasis-main-menu-link:hover {
+    color: #0f172a;
+    background: #f4f8fd;
+    border-color: #d9e4f2;
+}
+
+.oasis-main-menu-link-active {
+    background: linear-gradient(130deg, #e6f6ff 0%, #ecf4ff 60%, #eafdf2 100%);
+    color: var(--oasis-primary-strong);
+    border-color: #bde6fb;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.oasis-main-area {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.oasis-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(247, 250, 254, 0.86);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--oasis-border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.95rem;
+}
+
+.oasis-topbar h1 {
+    margin: 0;
+    font-size: 1.14rem;
+    line-height: 1;
+    font-weight: 800;
+    font-family: 'Sora', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
+}
+
+.oasis-topbar p {
+    margin: 0.32rem 0 0;
+    color: var(--oasis-muted);
+    font-size: 0.83rem;
+    font-weight: 600;
+}
+
+.oasis-mobile-menu-button {
+    display: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 0.75rem;
+    border: 1px solid var(--oasis-border-strong);
+    background: #fff;
+    color: #2b3b52;
+}
+
+.oasis-main-content {
+    padding: 1.3rem;
+}
+
+.oasis-card {
+    background: var(--oasis-surface);
+    border: 1px solid var(--oasis-border);
+    border-radius: 16px;
+    box-shadow: var(--oasis-shadow-sm);
+}
+
+.oasis-sidebar-overlay {
+    border: none;
+    padding: 0;
+    margin: 0;
+    position: fixed;
+    inset: 0;
+    background: rgba(9, 18, 33, 0.45);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 49;
+}
+
+.oasis-sidebar-overlay-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (max-width: 1024px) {
+    .oasis-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .oasis-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        width: 296px;
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+    }
+
+    .oasis-sidebar-open {
+        transform: translateX(0);
+    }
+
+    .oasis-mobile-menu-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .oasis-main-content {
+        padding: 1rem;
+    }
+}

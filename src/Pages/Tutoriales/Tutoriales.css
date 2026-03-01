@@ -1,0 +1,277 @@
+.tutorialesShell {
+  background: radial-gradient(circle at 88% -15%, rgba(14, 165, 233, 0.22), transparent 42%), #070b13;
+  border: 1px solid #1c2738;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(4, 10, 21, 0.45);
+  color: #e4edf8;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tutorialesHeader h3 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.tutorialesHeader p {
+  margin: 6px 0 0;
+  color: #91a5c3;
+  font-size: 14px;
+}
+
+.tutorialesHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tutorialesHeaderActions {
+  display: flex;
+  gap: 8px;
+}
+
+.tutorialesHeaderActions button {
+  border: 1px solid #2a3f5b;
+  background: #0f1a2b;
+  color: #e4edf8;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tutorialPrimaryBtn {
+  border: 1px solid #2f53a5 !important;
+  background: linear-gradient(135deg, #4f46e5, #2563eb) !important;
+  color: #fff !important;
+}
+
+.tutorialesCategories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tutorialesCategories button {
+  border: 1px solid #2a3f5b;
+  background: #0f1a2b;
+  color: #9bb0cd;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tutorialesCategories button.active {
+  color: #ecfbff;
+  background: linear-gradient(130deg, #12334c, #173f3c);
+  border-color: #2f5e6d;
+}
+
+.tutorialesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.videoCard {
+  border: 1px solid #22344d;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #0d1625;
+}
+
+.videoThumb {
+  aspect-ratio: 16 / 9;
+  border-bottom: 1px solid #22344d;
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.35), rgba(15, 23, 42, 0.9));
+  display: grid;
+  place-items: center;
+}
+
+.videoThumb span {
+  border: 1px solid #4a6382;
+  border-radius: 999px;
+  background: rgba(10, 20, 34, 0.75);
+  color: #c9d8ec;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+.videoBody {
+  padding: 11px;
+}
+
+.videoBody h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.videoBody small {
+  display: block;
+  margin-top: 6px;
+  color: #8ea3bf;
+}
+
+.videoBody button {
+  margin-top: 10px;
+  border: 1px solid #2f53a5;
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  color: #fff;
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-weight: 700;
+}
+
+.videoActions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.videoActions button {
+  margin-top: 0;
+}
+
+.videoActions .danger {
+  border-color: #8f3f54;
+  background: #4f1f2d;
+}
+
+.tutorialesModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(4, 9, 17, 0.8);
+  display: grid;
+  place-items: center;
+}
+
+.tutorialesModal {
+  width: min(900px, calc(100vw - 32px));
+  background: #0b1422;
+  border: 1px solid #243651;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.tutorialesModalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.tutorialesModalHead h4 {
+  margin: 0;
+  color: #e6edf8;
+}
+
+.tutorialesModalHead button {
+  border: 1px solid #34506f;
+  background: #132338;
+  color: #e2eaf7;
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-weight: 700;
+}
+
+.tutorialesEmbedWrap {
+  margin-top: 10px;
+  aspect-ratio: 16 / 9;
+  border: 1px solid #2b3f59;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f1b2d;
+}
+
+.tutorialesEmbedWrap iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.tutorialesEmbedWrap video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.tutorialesError {
+  margin: 0;
+  border: 1px solid #5a2d34;
+  background: #3b1820;
+  color: #ffc9d1;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+}
+
+.tutorialesEmpty {
+  border: 1px dashed #2c405a;
+  border-radius: 12px;
+  color: #9ab0ce;
+  padding: 18px;
+  text-align: center;
+}
+
+.tutorialesFormModal {
+  width: min(620px, calc(100vw - 24px));
+  background: #0b1422;
+  border: 1px solid #243651;
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.tutorialesFormGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tutorialesFormGrid label {
+  font-size: 12px;
+  color: #a7bad4;
+  font-weight: 700;
+}
+
+.tutorialesFormGrid input,
+.tutorialesFormGrid select {
+  border: 1px solid #2a3f5b;
+  background: #0f1a2b;
+  color: #e4edf8;
+  border-radius: 10px;
+  padding: 9px 11px;
+}
+
+.tutorialesFormActions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tutorialesFormActions button {
+  border-radius: 10px;
+  border: 1px solid #2a3f5b;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tutorialesFormActions .secondary {
+  background: #0f1a2b;
+  color: #e4edf8;
+}
+
+@media (max-width: 680px) {
+  .tutorialesHeader {
+    flex-direction: column;
+  }
+}

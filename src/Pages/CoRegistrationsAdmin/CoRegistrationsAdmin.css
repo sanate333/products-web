@@ -1,0 +1,160 @@
+.coAdminPage {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.coAdminHead {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 14px;
+    background: #ffffff;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 14px;
+}
+
+.coAdminHead h1 {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.2;
+    color: #0f172a;
+}
+
+.coAdminHead p {
+    margin: 5px 0 0;
+    font-size: 13px;
+    color: #475569;
+}
+
+.coAdminActions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.coAdminActions input {
+    width: 320px;
+    max-width: 72vw;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    background: #f8fafc;
+    padding: 10px 12px;
+    color: #0f172a;
+}
+
+.coAdminActions button {
+    border-radius: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(15, 23, 42, 0.16);
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.coAdminTableCard {
+    background: #ffffff;
+    border-radius: 14px;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    overflow: hidden;
+}
+
+.coAdminTableWrap {
+    overflow-x: auto;
+}
+
+.coAdminTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 860px;
+}
+
+.coAdminTable thead tr {
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.coAdminTable th {
+    text-align: left;
+    padding: 12px;
+    font-size: 12px;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.coAdminTable td {
+    padding: 12px;
+    font-size: 13px;
+    color: #0f172a;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.coAdminStoreName {
+    font-weight: 800;
+}
+
+.coAdminTable a {
+    color: #0ea5e9;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.coStatusTag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    background: rgba(148, 163, 184, 0.12);
+    color: #0f172a;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.coStatusTag.paid {
+    background: rgba(59, 130, 246, 0.14);
+    border-color: rgba(59, 130, 246, 0.35);
+    color: #1d4ed8;
+}
+
+.coStatusTag.active {
+    background: rgba(34, 197, 94, 0.16);
+    border-color: rgba(34, 197, 94, 0.36);
+    color: #15803d;
+}
+
+.coAdminEmpty {
+    opacity: 0.7;
+}
+
+@media (max-width: 860px) {
+    .coAdminHead {
+        padding: 12px;
+    }
+
+    .coAdminHead h1 {
+        font-size: 18px;
+    }
+
+    .coAdminHead p {
+        font-size: 12px;
+    }
+
+    .coAdminActions {
+        width: 100%;
+    }
+
+    .coAdminActions input {
+        width: 100%;
+        max-width: none;
+    }
+
+    .coAdminActions button {
+        width: 100%;
+    }
+}
