@@ -4,6 +4,7 @@ import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
 const BU = 'http://localhost:5055/api/whatsapp'
+const MEDIA_BASE = BU.replace('/api/whatsapp', '') // http://localhost:5055
 const H  = { 'x-secret': 'sanate_secret_2025' }
 const HJ = { ...H, 'Content-Type': 'application/json' }
 const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
@@ -825,27 +826,29 @@ export default function WhatsAppBot() {
                     <div className="wbv5-cw-msgs" ref={msgsRef}>
                       {msgs.length === 0 ? (
                         <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '.72rem', padding: '2rem 0' }}>Sin mensajes aún</div>
-                      ) : msgs.map((m) => (
+                      ) : msgs.map((m) => {
+                        const isMediaType = ['image', 'video', 'audio', 'document', 'sticker'].includes(m.type);
+                        return (
                         <div key={m.id} className={`wbv5-msg ${m.dir}`}>
-                          {/* texto */}
-                          {m.txt ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
+                          {/* texto - solo mostrar si NO es mensaje de media */}
+                          {m.txt && !isMediaType ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
                           {/* imagen */}
                           {m.type === 'image' ? (m.mediaUrl ? (
-                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer">
-                              <img src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} alt="img" className="wbv5-msg-img" />
+                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} target="_blank" rel="noreferrer">
+                              <img src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} alt="img" className="wbv5-msg-img" />
                             </a>
                           ) : <div className="wbv5-msg-media-ph">📷 Imagen</div>) : null}
                           {/* video */}
                           {m.type === 'video' ? (m.mediaUrl ? (
-                            <video src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-video" />
+                            <video src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} controls className="wbv5-msg-video" />
                           ) : <div className="wbv5-msg-media-ph">🎥 Video</div>) : null}
                           {/* audio / voz */}
                           {m.type === 'audio' ? (m.mediaUrl ? (
-                            <audio src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-audio" />
+                            <audio src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} controls className="wbv5-msg-audio" />
                           ) : <div className="wbv5-msg-media-ph">🎵 Audio</div>) : null}
                           {/* documento */}
                           {m.type === 'document' ? (m.mediaUrl ? (
-                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer" className="wbv5-msg-doc">
+                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} target="_blank" rel="noreferrer" className="wbv5-msg-doc">
                               📄 {m.fileName || 'Documento'}
                             </a>
                           ) : <div className="wbv5-msg-media-ph">📄 {m.fileName || 'Documento'}</div>) : null}
@@ -853,7 +856,7 @@ export default function WhatsAppBot() {
                           {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
                           <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ✓✓' : ' ✓') : ''}</div>
                         </div>
-                      ))}
+                      )})}
                     </div>
 
                     {/* inputs ocultos para adjuntos */}
