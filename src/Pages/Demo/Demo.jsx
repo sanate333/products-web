@@ -12,7 +12,7 @@ export default function Demo() {
         <section className='demo'>
             <Banners />
             <div className='catalogoBtnWrap'>
-                <Link to='/catalogo' className='catalogoBtn'>Ver Catálogo</Link>
+                <Link to='/catalogo' className='catalogoBtn'>Catálogo</Link>
             </div>
             <Products />
             <Footer />
