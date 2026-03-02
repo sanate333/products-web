@@ -162,6 +162,14 @@ export default function WhatsAppBot() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [contactStatus,     setContactStatus]     = useState('Nuevo')
 
+  // ── IA / ChatGPT ──────────────────────────────────────────────
+  const [serverOnline,   setServerOnline]   = useState(null)  // null=desconocido, true=online, false=offline
+  const [aiEnabled,      setAiEnabled]      = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
+  const [aiContactMap,   setAiContactMap]   = useState({})    // { chatId: bool } – override por contacto
+  const [openaiKey,      setOpenaiKey]      = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
+  const [aiModel,        setAiModel]        = useState('gpt-4o')
+  const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } })
+
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
   const dragRef          = useRef({})
@@ -331,13 +339,14 @@ export default function WhatsAppBot() {
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
+      setServerOnline(true)
       // IMPORTANTE: evaluar correctamente; sin paréntesis la precedencia es incorrecta
       const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
       setStatus(s)
       setPhone(d.phone || '')
       if (s === 'connected') { try { await loadC() } catch {} }
       else if (s === 'connecting' || s === 'qr') { loadQR() }
-    } catch { setStatus('disconnected') }
+    } catch { setServerOnline(false); setStatus('disconnected') }
   }
 
   async function loadQR() {
@@ -492,6 +501,54 @@ export default function WhatsAppBot() {
     } catch { setN8nOk(false); tip('⚠️ n8n no responde') }
   }
 
+  // ── IA / ChatGPT helpers ───────────────────────────────────────
+  function saveAiKey(v)    { setOpenaiKey(v);    try { localStorage.setItem('wa_openai_key', v) } catch {} }
+  function saveAiPrompt(v) { setAiPrompt(v);     try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
+  function toggleAiGlobal() {
+    setAiEnabled(prev => {
+      const next = !prev
+      try { localStorage.setItem('wa_ai_enabled', JSON.stringify(next)) } catch {}
+      tip(next ? '🤖 IA activada — respuestas automáticas ON' : '🤖 IA desactivada')
+      return next
+    })
+  }
+  function toggleAiContact(chatId) {
+    setAiContactMap(prev => {
+      const cur = prev[chatId]
+      // Si no había override, hereda global. Toggleamos respecto al estado efectivo.
+      const effective = cur === undefined ? aiEnabled : cur
+      return { ...prev, [chatId]: !effective }
+    })
+  }
+  function isAiActive(chatId) {
+    const override = aiContactMap[chatId]
+    return override === undefined ? aiEnabled : override
+  }
+
+  // Envía mensaje via IA (n8n → ChatGPT → responde automáticamente)
+  async function sendAiReply(chatId, userMsg) {
+    if (!openaiKey && !N8N_WH) return
+    try {
+      const payload = {
+        chatId,
+        message: userMsg,
+        model: aiModel,
+        systemPrompt: aiPrompt,
+        openaiKey,
+        phone: active?.phone || '',
+        contactName: active?.name || '',
+      }
+      // Primero intenta enviar via n8n webhook (producción)
+      await fetch(N8N_WH, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        mode: 'no-cors',
+      })
+      tip('🤖 IA procesando respuesta...')
+    } catch { /* n8n no disponible */ }
+  }
+
   function copyText(txt) {
     navigator.clipboard?.writeText(txt).then(() => tip('📋 Copiado!')).catch(() => tip('📋 ' + txt.substring(0, 40)))
   }
@@ -608,9 +665,17 @@ export default function WhatsAppBot() {
           ))}
           <div className="wbv5-sb-footer">
             <div className={`wbv5-status-badge ${status === 'connected' ? 'green' : status === 'connecting' ? 'amber' : 'gray'}`}>
-              {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando...' : '⏳ No conectado'}
+              {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando...' : serverOnline === false ? '🔌 Sin servidor' : '⏳ No conectado'}
             </div>
             <div style={{ marginTop: '.3rem', fontSize: '.62rem', color: '#9ca3af' }}>n8n + Baileys</div>
+            <button
+              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+              style={{ marginTop: '.4rem', width: '100%', fontSize: '.65rem', padding: '.28rem .5rem' }}
+              onClick={toggleAiGlobal}
+              title="Activar/desactivar IA global"
+            >
+              🤖 IA {aiEnabled ? 'ON' : 'OFF'}
+            </button>
           </div>
         </div>
 
@@ -816,6 +881,14 @@ export default function WhatsAppBot() {
                             </div>
                           )}
                         </div>
+                        {/* Botón IA por contacto */}
+                        <button
+                          className={`wbv5-btn wbv5-btn-sm ${isAiActive(active?.id) ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                          onClick={() => toggleAiContact(active?.id)}
+                          title={isAiActive(active?.id) ? 'IA activa — clic para desactivar' : 'IA inactiva — clic para activar'}
+                        >
+                          🤖 {isAiActive(active?.id) ? 'IA ON' : 'IA OFF'}
+                        </button>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
                       </div>
                     </div>
@@ -968,6 +1041,21 @@ export default function WhatsAppBot() {
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Teléfono</div><div className="wbv5-cp-val">{active.phone || '+' + active.id}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Último mensaje</div><div className="wbv5-cp-val">{active.preview || '—'}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Estado bot</div><div className="wbv5-cp-val"><span className="wbv5-badge badge-green">🤖 Activo</span></div></div>
+                  <div className="wbv5-cp-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div className="wbv5-cp-lbl">Respuesta IA</div>
+                      <div className="wbv5-cp-val" style={{ fontSize: '.68rem', color: isAiActive(active?.id) ? '#16a34a' : '#6b7280' }}>
+                        {isAiActive(active?.id) ? 'ChatGPT activo' : 'Manual'}
+                      </div>
+                    </div>
+                    <button
+                      className={`wbv5-btn wbv5-btn-sm ${isAiActive(active?.id) ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                      style={{ fontSize: '.65rem', padding: '.22rem .55rem' }}
+                      onClick={() => toggleAiContact(active?.id)}
+                    >
+                      {isAiActive(active?.id) ? '🤖 ON' : '⚪ OFF'}
+                    </button>
+                  </div>
                   {/* Etiquetas */}
                   <div className="wbv5-cp-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '.4rem' }}>
                     <div className="wbv5-cp-lbl">Etiquetas</div>
@@ -1150,15 +1238,40 @@ export default function WhatsAppBot() {
             <div className="wbv5-content">
               <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>📱 Conexión WhatsApp</div>
               <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Vincula tu WhatsApp al bot para recibir y enviar mensajes automáticamente</div>
+
+              {/* ── Banner: servidor Baileys offline ── */}
+              {serverOnline === false && (
+                <div className="wbv5-server-offline-banner">
+                  <div className="wbv5-sob-icon">⚠️</div>
+                  <div className="wbv5-sob-body">
+                    <div className="wbv5-sob-title">Servidor Baileys no disponible</div>
+                    <div className="wbv5-sob-desc">
+                      El backend de WhatsApp no está corriendo en <code>localhost:5055</code>.
+                      Inicia el servidor con: <code>node server.js</code> o despliégalo en Railway.
+                    </div>
+                  </div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping} style={{ flexShrink: 0 }}>🔄 Reintentar</button>
+                </div>
+              )}
+
               <div className="wbv5-qr-card">
                 {/* Canvas QR — solo visible cuando NO está conectado */}
                 {status !== 'connected' && (
-                  <div className="wbv5-qr-box">
-                    <canvas ref={qrRef} width="200" height="200" />
-                    {status === 'connecting' && !qrDataUrl && (
-                      <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: '.65rem', color: '#9ca3af' }}>
-                        Generando QR...
+                  <div className="wbv5-qr-box" style={{ position: 'relative' }}>
+                    {serverOnline === false ? (
+                      <div className="wbv5-qr-offline">
+                        <div style={{ fontSize: '2.2rem' }}>🔌</div>
+                        <div style={{ fontSize: '.72rem', color: '#6b7280', textAlign: 'center', marginTop: '.3rem', lineHeight: 1.4 }}>Servidor<br/>no disponible</div>
                       </div>
+                    ) : (
+                      <>
+                        <canvas ref={qrRef} width="200" height="200" />
+                        {status === 'connecting' && !qrDataUrl && (
+                          <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: '.65rem', color: '#9ca3af' }}>
+                            Generando QR...
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 )}
@@ -1177,6 +1290,21 @@ export default function WhatsAppBot() {
                       )}
                       <button className="wbv5-btn wbv5-btn-red" onClick={disconnectWA} style={{ width: '100%' }}>
                         🔌 Desvincular WhatsApp
+                      </button>
+                    </>
+                  ) : serverOnline === false ? (
+                    <>
+                      <h3 style={{ color: '#dc2626', margin: '0 0 .35rem' }}>🔌 Servidor no disponible</h3>
+                      <p style={{ opacity: .9, margin: '0 0 .6rem' }}>
+                        El servidor Baileys no responde. Inícialo localmente o despliégalo en Railway para generar el código QR.
+                      </p>
+                      <div className="wbv5-qr-steps">
+                        <span>💻 Local: <code style={{ background: 'rgba(255,255,255,.2)', padding: '1px 5px', borderRadius: 4, fontSize: '.68rem' }}>node server.js</code></span>
+                        <span>☁️ Railway: verifica que el servicio esté activo</span>
+                        <span>🔑 Puerto por defecto: <strong>5055</strong></span>
+                      </div>
+                      <button className="wbv5-btn" style={{ marginTop: '1rem', width: '100%', background: '#fff', color: '#075e54', fontSize: '.85rem', padding: '.55rem 1rem', fontWeight: 700 }} onClick={ping}>
+                        🔄 Verificar conexión
                       </button>
                     </>
                   ) : (
@@ -1443,6 +1571,65 @@ export default function WhatsAppBot() {
                   {/* API & Tokens */}
                   {cfgTab === 'api' && (
                     <>
+                      {/* ChatGPT / OpenAI */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🤖 ChatGPT / OpenAI</div>
+                          <span className={`wbv5-badge ${aiEnabled ? 'badge-green' : 'badge-amber'}`}>
+                            {aiEnabled ? '✅ IA Activa' : '⏳ Desactivada'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Conecta tu API de OpenAI para respuestas automáticas con IA. Los mensajes se procesan via n8n y ChatGPT responde en nombre tuyo.
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">OpenAI API Key</div>
+                            <input
+                              className="wbv5-form-input" type="password"
+                              placeholder="sk-proj-..."
+                              value={openaiKey}
+                              onChange={e => saveAiKey(e.target.value)}
+                            />
+                            {openaiKey && <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ API Key guardada en navegador</div>}
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Modelo</div>
+                            <select className="wbv5-form-input" value={aiModel} onChange={e => setAiModel(e.target.value)}>
+                              <option value="gpt-4o">GPT-4o (Recomendado)</option>
+                              <option value="gpt-4o-mini">GPT-4o mini (Rápido y económico)</option>
+                              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Más económico)</option>
+                            </select>
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Prompt del sistema (personalidad del bot)</div>
+                            <textarea
+                              className="wbv5-form-input" rows={4}
+                              value={aiPrompt}
+                              onChange={e => saveAiPrompt(e.target.value)}
+                              style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
+                              placeholder="Eres el asistente de Sanate..."
+                            />
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Webhook n8n (procesamiento IA)</div>
+                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                            <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>El webhook recibe el mensaje, llama a ChatGPT y responde automáticamente.</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-green'}`}
+                              onClick={toggleAiGlobal}
+                            >
+                              {aiEnabled ? '⏸ Desactivar IA' : '🚀 Activar IA'}
+                            </button>
+                            <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ↗</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>Obtener API Key ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
                           <div className="wbv5-card-title">🔑 Baileys (Railway)</div>
@@ -1490,33 +1677,67 @@ export default function WhatsAppBot() {
 
                   {/* Comportamiento bot */}
                   {cfgTab === 'bot' && (
-                    <div className="wbv5-card">
-                      <div className="wbv5-card-hd"><div className="wbv5-card-title">🤖 Comportamiento del bot</div></div>
-                      <div className="wbv5-card-bd">
-                        {[
-                          { label: 'Activar bot automáticamente', desc: 'El bot responde a todos los mensajes entrantes', on: true },
-                          { label: 'Guardar contactos en CRM', desc: 'Guarda nombre y teléfono de cada nuevo contacto', on: true },
-                          { label: 'Notificaciones en tiempo real', desc: 'Recibe notificaciones al llegar mensajes nuevos', on: true },
-                          { label: 'Modo silencioso fuera de horario', desc: 'El bot envía mensaje de ausencia y no notifica', on: false },
-                          { label: 'Transferir a humano cuando lo pide', desc: 'Desactiva el bot si el usuario escribe "agente"', on: true },
-                        ].map((opt, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                    <>
+                      {/* IA global */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🤖 Inteligencia Artificial</div>
+                          <span className={`wbv5-badge ${aiEnabled ? 'badge-green' : 'badge-amber'}`}>{aiEnabled ? '✅ Activa' : '⏳ Desactivada'}</span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
                             <div>
-                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>{opt.label}</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{opt.desc}</div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Respuestas automáticas con ChatGPT</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>Todos los mensajes entrantes son respondidos automáticamente por IA via n8n</div>
                             </div>
-                            <span
-                              className={`wbv5-badge ${opt.on ? 'badge-green' : 'badge-red'}`}
-                              style={{ cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}
-                              onClick={() => tip(`⚙️ ${opt.label} — ${opt.on ? 'desactivado' : 'activado'}`)}
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                              style={{ flexShrink: 0, marginLeft: '1rem' }}
+                              onClick={toggleAiGlobal}
                             >
-                              {opt.on ? '✅ ON' : '❌ OFF'}
-                            </span>
+                              {aiEnabled ? '🤖 ON' : '⚪ OFF'}
+                            </button>
                           </div>
-                        ))}
-                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.75rem' }} onClick={() => tip('✅ Configuración guardada')}>💾 Guardar</button>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Override por contacto</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>Activa/desactiva IA individualmente en cada chat con el botón 🤖 del header</div>
+                            </div>
+                            <span className="wbv5-badge badge-blue" style={{ flexShrink: 0, marginLeft: '1rem' }}>ℹ️ Info</span>
+                          </div>
+                          <div style={{ marginTop: '.4rem', fontSize: '.7rem', color: '#6b7280' }}>
+                            💡 Para configurar la API Key de ChatGPT ve a <strong>⚙️ Ajustes → API & Tokens → 🤖 ChatGPT</strong>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">⚙️ Comportamiento del bot</div></div>
+                        <div className="wbv5-card-bd">
+                          {[
+                            { label: 'Activar bot automáticamente', desc: 'El bot responde a todos los mensajes entrantes', on: true },
+                            { label: 'Guardar contactos en CRM', desc: 'Guarda nombre y teléfono de cada nuevo contacto', on: true },
+                            { label: 'Notificaciones en tiempo real', desc: 'Recibe notificaciones al llegar mensajes nuevos', on: true },
+                            { label: 'Modo silencioso fuera de horario', desc: 'El bot envía mensaje de ausencia y no notifica', on: false },
+                            { label: 'Transferir a humano cuando lo pide', desc: 'Desactiva el bot si el usuario escribe "agente"', on: true },
+                          ].map((opt, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                              <div>
+                                <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>{opt.label}</div>
+                                <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{opt.desc}</div>
+                              </div>
+                              <span
+                                className={`wbv5-badge ${opt.on ? 'badge-green' : 'badge-red'}`}
+                                style={{ cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}
+                                onClick={() => tip(`⚙️ ${opt.label} — ${opt.on ? 'desactivado' : 'activado'}`)}
+                              >
+                                {opt.on ? '✅ ON' : '❌ OFF'}
+                              </span>
+                            </div>
+                          ))}
+                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.75rem' }} onClick={() => tip('✅ Configuración guardada')}>💾 Guardar</button>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* Empresa */}
