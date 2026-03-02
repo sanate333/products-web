@@ -60,6 +60,14 @@ try {
     )";
     crearTablaSiNoExiste($conexion, 'banner', $consultaBanner);
 
+    // Crear tabla 'subbanner' si no existe
+    $consultaSubBanner = "CREATE TABLE IF NOT EXISTS `subbanner` (
+        idSubBanner INT(11) AUTO_INCREMENT PRIMARY KEY,
+        imagen VARCHAR(900) NOT NULL,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )";
+    crearTablaSiNoExiste($conexion, 'subbanner', $consultaSubBanner);
+
     // Crear tabla 'productos' si no existe
     $consultaProductos = "CREATE TABLE IF NOT EXISTS `productos` (
         idProducto INT(11) AUTO_INCREMENT PRIMARY KEY,
