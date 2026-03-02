@@ -159,6 +159,8 @@ export default function WhatsAppBot() {
   const [contactTags,       setContactTags]       = useState(['Nuevo lead'])
   const [availableTags,     setAvailableTags]     = useState(DEFAULT_TAGS)
   const [showTagsDropdown,  setShowTagsDropdown]  = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [contactStatus,     setContactStatus]     = useState('Nuevo')
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -170,6 +172,7 @@ export default function WhatsAppBot() {
   const audioChunksRef   = useRef([])
   const emojiPanelRef    = useRef(null)
   const tagsDropdownRef  = useRef(null)
+  const statusDropdownRef = useRef(null)
 
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
@@ -262,6 +265,18 @@ export default function WhatsAppBot() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showTagsDropdown])
+
+  // Close status dropdown on outside click
+  useEffect(() => {
+    if (!showStatusDropdown) return
+    const handler = e => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target)) {
+        setShowStatusDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showStatusDropdown])
 
   // Load tags from localStorage (shared with settings)
   useEffect(() => {
@@ -567,14 +582,14 @@ export default function WhatsAppBot() {
 
         {/* ── SIDEBAR ── */}
         <div className="wbv5-sidebar">
-          <div className="wbv5-sb-logo">
+          <div className="wbv5-sb-logo" style={{ display: 'none' }}>
             <div className="wbv5-sb-icon">🌿</div>
             <div>
               <div className="wbv5-sb-name">Sanate Bot</div>
               <div className="wbv5-sb-sub">WhatsApp Automation</div>
             </div>
           </div>
-          <div className="wbv5-sb-acct">
+          <div className="wbv5-sb-acct" style={{ display: 'none' }}>
             <div className="wbv5-sb-ava">S</div>
             <div className="wbv5-sb-uname">sanate.store</div>
           </div>
@@ -761,15 +776,48 @@ export default function WhatsAppBot() {
                           {active.isGroup && <span style={{ fontSize: '.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginRight: 5 }}>Grupo</span>}
                           {active.name || active.phone || active.id}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', flexWrap: 'wrap' }}>
-                          <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
-                          {contactTags.map(tag => {
-                            const td = availableTags.find(t => t.name === tag)
-                            return <span key={tag} className="wbv5-tag-chip" style={{ '--tc': td?.color || '#3b82f6', fontSize: '.62rem', padding: '1px 7px' }}>{tag}</span>
-                          })}
-                        </div>
+                        <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
                       </div>
-                      <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, alignItems: 'center' }}>
+                        {/* Dropdown de estado/etiqueta principal */}
+                        <div style={{ position: 'relative' }} ref={statusDropdownRef}>
+                          <button
+                            className="wbv5-btn wbv5-btn-outline wbv5-btn-sm"
+                            onClick={() => setShowStatusDropdown(o => !o)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}
+                          >
+                            <span style={{
+                              width: 8, height: 8, borderRadius: '50%',
+                              background: contactStatus === 'Facturado' ? '#10b981' : contactStatus === 'Pendiente' ? '#f59e0b' : '#3b82f6'
+                            }} />
+                            {contactStatus} ▾
+                          </button>
+                          {showStatusDropdown && (
+                            <div style={{
+                              position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: '#fff',
+                              border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 6px 20px rgba(0,0,0,.12)',
+                              zIndex: 300, minWidth: 160, overflow: 'hidden'
+                            }}>
+                              {['Nuevo', 'Pendiente', 'Facturado', 'Archivado'].map(st => (
+                                <button key={st} onClick={() => { setContactStatus(st); setShowStatusDropdown(false) }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '.5rem', width: '100%',
+                                    padding: '.5rem .75rem', background: 'none', border: 'none', cursor: 'pointer',
+                                    fontSize: '.78rem', color: '#374151', textAlign: 'left', transition: 'background .1s'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                >
+                                  <span style={{
+                                    width: 8, height: 8, borderRadius: '50%',
+                                    background: st === 'Facturado' ? '#10b981' : st === 'Pendiente' ? '#f59e0b' : st === 'Archivado' ? '#6b7280' : '#3b82f6'
+                                  }} />
+                                  {st}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
                       </div>
                     </div>

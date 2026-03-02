@@ -366,13 +366,14 @@
   display: flex;
   overflow: hidden;
   min-height: 0;
+  flex-direction: row-reverse; /* ← Chat list a la derecha */
 }
 
 .wbv5-inbox-list {
   width: 270px;
   flex-shrink: 0;
   background: #fff;
-  border-right: 1px solid #e5e7eb;
+  border-left: 1px solid #e5e7eb; /* ← Cambiar border-right a border-left */
   display: flex;
   flex-direction: column;
   overflow: hidden;
