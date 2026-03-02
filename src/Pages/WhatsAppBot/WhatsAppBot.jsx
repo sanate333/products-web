@@ -114,6 +114,14 @@ const FLOWS_LIST = [
 const COLORS_AV  = ['#d1fae5', '#dbeafe', '#ede9fe', '#fef3c7', '#fee2e2']
 const COLORS_TXT = ['#065f46', '#1d4ed8', '#5b21b6', '#92400e', '#b91c1c']
 
+const DEFAULT_TAGS = [
+  { id: 'tg1', name: 'Nuevo lead',      color: '#3b82f6' },
+  { id: 'tg2', name: 'Pendiente pago',  color: '#f59e0b' },
+  { id: 'tg3', name: 'Cliente VIP',     color: '#8b5cf6' },
+  { id: 'tg4', name: 'Soporte',         color: '#ef4444' },
+  { id: 'tg5', name: 'Recurrente',      color: '#10b981' },
+]
+
 export default function WhatsAppBot() {
   const [page,        setPage]        = useState('overview')
   const [status,      setStatus]      = useState('disconnected')
@@ -143,6 +151,9 @@ export default function WhatsAppBot() {
   const [showEmojiPanel,    setShowEmojiPanel]    = useState(false)
   const [emojiTab,          setEmojiTab]          = useState('emojis')
   const [showTemplatesModal,setShowTemplatesModal]= useState(false)
+  const [contactTags,       setContactTags]       = useState(['Nuevo lead'])
+  const [availableTags,     setAvailableTags]     = useState(DEFAULT_TAGS)
+  const [showTagsDropdown,  setShowTagsDropdown]  = useState(false)
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -153,6 +164,7 @@ export default function WhatsAppBot() {
   const mediaRecorderRef = useRef(null)
   const audioChunksRef   = useRef([])
   const emojiPanelRef    = useRef(null)
+  const tagsDropdownRef  = useRef(null)
 
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
@@ -233,6 +245,27 @@ export default function WhatsAppBot() {
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [showEmojiPanel])
+
+  // Close tags dropdown on outside click
+  useEffect(() => {
+    if (!showTagsDropdown) return
+    const handler = e => {
+      if (tagsDropdownRef.current && !tagsDropdownRef.current.contains(e.target)) {
+        setShowTagsDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showTagsDropdown])
+
+  // Load tags from localStorage (shared with settings)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('whatsapp_tags')
+      const parsed = raw ? JSON.parse(raw) : null
+      if (Array.isArray(parsed) && parsed.length) setAvailableTags(parsed)
+    } catch {}
+  }, [showTagsDropdown])
 
   const formatRecTime = s => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`
 
@@ -857,6 +890,43 @@ export default function WhatsAppBot() {
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Teléfono</div><div className="wbv5-cp-val">{active.phone || '+' + active.id}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Último mensaje</div><div className="wbv5-cp-val">{active.preview || '—'}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Estado bot</div><div className="wbv5-cp-val"><span className="wbv5-badge badge-green">🤖 Activo</span></div></div>
+                  {/* Etiquetas */}
+                  <div className="wbv5-cp-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '.4rem' }}>
+                    <div className="wbv5-cp-lbl">Etiquetas</div>
+                    <div className="wbv5-tags-wrap">
+                      {contactTags.map(tag => {
+                        const td = availableTags.find(t => t.name === tag)
+                        return (
+                          <button key={tag} className="wbv5-tag-chip"
+                            style={{ '--tc': td?.color || '#3b82f6' }}
+                            onClick={() => setContactTags(prev => prev.filter(t => t !== tag))}
+                            title="Clic para quitar">
+                            {tag} ✕
+                          </button>
+                        )
+                      })}
+                      <div className="wbv5-tag-dd-wrap" ref={tagsDropdownRef}>
+                        <button className="wbv5-tag-add" onClick={() => setShowTagsDropdown(o => !o)}>
+                          + Etiqueta ▾
+                        </button>
+                        {showTagsDropdown && (
+                          <div className="wbv5-tag-dropdown">
+                            {availableTags.filter(t => !contactTags.includes(t.name)).map(t => (
+                              <button key={t.id} className="wbv5-tag-dd-opt"
+                                style={{ '--tc': t.color }}
+                                onClick={() => { setContactTags(prev => [...prev, t.name]); setShowTagsDropdown(false) }}>
+                                <span className="wbv5-tag-dot" />
+                                {t.name}
+                              </button>
+                            ))}
+                            {availableTags.filter(t => !contactTags.includes(t.name)).length === 0 && (
+                              <div style={{ padding: '.5rem .75rem', fontSize: '.75rem', color: '#9ca3af' }}>Todas las etiquetas asignadas</div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
