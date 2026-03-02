@@ -2,10 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 
-const BU = 'http://localhost:5055/api/whatsapp'
-const MEDIA_BASE = BU.replace('/api/whatsapp', '') // http://localhost:5055
-const H  = { 'x-secret': 'sanate_secret_2025' }
-const HJ = { ...H, 'Content-Type': 'application/json' }
+const DEFAULT_BU     = 'http://localhost:5055/api/whatsapp'
+const DEFAULT_SECRET = 'sanate_secret_2025'
+// ── Backend URL y Secret — configurables en Ajustes ─────────────
+let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
+let MEDIA_BASE = BU.replace('/api/whatsapp', '')
+let H          = { 'x-secret': (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })() }
+let HJ         = { ...H, 'Content-Type': 'application/json' }
 const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
 
 // ── localStorage helpers ───────────────────────────────────────
@@ -318,6 +321,10 @@ export default function WhatsAppBot() {
   // ── Geo & Timing ──────────────────────────────────────────────
   const [botDelay,       setBotDelay]       = useState(() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') } catch { return 3 } })
   const [simulateTyping, setSimulateTyping] = useState(true)
+
+  // ── Backend URL & Secret ──────────────────────────────────────
+  const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
+  const [secretInput,     setSecretInput]     = useState(() => H['x-secret'])
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -696,6 +703,22 @@ export default function WhatsAppBot() {
   }
 
   // ── Entrenamiento helpers ──────────────────────────────────────
+  // ── Guardar URL del backend Baileys ──────────────────────────
+  function saveBackendUrl() {
+    const base   = backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '')
+    if (!base) { tip('⚠️ Ingresa una URL válida'); return }
+    const newBU  = base + '/api/whatsapp'
+    const newSec = secretInput.trim() || DEFAULT_SECRET
+    BU         = newBU
+    MEDIA_BASE = base
+    H          = { 'x-secret': newSec }
+    HJ         = { ...H, 'Content-Type': 'application/json' }
+    try { localStorage.setItem('wa_backend_url', newBU)   } catch {}
+    try { localStorage.setItem('wa_secret',      newSec)  } catch {}
+    tip('✅ Backend URL guardada — reconectando...')
+    setTimeout(() => { setServerOnline(null); ping() }, 600)
+  }
+
   function saveTraining(v) {
     setTrainingPrompt(v); setTrainingChars(v.length)
     try { localStorage.setItem('wa_training_prompt', v) } catch {}
@@ -1875,11 +1898,15 @@ export default function WhatsAppBot() {
                   <div className="wbv5-sob-body">
                     <div className="wbv5-sob-title">Servidor Baileys no disponible</div>
                     <div className="wbv5-sob-desc">
-                      El backend de WhatsApp no está corriendo en <code>localhost:5055</code>.
-                      Inicia el servidor con: <code>node server.js</code> o despliégalo en Railway.
+                      El backend no responde en <code>{BU.replace('/api/whatsapp','')}</code>.
+                      Si accedes desde <strong>sanate.store (HTTPS)</strong>, el navegador bloquea conexiones HTTP a localhost.
+                      Despliega el servidor en Railway/Render y configura la URL en <strong>Ajustes → Conexión WA</strong>.
                     </div>
                   </div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping} style={{ flexShrink: 0 }}>🔄 Reintentar</button>
+                  <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>🔄 Reintentar</button>
+                    <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#7c3aed', color: '#fff' }} onClick={() => { goPage('config'); setCfgTab('conn') }}>⚙️ Configurar URL</button>
+                  </div>
                 </div>
               )}
 
@@ -2081,26 +2108,85 @@ export default function WhatsAppBot() {
 
                   {/* Conexión WA */}
                   {cfgTab === 'conn' && (
+                    <>
+                    {/* ── Backend URL ── */}
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
-                        <div className="wbv5-card-title">📱 WhatsApp / Baileys</div>
+                        <div className="wbv5-card-title">🔌 Servidor Baileys</div>
+                        <span className={`wbv5-badge ${serverOnline === true ? 'badge-green' : serverOnline === false ? 'badge-red' : 'badge-amber'}`}>
+                          {serverOnline === true ? '✅ Online' : serverOnline === false ? '❌ Offline' : '⏳ Verificando'}
+                        </span>
+                      </div>
+                      <div className="wbv5-card-bd">
+                        <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                          El bot necesita un servidor Baileys corriendo. Puede ser en local, Railway, Render o cualquier servicio cloud.<br />
+                          <span style={{ color: '#dc2626', fontWeight: 600 }}>⚠️ Problema actual:</span> desde <code>https://sanate.store</code> los navegadores bloquean <code>http://localhost</code>. Usa una URL pública HTTPS.
+                        </div>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">URL base del servidor</div>
+                          <input
+                            className="wbv5-form-input"
+                            value={backendUrlInput}
+                            onChange={e => setBackendUrlInput(e.target.value)}
+                            placeholder="https://tu-app.railway.app  ó  http://localhost:5055"
+                          />
+                          <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                            Se usará: <code>{backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '') || 'http://localhost:5055'}/api/whatsapp</code>
+                          </div>
+                        </div>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">Secret Token</div>
+                          <input
+                            className="wbv5-form-input"
+                            type="password"
+                            value={secretInput}
+                            onChange={e => setSecretInput(e.target.value)}
+                            placeholder="sanate_secret_2025"
+                          />
+                        </div>
+                        {/* Opciones de deploy */}
+                        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.65rem .9rem', marginBottom: '.75rem' }}>
+                          <div style={{ fontSize: '.72rem', fontWeight: 700, color: '#166534', marginBottom: '.4rem' }}>🚀 Opciones de deploy del servidor</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
+                            {[
+                              { icon: '🚂', name: 'Railway (recomendado)', url: 'https://railway.app', desc: 'Gratis hasta 500h/mes, siempre HTTPS' },
+                              { icon: '🌐', name: 'Render', url: 'https://render.com', desc: 'Free tier disponible, HTTPS automático' },
+                              { icon: '🔧', name: 'ngrok (local HTTPS)', url: 'https://ngrok.com', desc: 'Expone localhost:5055 con URL pública temporal' },
+                            ].map((opt, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.7rem' }}>
+                                <span>{opt.icon}</span>
+                                <span style={{ fontWeight: 600, color: '#166534', minWidth: '150px' }}>{opt.name}</span>
+                                <span style={{ color: '#6b7280', flex: 1 }}>{opt.desc}</span>
+                                <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.15rem .45rem' }} onClick={() => window.open(opt.url, '_blank')}>Abrir ↗</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={saveBackendUrl}>💾 Guardar y reconectar</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp','')); setSecretInput(DEFAULT_SECRET) }}>↩️ Restaurar defaults</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* ── WhatsApp Status ── */}
+                    <div className="wbv5-card">
+                      <div className="wbv5-card-hd">
+                        <div className="wbv5-card-title">📱 WhatsApp</div>
                         <span className={`wbv5-badge ${status === 'connected' ? 'badge-green' : status === 'connecting' ? 'badge-amber' : 'badge-red'}`}>
                           {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando' : '❌ Desconectado'}
                         </span>
                       </div>
                       <div className="wbv5-card-bd">
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">Server URL (Baileys)</div><input className="wbv5-form-input" defaultValue="/api/whatsapp" /></div>
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">Secret Token</div><input className="wbv5-form-input" type="password" defaultValue="sanate_secret_2025" /></div>
+                        {phone && <div style={{ fontSize: '.76rem', color: '#166534', background: '#f0fdf4', borderRadius: 8, padding: '.5rem .75rem', marginBottom: '.6rem' }}>📱 <strong>{phone}</strong></div>}
                         <div className="wbv5-form-row">
                           <div className="wbv5-form-lbl">Webhook n8n (producción)</div>
                           <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto' }}>📋</span></div>
                         </div>
-                        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('✅ Configuración guardada')}>💾 Guardar</button>
-                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
-                        </div>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ver QR / Conexión →</button>
                       </div>
                     </div>
+                    </>
                   )}
 
                   {/* Respuestas rápidas */}
