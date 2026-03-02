@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import Banners from '../../Components/Banners/Banners'
 import Products from '../../Components/Products/Products'
 import './Demo.css'
@@ -10,6 +11,9 @@ export default function Demo() {
     return (
         <section className='demo'>
             <Banners />
+            <div className='catalogoBtnWrap'>
+                <Link to='/catalogo' className='catalogoBtn'>Ver Catálogo</Link>
+            </div>
             <Products />
             <Footer />
             <BtnWhatsapp />

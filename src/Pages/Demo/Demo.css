@@ -2,6 +2,30 @@
     height: 4rem;
 }
 
+.catalogoBtnWrap {
+    display: flex;
+    justify-content: center;
+    padding: 10px 16px 4px;
+}
+
+.catalogoBtn {
+    display: inline-block;
+    background-color: var(--color1, #2e7d32);
+    color: #fff;
+    text-decoration: none;
+    padding: 10px 32px;
+    border-radius: 24px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: background 0.2s;
+}
+
+.catalogoBtn:hover {
+    opacity: 0.88;
+}
+
 .demo{
     width: 100%;
     max-width: 100%;
