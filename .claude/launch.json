@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "products-web-dev",
+      "runtimeExecutable": "C:/Program Files/nodejs/node.exe",
+      "runtimeArgs": ["server/index.mjs"],
+      "port": 5055
+    }
+  ],
+  "autoVerify": false
+}

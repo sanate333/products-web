@@ -302,6 +302,7 @@ export default function WhatsAppBot() {
   // ── Disparadores por contacto (true = activos, false = pausados para ese chat) ──
   const [triggerContactMap,  setTriggerContactMap]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_trigger_contact_map') || '{}') } catch { return {} } })
   const [openaiKey,          setOpenaiKey]          = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
+  const [geminiKey,          setGeminiKey]          = useState(() => { try { return localStorage.getItem('wa_gemini_key') || '' } catch { return '' } })
   const [aiModel,        setAiModel]        = useState('gpt-4o')
   const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } })
 
@@ -676,8 +677,48 @@ export default function WhatsAppBot() {
   }
 
   // ── IA / ChatGPT helpers ───────────────────────────────────────
-  function saveAiKey(v)    { setOpenaiKey(v);    try { localStorage.setItem('wa_openai_key', v) } catch {} }
-  function saveAiPrompt(v) { setAiPrompt(v);     try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
+  function saveAiKey(v)     { setOpenaiKey(v);   try { localStorage.setItem('wa_openai_key', v) } catch {} }
+  function saveGeminiKey(v) { setGeminiKey(v);   try { localStorage.setItem('wa_gemini_key', v) } catch {} }
+  function saveAiPrompt(v)  { setAiPrompt(v);    try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
+
+  // ── Llamada IA universal (OpenAI o Gemini) ─────────────────────
+  async function callAI({ messages, maxTokens = 400 }) {
+    // Preferir OpenAI si hay key, fallback a Gemini
+    if (openaiKey) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: aiModel || 'gpt-4o', messages, max_tokens: maxTokens }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'OpenAI error')
+      return data.choices?.[0]?.message?.content?.trim() || ''
+    }
+    if (geminiKey) {
+      // Convertir formato OpenAI → Gemini
+      const systemMsg = messages.find(m => m.role === 'system')
+      const userMsgs  = messages.filter(m => m.role !== 'system')
+      const parts = []
+      if (systemMsg) parts.push({ text: systemMsg.content + '\n\n' })
+      userMsgs.forEach(m => parts.push({ text: (m.role === 'user' ? '' : '[Bot]: ') + m.content }))
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { temperature: 0.8, maxOutputTokens: maxTokens },
+          }),
+        }
+      )
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Gemini error')
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+    }
+    throw new Error('no_key')
+  }
+  const hasAiKey = !!(openaiKey || geminiKey)
   function toggleAiGlobal() {
     setAiEnabled(prev => {
       const next = !prev
@@ -753,28 +794,23 @@ export default function WhatsAppBot() {
     try { localStorage.setItem('wa_training_prompt', v) } catch {}
   }
   async function generateWinnerPrompt() {
-    if (!openaiKey) { tip('⚠️ Primero configura tu API Key de OpenAI en Ajustes → API & Tokens'); return }
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) en Ajustes → API'); return }
     setGeneratingPrompt(true); tip('🤖 Generando prompt ganador con IA...')
     try {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: aiModel,
-          messages: [
-            { role: 'system', content: 'Eres el mejor experto en ventas conversacionales por WhatsApp del mundo. Genera prompts de sistema para bots de ventas que sean naturales, empáticos y cierren ventas de forma efectiva.' },
-            { role: 'user', content: `Basándote en este contexto de negocio, genera un prompt de sistema completo y optimizado para un bot de WhatsApp que sea el mejor cerrador de ventas del mundo. Incluye personalidad, tono, técnicas de cierre, manejo de objeciones y reglas de comportamiento.\n\nContexto actual:\n${trainingPrompt.substring(0, 2000)}` },
-          ],
-          max_tokens: 1500,
-        }),
+      const generated = await callAI({
+        messages: [
+          { role: 'system', content: 'Eres el mejor experto en ventas conversacionales por WhatsApp del mundo. Genera prompts de sistema para bots de ventas que sean naturales, empáticos y cierren ventas de forma efectiva.' },
+          { role: 'user', content: `Basándote en este contexto de negocio, genera un prompt de sistema completo y optimizado para un bot de WhatsApp que sea el mejor cerrador de ventas del mundo. Incluye personalidad, tono, técnicas de cierre, manejo de objeciones y reglas de comportamiento.\n\nContexto actual:\n${trainingPrompt.substring(0, 2000)}` },
+        ],
+        maxTokens: 1500,
       })
-      const data = await res.json()
-      if (data.choices?.[0]?.message?.content) {
-        const generated = data.choices[0].message.content
+      if (generated) {
         saveTraining(trainingPrompt + '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🏆 PROMPT GANADOR GENERADO POR IA\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' + generated)
         tip('✅ Prompt ganador generado y agregado')
       }
-    } catch { tip('⚠️ Error generando prompt. Verifica tu API Key') }
+    } catch (e) {
+      tip(e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error generando prompt')
+    }
     setGeneratingPrompt(false)
   }
 
@@ -831,7 +867,7 @@ export default function WhatsAppBot() {
     tip('✅ Disparador guardado')
   }
   async function generateTriggerMsg(triggerName) {
-    if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI primero'); return }
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) primero'); return }
     const producto = editTrigger?.producto || 'General'
     const condition = editTrigger?.condition || 'no_reply'
     const delay = editTrigger?.delay || 60
@@ -841,84 +877,105 @@ export default function WhatsAppBot() {
       const condLabel = { no_reply: 'sin respuesta', seen: 'visto sin responder', no_purchase: 'sin compra', keyword: 'por palabra clave', first_message: 'primer mensaje' }[condition] || condition
       const timeLabel = `${delay} ${unit === 'min' ? 'minutos' : unit === 'h' ? 'horas' : 'días'}`
       const contextSnip = trainingPrompt ? trainingPrompt.substring(0, 600) : ''
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: aiModel,
-          messages: [
-            { role: 'system', content: `Eres el mejor cerrador de ventas del mundo por WhatsApp.${contextSnip ? ` Contexto del negocio: "${contextSnip}"` : ''}\n\nReglas de oro:\n1. Primero conecta emocionalmente (1 frase)\n2. Menciona el producto "${producto}" naturalmente\n3. Da 1 beneficio clave (no precio aún)\n4. Cierra con UNA pregunta irresistible\n5. Máximo 3-4 líneas, 1-2 emojis, tono humano y cálido` },
-            { role: 'user', content: `Genera el mensaje perfecto de seguimiento para WhatsApp.\nTrigger: "${triggerName}"\nProducto/Plantilla: "${producto}"\nSituación: cliente ${condLabel} después de ${timeLabel}\nUsa {nombre} para personalizar. Responde SOLO el mensaje, sin explicaciones.` },
-          ],
-          max_tokens: 250,
-        }),
+      const msg = await callAI({
+        messages: [
+          { role: 'system', content: `Eres el mejor cerrador de ventas del mundo por WhatsApp.${contextSnip ? ` Contexto del negocio: "${contextSnip}"` : ''}\n\nReglas de oro:\n1. Primero conecta emocionalmente (1 frase)\n2. Menciona el producto "${producto}" naturalmente\n3. Da 1 beneficio clave (no precio aún)\n4. Cierra con UNA pregunta irresistible\n5. Máximo 3-4 líneas, 1-2 emojis, tono humano y cálido` },
+          { role: 'user', content: `Genera el mensaje perfecto de seguimiento para WhatsApp.\nTrigger: "${triggerName}"\nProducto/Plantilla: "${producto}"\nSituación: cliente ${condLabel} después de ${timeLabel}\nUsa {nombre} para personalizar. Responde SOLO el mensaje, sin explicaciones.` },
+        ],
+        maxTokens: 250,
       })
-      const data = await res.json()
-      const msg = data.choices?.[0]?.message?.content?.trim() || ''
       if (msg && editTrigger) setEditTrigger(prev => ({ ...prev, message: msg }))
       tip('✅ Mensaje ganador generado ✨')
-    } catch { tip('⚠️ Error generando mensaje') }
+    } catch (e) {
+      tip(e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error generando mensaje')
+    }
     setGeneratingTrigger(false)
   }
 
-  // ── Generar respuesta IA para el último mensaje del cliente ────
+  // ── Generar respuesta IA + enviar con simulación de escritura ──
   async function generateAiReply() {
-    if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI en Ajustes'); return }
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) en Ajustes → API'); return }
     const lastClientMsg = [...msgs].reverse().find(m => m.dir === 'r')
     if (!lastClientMsg) { tip('⚠️ No hay mensajes del cliente para analizar'); return }
     setGeneratingAiReply(true); tip('🤖 Analizando ángulo de venta...')
     try {
       const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
       const history = msgs.slice(-12).map(m => ({ role: m.dir === 'r' ? 'user' : 'assistant', content: m.txt || '[archivo]' }))
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: aiModel || 'gpt-4o',
-          messages: [
-            { role: 'system', content: `Eres el mejor asesor de ventas por WhatsApp del mundo.\n\nContexto del negocio:\n${ctx}\n\nREGLAS ABSOLUTAS:\n1. Si el cliente hizo una PREGUNTA o pide información → da info clara del producto + beneficios + modo de uso. NO des precio todavía.\n2. Si el cliente muestra INTERÉS DE COMPRA ("cuánto cuesta", "lo quiero", "cómo pago") → da precio + oferta irresistible + pregunta de cierre.\n3. Primero CONECTA emocionalmente (1 frase), luego informa o vende.\n4. Máximo 3-4 líneas. Tono humano, cálido, ${wizardData.estilo || 'amigable'}. 1-2 emojis estratégicos.\n5. Termina SIEMPRE con una pregunta que invite a continuar o a comprar.\n6. Nunca suenes a robot ni a plantilla. Sé natural.` },
-            ...history,
-            { role: 'user', content: `El cliente acaba de escribir: "${lastClientMsg.txt}"\n\nAnaliza si es una pregunta informativa o si hay intención de compra, y genera LA MEJOR respuesta de ventas posible. Responde SOLO el mensaje para enviar al cliente, sin explicaciones adicionales.` },
-          ],
-          max_tokens: 350,
-        }),
+      const reply = await callAI({
+        messages: [
+          { role: 'system', content: `Eres el mejor asesor de ventas por WhatsApp del mundo.\n\nContexto del negocio:\n${ctx}\n\nREGLAS ABSOLUTAS:\n1. Si el cliente hizo una PREGUNTA o pide información → da info clara del producto + beneficios + modo de uso (NO des precio todavía).\n2. Si el cliente muestra INTERÉS DE COMPRA ("cuánto cuesta", "lo quiero", "cómo pago") → da precio + oferta irresistible + pregunta de cierre.\n3. Primero CONECTA emocionalmente (1 frase cálida), luego informa o vende.\n4. Máximo 3-4 líneas. Tono humano y natural. 1-2 emojis estratégicos.\n5. Termina SIEMPRE con una pregunta que invite a seguir o a comprar.\n6. Nunca suenes a robot. Sé como una persona real escribiendo en WhatsApp.` },
+          ...history,
+          { role: 'user', content: `El cliente acaba de escribir: "${lastClientMsg.txt}"\n\nAnaliza si es una pregunta informativa o si hay intención de compra, y genera LA MEJOR respuesta de ventas posible. Responde SOLO el mensaje para enviar al cliente, sin explicaciones adicionales.` },
+        ],
+        maxTokens: 350,
       })
-      const data = await res.json()
-      const reply = data.choices?.[0]?.message?.content?.trim() || ''
-      if (reply) { setInp(reply); tip('✅ Respuesta IA lista — revísala y envía 🚀') }
-      else tip('⚠️ No se generó respuesta')
-    } catch { tip('⚠️ Error al generar respuesta con IA') }
+      if (!reply) { tip('⚠️ No se generó respuesta'); setGeneratingAiReply(false); return }
+
+      // ── Simular escritura + enviar automáticamente ──
+      if (active && status === 'connected') {
+        tip('✍️ Enviando con efecto de escritura...')
+        // 1. Enviar indicador "escribiendo..."
+        try {
+          await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/presence`, {
+            method: 'POST', headers: HJ,
+            body: JSON.stringify({ action: 'composing' }),
+          })
+        } catch { /* si falla presence, igual enviamos */ }
+        // 2. Esperar tiempo proporcional al largo del mensaje (mínimo 2s, máximo 5s)
+        const typingMs = Math.max(2000, Math.min(reply.length * 55, 5000))
+        await new Promise(r => setTimeout(r, typingMs))
+        // 3. Enviar el mensaje real
+        try {
+          const fd = new FormData(); fd.append('text', reply)
+          const r = await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/send`, { method: 'POST', headers: H, body: fd })
+          const d = await r.json()
+          const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+          const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: reply, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+          setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
+          scroll()
+          tip('✅ Respuesta enviada con éxito 🚀')
+        } catch { tip('⚠️ Error al enviar la respuesta') }
+        // 4. Desactivar indicador
+        try {
+          await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/presence`, {
+            method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
+          })
+        } catch { /* ignorar */ }
+      } else {
+        // No conectado: poner en el input para envío manual
+        setInp(reply)
+        tip('✅ Respuesta IA lista — revísala y envía 🚀')
+      }
+    } catch (e) {
+      const msg = e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error al generar respuesta con IA'
+      tip(msg)
+    }
     setGeneratingAiReply(false)
   }
 
   // ── Generar entrenamiento ganador desde el wizard ──────────────
   async function generateTrainingWizard() {
-    if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI primero'); return }
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) primero'); return }
     const { empresa, descripcion, productos, precios, combos, estilo, objeciones, envio, horario, extra } = wizardData
     if (!empresa && !productos) { tip('⚠️ Llena al menos el nombre de empresa y tus productos'); return }
     setGeneratingWizard(true); tip('🤖 Generando entrenamiento ganador...')
     try {
       const estiloLabel = { amigable: 'amigable y cercano', profesional: 'profesional y formal', energico: 'energético y motivador', suave: 'suave y empático' }[estilo] || estilo
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: aiModel || 'gpt-4o',
-          messages: [
-            { role: 'system', content: 'Eres el mejor experto del mundo en entrenar bots de ventas por WhatsApp. Generas prompts de sistema completos, naturales y altamente efectivos que convierten conversaciones en ventas. El bot PRIMERO debe conservar la conversación siendo amigable e informativo, y DESPUÉS buscar el cierre de ventas de forma natural y sin presión.' },
-            { role: 'user', content: `Genera el entrenamiento completo para un bot de WhatsApp cerrador de ventas con esta información del negocio:\n\n🏢 NEGOCIO: ${empresa || 'Tienda online'}\n📝 DESCRIPCIÓN: ${descripcion || 'Productos y servicios'}\n🛍️ PRODUCTOS: ${productos || 'No especificado'}\n💰 PRECIOS: ${precios || 'No especificado'}\n🎁 COMBOS/OFERTAS: ${combos || 'Sin combos especiales'}\n💬 ESTILO: ${estiloLabel}\n🔄 OBJECIONES COMUNES: ${objeciones || '"Está muy caro", "Necesito pensarlo"'}\n🚚 ENVÍO/LOGÍSTICA: ${envio || 'No especificado'}\n🕐 HORARIO: ${horario || 'No especificado'}\n✨ INFO ADICIONAL: ${extra || 'Ninguna'}\n\nEl entrenamiento DEBE incluir en formato claro con emojis:\n1. 🎯 Personalidad del asistente (primero conecta, luego vende)\n2. 🛍️ Productos y precios detallados\n3. 💥 Combos y ofertas especiales\n4. 💬 Estilo de conversación (conectar → informar → cerrar)\n5. ✅ Técnicas de cierre natural\n6. 🔄 Manejo de objeciones\n7. 🚫 Reglas de nunca hacer\n\nIMPORTANTE: El bot SIEMPRE conserva primero e intenta cierre de ventas después de forma natural y sin presión.` },
-          ],
-          max_tokens: 2500,
-        }),
+      const generated = await callAI({
+        messages: [
+          { role: 'system', content: 'Eres el mejor experto del mundo en entrenar bots de ventas por WhatsApp. Generas prompts de sistema completos, naturales y altamente efectivos que convierten conversaciones en ventas. El bot PRIMERO debe conservar la conversación siendo amigable e informativo, y DESPUÉS buscar el cierre de ventas de forma natural y sin presión.' },
+          { role: 'user', content: `Genera el entrenamiento completo para un bot de WhatsApp cerrador de ventas con esta información del negocio:\n\n🏢 NEGOCIO: ${empresa || 'Tienda online'}\n📝 DESCRIPCIÓN: ${descripcion || 'Productos y servicios'}\n🛍️ PRODUCTOS: ${productos || 'No especificado'}\n💰 PRECIOS: ${precios || 'No especificado'}\n🎁 COMBOS/OFERTAS: ${combos || 'Sin combos especiales'}\n💬 ESTILO: ${estiloLabel}\n🔄 OBJECIONES COMUNES: ${objeciones || '"Está muy caro", "Necesito pensarlo"'}\n🚚 ENVÍO/LOGÍSTICA: ${envio || 'No especificado'}\n🕐 HORARIO: ${horario || 'No especificado'}\n✨ INFO ADICIONAL: ${extra || 'Ninguna'}\n\nEl entrenamiento DEBE incluir en formato claro con emojis:\n1. 🎯 Personalidad del asistente (primero conecta, luego vende)\n2. 🛍️ Productos y precios detallados\n3. 💥 Combos y ofertas especiales\n4. 💬 Estilo de conversación (conectar → informar → cerrar)\n5. ✅ Técnicas de cierre natural\n6. 🔄 Manejo de objeciones\n7. 🚫 Reglas de nunca hacer\n\nIMPORTANTE: El bot SIEMPRE conserva primero e intenta cierre de ventas después de forma natural y sin presión.` },
+        ],
+        maxTokens: 2500,
       })
-      const data = await res.json()
-      const generated = data.choices?.[0]?.message?.content?.trim() || ''
       if (generated) {
         saveTraining(generated)
         setTrainingTab('contexto')
         tip('🎉 Entrenamiento ganador generado y guardado ✨')
       } else tip('⚠️ No se generó contenido. Verifica tu API Key')
-    } catch { tip('⚠️ Error generando entrenamiento. Verifica tu API Key') }
+    } catch (e) {
+      tip(e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error generando entrenamiento')
+    }
     setGeneratingWizard(false)
   }
 
@@ -2003,16 +2060,16 @@ export default function WhatsAppBot() {
                         <textarea className="wbv5-form-input" rows={2} value={wizardData.extra} onChange={e => setWizardData(p => ({ ...p, extra: e.target.value }))} placeholder="Nequi, Bancolombia, contraentrega, 500+ clientes satisfechos..." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       </div>
                     </div>
-                    {!openaiKey && (
+                    {!hasAiKey && (
                       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.6rem .9rem', fontSize: '.73rem', color: '#713f12', marginTop: '.75rem' }}>
-                        ⚠️ Necesitas tu <strong>API Key de OpenAI</strong> configurada en <strong>Ajustes → API & Tokens</strong> para generar con IA.
+                        ⚠️ Necesitas una <strong>API Key</strong> configurada en <strong>Ajustes → API & Tokens</strong>. Puedes usar OpenAI (de pago) o <strong>Google Gemini gratis</strong> (aistudio.google.com/apikey).
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: '.5rem', marginTop: '.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
                       <button
                         className={`wbv5-btn wbv5-btn-sm ${generatingWizard ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`}
                         onClick={generateTrainingWizard}
-                        disabled={generatingWizard || !openaiKey}
+                        disabled={generatingWizard || !hasAiKey}
                         style={{ flex: 1, minWidth: 200, fontSize: '.78rem', padding: '.55rem 1rem' }}
                       >
                         {generatingWizard ? '⏳ Generando entrenamiento ganador...' : '🎯 Generar entrenamiento ganador'}
@@ -2131,9 +2188,9 @@ export default function WhatsAppBot() {
                     <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
                       Prueba cómo responderá tu bot antes de activarlo. Requiere API Key de OpenAI configurada.
                     </div>
-                    {!openaiKey ? (
+                    {!hasAiKey ? (
                       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12' }}>
-                        ⚠️ Configura tu API Key de OpenAI en <strong>Ajustes → API & Tokens → 🤖 ChatGPT</strong> para probar el bot.
+                        ⚠️ Configura tu API Key (OpenAI o Gemini gratis) en <strong>Ajustes → API & Tokens</strong> para probar el bot.
                       </div>
                     ) : (
                       <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} aiModel={aiModel} tip={tip} />
@@ -2545,17 +2602,23 @@ export default function WhatsAppBot() {
                   {/* API & Tokens */}
                   {cfgTab === 'api' && (
                     <>
+                      {/* Estado IA Key */}
+                      {!openaiKey && !geminiKey && (
+                        <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12', marginBottom: '.75rem' }}>
+                          ⚠️ <strong>Sin API Key configurada.</strong> Agrega una de las dos opciones abajo para activar la IA. El botón 🤖 en el chat necesita al menos una key para funcionar.
+                        </div>
+                      )}
                       {/* ChatGPT / OpenAI */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
                           <div className="wbv5-card-title">🤖 ChatGPT / OpenAI</div>
-                          <span className={`wbv5-badge ${aiEnabled ? 'badge-green' : 'badge-amber'}`}>
-                            {aiEnabled ? '✅ IA Activa' : '⏳ Desactivada'}
+                          <span className={`wbv5-badge ${openaiKey ? 'badge-green' : 'badge-amber'}`}>
+                            {openaiKey ? '✅ Conectado' : '⏳ Sin configurar'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Conecta tu API de OpenAI para respuestas automáticas con IA. Los mensajes se procesan via n8n y ChatGPT responde en nombre tuyo.
+                            Conecta tu API de OpenAI para respuestas automáticas con IA. El botón 🤖 en el chat usará esta key para generar respuestas perfectas.
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">OpenAI API Key</div>
@@ -2565,7 +2628,7 @@ export default function WhatsAppBot() {
                               value={openaiKey}
                               onChange={e => saveAiKey(e.target.value)}
                             />
-                            {openaiKey && <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ API Key guardada en navegador</div>}
+                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ API Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Obtén tu key en platform.openai.com/api-keys</div>}
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Modelo</div>
@@ -2600,6 +2663,34 @@ export default function WhatsAppBot() {
                             </button>
                             <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ↗</button>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>Obtener API Key ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Google Gemini — alternativa gratuita */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">✨ Google Gemini (alternativa gratuita)</div>
+                          <span className={`wbv5-badge ${geminiKey ? 'badge-green' : 'badge-amber'}`}>
+                            {geminiKey ? '✅ Conectado' : '⏳ Sin configurar'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Gemini 1.5 Flash es <strong>gratis hasta 60 req/min</strong>. Úsalo si no tienes OpenAI. El bot usa OpenAI primero y Gemini como respaldo automático.
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Google Gemini API Key</div>
+                            <input
+                              className="wbv5-form-input" type="password"
+                              placeholder="AIzaSy..."
+                              value={geminiKey}
+                              onChange={e => saveGeminiKey(e.target.value)}
+                            />
+                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ Gemini Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Obtén tu key gratis en aistudio.google.com/apikey</div>}
+                          </div>
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Obtener Gemini Key gratis ↗</button>
                           </div>
                         </div>
                       </div>
