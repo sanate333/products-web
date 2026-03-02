@@ -14,10 +14,12 @@ import './MonitorGlobalAI.css';
 const IFRAME_TIMEOUT_MS = 18000;
 const REFRESH_MS = 60000;
 const COLOMBIA_STREAM_EMBED = 'https://www.youtube.com/embed/kMNm9L0TM1w?autoplay=1&mute=1&rel=0&modestbranding=1';
-const MONITOR_PRIMARY_URL = 'https://worldmonitor.app';
-const MONITOR_OWN_URL = '/monitor-own.html';
+// ── WorldMonitor: siempre usar la copia local en /worldmonitor/ ──
+const MONITOR_PRIMARY_URL = '/worldmonitor/';
+const MONITOR_OWN_URL = '/worldmonitor/';
 const INSTAGRAM_POPUP_KEY = 'monitor_ig_popup_at';
-const IFRAME_BLOCKLIST = new Set(['tech.worldmonitor.app', 'worldmonitor.app', 'www.worldmonitor.app']);
+// Sin blocklist: usamos nuestra copia local, nunca el dominio externo
+const IFRAME_BLOCKLIST = new Set([]);
 
 function normalizeBase(urlValue) {
   const raw = String(urlValue || MONITOR_OWN_URL).trim();

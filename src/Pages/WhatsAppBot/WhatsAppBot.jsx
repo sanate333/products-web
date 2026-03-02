@@ -116,8 +116,137 @@ const FLOWS_LIST = [
   { key: 'soporte',    name: 'Flujo soporte',           trigger: '🔑 Keyword',        badge: 'badge-green', runs: 84,  ctr: '47%', date: '20/02/2026' },
 ]
 
+const DEFAULT_TRIGGERS = [
+  { id: 'tr1', name: 'Sin respuesta 1h', condition: 'no_reply',       delay: 60,   unit: 'min', templateId: 't1', message: '¡Hola {nombre}! 👋 Vi que revisaste nuestra info.\n¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy 🎁', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',    delay: 180,  unit: 'min', templateId: 't2', message: 'Hola {nombre} 😊 Quería enviarte nuestra mejor oferta de hoy.\n¿Cuál es tu producto favorito? 🌿\nTe armo un combo personalizado 💚', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'tr3', name: 'Cierre 24h', condition: 'no_purchase',          delay: 1440, unit: 'min', templateId: 't4', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
+]
+
+// ── Mapa de geo por código de país / área Colombia ──────────────
+const GEO_MAP = {
+  col: { '1':'Bogotá·CUN','2':'Cali·VAL','4':'Medellín·ANT','5':'Barranquilla·ATL','6':'Manizales·CAL','7':'Bucaramanga·SAN','8':'Cartagena·BOL','9':'Leticia·AMA' },
+  cc:  { '1':'USA·US 🇺🇸','52':'México·MX 🇲🇽','34':'España·ES 🇪🇸','54':'Argentina·AR 🇦🇷','55':'Brasil·BR 🇧🇷','56':'Chile·CL 🇨🇱','51':'Perú·PE 🇵🇪','58':'Venezuela·VE 🇻🇪','593':'Ecuador·EC 🇪🇨','57':'Colombia·CO 🇨🇴' },
+}
+function phoneToGeo(phone) {
+  if (!phone) return null
+  const raw = phone.replace(/\D/g, '')
+  if (raw.startsWith('57') && raw.length >= 11) {
+    const mobile = raw.substring(2, 4)
+    if (mobile.startsWith('3')) {
+      const area = raw.substring(2, 3)
+      const city = GEO_MAP.col[area]
+      if (city) { const [c,d] = city.split('·'); return { label: `${c} · ${d}`, flag: '🇨🇴' } }
+      return { label: 'Colombia · CO', flag: '🇨🇴' }
+    }
+  }
+  for (const [cc, label] of Object.entries(GEO_MAP.cc)) {
+    if (raw.startsWith(cc)) { const [c,d] = label.split(' ')[0].split('·'); return { label: `${c} · ${d}`, flag: label.split(' ')[1] || '' } }
+  }
+  return null
+}
+
+const TRAINING_TEMPLATE = `🏢 NOMBRE DEL NEGOCIO: Sanate
+🌐 SITIO WEB: sanate.store
+📱 WHATSAPP: +57 XXX XXX XXXX
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 PERSONALIDAD DEL ASISTENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Eres un cerrador de ventas experto, amable, cálido y natural.
+Nunca suenas como un robot. Haces pausas, usas emojis estratégicamente,
+escuchas al cliente, identificas su necesidad y ofreces la solución perfecta.
+Siempre terminas con una pregunta de cierre clara.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛍️ PRODUCTOS Y PRECIOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Pega aquí tus productos con precios]
+Ejemplo:
+- Combo Detox 30 días: $150.000
+- Pack Energía Total: $89.000
+- Kit Bienestar Premium: $220.000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💥 COMBOS Y OFERTAS ESPECIALES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Describe tus combos, precios, descuentos, vigencia]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💬 ESTILO DE CONVERSACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Saluda con el nombre del cliente
+2. Identifica qué necesita con 1 pregunta
+3. Ofrece el producto más adecuado
+4. Da 1-2 beneficios clave (no abrumes)
+5. Cierre: "¿Te lo reservamos?" / "¿Lo tomamos?"
+6. Si dice que va a pensar: envía oferta por tiempo limitado
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 NUNCA HACER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Dar precios sin contexto del producto
+- Responder con listas largas
+- Olvidar hacer una pregunta de cierre
+- Sonar robotico o formal en exceso
+`
+
 const COLORS_AV  = ['#d1fae5', '#dbeafe', '#ede9fe', '#fef3c7', '#fee2e2']
 const COLORS_TXT = ['#065f46', '#1d4ed8', '#5b21b6', '#92400e', '#b91c1c']
+
+// ── Componente: chat de prueba del bot IA ──────────────────────
+function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, aiModel, tip }) {
+  const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])
+  const [inp,  setInp]  = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+  async function send() {
+    if (!inp.trim() || busy) return
+    const userMsg = inp.trim(); setInp(''); setBusy(true)
+    setMsgs(p => [...p, { role: 'user', txt: userMsg }])
+    try {
+      const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: aiModel || 'gpt-4o',
+          messages: [
+            { role: 'system', content: (trainingPrompt || aiPrompt || 'Eres un asistente de ventas.').substring(0, 6000) },
+            ...history,
+            { role: 'user', content: userMsg },
+          ],
+          max_tokens: 300,
+        }),
+      })
+      const data = await res.json()
+      const reply = data.choices?.[0]?.message?.content || '⚠️ Sin respuesta de la IA'
+      setMsgs(p => [...p, { role: 'assistant', txt: reply }])
+    } catch { setMsgs(p => [...p, { role: 'assistant', txt: '⚠️ Error al conectar con OpenAI. Verifica tu API Key.' }]) }
+    setBusy(false)
+  }
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ background: '#075e54', padding: '.55rem 1rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#25d366', boxShadow: '0 0 0 3px rgba(37,211,102,.3)' }} />
+        <span style={{ color: '#fff', fontSize: '.78rem', fontWeight: 700 }}>🤖 Bot IA — Modo prueba</span>
+        <button style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '.2rem .6rem', fontSize: '.68rem', cursor: 'pointer' }} onClick={() => setMsgs([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])}>🔄 Reiniciar</button>
+      </div>
+      <div style={{ background: '#e5ddd5', padding: '.75rem', minHeight: 200, maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '.35rem' }}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{ maxWidth: '78%', alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', background: m.role === 'user' ? '#dcf8c6' : '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.77rem', lineHeight: 1.5, boxShadow: '0 1px 2px rgba(0,0,0,.1)' }}>
+            {m.role === 'assistant' && <div style={{ fontSize: '.58rem', color: '#7c3aed', fontWeight: 700, marginBottom: '.1rem' }}>🤖 IA</div>}
+            {m.txt}
+          </div>
+        ))}
+        {busy && <div style={{ alignSelf: 'flex-start', background: '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.75rem', color: '#9ca3af' }}>⏳ Pensando...</div>}
+      </div>
+      <div style={{ background: '#f0f0f0', padding: '.5rem .75rem', display: 'flex', gap: '.5rem' }}>
+        <input style={{ flex: 1, border: 'none', borderRadius: 24, padding: '.42rem 1rem', fontSize: '.76rem', outline: 'none', background: '#fff', fontFamily: 'inherit' }}
+          value={inp} onChange={e => setInp(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Escribe un mensaje de prueba..." disabled={busy} />
+        <button style={{ width: 36, height: 36, background: '#075e54', color: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '.9rem' }} onClick={send} disabled={busy}>{busy ? '⏳' : '➤'}</button>
+      </div>
+    </div>
+  )
+}
 
 const DEFAULT_TAGS = [
   { id: 'tg1', name: 'Nuevo lead',      color: '#3b82f6' },
@@ -163,12 +292,32 @@ export default function WhatsAppBot() {
   const [contactStatus,     setContactStatus]     = useState('Nuevo')
 
   // ── IA / ChatGPT ──────────────────────────────────────────────
-  const [serverOnline,   setServerOnline]   = useState(null)  // null=desconocido, true=online, false=offline
+  const [serverOnline,   setServerOnline]   = useState(null)
   const [aiEnabled,      setAiEnabled]      = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
-  const [aiContactMap,   setAiContactMap]   = useState({})    // { chatId: bool } – override por contacto
+  const [aiContactMap,   setAiContactMap]   = useState({})
   const [openaiKey,      setOpenaiKey]      = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
   const [aiModel,        setAiModel]        = useState('gpt-4o')
   const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } })
+
+  // ── Entrenamiento IA ──────────────────────────────────────────
+  const [trainingPrompt,   setTrainingPrompt]   = useState(() => { try { return localStorage.getItem('wa_training_prompt') || TRAINING_TEMPLATE } catch { return TRAINING_TEMPLATE } })
+  const [trainingTab,      setTrainingTab]      = useState('contexto')
+  const [generatingPrompt, setGeneratingPrompt] = useState(false)
+  const [trainingChars,    setTrainingChars]     = useState(0)
+
+  // ── Clientes ──────────────────────────────────────────────────
+  const [clientes,       setClientes]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_clientes') || '[]') } catch { return [] } })
+  const [clienteSearch,  setClienteSearch]  = useState('')
+  const [clienteDetail,  setClienteDetail]  = useState(null)  // cliente seleccionado
+
+  // ── Disparadores ──────────────────────────────────────────────
+  const [triggers,         setTriggers]         = useState(() => { try { return JSON.parse(localStorage.getItem('wa_triggers') || 'null') || DEFAULT_TRIGGERS } catch { return DEFAULT_TRIGGERS } })
+  const [editTrigger,      setEditTrigger]      = useState(null)   // trigger en edición (null=cerrado)
+  const [generatingTrigger,setGeneratingTrigger]= useState(false)
+
+  // ── Geo & Timing ──────────────────────────────────────────────
+  const [botDelay,       setBotDelay]       = useState(() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') } catch { return 3 } })
+  const [simulateTyping, setSimulateTyping] = useState(true)
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -336,6 +485,11 @@ export default function WhatsAppBot() {
   }
 
   // ─── API ──────────────────────────────────────────
+  // ╔══════════════════════════════════════════════════════════════╗
+  // ║  🔒 QR CRÍTICO — NO MODIFICAR ESTAS FUNCIONES              ║
+  // ║  ping · loadQR · drawQR · drawQRWaiting · regenerateQR     ║
+  // ║  Cualquier cambio en estas 5 funciones puede romper el QR  ║
+  // ╚══════════════════════════════════════════════════════════════╝
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
@@ -420,6 +574,7 @@ export default function WhatsAppBot() {
   async function openChat(c) {
     setActive(c); setShowContact(false)
     activePut(c)
+    saveClienteFromChat(c)  // auto-registrar cliente
     await loadM(c.id)
     setChats(p => p.map(x => x.id === c.id ? { ...x, unread: 0 } : x))
     fetch(`${BU}/chats/${encodeURIComponent(c.id)}/read`, { method: 'POST', headers: H }).catch(() => {})
@@ -530,23 +685,121 @@ export default function WhatsAppBot() {
     if (!openaiKey && !N8N_WH) return
     try {
       const payload = {
-        chatId,
-        message: userMsg,
-        model: aiModel,
-        systemPrompt: aiPrompt,
-        openaiKey,
-        phone: active?.phone || '',
-        contactName: active?.name || '',
+        chatId, message: userMsg, model: aiModel,
+        systemPrompt: (trainingPrompt || aiPrompt),
+        openaiKey, botDelay,
+        phone: active?.phone || '', contactName: active?.name || '',
       }
-      // Primero intenta enviar via n8n webhook (producción)
-      await fetch(N8N_WH, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        mode: 'no-cors',
-      })
+      await fetch(N8N_WH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), mode: 'no-cors' })
       tip('🤖 IA procesando respuesta...')
-    } catch { /* n8n no disponible */ }
+    } catch {}
+  }
+
+  // ── Entrenamiento helpers ──────────────────────────────────────
+  function saveTraining(v) {
+    setTrainingPrompt(v); setTrainingChars(v.length)
+    try { localStorage.setItem('wa_training_prompt', v) } catch {}
+  }
+  async function generateWinnerPrompt() {
+    if (!openaiKey) { tip('⚠️ Primero configura tu API Key de OpenAI en Ajustes → API & Tokens'); return }
+    setGeneratingPrompt(true); tip('🤖 Generando prompt ganador con IA...')
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: aiModel,
+          messages: [
+            { role: 'system', content: 'Eres el mejor experto en ventas conversacionales por WhatsApp del mundo. Genera prompts de sistema para bots de ventas que sean naturales, empáticos y cierren ventas de forma efectiva.' },
+            { role: 'user', content: `Basándote en este contexto de negocio, genera un prompt de sistema completo y optimizado para un bot de WhatsApp que sea el mejor cerrador de ventas del mundo. Incluye personalidad, tono, técnicas de cierre, manejo de objeciones y reglas de comportamiento.\n\nContexto actual:\n${trainingPrompt.substring(0, 2000)}` },
+          ],
+          max_tokens: 1500,
+        }),
+      })
+      const data = await res.json()
+      if (data.choices?.[0]?.message?.content) {
+        const generated = data.choices[0].message.content
+        saveTraining(trainingPrompt + '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🏆 PROMPT GANADOR GENERADO POR IA\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' + generated)
+        tip('✅ Prompt ganador generado y agregado')
+      }
+    } catch { tip('⚠️ Error generando prompt. Verifica tu API Key') }
+    setGeneratingPrompt(false)
+  }
+
+  // ── Clientes helpers ───────────────────────────────────────────
+  function saveClienteFromChat(chat) {
+    if (!chat?.id) return
+    const existing = JSON.parse(localStorage.getItem('wa_clientes') || '[]')
+    if (existing.find(c => c.id === chat.id)) return // ya guardado
+    const geo = phoneToGeo(chat.phone || '')
+    const newCliente = {
+      id: chat.id, name: chat.name || '', phone: chat.phone || chat.id,
+      pais: geo?.label?.split('·')[0]?.trim() || '', ciudad: geo?.label || '',
+      flag: geo?.flag || '', totalPedidos: 0, noRecibidos: 0,
+      etiqueta: 'Nuevo lead', primerMensaje: new Date().toLocaleDateString('es-CO'),
+      ultimoMensaje: new Date().toLocaleDateString('es-CO'),
+      direccion: '', notas: '', fotoUrl: chat.photoUrl || '',
+    }
+    const updated = [newCliente, ...existing]
+    try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
+    setClientes(updated)
+  }
+  function updateCliente(id, fields) {
+    setClientes(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...fields } : c)
+      try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+  }
+  function deleteCliente(id) {
+    setClientes(prev => {
+      const updated = prev.filter(c => c.id !== id)
+      try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+    if (clienteDetail?.id === id) setClienteDetail(null)
+  }
+
+  // ── Disparadores helpers ───────────────────────────────────────
+  function saveTriggers(updated) {
+    setTriggers(updated)
+    try { localStorage.setItem('wa_triggers', JSON.stringify(updated)) } catch {}
+  }
+  function toggleTrigger(id) {
+    saveTriggers(triggers.map(t => t.id === id ? { ...t, active: !t.active } : t))
+  }
+  function deleteTrigger(id) {
+    saveTriggers(triggers.filter(t => t.id !== id))
+  }
+  function saveTriggerEdit(trigger) {
+    const existing = triggers.find(t => t.id === trigger.id)
+    if (existing) { saveTriggers(triggers.map(t => t.id === trigger.id ? trigger : t)) }
+    else { saveTriggers([...triggers, trigger]) }
+    setEditTrigger(null)
+    tip('✅ Disparador guardado')
+  }
+  async function generateTriggerMsg(triggerName) {
+    if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI primero'); return }
+    setGeneratingTrigger(true); tip('🤖 Generando mensaje de seguimiento con IA...')
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: aiModel,
+          messages: [
+            { role: 'system', content: `Eres el mejor cerrador de ventas del mundo via WhatsApp. Basándote en este contexto de negocio: "${trainingPrompt.substring(0, 500)}"` },
+            { role: 'user', content: `Genera un mensaje de seguimiento de WhatsApp para el trigger "${triggerName}". Debe ser: natural, humano, con 1-2 emojis relevantes, máximo 3 líneas, y terminar con una pregunta de cierre irresistible. Usa {nombre} donde corresponde.` },
+          ],
+          max_tokens: 200,
+        }),
+      })
+      const data = await res.json()
+      const msg = data.choices?.[0]?.message?.content || ''
+      if (msg && editTrigger) setEditTrigger(prev => ({ ...prev, message: msg }))
+      tip('✅ Mensaje generado')
+    } catch { tip('⚠️ Error generando mensaje') }
+    setGeneratingTrigger(false)
   }
 
   function copyText(txt) {
@@ -579,12 +832,15 @@ export default function WhatsAppBot() {
   })
 
   const NAV = [
-    { id: 'overview',  label: '📊 Resumen',           section: 'Principal',       badge: 0 },
-    { id: 'chat',      label: '💬 Chats',              section: 'Principal',       badge: unread },
-    { id: 'flujos',    label: '🌊 Flujos',             section: 'Automatización',  badge: 0 },
-    { id: 'templates', label: '📋 Plantillas',         section: 'Automatización',  badge: 0 },
-    { id: 'conexion',  label: '📱 Conexión WhatsApp',  section: 'Configuración',   badge: 0 },
-    { id: 'config',    label: '⚙️ Ajustes',            section: 'Configuración',   badge: 0 },
+    { id: 'overview',       label: '📊 Resumen',            section: 'Principal',       badge: 0 },
+    { id: 'chat',           label: '💬 Chats',               section: 'Principal',       badge: unread },
+    { id: 'clientes',       label: '👥 Clientes',            section: 'Principal',       badge: clientes.filter(c => c.etiqueta === 'Nuevo lead').length },
+    { id: 'flujos',         label: '🌊 Flujos',              section: 'Automatización',  badge: 0 },
+    { id: 'templates',      label: '📋 Plantillas',          section: 'Automatización',  badge: 0 },
+    { id: 'disparadores',   label: '⚡ Disparadores',        section: 'Automatización',  badge: triggers.filter(t => t.active).length },
+    { id: 'entrenamiento',  label: '🧠 Entrenamiento IA',    section: 'Automatización',  badge: 0 },
+    { id: 'conexion',       label: '📱 Conexión WhatsApp',   section: 'Configuración',   badge: 0 },
+    { id: 'config',         label: '⚙️ Ajustes',             section: 'Configuración',   badge: 0 },
   ]
 
   function goPage(id) {
@@ -839,7 +1095,10 @@ export default function WhatsAppBot() {
                           {active.isGroup && <span style={{ fontSize: '.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginRight: 5 }}>Grupo</span>}
                           {active.name || active.phone || active.id}
                         </div>
-                        <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                          <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
+                          {(() => { const geo = phoneToGeo(active.phone || cleanPhone('', active.id)); return geo ? <span className="wbv5-geo-badge">{geo.flag} {geo.label}</span> : null })()}
+                        </div>
                       </div>
                       <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, alignItems: 'center' }}>
                         {/* Dropdown de estado/etiqueta principal */}
@@ -1230,6 +1489,376 @@ export default function WhatsAppBot() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ══ CLIENTES ══ */}
+          {page === 'clientes' && (
+            <div className="wbv5-content">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>👥 Clientes</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Clientes que han escrito al WhatsApp — guardados automáticamente</div>
+                </div>
+                <div style={{ display: 'flex', gap: '.4rem' }}>
+                  <input className="wbv5-il-search" placeholder="Buscar cliente..." value={clienteSearch} onChange={e => setClienteSearch(e.target.value)} style={{ width: 180 }} />
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(clientes.map(c => `${c.name}\t${c.phone}\t${c.pais}\t${c.etiqueta}\t${c.primerMensaje}`).join('\n')); tip('📋 Tabla copiada') }}>📋 Exportar</button>
+                </div>
+              </div>
+              {clienteDetail ? (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setClienteDetail(null)}>← Volver</button>
+                    <div className="wbv5-card-title" style={{ marginLeft: '.5rem' }}>{clienteDetail.name || clienteDetail.phone}</div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { updateCliente(clienteDetail.id, clienteDetail); tip('✅ Guardado'); setClienteDetail(null) }}>💾 Guardar</button>
+                      <button className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={() => { if(window.confirm('¿Eliminar cliente?')) deleteCliente(clienteDetail.id) }}>🗑️</button>
+                    </div>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div className="wbv5-cli-form-grid">
+                      {[
+                        { lbl: 'Nombre', key: 'name' }, { lbl: 'Teléfono', key: 'phone' },
+                        { lbl: 'País / Región', key: 'ciudad' }, { lbl: 'Dirección', key: 'direccion' },
+                        { lbl: 'Etiqueta', key: 'etiqueta' }, { lbl: 'Total Pedidos', key: 'totalPedidos', type: 'number' },
+                        { lbl: 'No recibidos', key: 'noRecibidos', type: 'number' }, { lbl: 'Primer mensaje', key: 'primerMensaje' },
+                        { lbl: 'Último mensaje', key: 'ultimoMensaje' },
+                      ].map(f => (
+                        <div key={f.key} className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">{f.lbl}</div>
+                          <input className="wbv5-form-input" type={f.type || 'text'} value={clienteDetail[f.key] || ''} onChange={e => setClienteDetail(prev => ({ ...prev, [f.key]: e.target.value }))} />
+                        </div>
+                      ))}
+                      <div className="wbv5-form-row" style={{ gridColumn: '1/-1' }}>
+                        <div className="wbv5-form-lbl">Notas</div>
+                        <textarea className="wbv5-form-input" rows={3} value={clienteDetail.notas || ''} onChange={e => setClienteDetail(prev => ({ ...prev, notas: e.target.value }))} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+                      </div>
+                    </div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ marginTop: '.4rem' }} onClick={() => { const t = `Nombre: ${clienteDetail.name}\nTeléfono: ${clienteDetail.phone}\nPaís: ${clienteDetail.ciudad}\nDirección: ${clienteDetail.direccion}\nPedidos: ${clienteDetail.totalPedidos}\nEtiqueta: ${clienteDetail.etiqueta}`; navigator.clipboard?.writeText(t); tip('📋 Datos copiados') }}>📋 Copiar datos</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="wbv5-card">
+                  <div style={{ padding: 0 }}>
+                    {clientes.filter(c => !clienteSearch || (c.name+c.phone+c.ciudad).toLowerCase().includes(clienteSearch.toLowerCase())).length === 0 ? (
+                      <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>👥</div>
+                        <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#6b7280' }}>Sin clientes aún</div>
+                        <div style={{ fontSize: '.72rem', color: '#9ca3af' }}>Los clientes se guardan automáticamente cuando escriben al WhatsApp</div>
+                      </div>
+                    ) : (
+                      <table className="wbv5-flows-table">
+                        <thead><tr><th>Cliente</th><th>Teléfono</th><th>Región</th><th>Etiqueta</th><th>Pedidos</th><th>Primer msg</th><th></th></tr></thead>
+                        <tbody>
+                          {clientes.filter(c => !clienteSearch || (c.name+c.phone+c.ciudad).toLowerCase().includes(clienteSearch.toLowerCase())).map(c => (
+                            <tr key={c.id}>
+                              <td style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                                {c.fotoUrl ? <img src={c.fotoUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#dbeafe', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 800, flexShrink: 0 }}>{(c.name || c.phone).substring(0,2).toUpperCase()}</div>}
+                                <span style={{ fontWeight: 600 }}>{c.name || '—'}</span>
+                              </td>
+                              <td style={{ fontSize: '.72rem', color: '#6b7280' }}>{c.phone}</td>
+                              <td style={{ fontSize: '.7rem' }}>{c.flag} {c.ciudad || '—'}</td>
+                              <td><span style={{ background: c.etiqueta === 'Nuevo lead' ? '#dbeafe' : c.etiqueta === 'Cliente VIP' ? '#ede9fe' : '#dcfce7', color: c.etiqueta === 'Nuevo lead' ? '#1d4ed8' : c.etiqueta === 'Cliente VIP' ? '#5b21b6' : '#166534', borderRadius: 20, padding: '.15rem .55rem', fontSize: '.65rem', fontWeight: 700 }}>{c.etiqueta}</span></td>
+                              <td style={{ textAlign: 'center' }}>{c.totalPedidos}</td>
+                              <td style={{ fontSize: '.65rem', color: '#9ca3af' }}>{c.primerMensaje}</td>
+                              <td>
+                                <button className="wbv5-flow-3btn" onClick={() => setClienteDetail({...c})}>✏️</button>
+                                <button className="wbv5-flow-3btn" onClick={() => { navigator.clipboard?.writeText(`${c.name} | ${c.phone} | ${c.ciudad}`); tip('📋 Copiado') }}>📋</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══ DISPARADORES ══ */}
+          {page === 'disparadores' && (
+            <div className="wbv5-content">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.2rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>⚡ Disparadores</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes automáticos basados en tiempo e interacción del cliente</div>
+                </div>
+                <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditTrigger({ id: `tr${Date.now()}`, name: '', condition: 'no_reply', delay: 60, unit: 'min', message: '', active: true, mediaType: null, mediaUrl: '' })}>+ Nuevo disparador</button>
+              </div>
+
+              {/* Panel de edición de disparador */}
+              {editTrigger && (
+                <div className="wbv5-card" style={{ border: '2px solid #2563eb' }}>
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">✏️ {editTrigger.id.startsWith('tr') && triggers.find(t => t.id === editTrigger.id) ? 'Editar' : 'Nuevo'} Disparador</div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>✕</button>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div className="wbv5-cli-form-grid">
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Nombre del disparador</div>
+                        <input className="wbv5-form-input" value={editTrigger.name} onChange={e => setEditTrigger(p => ({ ...p, name: e.target.value }))} placeholder="Ej: Sin respuesta 1 hora" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Condición</div>
+                        <select className="wbv5-form-input" value={editTrigger.condition} onChange={e => setEditTrigger(p => ({ ...p, condition: e.target.value }))}>
+                          <option value="no_reply">Sin respuesta después de X tiempo</option>
+                          <option value="seen">Mensaje visto pero sin responder</option>
+                          <option value="no_purchase">Sin compra después de X tiempo</option>
+                          <option value="keyword">Palabra clave detectada</option>
+                          <option value="first_message">Primer mensaje recibido</option>
+                        </select>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Tiempo de espera</div>
+                        <div style={{ display: 'flex', gap: '.4rem' }}>
+                          <input className="wbv5-form-input" type="number" value={editTrigger.delay} min={1} style={{ width: 80 }} onChange={e => setEditTrigger(p => ({ ...p, delay: parseInt(e.target.value) || 1 }))} />
+                          <select className="wbv5-form-input" value={editTrigger.unit} onChange={e => setEditTrigger(p => ({ ...p, unit: e.target.value }))}>
+                            <option value="min">Minutos</option>
+                            <option value="h">Horas</option>
+                            <option value="d">Días</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Tipo de media (opcional)</div>
+                        <select className="wbv5-form-input" value={editTrigger.mediaType || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaType: e.target.value || null }))}>
+                          <option value="">Solo texto</option>
+                          <option value="image">🖼️ Imagen</option>
+                          <option value="video">🎥 Video</option>
+                          <option value="audio">🎵 Audio</option>
+                          <option value="document">📄 Documento</option>
+                        </select>
+                      </div>
+                    </div>
+                    {editTrigger.mediaType && (
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">URL del archivo media</div>
+                        <input className="wbv5-form-input" value={editTrigger.mediaUrl || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaUrl: e.target.value }))} placeholder="https://... o ruta relativa" />
+                      </div>
+                    )}
+                    <div className="wbv5-form-row">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.28rem' }}>
+                        <div className="wbv5-form-lbl" style={{ margin: 0 }}>Mensaje ({(editTrigger.message || '').length}/1000 chars)</div>
+                        <button className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`} style={{ fontSize: '.65rem' }} onClick={() => generateTriggerMsg(editTrigger.name || 'seguimiento')} disabled={generatingTrigger}>
+                          {generatingTrigger ? '⏳ Generando...' : '🤖 Generar con IA'}
+                        </button>
+                      </div>
+                      <textarea className="wbv5-form-input" rows={4} value={editTrigger.message} onChange={e => setEditTrigger(p => ({ ...p, message: e.target.value }))} placeholder="Escribe el mensaje o genera con IA. Usa {nombre} para personalizar." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
+                      <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.18rem' }}>Variables: {'{nombre}'} {'{telefono}'} {'{tienda}'}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => saveTriggerEdit(editTrigger)}>💾 Guardar disparador</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Lista de disparadores */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">Disparadores configurados</div>
+                  <span style={{ fontSize: '.68rem', color: '#6b7280' }}>{triggers.filter(t => t.active).length} activos de {triggers.length}</span>
+                </div>
+                <div style={{ padding: 0 }}>
+                  {triggers.length === 0 ? (
+                    <div className="wbv5-empty-state" style={{ padding: '2rem' }}>
+                      <div style={{ fontSize: '2rem' }}>⚡</div>
+                      <div>Sin disparadores. Crea uno para automatizar seguimientos.</div>
+                    </div>
+                  ) : triggers.map(t => (
+                    <div key={t.id} className="wbv5-trigger-row">
+                      <div className="wbv5-tr-left">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.18rem' }}>
+                          <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#111827' }}>{t.name || 'Sin nombre'}</span>
+                          <span className={`wbv5-badge ${t.active ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '.6rem' }}>{t.active ? '✅ Activo' : '⏸ Pausado'}</span>
+                        </div>
+                        <div style={{ fontSize: '.68rem', color: '#6b7280', display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}>
+                          <span>⏱ {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'días'}</span>
+                          <span>🎯 {t.condition === 'no_reply' ? 'Sin respuesta' : t.condition === 'seen' ? 'Visto sin responder' : t.condition === 'no_purchase' ? 'Sin compra' : t.condition === 'keyword' ? 'Keyword' : 'Primer mensaje'}</span>
+                          {t.mediaType && <span>📎 {t.mediaType}</span>}
+                        </div>
+                        <div style={{ fontSize: '.7rem', color: '#374151', marginTop: '.2rem', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>💬 {t.message}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '.3rem', flexShrink: 0, alignItems: 'center' }}>
+                        <button className={`wbv5-btn wbv5-btn-sm ${t.active ? 'wbv5-btn-outline' : 'wbv5-btn-green'}`} onClick={() => toggleTrigger(t.id)}>{t.active ? '⏸' : '▶'}</button>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger({...t})}>✏️</button>
+                        <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#fee2e2', color: '#991b1b' }} onClick={() => deleteTrigger(t.id)}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Flujos de seguimiento recomendados */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">🏆 Secuencias de seguimiento recomendadas</div>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTriggers([...triggers, ...DEFAULT_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))]); tip('✅ Secuencias agregadas') }}>+ Agregar todas</button>
+                </div>
+                <div className="wbv5-card-bd">
+                  <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                    Las 3 mejores secuencias de cierre de ventas optimizadas con IA para WhatsApp
+                  </div>
+                  {[
+                    { icon: '⚡', title: '1h sin respuesta', desc: 'Reactivación amable — pregunta de interés', time: '1 hora', color: '#dbeafe', tc: '#1d4ed8' },
+                    { icon: '👁️', title: 'Visto sin responder 3h', desc: 'Oferta personalizada — urgencia suave', time: '3 horas', color: '#fef3c7', tc: '#92400e' },
+                    { icon: '🔥', title: 'Cierre 24h', desc: 'Última oportunidad — descuento + CTA directo', time: '24 horas', color: '#dcfce7', tc: '#166534' },
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{s.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827' }}>{s.title}</div>
+                        <div style={{ fontSize: '.65rem', color: '#6b7280' }}>{s.desc}</div>
+                      </div>
+                      <span style={{ background: s.color, color: s.tc, borderRadius: 20, padding: '.18rem .55rem', fontSize: '.62rem', fontWeight: 700 }}>{s.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ══ ENTRENAMIENTO IA ══ */}
+          {page === 'entrenamiento' && (
+            <div className="wbv5-content">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>🧠 Entrenamiento IA</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Dale contexto completo a tu bot para que sea el mejor cerrador de ventas del mundo</div>
+                </div>
+                <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                  <button className={`wbv5-btn wbv5-btn-sm ${generatingPrompt ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`} onClick={generateWinnerPrompt} disabled={generatingPrompt}>
+                    {generatingPrompt ? '⏳ Generando...' : '🤖 Generar prompt ganador'}
+                  </button>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTraining(trainingPrompt); tip('✅ Entrenamiento guardado') }}>💾 Guardar</button>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '.3rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'contexto',   label: '🏢 Contexto empresa' },
+                  { id: 'prompt',     label: '💡 Prompt del sistema' },
+                  { id: 'memoria',    label: '🧠 Memoria n8n' },
+                  { id: 'prueba',     label: '🧪 Probar bot' },
+                ].map(tab => (
+                  <button key={tab.id} className={`wbv5-btn wbv5-btn-sm ${trainingTab === tab.id ? 'wbv5-btn-blue' : 'wbv5-btn-outline'}`} onClick={() => setTrainingTab(tab.id)}>{tab.label}</button>
+                ))}
+              </div>
+
+              {/* Tab: Contexto empresa */}
+              {trainingTab === 'contexto' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">🏢 Contexto del negocio</div>
+                    <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '.68rem', color: trainingPrompt.length > 70000 ? '#dc2626' : trainingPrompt.length > 50000 ? '#f59e0b' : '#16a34a', fontWeight: 700 }}>
+                        {trainingPrompt.length.toLocaleString()} / 80,000 chars
+                      </span>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => saveTraining(TRAINING_TEMPLATE)}>📋 Plantilla</button>
+                    </div>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
+                      📝 Escribe aquí TODO sobre tu negocio: productos, precios, combos, forma de hablar, objeciones comunes, política de envío, historia... <strong>Entre más contexto, mejor vende la IA.</strong>
+                    </div>
+                    <textarea
+                      className="wbv5-training-area"
+                      value={trainingPrompt}
+                      onChange={e => saveTraining(e.target.value)}
+                      maxLength={80000}
+                      placeholder="Pega aquí el contexto completo de tu empresa...&#10;&#10;Incluye:&#10;- Nombre y descripción del negocio&#10;- Todos los productos con precios&#10;- Combos y ofertas especiales&#10;- Forma de hablar (formal/informal)&#10;- Técnicas de cierre de venta&#10;- Manejo de objeciones&#10;- Datos de contacto y envío"
+                    />
+                    <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
+                      <button className={`wbv5-btn wbv5-btn-sm ${generatingPrompt ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`} onClick={generateWinnerPrompt} disabled={generatingPrompt}>
+                        {generatingPrompt ? '⏳ Generando con IA...' : '✨ Generar prompt ganador con IA'}
+                      </button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(trainingPrompt); tip('📋 Contexto copiado') }}>📋 Copiar todo</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { if(window.confirm('¿Limpiar todo el contexto?')) saveTraining('') }}>🗑️ Limpiar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Prompt sistema */}
+              {trainingTab === 'prompt' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">💡 Prompt del sistema (System Prompt)</div>
+                    <span style={{ fontSize: '.68rem', color: '#6b7280' }}>{aiPrompt.length} chars</span>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
+                      Este es el prompt de personalidad que guía el comportamiento de ChatGPT. Se combina automáticamente con el contexto del negocio.
+                    </div>
+                    <textarea
+                      className="wbv5-form-input"
+                      rows={12}
+                      value={aiPrompt}
+                      onChange={e => saveAiPrompt(e.target.value)}
+                      style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, fontSize: '.76rem' }}
+                    />
+                    <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { try { localStorage.setItem('wa_ai_prompt', aiPrompt) } catch {}; tip('✅ Prompt guardado') }}>💾 Guardar prompt</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(aiPrompt); tip('📋 Copiado') }}>📋 Copiar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Memoria n8n */}
+              {trainingTab === 'memoria' && (
+                <div className="wbv5-content" style={{ padding: 0, gap: '.75rem' }}>
+                  <div className="wbv5-card">
+                    <div className="wbv5-card-hd"><div className="wbv5-card-title">🧠 Memoria de clientes (n8n)</div><span className="wbv5-badge badge-blue">Via n8n</span></div>
+                    <div className="wbv5-card-bd">
+                      <div style={{ fontSize: '.76rem', color: '#374151', lineHeight: 1.6, marginBottom: '.75rem' }}>
+                        La memoria del cliente se guarda en n8n usando <strong>nodos de memoria</strong>. Cada número de WhatsApp tiene su propio historial.
+                      </div>
+                      {[
+                        { icon: '📱', title: 'Identificación por número', desc: 'Cada cliente se identifica por su número de WhatsApp (chatId). La IA siempre sabe con quién habla.' },
+                        { icon: '🛒', title: 'Historial de pedidos', desc: 'n8n guarda qué productos pidió, cuándo y cuánto pagó. La IA lo usa para personalizar respuestas.' },
+                        { icon: '💬', title: 'Contexto de conversación', desc: 'Los últimos 20 mensajes se incluyen en cada llamada a ChatGPT para mantener coherencia.' },
+                        { icon: '🔄', title: 'Reconocimiento automático', desc: 'Cuando el cliente vuelve a escribir, la IA lo reconoce y saluda por su nombre con su historial.' },
+                      ].map((item, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '.75rem', padding: '.55rem 0', borderBottom: i < 3 ? '1px solid #f3f4f6' : 'none' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>{item.icon}</div>
+                          <div>
+                            <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827' }}>{item.title}</div>
+                            <div style={{ fontSize: '.68rem', color: '#6b7280', marginTop: '.08rem', lineHeight: 1.4 }}>{item.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: '.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.72rem', color: '#166534' }}>
+                        💡 <strong>Configurar en n8n:</strong> Agrega un nodo "Window Buffer Memory" o "Postgres Chat Memory" en tu flujo de WhatsApp. El webhook ya recibe el <code style={{ background: 'rgba(0,0,0,.07)', padding: '1px 4px', borderRadius: 3 }}>chatId</code> para identificar al cliente.
+                      </div>
+                      <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" style={{ marginTop: '.6rem' }} onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n para configurar ↗</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Probar bot */}
+              {trainingTab === 'prueba' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd"><div className="wbv5-card-title">🧪 Probar bot IA</div></div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
+                      Prueba cómo responderá tu bot antes de activarlo. Requiere API Key de OpenAI configurada.
+                    </div>
+                    {!openaiKey ? (
+                      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12' }}>
+                        ⚠️ Configura tu API Key de OpenAI en <strong>Ajustes → API & Tokens → 🤖 ChatGPT</strong> para probar el bot.
+                      </div>
+                    ) : (
+                      <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} aiModel={aiModel} tip={tip} />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1678,6 +2307,27 @@ export default function WhatsAppBot() {
                   {/* Comportamiento bot */}
                   {cfgTab === 'bot' && (
                     <>
+                      {/* Timing del bot */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">⏱️ Tiempos de respuesta</div></div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Simula un comportamiento humano — la IA esperará antes de responder para que no parezca robot.
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Pausa antes de responder (segundos): <strong>{botDelay}s</strong></div>
+                            <input type="range" min={0} max={15} value={botDelay} onChange={e => { const v = parseInt(e.target.value); setBotDelay(v); try { localStorage.setItem('wa_bot_delay', String(v)) } catch {} }} style={{ width: '100%', accentColor: '#25d366' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.6rem', color: '#9ca3af' }}><span>0s (inmediato)</span><span>5s</span><span>10s</span><span>15s (natural)</span></div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.5rem 0', borderTop: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Simular "escribiendo..."</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af' }}>Muestra el indicador de escritura antes de cada respuesta</div>
+                            </div>
+                            <button className={`wbv5-btn wbv5-btn-sm ${simulateTyping ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`} onClick={() => setSimulateTyping(s => !s)}>{simulateTyping ? '✅ ON' : '⚪ OFF'}</button>
+                          </div>
+                        </div>
+                      </div>
                       {/* IA global */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
