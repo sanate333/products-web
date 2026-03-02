@@ -295,10 +295,12 @@ export default function WhatsAppBot() {
   const [contactStatus,     setContactStatus]     = useState('Nuevo')
 
   // ── IA / ChatGPT ──────────────────────────────────────────────
-  const [serverOnline,   setServerOnline]   = useState(null)
-  const [aiEnabled,      setAiEnabled]      = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
-  const [aiContactMap,   setAiContactMap]   = useState({})
-  const [openaiKey,      setOpenaiKey]      = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
+  const [serverOnline,       setServerOnline]       = useState(null)
+  const [aiEnabled,          setAiEnabled]          = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
+  const [aiContactMap,       setAiContactMap]       = useState({})
+  // ── Disparadores por contacto (true = activos, false = pausados para ese chat) ──
+  const [triggerContactMap,  setTriggerContactMap]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_trigger_contact_map') || '{}') } catch { return {} } })
+  const [openaiKey,          setOpenaiKey]          = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
   const [aiModel,        setAiModel]        = useState('gpt-4o')
   const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } })
 
@@ -687,6 +689,23 @@ export default function WhatsAppBot() {
     return override === undefined ? aiEnabled : override
   }
 
+  // ── Disparadores por contacto ─────────────────────────────────
+  // Por defecto los triggers están ACTIVOS para todos. El usuario puede pausarlos por contacto.
+  function isTriggerActive(chatId) {
+    if (!chatId) return true
+    const override = triggerContactMap[chatId]
+    return override === undefined ? true : override   // default: ON
+  }
+  function toggleTriggerContact(chatId) {
+    if (!chatId) return
+    setTriggerContactMap(prev => {
+      const updated = { ...prev, [chatId]: !isTriggerActive(chatId) }
+      try { localStorage.setItem('wa_trigger_contact_map', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+    tip(isTriggerActive(chatId) ? '⚡ Disparadores pausados para este contacto' : '⚡ Disparadores reactivados para este contacto')
+  }
+
   // Envía mensaje via IA (n8n → ChatGPT → responde automáticamente)
   async function sendAiReply(chatId, userMsg) {
     if (!openaiKey && !N8N_WH) return
@@ -955,6 +974,16 @@ export default function WhatsAppBot() {
             >
               🤖 IA {aiEnabled ? 'ON' : 'OFF'}
             </button>
+            {/* Contador de contactos con triggers pausados */}
+            {Object.values(triggerContactMap).filter(v => v === false).length > 0 && (
+              <div
+                style={{ marginTop: '.3rem', background: '#fef3c7', borderRadius: 6, padding: '.25rem .5rem', fontSize: '.6rem', color: '#92400e', fontWeight: 700, textAlign: 'center', cursor: 'pointer' }}
+                onClick={() => goPage('disparadores')}
+                title="Contactos con disparadores pausados"
+              >
+                ⚡ {Object.values(triggerContactMap).filter(v => v === false).length} pausado(s)
+              </div>
+            )}
           </div>
         </div>
 
@@ -1087,6 +1116,7 @@ export default function WhatsAppBot() {
                         <div className="wbv5-ci-name">
                           {c.name || c.phone || c.id.split('@')[0]}
                           {c.isGroup && <span style={{ marginLeft: 4, fontSize: '.62rem', color: '#7c3aed' }}>·grupo</span>}
+                          {!isTriggerActive(c.id) && <span className="wbv5-trigger-paused-badge" title="Disparadores pausados">⚡ pausa</span>}
                         </div>
                         <div className="wbv5-ci-prev">{c.preview || 'Sin mensajes'}</div>
                       </div>
@@ -1163,6 +1193,14 @@ export default function WhatsAppBot() {
                             </div>
                           )}
                         </div>
+                        {/* Botón Disparadores por contacto */}
+                        <button
+                          className={`wbv5-btn wbv5-btn-sm ${isTriggerActive(active?.id) ? 'wbv5-btn-trigger-on' : 'wbv5-btn-trigger-off'}`}
+                          onClick={() => toggleTriggerContact(active?.id)}
+                          title={isTriggerActive(active?.id) ? '⚡ Disparadores activos — clic para pausar' : '⚡ Disparadores pausados — clic para reactivar'}
+                        >
+                          ⚡ {isTriggerActive(active?.id) ? 'Auto ON' : 'Auto OFF'}
+                        </button>
                         {/* Botón IA por contacto */}
                         <button
                           className={`wbv5-btn wbv5-btn-sm ${isAiActive(active?.id) ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
@@ -1609,6 +1647,32 @@ export default function WhatsAppBot() {
                 </div>
                 <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditTrigger({ id: `tr${Date.now()}`, name: '', condition: 'no_reply', delay: 60, unit: 'min', message: '', active: true, mediaType: null, mediaUrl: '' })}>+ Nuevo disparador</button>
               </div>
+
+              {/* ── Banner: contactos con disparadores pausados ── */}
+              {Object.values(triggerContactMap).filter(v => v === false).length > 0 && (
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '.65rem 1rem', marginBottom: '.75rem', display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                  <span style={{ fontSize: '1.1rem' }}>⚡</span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '.76rem', fontWeight: 700, color: '#92400e' }}>
+                      {Object.values(triggerContactMap).filter(v => v === false).length} contacto(s) con disparadores pausados
+                    </span>
+                    <span style={{ fontSize: '.66rem', color: '#b45309', marginLeft: '.4rem' }}>
+                      — Actívalo en cada chat desde el botón ⚡ Auto OFF del header
+                    </span>
+                  </div>
+                  <button
+                    className="wbv5-btn wbv5-btn-sm"
+                    style={{ background: '#f59e0b', color: '#fff', border: 'none', flexShrink: 0 }}
+                    onClick={() => {
+                      setTriggerContactMap({})
+                      try { localStorage.setItem('wa_trigger_contact_map', '{}') } catch {}
+                      tip('⚡ Disparadores reactivados para todos los contactos')
+                    }}
+                  >
+                    🔄 Reactivar todos
+                  </button>
+                </div>
+              )}
 
               {/* Panel de edición de disparador */}
               {editTrigger && (
