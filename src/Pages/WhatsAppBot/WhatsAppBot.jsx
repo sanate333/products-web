@@ -2,11 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
-// Si se accede desde localhost, usar ruta relativa (misma origin, sin bloqueo de Chrome PNA)
-// Si se accede desde sanate.store (HTTPS), Chrome bloquea HTTP→localhost; usar localhost:5055 sólo como fallback
-const BU = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ? '/api/whatsapp'
-  : 'http://localhost:5055/api/whatsapp'
+const BU = 'http://localhost:5055/api/whatsapp'
 const H  = { 'x-secret': 'sanate_secret_2025' }
 const HJ = { ...H, 'Content-Type': 'application/json' }
 const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
@@ -865,17 +861,6 @@ export default function WhatsAppBot() {
             <div className="wbv5-content">
               <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>📱 Conexión WhatsApp</div>
               <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Vincula tu WhatsApp al bot para recibir y enviar mensajes automáticamente</div>
-              {/* Aviso si se accede desde HTTPS (sanate.store): Chrome bloquea HTTP→localhost */}
-              {window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' && (
-                <div style={{ background: '#fffbeb', border: '1px solid #f59e0b', borderRadius: 8, padding: '.7rem 1rem', marginBottom: '1rem', fontSize: '.75rem', color: '#92400e' }}>
-                  ⚠️ <strong>Para ver el QR</strong>, accede al panel desde el servidor local:{' '}
-                  <a href="http://localhost:5055/dashboard/whatsapp-bot" target="_blank" rel="noreferrer"
-                     style={{ color: '#1d4ed8', textDecoration: 'underline', fontWeight: 700 }}>
-                    http://localhost:5055/dashboard/whatsapp-bot
-                  </a>
-                  {' '}— Chrome bloquea conexiones HTTPS→localhost.
-                </div>
-              )}
               <div className="wbv5-qr-card">
                 {/* Canvas QR — solo visible cuando NO está conectado */}
                 {status !== 'connected' && (

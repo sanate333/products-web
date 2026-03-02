@@ -7,6 +7,8 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import crypto from "crypto";
+import https from "https";
+import http from "http";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -1927,9 +1929,29 @@ if (fs.existsSync(buildDir)) {
   });
 }
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`SERVER ON :${PORT}`);
-});
+// Intentar iniciar con HTTPS (cert auto-firmado local, instalado como trusted)
+// Esto permite que sanate.store (HTTPS) llame a localhost sin bloqueo de Chrome PNA
+const certDir = path.join(__dirname, 'certs');
+const certPath = path.join(certDir, 'cert.pem');
+const keyPath  = path.join(certDir, 'key.pem');
+
+if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
+  try {
+    const sslOptions = { cert: fs.readFileSync(certPath), key: fs.readFileSync(keyPath) };
+    https.createServer(sslOptions, app).listen(PORT, '0.0.0.0', () => {
+      console.log(`SERVER ON HTTPS :${PORT}`);
+    });
+    // También escuchar en HTTP en puerto 5056 como fallback
+    http.createServer(app).listen(5056, '0.0.0.0', () => {
+      console.log(`SERVER ON HTTP :5056 (fallback)`);
+    });
+  } catch (e) {
+    console.warn('HTTPS failed, falling back to HTTP:', e.message);
+    app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT}`); });
+  }
+} else {
+  app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT}`); });
+}
 
 
 
