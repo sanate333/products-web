@@ -10,6 +10,9 @@ export default function StoreDashboardLayout() {
 export function StoreDashboardRedirect() {
     const { storeSlug } = useParams();
     const location = useLocation();
+
+    if (!storeSlug || storeSlug === 's') return null;
+
     const suffix = (location.pathname || '').replace(new RegExp(`^/dashboard/${storeSlug}`), '') || '';
     const search = location.search || '';
     const hash = location.hash || '';
