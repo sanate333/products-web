@@ -1659,11 +1659,12 @@ app.delete('/api/tiendaDelete', (req, res) => {
 const WA_SECRET = process.env.WA_SECRET || "sanate_secret_2025";
 const waAuthDir = path.join(generatedDir, "wa-auth");
 
-let waSocket   = null;
-let waStatus   = "disconnected"; // 'disconnected' | 'connecting' | 'connected'
-let waQR       = null;           // data-url PNG
-let waPhone    = "";
-let waIniting  = false;
+let waSocket        = null;
+let waStatus        = "disconnected"; // 'disconnected' | 'connecting' | 'connected'
+let waQR            = null;           // data-url PNG
+let waPhone         = "";
+let waIniting       = false;
+let downloadMediaFn = null; // set after Baileys dynamic import
 
 // ── Chat store en memoria ───────────────────────────────────────────────────
 const WA_HISTORY_DAYS = 15;
@@ -1686,7 +1687,7 @@ function extractText(msg) {
   );
 }
 
-function storeMsg(msg) {
+async function storeMsg(msg) {
   const jid = msg?.key?.remoteJid;
   if (!jid || jid === "status@broadcast") return;
 
@@ -1734,6 +1735,23 @@ function storeMsg(msg) {
     else if (m.audioMessage)    { type = "audio";    mimeType = m.audioMessage.mimetype    || "audio/ogg";  }
     else if (m.stickerMessage)  { type = "sticker";  mimeType = "image/webp"; }
     else if (m.documentMessage) { type = "document"; mimeType = m.documentMessage.mimetype || "application/octet-stream"; fileName = m.documentMessage.fileName || ""; }
+
+    // ── Descargar media si hay adjunto ─────────────────────────────────────
+    let mediaUrl = "";
+    if (type !== "text" && type !== "sticker" && downloadMediaFn) {
+      try {
+        const buf  = await downloadMediaFn(msg, "buffer", {});
+        const ext  = (mimeType.split("/")[1] || "bin").split(";")[0];
+        const fname = `${msgId.replace(/[^a-zA-Z0-9_-]/g, "_")}.${ext}`;
+        const fpath = path.join(whatsappUploadsDir, fname);
+        fs.writeFileSync(fpath, buf);
+        mediaUrl = `/uploads/whatsapp/${fname}`;
+        console.log("[WA][storeMsg][media-saved]", fname);
+      } catch (dlErr) {
+        console.warn("[WA][storeMsg][media-download-failed]", dlErr?.message || dlErr);
+      }
+    }
+
     const saved = saveMessage(db, {
       providerMessageId: msgId,
       chatId:    jid,
@@ -1742,7 +1760,7 @@ function storeMsg(msg) {
       timestamp: new Date(ts).toISOString(),
       type,
       text,
-      mediaUrl:  "",
+      mediaUrl,
       mimeType,
       fileName,
       status:    fromMe ? "sent" : "delivered",
@@ -1770,8 +1788,9 @@ async function initWhatsApp() {
   if (waIniting) return;
   waIniting = true;
   try {
-    const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } =
+    const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, downloadMediaMessage } =
       await import("@whiskeysockets/baileys");
+    downloadMediaFn = downloadMediaMessage;
     const { default: pino } = await import("pino");
     const { toDataURL }     = await import("qrcode");
 
@@ -1812,7 +1831,7 @@ async function initWhatsApp() {
 
     // ── Almacenar mensajes entrantes/salientes ─────────────────────────────
     sock.ev.on("messages.upsert", ({ messages: msgs, type }) => {
-      for (const m of msgs) storeMsg(m);
+      for (const m of msgs) storeMsg(m).catch(e => console.error("[WA][storeMsg]", e?.message));
     });
 
     // ── Historial inicial: últimos 15 días al reconectar ──────────────────

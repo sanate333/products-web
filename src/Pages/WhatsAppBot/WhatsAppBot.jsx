@@ -48,10 +48,15 @@ function normChat(c) {
   const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return '' } })() : ''
   const chatId = c.chatId || c.id || ''
   const phone  = cleanPhone(c.phone, chatId)
+  const isGroup = chatId.includes('@g.us')
+  // Limpia nombres que son JIDs (ej: "1234567890@s.whatsapp.net" → usa el teléfono)
+  const rawName = String(c.name || '').trim()
+  const name = (rawName && !rawName.includes('@')) ? rawName : (isGroup ? 'Grupo' : '')
   return {
     id:       chatId,
-    name:     c.name || '',
+    name,
     phone,
+    isGroup,
     photoUrl: c.photoUrl || '',
     preview:  c.lastMessagePreview || c.preview || '',
     time:     hhmm,
@@ -363,7 +368,15 @@ export default function WhatsAppBot() {
 
   async function loadC() {
     const d = await (await fetch(BU + '/chats', { headers: H })).json()
-    setChats((d.chats || []).map(normChat))
+    const loaded = (d.chats || []).map(normChat)
+    setChats(loaded)
+    // Auto-fetch fotos de perfil en segundo plano (primeros 30 chats)
+    loaded.slice(0, 30).forEach(c => {
+      fetch(`${BU}/chats/${encodeURIComponent(c.id)}/photo`, { headers: H })
+        .then(r => r.json())
+        .then(p => { if (p.ok && p.photoUrl) setChats(prev => prev.map(x => x.id === c.id ? { ...x, photoUrl: p.photoUrl } : x)) })
+        .catch(() => {})
+    })
   }
 
   async function loadM(chatId, sc = true) {
@@ -709,16 +722,16 @@ export default function WhatsAppBot() {
                     </div>
                   ) : filteredChats.map((c, i) => (
                     <div key={c.id} className={`wbv5-conv-itm ${active?.id === c.id ? 'active' : ''}`} onClick={() => openChat(c)}>
-                      <div className="wbv5-ci-ava" style={{ background: COLORS_AV[i % 5], color: COLORS_TXT[i % 5], position: 'relative', overflow: 'hidden' }}>
-                        {(c.name || c.phone || '?').substring(0, 2).toUpperCase()}
+                      <div className="wbv5-ci-ava" style={{ background: c.isGroup ? '#ede9fe' : COLORS_AV[i % 5], color: c.isGroup ? '#5b21b6' : COLORS_TXT[i % 5], position: 'relative', overflow: 'hidden' }}>
+                        {c.isGroup ? '👥' : (c.name || c.phone || '?').substring(0, 2).toUpperCase()}
                         {c.photoUrl ? <img src={c.photoUrl} alt="" className="wbv5-ci-ava-img wbv5-ci-ava-abs" onError={e => e.target.style.display='none'} /> : null}
                       </div>
                       <div className="wbv5-ci-body">
-                        <div className="wbv5-ci-name">{c.name || c.phone || c.id}</div>
-                        <div className="wbv5-ci-prev">
-                          {!c.name && c.phone && <span style={{ color: '#6b7280', fontSize: '.65rem', marginRight: '4px' }}>{c.phone}</span>}
-                          {c.preview || 'Sin mensajes'}
+                        <div className="wbv5-ci-name">
+                          {c.name || c.phone || c.id.split('@')[0]}
+                          {c.isGroup && <span style={{ marginLeft: 4, fontSize: '.62rem', color: '#7c3aed' }}>·grupo</span>}
                         </div>
+                        <div className="wbv5-ci-prev">{c.preview || 'Sin mensajes'}</div>
                       </div>
                       <div className="wbv5-ci-meta">
                         <div className="wbv5-ci-time">{c.time || ''}</div>
@@ -743,11 +756,20 @@ export default function WhatsAppBot() {
                         {(active.name || active.phone || '?').substring(0, 2).toUpperCase()}
                         {active.photoUrl ? <img src={active.photoUrl} alt="" className="wbv5-ci-ava-img wbv5-ci-ava-abs" onError={e => e.target.style.display='none'} /> : null}
                       </div>
-                      <div>
-                        <div className="wbv5-cw-name">{active.name || active.phone || active.id}</div>
-                        <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div className="wbv5-cw-name">
+                          {active.isGroup && <span style={{ fontSize: '.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginRight: 5 }}>Grupo</span>}
+                          {active.name || active.phone || active.id}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', flexWrap: 'wrap' }}>
+                          <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
+                          {contactTags.map(tag => {
+                            const td = availableTags.find(t => t.name === tag)
+                            return <span key={tag} className="wbv5-tag-chip" style={{ '--tc': td?.color || '#3b82f6', fontSize: '.62rem', padding: '1px 7px' }}>{tag}</span>
+                          })}
+                        </div>
                       </div>
-                      <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
+                      <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0 }}>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
                       </div>
                     </div>
