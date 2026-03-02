@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
-import Header from '../Header/Header'
 
 const BU = 'http://localhost:5055/api/whatsapp'
 const MEDIA_BASE = BU.replace('/api/whatsapp', '') // http://localhost:5055
@@ -198,7 +197,6 @@ export default function WhatsAppBot() {
     const saved = activeGet()
     if (saved && !active) {
       setActive(saved)
-      setShowContact(true)
       loadM(saved.id, false)
     }
   }, [status]) // eslint-disable-line
@@ -411,7 +409,7 @@ export default function WhatsAppBot() {
   }
 
   async function openChat(c) {
-    setActive(c); setShowContact(true)
+    setActive(c); setShowContact(false)
     activePut(c)
     await loadM(c.id)
     setChats(p => p.map(x => x.id === c.id ? { ...x, unread: 0 } : x))
@@ -578,7 +576,6 @@ export default function WhatsAppBot() {
 
   return (
     <div className="containerGrid">
-      <Header />
       <div className="wbv5-root">
 
         {/* ── SIDEBAR ── */}
