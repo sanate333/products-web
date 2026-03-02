@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
+import Header from '../Header/Header'
 
 const DEFAULT_BU     = 'http://localhost:5055/api/whatsapp'
 const DEFAULT_SECRET = 'sanate_secret_2025'
@@ -120,9 +121,9 @@ const FLOWS_LIST = [
 ]
 
 const DEFAULT_TRIGGERS = [
-  { id: 'tr1', name: 'Sin respuesta 1h', condition: 'no_reply',       delay: 60,   unit: 'min', templateId: 't1', message: '¡Hola {nombre}! 👋 Vi que revisaste nuestra info.\n¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy 🎁', active: true,  mediaType: null, mediaUrl: '' },
-  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',    delay: 180,  unit: 'min', templateId: 't2', message: 'Hola {nombre} 😊 Quería enviarte nuestra mejor oferta de hoy.\n¿Cuál es tu producto favorito? 🌿\nTe armo un combo personalizado 💚', active: true,  mediaType: null, mediaUrl: '' },
-  { id: 'tr3', name: 'Cierre 24h', condition: 'no_purchase',          delay: 1440, unit: 'min', templateId: 't4', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr1', name: 'Sin respuesta 1h',      condition: 'no_reply',    delay: 60,   unit: 'min', producto: 'General', message: '¡Hola {nombre}! 👋 Vi que revisaste nuestra info.\n¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy 🎁', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',       delay: 180,  unit: 'min', producto: 'General', message: 'Hola {nombre} 😊 Quería enviarte nuestra mejor oferta de hoy.\n¿Cuál es tu producto favorito? 🌿\nTe armo un combo personalizado 💚', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
 ]
 
 // ── Mapa de geo por código de país / área Colombia ──────────────
@@ -306,9 +307,15 @@ export default function WhatsAppBot() {
 
   // ── Entrenamiento IA ──────────────────────────────────────────
   const [trainingPrompt,   setTrainingPrompt]   = useState(() => { try { return localStorage.getItem('wa_training_prompt') || TRAINING_TEMPLATE } catch { return TRAINING_TEMPLATE } })
-  const [trainingTab,      setTrainingTab]      = useState('contexto')
+  const [trainingTab,      setTrainingTab]      = useState('asistente')
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
   const [trainingChars,    setTrainingChars]     = useState(0)
+  // Wizard de entrenamiento
+  const [wizardData, setWizardData] = useState({
+    empresa: '', descripcion: '', productos: '', precios: '', combos: '',
+    estilo: 'amigable', objeciones: '', envio: '', horario: '', extra: ''
+  })
+  const [generatingWizard, setGeneratingWizard] = useState(false)
 
   // ── Clientes ──────────────────────────────────────────────────
   const [clientes,       setClientes]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_clientes') || '[]') } catch { return [] } })
@@ -327,6 +334,9 @@ export default function WhatsAppBot() {
   // ── Backend URL & Secret ──────────────────────────────────────
   const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
   const [secretInput,     setSecretInput]     = useState(() => H['x-secret'])
+
+  // ── AI reply generator ────────────────────────────────────────
+  const [generatingAiReply, setGeneratingAiReply] = useState(false)
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -822,26 +832,94 @@ export default function WhatsAppBot() {
   }
   async function generateTriggerMsg(triggerName) {
     if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI primero'); return }
-    setGeneratingTrigger(true); tip('🤖 Generando mensaje de seguimiento con IA...')
+    const producto = editTrigger?.producto || 'General'
+    const condition = editTrigger?.condition || 'no_reply'
+    const delay = editTrigger?.delay || 60
+    const unit = editTrigger?.unit || 'min'
+    setGeneratingTrigger(true); tip('🤖 Generando mensaje ganador con IA...')
     try {
+      const condLabel = { no_reply: 'sin respuesta', seen: 'visto sin responder', no_purchase: 'sin compra', keyword: 'por palabra clave', first_message: 'primer mensaje' }[condition] || condition
+      const timeLabel = `${delay} ${unit === 'min' ? 'minutos' : unit === 'h' ? 'horas' : 'días'}`
+      const contextSnip = trainingPrompt ? trainingPrompt.substring(0, 600) : ''
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
         body: JSON.stringify({
           model: aiModel,
           messages: [
-            { role: 'system', content: `Eres el mejor cerrador de ventas del mundo via WhatsApp. Basándote en este contexto de negocio: "${trainingPrompt.substring(0, 500)}"` },
-            { role: 'user', content: `Genera un mensaje de seguimiento de WhatsApp para el trigger "${triggerName}". Debe ser: natural, humano, con 1-2 emojis relevantes, máximo 3 líneas, y terminar con una pregunta de cierre irresistible. Usa {nombre} donde corresponde.` },
+            { role: 'system', content: `Eres el mejor cerrador de ventas del mundo por WhatsApp.${contextSnip ? ` Contexto del negocio: "${contextSnip}"` : ''}\n\nReglas de oro:\n1. Primero conecta emocionalmente (1 frase)\n2. Menciona el producto "${producto}" naturalmente\n3. Da 1 beneficio clave (no precio aún)\n4. Cierra con UNA pregunta irresistible\n5. Máximo 3-4 líneas, 1-2 emojis, tono humano y cálido` },
+            { role: 'user', content: `Genera el mensaje perfecto de seguimiento para WhatsApp.\nTrigger: "${triggerName}"\nProducto/Plantilla: "${producto}"\nSituación: cliente ${condLabel} después de ${timeLabel}\nUsa {nombre} para personalizar. Responde SOLO el mensaje, sin explicaciones.` },
           ],
-          max_tokens: 200,
+          max_tokens: 250,
         }),
       })
       const data = await res.json()
-      const msg = data.choices?.[0]?.message?.content || ''
+      const msg = data.choices?.[0]?.message?.content?.trim() || ''
       if (msg && editTrigger) setEditTrigger(prev => ({ ...prev, message: msg }))
-      tip('✅ Mensaje generado')
+      tip('✅ Mensaje ganador generado ✨')
     } catch { tip('⚠️ Error generando mensaje') }
     setGeneratingTrigger(false)
+  }
+
+  // ── Generar respuesta IA para el último mensaje del cliente ────
+  async function generateAiReply() {
+    if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI en Ajustes'); return }
+    const lastClientMsg = [...msgs].reverse().find(m => m.dir === 'r')
+    if (!lastClientMsg) { tip('⚠️ No hay mensajes del cliente para analizar'); return }
+    setGeneratingAiReply(true); tip('🤖 Analizando ángulo de venta...')
+    try {
+      const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
+      const history = msgs.slice(-12).map(m => ({ role: m.dir === 'r' ? 'user' : 'assistant', content: m.txt || '[archivo]' }))
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: aiModel || 'gpt-4o',
+          messages: [
+            { role: 'system', content: `Eres el mejor asesor de ventas por WhatsApp del mundo.\n\nContexto del negocio:\n${ctx}\n\nREGLAS ABSOLUTAS:\n1. Si el cliente hizo una PREGUNTA o pide información → da info clara del producto + beneficios + modo de uso. NO des precio todavía.\n2. Si el cliente muestra INTERÉS DE COMPRA ("cuánto cuesta", "lo quiero", "cómo pago") → da precio + oferta irresistible + pregunta de cierre.\n3. Primero CONECTA emocionalmente (1 frase), luego informa o vende.\n4. Máximo 3-4 líneas. Tono humano, cálido, ${wizardData.estilo || 'amigable'}. 1-2 emojis estratégicos.\n5. Termina SIEMPRE con una pregunta que invite a continuar o a comprar.\n6. Nunca suenes a robot ni a plantilla. Sé natural.` },
+            ...history,
+            { role: 'user', content: `El cliente acaba de escribir: "${lastClientMsg.txt}"\n\nAnaliza si es una pregunta informativa o si hay intención de compra, y genera LA MEJOR respuesta de ventas posible. Responde SOLO el mensaje para enviar al cliente, sin explicaciones adicionales.` },
+          ],
+          max_tokens: 350,
+        }),
+      })
+      const data = await res.json()
+      const reply = data.choices?.[0]?.message?.content?.trim() || ''
+      if (reply) { setInp(reply); tip('✅ Respuesta IA lista — revísala y envía 🚀') }
+      else tip('⚠️ No se generó respuesta')
+    } catch { tip('⚠️ Error al generar respuesta con IA') }
+    setGeneratingAiReply(false)
+  }
+
+  // ── Generar entrenamiento ganador desde el wizard ──────────────
+  async function generateTrainingWizard() {
+    if (!openaiKey) { tip('⚠️ Configura tu API Key de OpenAI primero'); return }
+    const { empresa, descripcion, productos, precios, combos, estilo, objeciones, envio, horario, extra } = wizardData
+    if (!empresa && !productos) { tip('⚠️ Llena al menos el nombre de empresa y tus productos'); return }
+    setGeneratingWizard(true); tip('🤖 Generando entrenamiento ganador...')
+    try {
+      const estiloLabel = { amigable: 'amigable y cercano', profesional: 'profesional y formal', energico: 'energético y motivador', suave: 'suave y empático' }[estilo] || estilo
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({
+          model: aiModel || 'gpt-4o',
+          messages: [
+            { role: 'system', content: 'Eres el mejor experto del mundo en entrenar bots de ventas por WhatsApp. Generas prompts de sistema completos, naturales y altamente efectivos que convierten conversaciones en ventas. El bot PRIMERO debe conservar la conversación siendo amigable e informativo, y DESPUÉS buscar el cierre de ventas de forma natural y sin presión.' },
+            { role: 'user', content: `Genera el entrenamiento completo para un bot de WhatsApp cerrador de ventas con esta información del negocio:\n\n🏢 NEGOCIO: ${empresa || 'Tienda online'}\n📝 DESCRIPCIÓN: ${descripcion || 'Productos y servicios'}\n🛍️ PRODUCTOS: ${productos || 'No especificado'}\n💰 PRECIOS: ${precios || 'No especificado'}\n🎁 COMBOS/OFERTAS: ${combos || 'Sin combos especiales'}\n💬 ESTILO: ${estiloLabel}\n🔄 OBJECIONES COMUNES: ${objeciones || '"Está muy caro", "Necesito pensarlo"'}\n🚚 ENVÍO/LOGÍSTICA: ${envio || 'No especificado'}\n🕐 HORARIO: ${horario || 'No especificado'}\n✨ INFO ADICIONAL: ${extra || 'Ninguna'}\n\nEl entrenamiento DEBE incluir en formato claro con emojis:\n1. 🎯 Personalidad del asistente (primero conecta, luego vende)\n2. 🛍️ Productos y precios detallados\n3. 💥 Combos y ofertas especiales\n4. 💬 Estilo de conversación (conectar → informar → cerrar)\n5. ✅ Técnicas de cierre natural\n6. 🔄 Manejo de objeciones\n7. 🚫 Reglas de nunca hacer\n\nIMPORTANTE: El bot SIEMPRE conserva primero e intenta cierre de ventas después de forma natural y sin presión.` },
+          ],
+          max_tokens: 2500,
+        }),
+      })
+      const data = await res.json()
+      const generated = data.choices?.[0]?.message?.content?.trim() || ''
+      if (generated) {
+        saveTraining(generated)
+        setTrainingTab('contexto')
+        tip('🎉 Entrenamiento ganador generado y guardado ✨')
+      } else tip('⚠️ No se generó contenido. Verifica tu API Key')
+    } catch { tip('⚠️ Error generando entrenamiento. Verifica tu API Key') }
+    setGeneratingWizard(false)
   }
 
   function copyText(txt) {
@@ -931,6 +1009,7 @@ export default function WhatsAppBot() {
 
   return (
     <div className="containerGrid">
+      <Header />
       <div className="wbv5-root">
 
         {/* ── SIDEBAR ── */}
@@ -1335,6 +1414,16 @@ export default function WhatsAppBot() {
                             onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
                             placeholder={sending ? 'Enviando...' : 'Escribe un mensaje...'}
                           />
+                          {aiEnabled && (
+                            <button
+                              className={`wbv5-cw-ai-reply-btn${generatingAiReply ? ' loading' : ''}`}
+                              title="🤖 Generar respuesta IA — analiza el último mensaje y genera el mejor ángulo de venta"
+                              onClick={generateAiReply}
+                              disabled={generatingAiReply || !msgs.some(m => m.dir === 'r')}
+                            >
+                              {generatingAiReply ? '⏳' : '🤖'}
+                            </button>
+                          )}
                           {inp.trim() ? (
                             <button className="wbv5-cw-send" onClick={send} disabled={sending}>
                               {sending ? '⏳' : '➤'}
@@ -1645,7 +1734,7 @@ export default function WhatsAppBot() {
                   <div style={{ fontSize: '.85rem', fontWeight: 800 }}>⚡ Disparadores</div>
                   <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes automáticos basados en tiempo e interacción del cliente</div>
                 </div>
-                <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditTrigger({ id: `tr${Date.now()}`, name: '', condition: 'no_reply', delay: 60, unit: 'min', message: '', active: true, mediaType: null, mediaUrl: '' })}>+ Nuevo disparador</button>
+                <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditTrigger({ id: `tr${Date.now()}`, name: '', condition: 'no_reply', delay: 60, unit: 'min', producto: '', message: '', active: true, mediaType: null, mediaUrl: '' })}>+ Nuevo disparador</button>
               </div>
 
               {/* ── Banner: contactos con disparadores pausados ── */}
@@ -1686,6 +1775,22 @@ export default function WhatsAppBot() {
                       <div className="wbv5-form-row">
                         <div className="wbv5-form-lbl">Nombre del disparador</div>
                         <input className="wbv5-form-input" value={editTrigger.name} onChange={e => setEditTrigger(p => ({ ...p, name: e.target.value }))} placeholder="Ej: Sin respuesta 1 hora" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">📦 Producto / Plantilla <span style={{ fontWeight: 400, color: '#9ca3af' }}>(nombre del producto a promover)</span></div>
+                        <input
+                          className="wbv5-form-input"
+                          value={editTrigger.producto || ''}
+                          onChange={e => setEditTrigger(p => ({ ...p, producto: e.target.value }))}
+                          placeholder="Ej: Combo Detox 30 días, Pack Energía Total..."
+                          list="productos-list"
+                        />
+                        <datalist id="productos-list">
+                          {trainingPrompt.match(/^[-•·]\s*(.+?):/gm)?.slice(0, 12).map((m, i) => (
+                            <option key={i} value={m.replace(/^[-•·]\s*/, '').replace(/:.*/, '').trim()} />
+                          ))}
+                        </datalist>
+                        <div style={{ fontSize: '.6rem', color: '#9ca3af', marginTop: '.15rem' }}>💡 La IA genera el mensaje específico para este producto cuando presionas 🤖 Generar</div>
                       </div>
                       <div className="wbv5-form-row">
                         <div className="wbv5-form-lbl">Condición</div>
@@ -1758,9 +1863,10 @@ export default function WhatsAppBot() {
                   ) : triggers.map(t => (
                     <div key={t.id} className="wbv5-trigger-row">
                       <div className="wbv5-tr-left">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.18rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.18rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#111827' }}>{t.name || 'Sin nombre'}</span>
                           <span className={`wbv5-badge ${t.active ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '.6rem' }}>{t.active ? '✅ Activo' : '⏸ Pausado'}</span>
+                          {t.producto && <span style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 20, padding: '.1rem .5rem', fontSize: '.62rem', fontWeight: 700 }}>📦 {t.producto}</span>}
                         </div>
                         <div style={{ fontSize: '.68rem', color: '#6b7280', display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}>
                           <span>⏱ {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'días'}</span>
@@ -1827,6 +1933,7 @@ export default function WhatsAppBot() {
               {/* Tabs */}
               <div style={{ display: 'flex', gap: '.3rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
                 {[
+                  { id: 'asistente',  label: '🚀 Asistente IA' },
                   { id: 'contexto',   label: '🏢 Contexto empresa' },
                   { id: 'prompt',     label: '💡 Prompt del sistema' },
                   { id: 'memoria',    label: '🧠 Memoria n8n' },
@@ -1835,6 +1942,94 @@ export default function WhatsAppBot() {
                   <button key={tab.id} className={`wbv5-btn wbv5-btn-sm ${trainingTab === tab.id ? 'wbv5-btn-blue' : 'wbv5-btn-outline'}`} onClick={() => setTrainingTab(tab.id)}>{tab.label}</button>
                 ))}
               </div>
+
+              {/* Tab: Asistente IA — Wizard */}
+              {trainingTab === 'asistente' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">🚀 Asistente de entrenamiento IA</div>
+                    <span className="wbv5-badge" style={{ background: '#ede9fe', color: '#5b21b6' }}>✨ Wizard</span>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.73rem', color: '#374151', marginBottom: '.85rem', lineHeight: 1.6, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '.65rem .9rem' }}>
+                      🎯 <strong>¿Cómo funciona?</strong> Llena los datos de tu negocio y la IA genera automáticamente el entrenamiento ganador. El bot primero <strong>conserva la conversación siendo amigable</strong>, y después busca el <strong>cierre de ventas de forma natural</strong>.
+                    </div>
+                    <div style={{ display: 'grid', gap: '.6rem' }}>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🏢 Nombre de tu empresa / negocio *</div>
+                        <input className="wbv5-form-input" value={wizardData.empresa} onChange={e => setWizardData(p => ({ ...p, empresa: e.target.value }))} placeholder="Ej: Sanate Colombia" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">📝 ¿Qué vendes? Descripción breve</div>
+                        <input className="wbv5-form-input" value={wizardData.descripcion} onChange={e => setWizardData(p => ({ ...p, descripcion: e.target.value }))} placeholder="Ej: Suplementos naturales para salud y bienestar" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🛍️ Productos principales *</div>
+                        <textarea className="wbv5-form-input" rows={3} value={wizardData.productos} onChange={e => setWizardData(p => ({ ...p, productos: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 días\n- Pack Energía Total\n- Kit Bienestar Premium'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">💰 Precios de tus productos *</div>
+                        <textarea className="wbv5-form-input" rows={3} value={wizardData.precios} onChange={e => setWizardData(p => ({ ...p, precios: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 días: $150.000\n- Pack Energía Total: $89.000\n- Kit Bienestar Premium: $220.000'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🎁 Combos y ofertas especiales</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.combos} onChange={e => setWizardData(p => ({ ...p, combos: e.target.value }))} placeholder="Ej: 2x1 en Detox, envío gratis por compras +$200.000" style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">💬 Estilo de comunicación del bot</div>
+                        <select className="wbv5-form-input" value={wizardData.estilo} onChange={e => setWizardData(p => ({ ...p, estilo: e.target.value }))}>
+                          <option value="amigable">😊 Amigable y cercano</option>
+                          <option value="profesional">👔 Profesional y formal</option>
+                          <option value="energico">⚡ Energético y motivador</option>
+                          <option value="suave">🌸 Suave y empático</option>
+                        </select>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🔄 Objeciones comunes (cómo las manejas)</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.objeciones} onChange={e => setWizardData(p => ({ ...p, objeciones: e.target.value }))} placeholder={'Ej: "Está muy caro" → Ofrezco plan de pago o combo más económico'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">🚚 Envío y logística</div>
+                          <input className="wbv5-form-input" value={wizardData.envio} onChange={e => setWizardData(p => ({ ...p, envio: e.target.value }))} placeholder="Ej: Todo Colombia, 2-3 días, $12.000" />
+                        </div>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">🕐 Horario de atención</div>
+                          <input className="wbv5-form-input" value={wizardData.horario} onChange={e => setWizardData(p => ({ ...p, horario: e.target.value }))} placeholder="Ej: Lun-Sáb 8am-6pm" />
+                        </div>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">✨ Info adicional (métodos de pago, certificaciones, testimonios...)</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.extra} onChange={e => setWizardData(p => ({ ...p, extra: e.target.value }))} placeholder="Nequi, Bancolombia, contraentrega, 500+ clientes satisfechos..." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                    </div>
+                    {!openaiKey && (
+                      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.6rem .9rem', fontSize: '.73rem', color: '#713f12', marginTop: '.75rem' }}>
+                        ⚠️ Necesitas tu <strong>API Key de OpenAI</strong> configurada en <strong>Ajustes → API & Tokens</strong> para generar con IA.
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '.5rem', marginTop: '.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        className={`wbv5-btn wbv5-btn-sm ${generatingWizard ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`}
+                        onClick={generateTrainingWizard}
+                        disabled={generatingWizard || !openaiKey}
+                        style={{ flex: 1, minWidth: 200, fontSize: '.78rem', padding: '.55rem 1rem' }}
+                      >
+                        {generatingWizard ? '⏳ Generando entrenamiento ganador...' : '🎯 Generar entrenamiento ganador'}
+                      </button>
+                      <button
+                        className="wbv5-btn wbv5-btn-outline wbv5-btn-sm"
+                        onClick={() => setWizardData({ empresa: '', descripcion: '', productos: '', precios: '', combos: '', estilo: 'amigable', objeciones: '', envio: '', horario: '', extra: '' })}
+                      >
+                        🗑️ Limpiar
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '.65rem', color: '#9ca3af', marginTop: '.4rem', lineHeight: 1.5 }}>
+                      💡 El resultado se guardará automáticamente en <strong>Contexto empresa</strong>. Puedes editarlo después.
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Tab: Contexto empresa */}
               {trainingTab === 'contexto' && (
