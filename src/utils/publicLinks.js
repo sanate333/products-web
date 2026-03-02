@@ -23,6 +23,6 @@ const storePrefix = () => {
 };
 
 export const buildProductPath = (idProducto, title = '') =>
-    `${storePrefix()}/producto/${toShortProductSlug(title)}`;
+    `${storePrefix()}/producto/${idProducto}/${toShortProductSlug(title)}`;
 
 export const buildCatalogPath = () => `${storePrefix()}/catalogo`;
