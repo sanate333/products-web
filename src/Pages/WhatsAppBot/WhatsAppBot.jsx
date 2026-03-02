@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
@@ -135,15 +136,23 @@ export default function WhatsAppBot() {
   const [pan,         setPan]         = useState({ x: 30, y: 18 })
   const [cfgTab,      setCfgTab]      = useState('conn')
 
-  const [attachOpen,   setAttachOpen]   = useState(false)
-  const [sending,      setSending]      = useState(false)
+  const [attachOpen,        setAttachOpen]        = useState(false)
+  const [sending,           setSending]           = useState(false)
+  const [isRecording,       setIsRecording]       = useState(false)
+  const [recordingSeconds,  setRecordingSeconds]  = useState(0)
+  const [showEmojiPanel,    setShowEmojiPanel]    = useState(false)
+  const [emojiTab,          setEmojiTab]          = useState('emojis')
+  const [showTemplatesModal,setShowTemplatesModal]= useState(false)
 
-  const msgsRef    = useRef(null)
-  const qrRef      = useRef(null)
-  const dragRef    = useRef({})
-  const fileImgRef = useRef(null)
-  const fileAudRef = useRef(null)
-  const fileDocRef = useRef(null)
+  const msgsRef          = useRef(null)
+  const qrRef            = useRef(null)
+  const dragRef          = useRef({})
+  const fileImgRef       = useRef(null)
+  const fileAudRef       = useRef(null)
+  const fileDocRef       = useRef(null)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef   = useRef([])
+  const emojiPanelRef    = useRef(null)
 
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
@@ -205,6 +214,66 @@ export default function WhatsAppBot() {
     window.addEventListener('mouseup', onUp)
     return () => { window.removeEventListener('mousemove', onMove); window.removeEventListener('mouseup', onUp) }
   }, [zoom, pan])
+
+  // Recording timer
+  useEffect(() => {
+    if (!isRecording) { setRecordingSeconds(0); return }
+    const iv = setInterval(() => setRecordingSeconds(s => s + 1), 1000)
+    return () => clearInterval(iv)
+  }, [isRecording])
+
+  // Close emoji panel on outside click
+  useEffect(() => {
+    if (!showEmojiPanel) return
+    const handler = e => {
+      if (emojiPanelRef.current && !emojiPanelRef.current.contains(e.target)) {
+        setShowEmojiPanel(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showEmojiPanel])
+
+  const formatRecTime = s => `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const recorder = new MediaRecorder(stream)
+      audioChunksRef.current = []
+      recorder.ondataavailable = e => { if (e.data.size > 0) audioChunksRef.current.push(e.data) }
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const url  = URL.createObjectURL(blob)
+        const t    = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        setMsgs(prev => [...prev, { id: Date.now().toString(), dir: 's', txt: '', time: t, type: 'audio', mediaUrl: url, status: 'sent' }])
+        stream.getTracks().forEach(tr => tr.stop())
+        scroll()
+      }
+      recorder.start()
+      mediaRecorderRef.current = recorder
+      setIsRecording(true)
+    } catch { tip('❌ No se pudo acceder al micrófono. Verifica permisos del navegador.') }
+  }
+
+  function stopRecording() {
+    if (mediaRecorderRef.current?.state !== 'inactive') mediaRecorderRef.current.stop()
+    setIsRecording(false)
+  }
+
+  const QUICK_TEMPLATES = [
+    { id: 't1', name: 'Bienvenida', category: 'Saludo',  description: '¡Hola! ¿En qué te puedo ayudar hoy?' },
+    { id: 't2', name: 'Seguimiento', category: 'Ventas', description: 'Hola {nombre}, ¿pudiste revisar la información que te envié?' },
+    { id: 't3', name: 'Pago pendiente', category: 'Cobro', description: 'Hola, te recordamos que tienes un pago pendiente. ¿Deseas proceder?' },
+    { id: 't4', name: 'Confirmación pedido', category: 'Pedidos', description: 'Tu pedido #{numero} ha sido confirmado. ¡Gracias por tu compra!' },
+  ]
+
+  function sendTemplate(tpl) {
+    const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+    setMsgs(prev => [...prev, { id: Date.now().toString(), dir: 's', txt: `📋 ${tpl.name} — ${tpl.description}`, time: t, type: 'text', status: 'sent' }])
+    setShowTemplatesModal(false)
+    scroll()
+  }
 
   // ─── API ──────────────────────────────────────────
   async function ping() {
@@ -681,24 +750,96 @@ export default function WhatsAppBot() {
                     <input ref={fileAudRef} type="file" accept="audio/*" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f,'audio'); e.target.value='' }} />
                     <input ref={fileDocRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f,'document'); e.target.value='' }} />
 
+                    {/* Modal de plantillas rápidas */}
+                    {showTemplatesModal && (
+                      <div className="wbv5-tpl-overlay" onClick={() => setShowTemplatesModal(false)}>
+                        <div className="wbv5-tpl-popup" onClick={e => e.stopPropagation()}>
+                          <div className="wbv5-tpl-head">
+                            <strong>Enviar plantilla</strong>
+                            <button onClick={() => setShowTemplatesModal(false)}>✕</button>
+                          </div>
+                          <div className="wbv5-tpl-list">
+                            {QUICK_TEMPLATES.map(tpl => (
+                              <button key={tpl.id} className="wbv5-tpl-opt" onClick={() => sendTemplate(tpl)}>
+                                <span className="wbv5-tpl-cat">{tpl.category}</span>
+                                <strong>{tpl.name}</strong>
+                                <small>{tpl.description}</small>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="wbv5-cw-input-bar" style={{ position: 'relative' }}>
-                      {attachOpen && (
-                        <div className="wbv5-attach-menu">
-                          <button onClick={() => { setAttachOpen(false); fileImgRef.current?.click() }}>🖼️ Imagen / Video</button>
-                          <button onClick={() => { setAttachOpen(false); fileAudRef.current?.click() }}>🎵 Audio</button>
-                          <button onClick={() => { setAttachOpen(false); fileDocRef.current?.click() }}>📄 Documento</button>
+                      {/* Emoji panel */}
+                      {showEmojiPanel && (
+                        <div className="wbv5-emoji-panel" ref={emojiPanelRef}>
+                          <div className="wbv5-emoji-tabs">
+                            <button className={emojiTab === 'emojis' ? 'active' : ''} onClick={() => setEmojiTab('emojis')}>😊 Emojis</button>
+                            <button className={emojiTab === 'stickers' ? 'active' : ''} onClick={() => setEmojiTab('stickers')}>Stickers</button>
+                          </div>
+                          {emojiTab === 'emojis' ? (
+                            <EmojiPicker
+                              onEmojiClick={data => { setInp(prev => prev + data.emoji); setShowEmojiPanel(false) }}
+                              height={320} width="100%"
+                              searchPlaceholder="Buscar emoji..."
+                              previewConfig={{ showPreview: false }}
+                              skinTonesDisabled
+                            />
+                          ) : (
+                            <div className="wbv5-sticker-grid">
+                              {['😂🔥','❤️✨','👏🎉','😍💯','🙏👍','😭🤣','💪🎯','🌟⭐','🎁🎊','😅😎'].flatMap(pair =>
+                                (pair.match(/./gu) || []).map((em, i) => (
+                                  <button key={pair+i} className="wbv5-sticker-item" onClick={() => {
+                                    const t = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})
+                                    setMsgs(prev => [...prev, { id: Date.now().toString(), dir:'s', txt:em, time:t, type:'text', status:'sent' }])
+                                    setShowEmojiPanel(false); scroll()
+                                  }}>{em}</button>
+                                ))
+                              )}
+                              <p className="wbv5-sticker-note">Los stickers del celular se sincronizan cuando conectas tu WhatsApp.</p>
+                            </div>
+                          )}
                         </div>
                       )}
-                      <button className="wbv5-cw-attach" title="Adjuntar" onClick={() => setAttachOpen(o => !o)}>📎</button>
-                      <input
-                        className="wbv5-cw-input" value={inp} disabled={sending}
-                        onChange={e => setInp(e.target.value)}
-                        onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
-                        placeholder={sending ? 'Enviando...' : 'Escribe un mensaje...'}
-                      />
-                      <button className="wbv5-cw-send" onClick={send} disabled={sending}>
-                        {sending ? '⏳' : '➤'}
-                      </button>
+
+                      {isRecording ? (
+                        <div className="wbv5-recording-bar">
+                          <span className="wbv5-rec-dot" />
+                          <span className="wbv5-rec-time">{formatRecTime(recordingSeconds)}</span>
+                          <span className="wbv5-rec-label">Grabando audio...</span>
+                          <button className="wbv5-rec-stop" onClick={stopRecording}>⏹ Detener</button>
+                        </div>
+                      ) : (
+                        <>
+                          {attachOpen && (
+                            <div className="wbv5-attach-menu">
+                              <button onClick={() => { setAttachOpen(false); fileImgRef.current?.click() }}>🖼️ Imagen / Video</button>
+                              <button onClick={() => { setAttachOpen(false); fileAudRef.current?.click() }}>🎵 Audio</button>
+                              <button onClick={() => { setAttachOpen(false); fileDocRef.current?.click() }}>📄 Documento</button>
+                            </div>
+                          )}
+                          <button className="wbv5-cw-emoji-btn" title="Emoji y stickers"
+                            onClick={() => setShowEmojiPanel(o => !o)}>😊</button>
+                          <button className="wbv5-cw-attach" title="Adjuntar" onClick={() => setAttachOpen(o => !o)}>📎</button>
+                          <button className="wbv5-cw-tpl-btn" title="Plantillas rápidas"
+                            onClick={() => setShowTemplatesModal(true)}>📋</button>
+                          <input
+                            className="wbv5-cw-input" value={inp} disabled={sending}
+                            onChange={e => setInp(e.target.value)}
+                            onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
+                            placeholder={sending ? 'Enviando...' : 'Escribe un mensaje...'}
+                          />
+                          {inp.trim() ? (
+                            <button className="wbv5-cw-send" onClick={send} disabled={sending}>
+                              {sending ? '⏳' : '➤'}
+                            </button>
+                          ) : (
+                            <button className="wbv5-cw-send wbv5-cw-mic" title="Grabar voz" onClick={startRecording}>🎤</button>
+                          )}
+                        </>
+                      )}
                     </div>
                   </>
                 )}

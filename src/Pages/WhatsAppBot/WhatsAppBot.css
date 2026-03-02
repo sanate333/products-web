@@ -1200,3 +1200,100 @@
   color: inherit; text-decoration: none; margin-top: 4px;
 }
 .wbv5-msg-doc:hover { background: rgba(0,0,0,.12); }
+
+/* ── EMOJI PANEL ─────────────────────────────────────────────── */
+.wbv5-emoji-panel {
+  position: absolute; bottom: calc(100% + 6px); left: 0;
+  width: 340px; max-width: 95vw;
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.14); z-index: 200; overflow: hidden;
+}
+.wbv5-emoji-tabs {
+  display: flex; border-bottom: 1px solid #e5e7eb;
+}
+.wbv5-emoji-tabs button {
+  flex: 1; padding: .55rem; background: none; border: none;
+  cursor: pointer; font-size: .82rem; font-weight: 600; color: #6b7280;
+  transition: background .12s;
+}
+.wbv5-emoji-tabs button.active { color: #25d366; border-bottom: 2px solid #25d366; }
+.wbv5-emoji-tabs button:hover:not(.active) { background: #f9fafb; }
+.wbv5-sticker-grid {
+  display: flex; flex-wrap: wrap; gap: .25rem;
+  padding: .75rem; max-height: 280px; overflow-y: auto;
+}
+.wbv5-sticker-item {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.6rem; line-height: 1; padding: .25rem;
+  border-radius: 6px; transition: background .1s;
+}
+.wbv5-sticker-item:hover { background: #f3f4f6; }
+.wbv5-sticker-note {
+  width: 100%; font-size: .7rem; color: #9ca3af;
+  text-align: center; padding: .5rem 0 0; margin: 0;
+}
+
+/* ── EMOJI & TEMPLATE BUTTONS ────────────────────────────────── */
+.wbv5-cw-emoji-btn, .wbv5-cw-tpl-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.05rem; padding: 0 .45rem;
+  color: #6b7280; flex-shrink: 0;
+  transition: color .15s;
+}
+.wbv5-cw-emoji-btn:hover, .wbv5-cw-tpl-btn:hover { color: #25d366; }
+
+/* ── RECORDING BAR ───────────────────────────────────────────── */
+.wbv5-recording-bar {
+  display: flex; align-items: center; gap: .6rem;
+  width: 100%; padding: 0 .5rem;
+}
+.wbv5-rec-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: #ef4444; animation: recPulse 1s infinite;
+  flex-shrink: 0;
+}
+@keyframes recPulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+.wbv5-rec-time { font-variant-numeric: tabular-nums; font-weight: 700; color: #ef4444; font-size: .9rem; }
+.wbv5-rec-label { flex: 1; font-size: .82rem; color: #6b7280; }
+.wbv5-rec-stop {
+  background: #fee2e2; border: none; cursor: pointer;
+  color: #b91c1c; border-radius: 8px; padding: .35rem .75rem;
+  font-size: .8rem; font-weight: 600; white-space: nowrap;
+  transition: background .15s;
+}
+.wbv5-rec-stop:hover { background: #fecaca; }
+.wbv5-cw-mic { background: none !important; }
+
+/* ── TEMPLATES MODAL ─────────────────────────────────────────── */
+.wbv5-tpl-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.wbv5-tpl-popup {
+  background: #fff; border-radius: 14px; width: 360px; max-width: 95vw;
+  box-shadow: 0 12px 40px rgba(0,0,0,.2); overflow: hidden;
+}
+.wbv5-tpl-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .9rem 1.1rem; border-bottom: 1px solid #e5e7eb;
+  font-size: .95rem; font-weight: 700;
+}
+.wbv5-tpl-head button {
+  background: none; border: none; cursor: pointer;
+  font-size: 1rem; color: #6b7280; padding: .25rem;
+}
+.wbv5-tpl-list { padding: .5rem; max-height: 320px; overflow-y: auto; }
+.wbv5-tpl-opt {
+  display: flex; flex-direction: column; gap: .2rem; text-align: left;
+  width: 100%; padding: .7rem .9rem; background: none; border: none;
+  cursor: pointer; border-radius: 8px; transition: background .12s;
+}
+.wbv5-tpl-opt:hover { background: #f3f4f6; }
+.wbv5-tpl-cat {
+  font-size: .68rem; font-weight: 700; color: #fff;
+  background: #25d366; border-radius: 4px; padding: .1rem .4rem;
+  align-self: flex-start;
+}
+.wbv5-tpl-opt strong { font-size: .85rem; color: #111827; }
+.wbv5-tpl-opt small { font-size: .78rem; color: #6b7280; }
