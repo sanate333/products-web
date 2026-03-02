@@ -23,6 +23,7 @@ import {
   faCalendarAlt,
   faVideo,
   faCog,
+  faTag,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
@@ -41,10 +42,12 @@ const SECTIONS = [
   {
     label: 'CATALOGO',
     items: [
-      { to: '/dashboard/categorias',   icon: faTachometerAlt, text: 'Categorias' },
-      { to: '/dashboard/sub-banners',  icon: faImage,        text: 'Sub-Banners' },
-      { to: '/dashboard/codigos',      icon: faCode,         text: 'Codigos' },
-      { to: '/dashboard/contacto',     icon: faAddressBook,  text: 'Contacto' },
+      { to: '/dashboard/categorias',      icon: faTachometerAlt, text: 'Categorias' },
+      { to: '/dashboard/banners',         icon: faImage,         text: 'Banners' },
+      { to: '/dashboard/sub-banners',     icon: faImage,         text: 'Sub-Banners' },
+      { to: '/dashboard/ofertas-carrito', icon: faTag,           text: 'Ofertas Carrito' },
+      { to: '/dashboard/codigos',         icon: faCode,          text: 'Codigos' },
+      { to: '/dashboard/contacto',        icon: faAddressBook,   text: 'Contacto' },
     ],
   },
   {
