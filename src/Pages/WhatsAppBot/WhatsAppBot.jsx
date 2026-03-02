@@ -386,8 +386,19 @@ export default function WhatsAppBot() {
     activePut(c)
     await loadM(c.id)
     setChats(p => p.map(x => x.id === c.id ? { ...x, unread: 0 } : x))
-    // Marcar como leído en backend
     fetch(`${BU}/chats/${encodeURIComponent(c.id)}/read`, { method: 'POST', headers: H }).catch(() => {})
+    // Cargar foto de perfil desde WhatsApp (sincronizar)
+    fetch(`${BU}/chats/${encodeURIComponent(c.id)}/photo`, { headers: H })
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.photoUrl) {
+          const updated = { ...c, photoUrl: d.photoUrl }
+          setActive(updated)
+          activePut(updated)
+          setChats(p => p.map(x => x.id === c.id ? { ...x, photoUrl: d.photoUrl } : x))
+        }
+      })
+      .catch(() => {})
   }
 
   async function send() {
@@ -698,14 +709,10 @@ export default function WhatsAppBot() {
                     </div>
                   ) : filteredChats.map((c, i) => (
                     <div key={c.id} className={`wbv5-conv-itm ${active?.id === c.id ? 'active' : ''}`} onClick={() => openChat(c)}>
-                      {c.photoUrl && c.photoUrl.startsWith('http') ? (
-                        <img src={c.photoUrl} alt={c.name} className="wbv5-ci-ava-img"
-                          onError={e => { e.target.style.display='none' }} />
-                      ) : (
-                        <div className="wbv5-ci-ava" style={{ background: COLORS_AV[i % 5], color: COLORS_TXT[i % 5] }}>
-                          {(c.name || c.phone || '?').substring(0, 2).toUpperCase()}
-                        </div>
-                      )}
+                      <div className="wbv5-ci-ava" style={{ background: COLORS_AV[i % 5], color: COLORS_TXT[i % 5], position: 'relative', overflow: 'hidden' }}>
+                        {(c.name || c.phone || '?').substring(0, 2).toUpperCase()}
+                        {c.photoUrl ? <img src={c.photoUrl} alt="" className="wbv5-ci-ava-img wbv5-ci-ava-abs" onError={e => e.target.style.display='none'} /> : null}
+                      </div>
                       <div className="wbv5-ci-body">
                         <div className="wbv5-ci-name">{c.name || c.phone || c.id}</div>
                         <div className="wbv5-ci-prev">
@@ -732,11 +739,10 @@ export default function WhatsAppBot() {
                 ) : (
                   <>
                     <div className="wbv5-cw-header">
-                      {active.photoUrl && active.photoUrl.startsWith('http') ? (
-                        <img src={active.photoUrl} alt={active.name} className="wbv5-ci-ava-img" onError={e => e.target.style.display='none'} />
-                      ) : (
-                        <div className="wbv5-cw-ava">{(active.name || '?').substring(0, 2).toUpperCase()}</div>
-                      )}
+                      <div className="wbv5-cw-ava" style={{ position: 'relative', overflow: 'hidden' }}>
+                        {(active.name || active.phone || '?').substring(0, 2).toUpperCase()}
+                        {active.photoUrl ? <img src={active.photoUrl} alt="" className="wbv5-ci-ava-img wbv5-ci-ava-abs" onError={e => e.target.style.display='none'} /> : null}
+                      </div>
                       <div>
                         <div className="wbv5-cw-name">{active.name || active.phone || active.id}</div>
                         <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
@@ -754,25 +760,27 @@ export default function WhatsAppBot() {
                           {/* texto */}
                           {m.txt ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
                           {/* imagen */}
-                          {m.type === 'image' && m.mediaUrl ? (
+                          {m.type === 'image' ? (m.mediaUrl ? (
                             <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer">
                               <img src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} alt="img" className="wbv5-msg-img" />
                             </a>
-                          ) : null}
+                          ) : <div className="wbv5-msg-media-ph">📷 Imagen</div>) : null}
                           {/* video */}
-                          {m.type === 'video' && m.mediaUrl ? (
+                          {m.type === 'video' ? (m.mediaUrl ? (
                             <video src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-video" />
-                          ) : null}
-                          {/* audio */}
-                          {m.type === 'audio' && m.mediaUrl ? (
+                          ) : <div className="wbv5-msg-media-ph">🎥 Video</div>) : null}
+                          {/* audio / voz */}
+                          {m.type === 'audio' ? (m.mediaUrl ? (
                             <audio src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-audio" />
-                          ) : null}
+                          ) : <div className="wbv5-msg-media-ph">🎵 Audio</div>) : null}
                           {/* documento */}
-                          {m.type === 'document' && m.mediaUrl ? (
+                          {m.type === 'document' ? (m.mediaUrl ? (
                             <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer" className="wbv5-msg-doc">
                               📄 {m.fileName || 'Documento'}
                             </a>
-                          ) : null}
+                          ) : <div className="wbv5-msg-media-ph">📄 {m.fileName || 'Documento'}</div>) : null}
+                          {/* sticker */}
+                          {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
                           <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ✓✓' : ' ✓') : ''}</div>
                         </div>
                       ))}

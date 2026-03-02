@@ -1332,3 +1332,17 @@
   width: 8px; height: 8px; border-radius: 50%;
   background: var(--tc); flex-shrink: 0;
 }
+
+/* ── AVATAR OVERLAY (foto encima de iniciales) ───────────────── */
+.wbv5-ci-ava-abs {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; border-radius: inherit;
+}
+
+/* ── MEDIA PLACEHOLDER ───────────────────────────────────────── */
+.wbv5-msg-media-ph {
+  display: inline-flex; align-items: center; gap: .35rem;
+  background: rgba(0,0,0,.06); border-radius: 8px;
+  padding: .4rem .75rem; font-size: .78rem; color: #6b7280;
+  margin-top: 2px; font-style: italic;
+}
