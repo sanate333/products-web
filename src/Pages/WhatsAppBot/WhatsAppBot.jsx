@@ -1212,13 +1212,95 @@ REGLAS DE ORO:
         : ''
       const finalSysPrompt = sysPrompt + currentMsgCtx
 
-      const reply = await callAI({
-        messages: [
-          { role: 'system', content: finalSysPrompt },
-          ...history,
-        ],
-        maxTokens: 480,
-      })
+      // ── Detectar tipo de mensaje entrante ─────────────────────────
+      const msgType = lastClientMsg.type || 'text'
+      const isAudioMsg = (msgType === 'audio' || msgType === 'ptt') && lastClientMsg.mediaUrl
+      const isImageMsg = (msgType === 'image' || msgType === 'sticker') && lastClientMsg.mediaUrl
+      // Resolver URL completa del media (relativa → absoluta)
+      const mediaFull = (url) => {
+        if (!url) return ''
+        if (url.startsWith('http')) return url
+        return `${MEDIA_BASE}${url.startsWith('/') ? '' : '/'}${url}`
+      }
+      const clientNameN8n = chats.find(c => c.id === chatId)?.name || chatId.split('@')[0] || 'Cliente'
+      const lsBackendUrl = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
+      const lsSecret     = (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })()
+
+      // ── n8n como procesador IA principal (texto + audio Whisper + imagen Vision) ──
+      let reply = ''
+      let n8nHandled = false
+      try {
+        const n8nPayload = {
+          chatId,
+          messageType: isAudioMsg ? 'audio' : (isImageMsg ? 'image' : 'text'),
+          text:     lastClientMsg.txt || (isAudioMsg ? '[Nota de voz]' : (isImageMsg ? '[Imagen]' : '')),
+          audioUrl: isAudioMsg ? mediaFull(lastClientMsg.mediaUrl) : '',
+          imageUrl: isImageMsg ? mediaFull(lastClientMsg.mediaUrl) : '',
+          clientName:   clientNameN8n,
+          systemPrompt: finalSysPrompt,
+          openaiKey,
+          history,
+          backendUrl:   lsBackendUrl,
+          backendSecret: lsSecret,
+        }
+        const n8nRes = await fetch(N8N_WH, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(n8nPayload),
+          signal: AbortSignal.timeout(35000),
+        })
+        if (!n8nRes.ok) throw new Error(`n8n HTTP ${n8nRes.status}`)
+        const n8nData = await n8nRes.json()
+        if (!n8nData?.ok || !n8nData?.reply) throw new Error('n8n sin respuesta válida')
+
+        reply = n8nData.reply
+        n8nHandled = true
+
+        // Si n8n transcribió audio, mostrar la transcripción como nota en el chat
+        if (n8nData.transcription && isAudioMsg) {
+          const tMsg = {
+            id: `tr_${Date.now()}`, dir: 'r',
+            txt: `🎙️ Transcripción: "${n8nData.transcription}"`,
+            time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            type: 'text', status: 'transcript',
+          }
+          if (active?.id === chatId) setMsgs(p => { const next = [...p, tMsg]; cachePut(chatId, next); return next })
+        }
+
+        // Si n8n ya envió los mensajes via backend público → solo actualizar UI y salir
+        if (n8nData.sent) {
+          const sentParts = (n8nData.parts || [reply]).filter(Boolean)
+          const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+          if (active?.id === chatId) {
+            setMsgs(p => {
+              const next = [...p, ...sentParts.map((pt, i) => ({
+                id: `n8n_${Date.now()}_${i}`, dir: 's', txt: pt, time: t, type: 'text', status: 'sent',
+              }))]
+              cachePut(chatId, next)
+              return next
+            })
+            scroll()
+          }
+          setAiTyping(false); autoReplyingRef.current = false; return
+        }
+      } catch (n8nErr) {
+        // n8n no disponible o falló — fallback para texto, error para audio/imagen
+        if (isAudioMsg || isImageMsg) {
+          tip(`⚠️ n8n no disponible — no se puede procesar ${isAudioMsg ? 'la nota de voz' : 'la imagen'}`)
+          setAiTyping(false); autoReplyingRef.current = false; return
+        }
+        // Texto: fallback a OpenAI directo
+        try {
+          reply = await callAI({
+            messages: [{ role: 'system', content: finalSysPrompt }, ...history],
+            maxTokens: 480,
+          })
+        } catch (aiErr) {
+          if (aiErr?.message !== 'no_key') tip('⚠️ Error auto-respuesta IA')
+          setAiTyping(false); autoReplyingRef.current = false; return
+        }
+      }
+
       // Verificar que no haya llegado un mensaje nuevo que invalide esta generación
       if (!reply || active?.id !== chatId || autoReplyGenRef.current !== myGen) {
         setAiTyping(false); autoReplyingRef.current = false; return
