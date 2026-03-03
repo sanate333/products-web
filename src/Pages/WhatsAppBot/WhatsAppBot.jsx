@@ -763,7 +763,11 @@ export default function WhatsAppBot() {
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
-      setServerOnline(true)
+      setServerOnline(prev => {
+        // Primera vez online → sincronizar settings al backend en background
+        if (prev !== true) setTimeout(() => syncSettingsToBackend({ silent: true }), 1200)
+        return true
+      })
       // IMPORTANTE: evaluar correctamente; sin paréntesis la precedencia es incorrecta
       const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
       setStatus(s)
@@ -973,7 +977,12 @@ export default function WhatsAppBot() {
   }
 
   // ── IA / ChatGPT helpers ───────────────────────────────────────
-  function saveAiKey(v)     { setOpenaiKey(v);   try { localStorage.setItem('wa_openai_key', v) } catch {} }
+  function saveAiKey(v)     {
+    setOpenaiKey(v)
+    try { localStorage.setItem('wa_openai_key', v) } catch {}
+    // Sincronizar al backend para modo Chrome cerrado
+    setTimeout(() => syncSettingsToBackend({ silent: true }), 500)
+  }
   function saveGeminiKey(v) { setGeminiKey(v);   try { localStorage.setItem('wa_gemini_key', v) } catch {} }
   function saveAiPrompt(v)  { setAiPrompt(v);    try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
 
@@ -1426,12 +1435,50 @@ ${conversation}`
     try { localStorage.setItem('wa_backend_url', newBU)   } catch {}
     try { localStorage.setItem('wa_secret',      newSec)  } catch {}
     tip('✅ Backend URL guardada — reconectando...')
-    setTimeout(() => { setServerOnline(null); ping() }, 600)
+    setTimeout(() => {
+      setServerOnline(null); ping()
+      // Sincronizar settings al backend con la nueva URL
+      syncSettingsToBackend({ buOverride: newBU, secOverride: newSec, baseOverride: base })
+    }, 800)
+  }
+
+  // ── Sincronizar settings al backend (para operación con Chrome cerrado) ──
+  // Lee desde localStorage para evitar stale closures en setTimeout
+  function syncSettingsToBackend({ buOverride, secOverride, baseOverride, silent = false } = {}) {
+    const curBU   = buOverride   || BU
+    const curSec  = secOverride  || (H['x-secret'] || DEFAULT_SECRET)
+    const curBase = baseOverride || MEDIA_BASE
+    const isPublic = curBase && !curBase.includes('localhost') && !curBase.includes('127.0.0.1')
+    // Leer siempre de localStorage — evita problemas de stale closure
+    const lsKey      = (() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })()
+    const lsTraining = (() => { try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
+    const lsPrompt   = (() => { try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
+    const lsAiOn     = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })()
+    const sysP = (lsTraining || lsPrompt || '').substring(0, 8000)
+    const payload = {
+      botEnabled:       lsAiOn,
+      n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pública
+      n8nWebhook:       N8N_WH,
+      backendPublicUrl: isPublic ? curBase : '',
+      openaiKey:        lsKey,
+      systemPrompt:     sysP,
+    }
+    fetch(curBU.replace('/api/whatsapp', '') + '/api/whatsapp/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-secret': curSec },
+      body: JSON.stringify(payload),
+    }).then(r => r.json()).then(d => {
+      if (d?.ok && !silent) tip('☁️ Configuración sincronizada al backend')
+    }).catch(() => {
+      if (!silent) console.warn('[syncSettings] Backend no alcanzable')
+    })
   }
 
   function saveTraining(v) {
     setTrainingPrompt(v); setTrainingChars(v.length)
     try { localStorage.setItem('wa_training_prompt', v) } catch {}
+    // Sincronizar prompt actualizado al backend
+    setTimeout(() => syncSettingsToBackend({ silent: true }), 600)
   }
   async function generateWinnerPrompt() {
     if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) en Ajustes → API'); return }
@@ -3518,6 +3565,7 @@ ${conversation}`
                           <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={saveBackendUrl}>💾 Guardar y reconectar</button>
                           <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp','')); setSecretInput(DEFAULT_SECRET) }}>↩️ Restaurar defaults</button>
                           <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => syncSettingsToBackend()} title="Sincroniza OpenAI key, prompt y configuración n8n al backend para que el bot funcione con Chrome cerrado">☁️ Sincronizar al Backend</button>
                         </div>
                       </div>
                     </div>
