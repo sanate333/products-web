@@ -363,6 +363,11 @@ export default function WhatsAppBot() {
 
   // ── AI reply generator ────────────────────────────────────────
   const [generatingAiReply, setGeneratingAiReply] = useState(false)
+  const [aiTyping,          setAiTyping]          = useState(false) // indicator "IA respondiendo..."
+
+  // Auto-reply deduplication: IDs ya procesados por el bot automático
+  const aiProcessedRef   = useRef(new Set())
+  const autoReplyingRef  = useRef(false)
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -389,9 +394,36 @@ export default function WhatsAppBot() {
   // Polling mensajes cuando hay chat activo
   useEffect(() => { // eslint-disable-line
     if (!active || status !== 'connected') return
-    const t = setInterval(() => loadM(active.id, false), 3500)
+    const t = setInterval(() => loadM(active.id, false), 3000)
     return () => clearInterval(t)
   }, [active?.id, status]) // eslint-disable-line
+
+  // Cuando cambia el chat: reiniciar procesados para no responder mensajes anteriores
+  useEffect(() => { // eslint-disable-line
+    if (!active) return
+    // Marcar todos los mensajes actuales como ya procesados (no auto-responder historial)
+    aiProcessedRef.current.clear()
+    msgs.forEach(m => { if (m.dir === 'r') aiProcessedRef.current.add(m.id) })
+    setAiTyping(false)
+  }, [active?.id]) // eslint-disable-line
+
+  // ── Auto-reply: detectar mensajes nuevos entrantes y responder automáticamente ──
+  useEffect(() => { // eslint-disable-line
+    if (!active || !msgs.length) return
+    const incoming = msgs.filter(m => m.dir === 'r')
+    if (!incoming.length) return
+    const lastIn = incoming[incoming.length - 1]
+    // Ya procesado → no hacer nada
+    if (aiProcessedRef.current.has(lastIn.id)) return
+    // Marcar como procesado ANTES de llamar async para evitar duplicados
+    aiProcessedRef.current.add(lastIn.id)
+    // Verificar que IA esté ON para este chat y haya API key
+    if (!isAiActive(active.id)) return
+    if (!hasAiKey) return
+    if (autoReplyingRef.current) return
+    // Lanzar auto-reply
+    autoReplyToMsg(lastIn)
+  }, [msgs]) // eslint-disable-line
 
   // Restaurar chat activo desde localStorage cuando se conecta
   useEffect(() => { // eslint-disable-line
@@ -818,7 +850,58 @@ export default function WhatsAppBot() {
     tip(isTriggerActive(chatId) ? '⚡ Disparadores pausados para este contacto' : '⚡ Disparadores reactivados para este contacto')
   }
 
-  // Envía mensaje via IA (n8n → ChatGPT → responde automáticamente)
+  // ── Auto-reply automático cuando llega un mensaje nuevo y la IA está ON ──
+  async function autoReplyToMsg(lastClientMsg) {
+    if (!hasAiKey || !active || autoReplyingRef.current) return
+    autoReplyingRef.current = true
+    const chatId = active.id
+    setAiTyping(true)
+    try {
+      const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
+      const history = msgs.slice(-10).map(m => ({
+        role: m.dir === 'r' ? 'user' : 'assistant',
+        content: m.txt || '[archivo]',
+      }))
+      const reply = await callAI({
+        messages: [
+          { role: 'system', content: `${ctx}\n\nREGLAS DE VENTA:\n1. Si el cliente hace una PREGUNTA → da información clara del producto + beneficios (no des precio todavía).\n2. Si muestra INTENCIÓN DE COMPRA → da precio + oferta + pregunta de cierre.\n3. Responde en máximo 3 líneas. Tono humano, cálido, natural. 1-2 emojis.\n4. Termina siempre con una pregunta que invite a continuar.\n5. NO expliques que eres IA. Actúa como asesor real de ventas.` },
+          ...history,
+        ],
+        maxTokens: 280,
+      })
+      if (!reply || active?.id !== chatId) { setAiTyping(false); autoReplyingRef.current = false; return }
+      // Enviar "escribiendo..." al cliente
+      try {
+        await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
+          method: 'POST', headers: HJ, body: JSON.stringify({ action: 'composing' }),
+        })
+      } catch {}
+      // Delay natural corto: mínimo 0.8s, máximo 2s
+      const typingMs = Math.max(800, Math.min(reply.length * 18, 2000))
+      await new Promise(r => setTimeout(r, typingMs))
+      if (active?.id !== chatId) { setAiTyping(false); autoReplyingRef.current = false; return }
+      // Enviar mensaje
+      const fd = new FormData(); fd.append('text', reply)
+      const r = await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/send`, { method: 'POST', headers: H, body: fd })
+      const d = await r.json()
+      const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+      const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: reply, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      setMsgs(p => { const next = [...p, newMsg]; cachePut(chatId, next); return next })
+      scroll()
+      // Quitar "escribiendo..."
+      try {
+        await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
+          method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
+        })
+      } catch {}
+    } catch (e) {
+      if (e?.message !== 'no_key') tip('⚠️ Error auto-respuesta IA')
+    }
+    setAiTyping(false)
+    autoReplyingRef.current = false
+  }
+
+  // Envía mensaje via n8n (método legacy — mantenido para compatibilidad)
   async function sendAiReply(chatId, userMsg) {
     if (!openaiKey && !N8N_WH) return
     try {
@@ -829,7 +912,6 @@ export default function WhatsAppBot() {
         phone: active?.phone || '', contactName: active?.name || '',
       }
       await fetch(N8N_WH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), mode: 'no-cors' })
-      tip('🤖 IA procesando respuesta...')
     } catch {}
   }
 
@@ -958,7 +1040,7 @@ export default function WhatsAppBot() {
     if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) en Ajustes → API'); return }
     const lastClientMsg = [...msgs].reverse().find(m => m.dir === 'r')
     if (!lastClientMsg) { tip('⚠️ No hay mensajes del cliente para analizar'); return }
-    setGeneratingAiReply(true); tip('🤖 Analizando ángulo de venta...')
+    setGeneratingAiReply(true); setAiTyping(true); tip('🤖 Analizando ángulo de venta...')
     try {
       const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
       const history = msgs.slice(-12).map(m => ({ role: m.dir === 'r' ? 'user' : 'assistant', content: m.txt || '[archivo]' }))
@@ -982,8 +1064,8 @@ export default function WhatsAppBot() {
             body: JSON.stringify({ action: 'composing' }),
           })
         } catch { /* si falla presence, igual enviamos */ }
-        // 2. Esperar tiempo proporcional al largo del mensaje (mínimo 2s, máximo 5s)
-        const typingMs = Math.max(2000, Math.min(reply.length * 55, 5000))
+        // 2. Esperar tiempo proporcional al largo del mensaje (mínimo 0.8s, máximo 2s)
+        const typingMs = Math.max(800, Math.min(reply.length * 18, 2000))
         await new Promise(r => setTimeout(r, typingMs))
         // 3. Enviar el mensaje real
         try {
@@ -1012,6 +1094,7 @@ export default function WhatsAppBot() {
       tip(msg)
     }
     setGeneratingAiReply(false)
+    setAiTyping(false)
   }
 
   // ── Generar entrenamiento ganador desde el wizard ──────────────
@@ -1126,7 +1209,7 @@ export default function WhatsAppBot() {
 
   return (
     <div className="containerGrid">
-      <Header />
+      <Header noFloat />
       <div className="wbv5-root">
 
         {/* ── SIDEBAR ── */}
@@ -1345,8 +1428,21 @@ export default function WhatsAppBot() {
                           {active.name || active.phone || active.id}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                          <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
-                          {(() => { const geo = phoneToGeo(active.phone || cleanPhone('', active.id)); return geo ? <span className="wbv5-geo-badge">{geo.flag} {geo.label}</span> : null })()}
+                          {aiTyping ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.7rem', color: '#7c3aed', fontWeight: 600 }}>
+                              <span style={{ display: 'inline-flex', gap: 2 }}>
+                                {[0,1,2].map(i => (
+                                  <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: '#7c3aed', display: 'inline-block', animation: `wbv5-pulse 0.9s ease-in-out ${i*0.22}s infinite` }} />
+                                ))}
+                              </span>
+                              🤖 IA respondiendo...
+                            </div>
+                          ) : (
+                            <>
+                              <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
+                              {(() => { const geo = phoneToGeo(active.phone || cleanPhone('', active.id)); return geo ? <span className="wbv5-geo-badge">{geo.flag} {geo.label}</span> : null })()}
+                            </>
+                          )}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, alignItems: 'center' }}>

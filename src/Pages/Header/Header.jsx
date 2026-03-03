@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import NavbarDashboard from '../../Components/Admin/NavbarDashboard/NavbarDashboard'
 import FloatingMenuDashboard from '../../Components/Admin/FloatingMenuDashboard/FloatingMenuDashboard'
 import './Header.css'
-export default function Header() {
+export default function Header({ noFloat = false }) {
     const [menuOpen, setMenuOpen] = useState(false);
 
     return (
@@ -16,11 +16,12 @@ export default function Header() {
                     aria-label="Cerrar menu"
                 />
             )}
-            <FloatingMenuDashboard
-                menuOpen={menuOpen}
-                onToggleMenu={() => setMenuOpen((prev) => !prev)}
-            />
-
+            {!noFloat && (
+                <FloatingMenuDashboard
+                    menuOpen={menuOpen}
+                    onToggleMenu={() => setMenuOpen((prev) => !prev)}
+                />
+            )}
         </div>
     )
 }
