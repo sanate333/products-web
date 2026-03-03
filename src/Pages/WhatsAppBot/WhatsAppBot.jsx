@@ -370,7 +370,7 @@ export default function WhatsAppBot() {
   // ── IA / ChatGPT ──────────────────────────────────────────────
   const [serverOnline,       setServerOnline]       = useState(null)
   const [aiEnabled,          setAiEnabled]          = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
-  const [aiContactMap,       setAiContactMap]       = useState({})
+  const [aiContactMap,       setAiContactMap]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_contact_map') || '{}') } catch { return {} } })
   // ── Disparadores por contacto (true = activos, false = pausados para ese chat) ──
   const [triggerContactMap,  setTriggerContactMap]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_trigger_contact_map') || '{}') } catch { return {} } })
   const [openaiKey,          setOpenaiKey]          = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
@@ -459,11 +459,14 @@ export default function WhatsAppBot() {
     return () => clearInterval(t)
   }, [active?.id, status]) // eslint-disable-line
 
-  // Cuando cambia el chat: limpiar estado de IA (openChat ya lo hace, esto es fallback)
+  // Cuando cambia el chat: limpiar estado de IA y cancelar cualquier respuesta pendiente
   useEffect(() => { // eslint-disable-line
     if (!active) return
     setAiTyping(false)
     autoReplyingRef.current = false
+    autoReplyGenRef.current += 1          // invalida cualquier respuesta en vuelo del chat anterior
+    clearTimeout(autoReplyTimerRef.current) // cancela debounce pendiente del chat anterior
+    aiProcessedRef.current = new Set()    // limpia dedup — chat nuevo = pizarra en blanco
   }, [active?.id]) // eslint-disable-line
 
   // ── Auto-reply: detectar mensajes nuevos entrantes y responder automáticamente ──
@@ -501,8 +504,12 @@ export default function WhatsAppBot() {
     const configDelay = Math.max(0, parseInt(localStorage.getItem('wa_bot_delay') || '3') || 0)
     // Mínimo 400ms (natural feel) + debounce para esperar si el cliente sigue escribiendo
     const totalDelay = configDelay * 1000 + 400
+    // ⚠️ Capturar chatId AHORA (antes del timeout) para evitar stale closure.
+    // Si el usuario cambia de chat durante la espera, el chatId capturado ya no coincide
+    // con active.id al disparar → autoReplyToMsg aborta y NO responde en el chat incorrecto.
+    const capturedChatId = active.id
     clearTimeout(autoReplyTimerRef.current)
-    autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn), totalDelay)
+    autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn, capturedChatId), totalDelay)
   }, [msgs]) // eslint-disable-line
 
   // ── Persistir etiquetas cuando el usuario las cambia manualmente ─
@@ -912,15 +919,18 @@ export default function WhatsAppBot() {
   }
   function toggleAiContact(chatId) {
     setAiContactMap(prev => {
-      const cur = prev[chatId]
-      // Si no había override, hereda global. Toggleamos respecto al estado efectivo.
-      const effective = cur === undefined ? aiEnabled : cur
-      return { ...prev, [chatId]: !effective }
+      const next = { ...prev, [chatId]: !prev[chatId] }
+      try { localStorage.setItem('wa_ai_contact_map', JSON.stringify(next)) } catch {}
+      return next
     })
   }
+  // IA activa SOLO si hay activación explícita para este contacto (true en aiContactMap)
+  // Y además el global aiEnabled está ON (interruptor maestro en Ajustes).
+  // Esto evita que todos los chats respondan automáticamente — cada contacto debe
+  // ser activado individualmente con el botón "🤖 IA OFF → IA ON" del header del chat.
   function isAiActive(chatId) {
-    const override = aiContactMap[chatId]
-    return override === undefined ? aiEnabled : override
+    if (!aiEnabled) return false           // interruptor maestro apagado → nada responde
+    return aiContactMap[chatId] === true   // debe ser activación explícita por contacto
   }
 
   // ── Disparadores por contacto ─────────────────────────────────
@@ -941,10 +951,13 @@ export default function WhatsAppBot() {
   }
 
   // ── Auto-reply automático cuando llega un mensaje nuevo y la IA está ON ──
-  async function autoReplyToMsg(lastClientMsg) {
+  async function autoReplyToMsg(lastClientMsg, targetChatId) {
     if (!hasAiKey || !active || autoReplyingRef.current) return
+    // Si el usuario cambió de chat durante el delay del debounce → abortar.
+    // targetChatId fue capturado al momento de programar el timeout (antes del delay).
+    if (targetChatId && active.id !== targetChatId) return
     autoReplyingRef.current = true
-    const chatId = active.id
+    const chatId = targetChatId || active.id
     const myGen = ++autoReplyGenRef.current  // capturar generación — si cambia, abortar
     setAiTyping(true)
     try {
