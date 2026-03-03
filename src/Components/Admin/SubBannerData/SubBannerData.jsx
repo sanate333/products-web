@@ -7,6 +7,7 @@ import Swal from 'sweetalert2';
 import baseURL, { resolveImg } from '../../url';
 import './SubBannerData.css';
 import NewSubBanner from '../SubBannerData/NewSubBanner';
+import NewBanner from '../NewBanner/NewBanner';
 
 export default function SubBannerData() {
     const [activeTab, setActiveTab] = useState('banner');
@@ -248,11 +249,7 @@ export default function SubBannerData() {
                 </button>
             </div>
 
-            <NewSubBanner onSuccess={() => {
-                if (activeTab === 'banner') cargarBanners();
-                else if (activeTab === 'subbanner') cargarSubBanners();
-                else cargarBannersCatalogo();
-            }} />
+            {activeTab === 'subbanner' ? <NewSubBanner /> : <NewBanner />}
 
             <p className='subBannerNote'>
                 {activeTab === 'banner' && 'Banner principal del home'}
