@@ -25,7 +25,8 @@ function normMsg(m) {
   const ts = m.timestamp || m.time || ''
   const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return ts.substring(11, 16) } })() : ''
   return {
-    id:       m.providerMessageId || m.id || Math.random().toString(36).slice(2),
+    id:       m.providerMessageId || m.id ||
+              `${(m.direction === 'outgoing' || m.dir === 's') ? 's' : 'r'}_${m.timestamp || m.time || ''}_${(m.text || m.txt || '').substring(0, 24)}`,
     dir:      (m.direction === 'outgoing' || m.dir === 's') ? 's' : 'r',
     txt:      m.text || m.txt || '',
     time:     hhmm,
@@ -368,6 +369,8 @@ export default function WhatsAppBot() {
   // Auto-reply deduplication: IDs ya procesados por el bot automático
   const aiProcessedRef   = useRef(new Set())
   const autoReplyingRef  = useRef(false)
+  const autoReplyTimerRef = useRef(null)  // debounce timer
+  const autoReplyGenRef  = useRef(0)      // generación: se incrementa para cancelar respuesta en curso
   const chatOpenedAtRef  = useRef(0) // timestamp al abrir chat — evita responder historial
 
   const msgsRef          = useRef(null)
@@ -427,9 +430,15 @@ export default function WhatsAppBot() {
     // Verificar que IA esté ON para este chat y haya API key
     if (!isAiActive(active.id)) return
     if (!hasAiKey) return
-    if (autoReplyingRef.current) return
-    // Lanzar auto-reply
-    autoReplyToMsg(lastIn)
+    // Si la IA ya estaba generando una respuesta → cancelarla (el cliente mandó algo nuevo)
+    if (autoReplyingRef.current) {
+      autoReplyGenRef.current += 1  // invalida la generación anterior
+      autoReplyingRef.current = false
+      setAiTyping(false)
+    }
+    // Debounce 2.5s: si el cliente sigue escribiendo mensajes, esperamos al último
+    clearTimeout(autoReplyTimerRef.current)
+    autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn), 2500)
   }, [msgs]) // eslint-disable-line
 
   // Restaurar chat activo desde localStorage cuando se conecta
@@ -864,6 +873,7 @@ export default function WhatsAppBot() {
     if (!hasAiKey || !active || autoReplyingRef.current) return
     autoReplyingRef.current = true
     const chatId = active.id
+    const myGen = ++autoReplyGenRef.current  // capturar generación — si cambia, abortar
     setAiTyping(true)
     try {
       // Leer siempre de localStorage para evitar closures stale con el entrenamiento
@@ -884,7 +894,10 @@ export default function WhatsAppBot() {
         ],
         maxTokens: 280,
       })
-      if (!reply || active?.id !== chatId) { setAiTyping(false); autoReplyingRef.current = false; return }
+      // Verificar que no haya llegado un mensaje nuevo que invalide esta generación
+      if (!reply || active?.id !== chatId || autoReplyGenRef.current !== myGen) {
+        setAiTyping(false); autoReplyingRef.current = false; return
+      }
       // Enviar "escribiendo..." al cliente
       try {
         await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
@@ -894,7 +907,10 @@ export default function WhatsAppBot() {
       // Delay natural corto: mínimo 0.8s, máximo 2s
       const typingMs = Math.max(800, Math.min(reply.length * 18, 2000))
       await new Promise(r => setTimeout(r, typingMs))
-      if (active?.id !== chatId) { setAiTyping(false); autoReplyingRef.current = false; return }
+      // Re-verificar después del delay
+      if (active?.id !== chatId || autoReplyGenRef.current !== myGen) {
+        setAiTyping(false); autoReplyingRef.current = false; return
+      }
       // Enviar mensaje
       const fd = new FormData(); fd.append('text', reply)
       const r = await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/send`, { method: 'POST', headers: H, body: fd })
