@@ -122,8 +122,8 @@ const FLOWS_LIST = [
 ]
 
 const DEFAULT_TRIGGERS = [
-  { id: 'tr1', name: 'Sin respuesta 1h',      condition: 'no_reply',    delay: 60,   unit: 'min', producto: 'General', message: '¡Hola {nombre}! 👋 Vi que revisaste nuestra info.\n¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy 🎁', active: true,  mediaType: null, mediaUrl: '' },
-  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',       delay: 180,  unit: 'min', producto: 'General', message: 'Hola {nombre} 😊 Quería enviarte nuestra mejor oferta de hoy.\n¿Cuál es tu producto favorito? 🌿\nTe armo un combo personalizado 💚', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'tr1', name: 'Sin respuesta 1h',      condition: 'no_reply',    delay: 60,   unit: 'min', producto: 'General', message: '¡Hola {nombre}! 👋 Vi que revisaste nuestra info.\n¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy 🎁', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',       delay: 180,  unit: 'min', producto: 'General', message: 'Hola {nombre} 😊 Quería enviarte nuestra mejor oferta de hoy.\n¿Cuál es tu producto favorito? 🌿\nTe armo un combo personalizado 💚', active: false, mediaType: null, mediaUrl: '' },
   { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
 ]
 
@@ -462,6 +462,7 @@ export default function WhatsAppBot() {
   const autoReplyGenRef     = useRef(0)     // generación: se incrementa para cancelar respuesta en curso
   const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat — evita responder historial
   const kwFiredRef          = useRef(new Set()) // dedup para triggers de palabra clave (msgId_triggerId)
+  const sentTextsRef        = useRef([])         // últimos 30 textos ENVIADOS por el bot — eco prevention
 
   // Refs para evitar stale closures en polling y ping
   const statusRef        = useRef('disconnected') // siempre tiene el status actual
@@ -496,7 +497,17 @@ export default function WhatsAppBot() {
   useEffect(() => { // eslint-disable-line
     ping()
     const t = setInterval(ping, 5000)
-    return () => clearInterval(t)
+    // Page Visibility API: re-sincronizar inmediatamente cuando el usuario vuelve al tab
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        ping()
+        if (activeRef.current?.id && statusRef.current === 'connected') {
+          loadM(activeRef.current.id, false).catch(() => {})
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVisible) }
   }, []) // eslint-disable-line
 
   // Polling mensajes cuando hay chat activo — 1.5s, independiente del status (usa ref)
@@ -533,6 +544,21 @@ export default function WhatsAppBot() {
     // con timestamps distintos entre polls y genera IDs diferentes)
     const contentKey = `r_${(lastIn.txt || '').substring(0, 40)}`
     if (aiProcessedRef.current.has(contentKey)) return
+
+    // ── ECO PREVENTION: ignorar mensajes que el bot envió recientemente ──────
+    // El backend a veces refleja el mensaje saliente como mensaje entrante (eco de Baileys).
+    // Si el texto coincide con algo enviado en los últimos 60s, ignorar.
+    if (lastIn.txt) {
+      const incomingText = lastIn.txt.trim().toLowerCase()
+      const isEcho = sentTextsRef.current.some(s => s.txt === incomingText)
+      if (isEcho) {
+        // Marcar como procesado para no revisarlo de nuevo
+        aiProcessedRef.current.add(lastIn.id)
+        aiProcessedRef.current.add(contentKey)
+        return
+      }
+    }
+
     aiProcessedRef.current.add(lastIn.id)
     aiProcessedRef.current.add(contentKey)
 
@@ -570,8 +596,8 @@ export default function WhatsAppBot() {
     if (lastIn.txt) autoTagOrder(active.id, lastIn.txt)
 
     // Debounce: respetar el botDelay configurado en Ajustes
-    // Lee directamente de localStorage para evitar stale closure
-    const configDelay = Math.max(0, parseInt(localStorage.getItem('wa_bot_delay') || '3') || 0)
+    // Lee directamente de localStorage — cap en 15s para evitar valores obsoletos altos
+    const configDelay = Math.min(15, Math.max(0, parseInt(localStorage.getItem('wa_bot_delay') || '3') || 0))
     // Mínimo 400ms (natural feel) + debounce para esperar si el cliente sigue escribiendo
     const totalDelay = configDelay * 1000 + 400
     // ⚠️ Capturar chatId AHORA (antes del timeout) para evitar stale closure.
@@ -891,6 +917,7 @@ export default function WhatsAppBot() {
       const d = await r.json()
       const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
       const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: inp, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      trackSentText(inp)
       setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
       setInp(''); scroll()
     } catch { tip('⚠️ Error al enviar') }
@@ -1017,12 +1044,23 @@ export default function WhatsAppBot() {
     return aiContactMap[chatId] === true   // debe ser activación explícita por contacto
   }
 
+  // ── Eco prevention: registra texto enviado para que el bot no responda su propio eco ──
+  function trackSentText(text) {
+    if (!text) return
+    const now = Date.now()
+    const entry = { txt: text.trim().toLowerCase().substring(0, 120), ts: now }
+    sentTextsRef.current = [
+      ...sentTextsRef.current.filter(s => now - s.ts < 60000),
+      entry,
+    ].slice(-30)
+  }
+
   // ── Disparadores por contacto ─────────────────────────────────
-  // Por defecto los triggers están ACTIVOS para todos. El usuario puede pausarlos por contacto.
+  // Por defecto los triggers están INACTIVOS — el usuario activa manualmente por contacto.
   function isTriggerActive(chatId) {
-    if (!chatId) return true
+    if (!chatId) return false
     const override = triggerContactMap[chatId]
-    return override === undefined ? true : override   // default: ON
+    return override === true   // DEBE ser activación explícita — default: OFF
   }
   function toggleTriggerContact(chatId) {
     if (!chatId) return
@@ -1054,6 +1092,7 @@ export default function WhatsAppBot() {
       const d = await r.json()
       const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
       const newMsg = { id: d.message?.providerMessageId || `kw_${Date.now()}`, dir: 's', txt: text, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      trackSentText(text)  // eco prevention
       if (active?.id === targetChatId) {
         setMsgs(p => { const next = [...p, newMsg]; cachePut(targetChatId, next); return next })
         scroll()
@@ -1214,6 +1253,7 @@ REGLAS DE ORO:
         const d = await r.json()
         const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
         const newMsg = { id: d.message?.providerMessageId || `${Date.now()}_${pi}`, dir: 's', txt: part, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+        trackSentText(part)  // eco prevention — evita que el bot procese su propia respuesta
         setMsgs(p => { const next = [...p, newMsg]; cachePut(chatId, next); return next })
         scroll()
 
