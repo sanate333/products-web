@@ -412,9 +412,10 @@ export default function WhatsAppBot() {
 
   // Redibujar QR en canvas cuando cambia la URL, la página o el status
   useEffect(() => {
-    if (page !== 'conexion' || status === 'connected') return
+    if (page !== 'conexion') return
     setTimeout(() => {
-      if (qrDataUrl) drawQR(qrDataUrl)
+      if (status === 'connected') drawQRConnected()
+      else if (qrDataUrl) drawQR(qrDataUrl)
       else drawQRWaiting()
     }, 80)
   }, [page, qrDataUrl, status]) // eslint-disable-line
@@ -543,7 +544,7 @@ export default function WhatsAppBot() {
       const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
       setStatus(s)
       setPhone(d.phone || '')
-      if (s === 'connected') { try { await loadC() } catch {} }
+      if (s === 'connected') { try { await loadC() } catch {}; setTimeout(drawQRConnected, 80) }
       else if (s === 'connecting' || s === 'qr') { loadQR() }
     } catch { setServerOnline(false); setStatus('disconnected') }
   }
@@ -586,6 +587,41 @@ export default function WhatsAppBot() {
     ctx.fillStyle = '#e5e7eb'
     for (let r=0;r<6;r++) for (let c=0;c<6;c++)
       if ((r+c)%2===0) ctx.fillRect(74+c*9, 74+r*9, 7, 7)
+  }
+
+  // Canvas de éxito: QR skeleton en verde con checkmark overlay cuando está conectado
+  function drawQRConnected() {
+    const canvas = qrRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d'), s = 200
+    // Fondo verde muy suave
+    ctx.fillStyle = '#f0fdf4'; ctx.fillRect(0, 0, s, s)
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = '#86efac'; ctx.lineWidth = 1.5
+    ctx.strokeRect(6, 6, s - 12, s - 12); ctx.setLineDash([])
+    // Tres esquinas finder-pattern en tonos verdes
+    for (const [x, y] of [[14,14],[142,14],[14,142]]) {
+      ctx.fillStyle = '#bbf7d0'; ctx.fillRect(x, y, 44, 44)
+      ctx.fillStyle = '#f0fdf4'; ctx.fillRect(x+6, y+6, 32, 32)
+      ctx.fillStyle = '#86efac'; ctx.fillRect(x+11, y+11, 22, 22)
+    }
+    // Patrón central de puntos verdes
+    ctx.fillStyle = '#86efac'
+    for (let r=0;r<6;r++) for (let c=0;c<6;c++)
+      if ((r+c)%2===0) ctx.fillRect(74+c*9, 74+r*9, 7, 7)
+    // Overlay verde semitransparente
+    ctx.fillStyle = 'rgba(22, 163, 74, 0.78)'; ctx.fillRect(0, 0, s, s)
+    // Círculo blanco central
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.beginPath()
+    ctx.arc(s/2, s/2 - 10, 48, 0, Math.PI * 2); ctx.fill()
+    // Checkmark grande
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+    ctx.setLineDash([])
+    ctx.beginPath(); ctx.moveTo(s/2-22, s/2-8); ctx.lineTo(s/2-4, s/2+12); ctx.lineTo(s/2+26, s/2-20)
+    ctx.stroke()
+    // Texto "Conectado"
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui,sans-serif'
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+    ctx.fillText('✓ Conectado', s/2, s - 14)
   }
 
   async function loadC() {
@@ -1049,20 +1085,19 @@ export default function WhatsAppBot() {
     setPage(id)
     setBuilderOpen(false)
     if (id === 'conexion') {
-      // Solo cargar QR si está en modo connecting (no llamar logout automáticamente)
-      if (status === 'connecting' || status === 'qr') setTimeout(loadQR, 150)
-      else if (status === 'disconnected') {
+      if (status === 'connected') { setTimeout(drawQRConnected, 120) }
+      else if (status === 'connecting' || status === 'qr') { setTimeout(loadQR, 150) }
+      else {
         // Verificar estado real del backend antes de actuar
         setTimeout(async () => {
           const d = await fetch(BU + '/status', { headers: H }).then(r => r.json()).catch(() => ({}))
           const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
           setStatus(s); setPhone(d.phone || '')
           if (s === 'connecting' || s === 'qr') { loadQR() }
-          else if (s === 'connected') { loadC().catch(() => {}) }
-          else { regenerateQR() } // confirmado disconnected: auto-iniciar generación QR
+          else if (s === 'connected') { loadC().catch(() => {}); setTimeout(drawQRConnected, 150) }
+          else { regenerateQR() }
         }, 100)
       }
-      // si connected: mostrar estado conectado sin hacer nada
     }
   }
 
@@ -2252,26 +2287,30 @@ export default function WhatsAppBot() {
               )}
 
               <div className="wbv5-qr-card">
-                {/* Canvas QR — solo visible cuando NO está conectado */}
-                {status !== 'connected' && (
-                  <div className="wbv5-qr-box" style={{ position: 'relative' }}>
-                    {serverOnline === false ? (
-                      <div className="wbv5-qr-offline">
-                        <div style={{ fontSize: '2.2rem' }}>🔌</div>
-                        <div style={{ fontSize: '.72rem', color: '#6b7280', textAlign: 'center', marginTop: '.3rem', lineHeight: 1.4 }}>Servidor<br/>no disponible</div>
-                      </div>
-                    ) : (
-                      <>
-                        <canvas ref={qrRef} width="200" height="200" />
-                        {status === 'connecting' && !qrDataUrl && (
-                          <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: '.65rem', color: '#9ca3af' }}>
-                            Generando QR...
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                )}
+                {/* Canvas QR — siempre visible; muestra skeleton, QR real o checkmark verde */}
+                <div className="wbv5-qr-box" style={{ position: 'relative' }}>
+                  {serverOnline === false && status !== 'connected' ? (
+                    <div className="wbv5-qr-offline">
+                      <div style={{ fontSize: '2.2rem' }}>🔌</div>
+                      <div style={{ fontSize: '.72rem', color: '#6b7280', textAlign: 'center', marginTop: '.3rem', lineHeight: 1.4 }}>Servidor<br/>no disponible</div>
+                    </div>
+                  ) : (
+                    <>
+                      <canvas ref={qrRef} width="200" height="200" style={{ borderRadius: 10, display: 'block' }} />
+                      {status === 'connecting' && !qrDataUrl && (
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.45)', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, textAlign: 'center', padding: '.25rem 0', fontSize: '.64rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.3rem' }}>
+                          <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#fbbf24', animation: 'wbv5-pulse 1s ease-in-out infinite' }} />
+                          Generando QR...
+                        </div>
+                      )}
+                      {status === 'connected' && (
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(22,163,74,.9)', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, textAlign: 'center', padding: '.28rem 0', fontSize: '.67rem', color: '#fff', fontWeight: 700 }}>
+                          ✅ WhatsApp vinculado
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
                 <div className="wbv5-qr-info">
                   {status === 'connected' ? (
                     <>
