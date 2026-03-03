@@ -208,7 +208,7 @@ function resolveMediaUrl(url) {
 }
 
 // ── Componente: chat de prueba del bot IA ──────────────────────
-function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, tip }) {
+function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, tip, msgMode, useEmojis, useStyles }) {
   const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])
   const [inp,  setInp]  = React.useState('')
   const [busy, setBusy] = React.useState(false)
@@ -218,7 +218,7 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-        body: JSON.stringify({ model: aiModel || 'gpt-4o', messages, max_tokens: 300 }),
+        body: JSON.stringify({ model: aiModel || 'gpt-4o', messages, max_tokens: 480 }),
       })
       const data = await res.json()
       if (data.error) throw new Error(data.error.message || 'OpenAI error')
@@ -233,7 +233,7 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
       const res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
         { method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.8, maxOutputTokens: 300 } }) }
+          body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.8, maxOutputTokens: 480 } }) }
       )
       const data = await res.json()
       if (data.error) throw new Error(data.error.message || 'Gemini error')
@@ -249,9 +249,22 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
     try {
       const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
       const baseCtx = (trainingPrompt || aiPrompt || '').substring(0, 5500)
+
+      // Bloques condicionales según configuración de estilo
+      const tc_stylesBlock = (useStyles !== false)
+        ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
+        : `• Texto plano ÚNICAMENTE — sin asteriscos ni formato. PROHIBIDO *negritas*, _cursiva_ o ~tachado~`
+      const tc_emojisBlock = (useEmojis !== false)
+        ? `• Emojis: máx 2 por mensaje, úsalos estratégicamente como viñetas o énfasis`
+        : `• PROHIBIDO usar emojis — solo texto plano`
+      const tc_multiMsgBlock = (msgMode !== 'completo')
+        ? `ENVÍO POR PARTES:\nDivide en 2 a 5 mensajes separados por el separador EXACTO: ||||\n• Parte 1 → gancho o contexto — no lo reveles todo\n• Partes intermedias → desarrolla con intriga o mini-pregunta\n• Última parte → pregunta de cierre de venta\nEjemplo:\nTenemos varias opciones${(useEmojis !== false) ? ' 🌿' : ''}\n||||\n${(useStyles !== false) ? '*Combo A*' : 'Combo A'} — beneficio — ${(useStyles !== false) ? '*$66.000*' : '$66.000'}\n||||\n¿Cuál prefieres${(useEmojis !== false) ? ' 😊' : '?'}`
+        : `ENVÍO COMPLETO:\nResponde en UN solo mensaje bien organizado (máx 6 líneas). NO uses |||| separador.`
+
       const enhancedSys = baseCtx
-        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÍTICAS WHATSAPP:\n• Mensajes cortos: máx 3-4 líneas POR MENSAJE\n• NEGRITAS en WhatsApp: usa *una palabra* o *frase clave* con UN asterisco a cada lado — úsalas para precios, nombres de combos, beneficios clave\n• Ejemplo: *Combo Detox* — $66.000 🌿 | *envío gratis* hoy\n• NO uses **doble asterisco** nunca — solo *uno a cada lado*\n• Emojis: máx 2 por mensaje, úsalos estratégicamente\n• VARÍA tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente (informal → informal, formal → más estructurado)\n• Eres una persona real, NUNCA te presentes como IA o bot\n\nMULTI-MENSAJE (MUY IMPORTANTE):\nCuando explicas combos, varios productos o un tema que requiere varios puntos,\nDIVIDE en 2 a 5 mensajes cortos separados por el texto exacto ||||\nEjemplo de respuesta multi-mensaje:\nTenemos 3 combos disponibles 🌿\n||||\n*Combo 1* — Jabón Avena + Arroz: ideal piel sensible 🧼 — *$66.000*\n||||\n*Combo 2* — Jabón Cúrcuma + Caléndula: regenera y calma ✨ — *$66.000*\n||||\n¿Cuál te llama más la atención? 😊\n\nPROTOCOLO DE VENTAS:\n1. Calificar → entiende la necesidad con 1 pregunta\n2. Presentar → beneficios clave con *negritas* en palabras importantes\n3. Manejar objeciones → empatía + reencuadre de valor\n4. Cerrar → pregunta directa de cierre\n\nCIERRES QUE FUNCIONAN:\n• "¿Lo pedimos para hoy?" 📦\n• "¿Te lo enviamos al mismo WhatsApp?"\n• "Solo hasta mañana — ¿Arrancamos? 🔥"\n• "¿Prefieres el *Combo A* o el *Combo B*?"\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo mensaje\n❌ Listas numeradas 1. 2. 3.\n❌ **Doble asterisco** markdown\n❌ Decir que eres IA\n❌ Más de 2 emojis por mensaje`
-        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real.\nMensajes cortos (máx 3-4 líneas). Negritas WhatsApp: *texto* (un asterisco cada lado). Máx 2 emojis. Varía tus respuestas.\nPara combos o temas complejos: divide en 2-5 mensajes separados por ||||\nSiempre termina con una pregunta de cierre o avance.\nNUNCA te presentes como IA.`
+        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÍTICAS WHATSAPP:\n• Mensajes cortos: máx 3-4 líneas POR MENSAJE\n${tc_stylesBlock}\n${tc_emojisBlock}\n• VARÍA tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente\n• Eres una persona real, NUNCA te presentes como IA o bot\n\n${tc_multiMsgBlock}\n\nPROTOCOLO DE VENTAS:\n1. Calificar → entiende la necesidad con 1 pregunta\n2. Presentar → beneficios clave${(useStyles !== false) ? ' con *negritas*' : ''}\n3. Manejar objeciones → empatía + reencuadre\n4. Cerrar → pregunta directa única\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Listas numeradas | ❌ Decir que eres IA`
+        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real. NUNCA te presentes como IA.\n${tc_stylesBlock}\n${tc_emojisBlock}\nMensajes cortos (máx 3-4 líneas). Varía tus respuestas.\n\n${tc_multiMsgBlock}\n\nSiempre termina con una pregunta de cierre o avance.`
+
       const reply = await localCallAI([
         { role: 'system', content: enhancedSys },
         ...history,
@@ -390,6 +403,11 @@ export default function WhatsAppBot() {
   // ── Geo & Timing ──────────────────────────────────────────────
   const [botDelay,       setBotDelay]       = useState(() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') } catch { return 3 } })
   const [simulateTyping, setSimulateTyping] = useState(true)
+
+  // ── AI Message Style ──────────────────────────────────────────
+  const [msgMode,   setMsgMode]   = useState(() => { try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })
+  const [useEmojis, setUseEmojis] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })
+  const [useStyles, setUseStyles] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })
 
   // ── Backend URL & Secret ──────────────────────────────────────
   const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
@@ -942,9 +960,49 @@ export default function WhatsAppBot() {
       const profile = clientAnalysis[chatId]
       const profileCtx = profile ? `\nPERFIL DEL CLIENTE ACTUAL:\n• Estilo: ${profile.estilo} | Tono: ${profile.tono} | Intención de compra: ${profile.intencion}\n• Intereses: ${(profile.intereses||[]).join(', ')}\n• Ángulo recomendado: ${profile.angulo || 'N/A'}\n` : ''
 
+      // Leer preferencias de estilo desde localStorage (evita stale closures)
+      const lsMsgMode   = (function(){ try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })()
+      const lsUseEmojis = (function(){ try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })()
+      const lsUseStyles = (function(){ try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })()
+
+      // Bloque: formato de texto
+      const stylesBlock = lsUseStyles
+        ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• Ejemplo: *Combo Detox* — *$66.000* | _envío gratis_ hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
+        : `• Texto plano ÚNICAMENTE — sin asteriscos, guiones bajos ni tildes de formato\n• PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`
+
+      // Bloque: emojis
+      const emojisBlock = lsUseEmojis
+        ? `• Emojis: máx 2 por mensaje, úsalos como viñetas o énfasis estratégico`
+        : `• PROHIBIDO usar emojis — responde solo con texto plano`
+
+      // Bloque: envío por partes o completo
+      const multiMsgBlock = lsMsgMode === 'partes'
+        ? `ENVÍO POR PARTES (MUY IMPORTANTE):
+Divide tu respuesta en 2 a 5 mensajes cortos separados por el separador EXACTO: ||||
+Reglas para cada parte:
+• Parte 1 → gancho o contexto inicial — abre con intriga o dato interesante, NO reveles todo
+• Partes intermedias → desarrolla punto por punto, cada una termina dejando curiosidad o una mini-pregunta
+• Última parte → pregunta de cierre de venta ("¿Cuál prefieres?" / "¿Te lo enviamos hoy?" / "¿Arrancamos?")
+Estructura inteligente por tipo de situación:
+  - Si el cliente pregunta por productos: parte 1 = beneficio + hook | parte 2 = opción principal | parte 3 = opción alternativa | última = pregunta de decisión
+  - Si el cliente muestra objeción: parte 1 = empatía | parte 2 = reencuadre de valor | última = cierre con urgencia o elección
+  - Si el cliente ya quiere comprar: máx 2 partes — confirma + cierra directo
+Ejemplo correcto:
+Tenemos varias opciones que te pueden funcionar${lsUseEmojis ? ' 🌿' : ''}
+||||
+${lsUseStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} — ideal para piel sensible${lsUseEmojis ? ' ✨' : ''} — ${lsUseStyles ? '*$66.000*' : '$66.000'}
+||||
+${lsUseStyles ? '*Combo Cúrcuma*' : 'Combo Cúrcuma'} — manchas y cicatrices${lsUseEmojis ? ' 🌻' : ''} — ${lsUseStyles ? '*$66.000*' : '$66.000'}
+||||
+¿Cuál va más con lo que necesitas${lsUseEmojis ? ' 😊' : '?'}`
+        : `ENVÍO COMPLETO:
+Responde en UN SOLO MENSAJE bien estructurado (máx 6 líneas).
+NO uses el separador |||| — todo en un bloque.
+Organiza bien el texto con saltos de línea para que sea fácil de leer.`
+
       const sysPrompt = ctx
-        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n• NEGRITAS WhatsApp: *una palabra* con UN asterisco a cada lado — úsalas en precios, nombres de combos, beneficios destacados\n• Ejemplo correcto: *Combo Detox* — *$66.000* 🌿 | *envío gratis* hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*\n• Emojis: máx 2 por mensaje, úsalos estratégicamente como viñetas\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono: si el cliente escribe informal, responde informal\n\nMULTI-MENSAJE (MUY IMPORTANTE):\nCuando explicas combos, productos, precios o temas que necesitan varios puntos,\nDIVIDE en 2 a 5 mensajes cortos separados por el separador exacto: ||||\nCada segmento = 1 mensaje de WhatsApp independiente\nEjemplo:\nTenemos opciones para tu piel 🌿\n||||\n*Combo Avena y Arroz* — piel sensible, granitos ✨ — *$66.000*\n||||\n*Combo Cúrcuma* — cicatrices y manchas 🌻 — *$66.000*\n||||\n¿Cuál va más con lo que necesitas? 😊\n\nPROTOCOLO DE VENTAS:\n1. Califica → entiende la necesidad con 1 pregunta\n2. Presenta → beneficios clave con *negritas* para lo importante\n3. Maneja objeciones → empatía + reencuadre de valor\n4. Cierra → pregunta directa única\n\nTÉCNICAS DE CIERRE:\n• Directo: "¿Arrancamos hoy?" / "¿Lo pedimos?"\n• Urgencia: "Solo hasta mañana 🔥"\n• Elección: "¿*Combo A* o *Combo B*?"\n• Cliente existente → pregunta experiencia + cross-sell natural\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Listas numeradas 1. 2. 3.\n❌ **Doble asterisco** — solo *uno cada lado*\n❌ Decir que eres IA o bot\n❌ Más de 2 emojis por mensaje`
-        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n• Negritas WhatsApp: *texto* (un asterisco cada lado) para precios y combos\n• Emojis: máx 2 por mensaje\n• Multi-mensaje: divide temas complejos en 2-5 partes separadas por ||||\n• Varía saludos y apertura en cada mensaje\n• Adapta el tono al estilo del cliente\n\nFLUJO DE VENTAS:\n1. Calificar → preguntar qué busca\n2. Presentar con *negritas* en precios/combos\n3. Manejar objeciones con empatía\n4. Cerrar con pregunta directa\n\nTÉCNICAS DE CIERRE:\n• "Solo hasta hoy 🔥" | "¿*Combo A* o *Combo B*?" | "¿Arrancamos?"\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ **Doble asterisco** | ❌ Decir que eres IA | ❌ +2 emojis`
+        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono: si el cliente escribe informal, responde informal\n\n${multiMsgBlock}\n\nPROTOCOLO DE VENTAS:\n1. Califica → entiende la necesidad con 1 pregunta\n2. Presenta → beneficios clave${lsUseStyles ? ' con *negritas* para lo importante' : ''}\n3. Maneja objeciones → empatía + reencuadre de valor\n4. Cierra → pregunta directa única\n\nTÉCNICAS DE CIERRE:\n• Directo: "¿Arrancamos hoy?" / "¿Lo pedimos?"\n• Urgencia: "Solo hasta mañana${lsUseEmojis ? ' 🔥' : ''}"\n• Elección: "¿${lsUseStyles ? '*Combo A*' : 'Combo A'} o ${lsUseStyles ? '*Combo B*' : 'Combo B'}?"\n• Cliente existente → pregunta experiencia + cross-sell natural\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Listas numeradas 1. 2. 3.\n❌ Decir que eres IA o bot`
+        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y apertura en cada mensaje\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\nFLUJO DE VENTAS:\n1. Calificar → preguntar qué busca\n2. Presentar${lsUseStyles ? ' con *negritas* en precios/combos' : ''}\n3. Manejar objeciones con empatía\n4. Cerrar con pregunta directa\n\nTÉCNICAS DE CIERRE:\n"Solo hasta hoy${lsUseEmojis ? ' 🔥' : ''}" | "¿${lsUseStyles ? '*Combo A*' : 'Combo A'} o ${lsUseStyles ? '*Combo B*' : 'Combo B'}?" | "¿Arrancamos?"\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Decir que eres IA`
       // Mensaje actual del cliente para que la IA NO alucine sobre otros temas
       const currentMsgCtx = lastClientMsg.txt
         ? `\n\n⚡ MENSAJE ACTUAL DEL CLIENTE AL QUE DEBES RESPONDER:\n"${lastClientMsg.txt}"\nResponde SOLO a esto. No inventes temas que el cliente no haya mencionado.`
@@ -2726,7 +2784,7 @@ ${conversation}`
                         ⚠️ Configura tu API Key (OpenAI o Gemini gratis) en <strong>Ajustes → API & Tokens</strong> para probar el bot.
                       </div>
                     ) : (
-                      <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} geminiKey={geminiKey} aiModel={aiModel} tip={tip} />
+                      <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} geminiKey={geminiKey} aiModel={aiModel} tip={tip} msgMode={msgMode} useEmojis={useEmojis} useStyles={useStyles} />
                     )}
                   </div>
                 </div>
@@ -3298,6 +3356,58 @@ ${conversation}`
                               <div style={{ fontSize: '.64rem', color: '#9ca3af' }}>Muestra el indicador de escritura antes de cada respuesta</div>
                             </div>
                             <button className={`wbv5-btn wbv5-btn-sm ${simulateTyping ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`} onClick={() => setSimulateTyping(s => !s)}>{simulateTyping ? '✅ ON' : '⚪ OFF'}</button>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Estilo de mensajes */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">📨 Estilo de mensajes</div></div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Controla cómo el bot estructura y formatea sus respuestas en WhatsApp.
+                          </div>
+                          {/* Envío Por Partes / Completo */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Envío de mensajes</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>
+                                {msgMode === 'partes' ? 'Por partes: varios mensajes con gancho e intriga' : 'Completo: un solo bloque de texto'}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '.35rem', flexShrink: 0, marginLeft: '1rem' }}>
+                              <button
+                                className={`wbv5-btn wbv5-btn-sm ${msgMode === 'partes' ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                                onClick={() => { setMsgMode('partes'); try { localStorage.setItem('wa_msg_mode', 'partes') } catch {} }}
+                              >Por partes</button>
+                              <button
+                                className={`wbv5-btn wbv5-btn-sm ${msgMode === 'completo' ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                                onClick={() => { setMsgMode('completo'); try { localStorage.setItem('wa_msg_mode', 'completo') } catch {} }}
+                              >Completo</button>
+                            </div>
+                          </div>
+                          {/* Uso de Emojis */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Uso de Emojis</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useEmojis ? 'El bot usa emojis estratégicos en sus respuestas' : 'Sin emojis — respuestas más formales y textuales'}</div>
+                            </div>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${useEmojis ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                              style={{ flexShrink: 0, marginLeft: '1rem' }}
+                              onClick={() => { const nv = !useEmojis; setUseEmojis(nv); try { localStorage.setItem('wa_use_emojis', String(nv)) } catch {} }}
+                            >{useEmojis ? '✅ Activo' : '⚪ Inactivo'}</button>
+                          </div>
+                          {/* Uso de Estilos */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Uso de estilos</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useStyles ? 'Usa *negrita*, _cursiva_, ~tachado~ en WhatsApp' : 'Sin formato — texto plano únicamente'}</div>
+                            </div>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${useStyles ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                              style={{ flexShrink: 0, marginLeft: '1rem' }}
+                              onClick={() => { const nv = !useStyles; setUseStyles(nv); try { localStorage.setItem('wa_use_styles', String(nv)) } catch {} }}
+                            >{useStyles ? '✅ Activo' : '⚪ Inactivo'}</button>
                           </div>
                         </div>
                       </div>
