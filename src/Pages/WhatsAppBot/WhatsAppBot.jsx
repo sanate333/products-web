@@ -198,6 +198,15 @@ Ejemplo:
 const COLORS_AV  = ['#d1fae5', '#dbeafe', '#ede9fe', '#fef3c7', '#fee2e2']
 const COLORS_TXT = ['#065f46', '#1d4ed8', '#5b21b6', '#92400e', '#b91c1c']
 
+// ── Resolver URL de media: blob / http completo / ruta relativa ─
+function resolveMediaUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('blob:') || url.startsWith('data:')) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Ruta relativa → anteponer MEDIA_BASE
+  return MEDIA_BASE + (url.startsWith('/') ? url : '/' + url)
+}
+
 // ── Componente: chat de prueba del bot IA ──────────────────────
 function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, tip }) {
   const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])
@@ -445,10 +454,16 @@ export default function WhatsAppBot() {
     const incoming = msgs.filter(m => m.dir === 'r')
     if (!incoming.length) return
     const lastIn = incoming[incoming.length - 1]
-    // Ya procesado → no hacer nada
+
+    // Dedup por ID
     if (aiProcessedRef.current.has(lastIn.id)) return
-    // Marcar como procesado ANTES de llamar async para evitar duplicados
+    // Dedup secundario por contenido (evita duplicados cuando el mismo mensaje llega
+    // con timestamps distintos entre polls y genera IDs diferentes)
+    const contentKey = `r_${(lastIn.txt || '').substring(0, 40)}`
+    if (aiProcessedRef.current.has(contentKey)) return
     aiProcessedRef.current.add(lastIn.id)
+    aiProcessedRef.current.add(contentKey)
+
     // Grace period de 4s al abrir el chat para no responder el historial
     if (Date.now() - chatOpenedAtRef.current < 4000) return
     // Verificar que IA esté ON para este chat y haya API key
@@ -456,16 +471,20 @@ export default function WhatsAppBot() {
     if (!hasAiKey) return
     // Si la IA ya estaba generando una respuesta → cancelarla (el cliente mandó algo nuevo)
     if (autoReplyingRef.current) {
-      autoReplyGenRef.current += 1  // invalida la generación anterior
+      autoReplyGenRef.current += 1
       autoReplyingRef.current = false
       setAiTyping(false)
     }
     // Auto-etiquetar pedido si se detectan keywords de compra
     if (lastIn.txt) autoTagOrder(active.id, lastIn.txt)
 
-    // Debounce 2.5s: si el cliente sigue escribiendo mensajes, esperamos al último
+    // Debounce: respetar el botDelay configurado en Ajustes
+    // Lee directamente de localStorage para evitar stale closure
+    const configDelay = Math.max(0, parseInt(localStorage.getItem('wa_bot_delay') || '3') || 0)
+    // Mínimo 400ms (natural feel) + debounce para esperar si el cliente sigue escribiendo
+    const totalDelay = configDelay * 1000 + 400
     clearTimeout(autoReplyTimerRef.current)
-    autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn), 2500)
+    autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn), totalDelay)
   }, [msgs]) // eslint-disable-line
 
   // ── Persistir etiquetas cuando el usuario las cambia manualmente ─
@@ -926,12 +945,18 @@ export default function WhatsAppBot() {
       const sysPrompt = ctx
         ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n• NEGRITAS WhatsApp: *una palabra* con UN asterisco a cada lado — úsalas en precios, nombres de combos, beneficios destacados\n• Ejemplo correcto: *Combo Detox* — *$66.000* 🌿 | *envío gratis* hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*\n• Emojis: máx 2 por mensaje, úsalos estratégicamente como viñetas\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono: si el cliente escribe informal, responde informal\n\nMULTI-MENSAJE (MUY IMPORTANTE):\nCuando explicas combos, productos, precios o temas que necesitan varios puntos,\nDIVIDE en 2 a 5 mensajes cortos separados por el separador exacto: ||||\nCada segmento = 1 mensaje de WhatsApp independiente\nEjemplo:\nTenemos opciones para tu piel 🌿\n||||\n*Combo Avena y Arroz* — piel sensible, granitos ✨ — *$66.000*\n||||\n*Combo Cúrcuma* — cicatrices y manchas 🌻 — *$66.000*\n||||\n¿Cuál va más con lo que necesitas? 😊\n\nPROTOCOLO DE VENTAS:\n1. Califica → entiende la necesidad con 1 pregunta\n2. Presenta → beneficios clave con *negritas* para lo importante\n3. Maneja objeciones → empatía + reencuadre de valor\n4. Cierra → pregunta directa única\n\nTÉCNICAS DE CIERRE:\n• Directo: "¿Arrancamos hoy?" / "¿Lo pedimos?"\n• Urgencia: "Solo hasta mañana 🔥"\n• Elección: "¿*Combo A* o *Combo B*?"\n• Cliente existente → pregunta experiencia + cross-sell natural\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Listas numeradas 1. 2. 3.\n❌ **Doble asterisco** — solo *uno cada lado*\n❌ Decir que eres IA o bot\n❌ Más de 2 emojis por mensaje`
         : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n• Negritas WhatsApp: *texto* (un asterisco cada lado) para precios y combos\n• Emojis: máx 2 por mensaje\n• Multi-mensaje: divide temas complejos en 2-5 partes separadas por ||||\n• Varía saludos y apertura en cada mensaje\n• Adapta el tono al estilo del cliente\n\nFLUJO DE VENTAS:\n1. Calificar → preguntar qué busca\n2. Presentar con *negritas* en precios/combos\n3. Manejar objeciones con empatía\n4. Cerrar con pregunta directa\n\nTÉCNICAS DE CIERRE:\n• "Solo hasta hoy 🔥" | "¿*Combo A* o *Combo B*?" | "¿Arrancamos?"\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ **Doble asterisco** | ❌ Decir que eres IA | ❌ +2 emojis`
+      // Mensaje actual del cliente para que la IA NO alucine sobre otros temas
+      const currentMsgCtx = lastClientMsg.txt
+        ? `\n\n⚡ MENSAJE ACTUAL DEL CLIENTE AL QUE DEBES RESPONDER:\n"${lastClientMsg.txt}"\nResponde SOLO a esto. No inventes temas que el cliente no haya mencionado.`
+        : ''
+      const finalSysPrompt = sysPrompt + currentMsgCtx
+
       const reply = await callAI({
         messages: [
-          { role: 'system', content: sysPrompt },
+          { role: 'system', content: finalSysPrompt },
           ...history,
         ],
-        maxTokens: 480,  // más tokens para multi-mensajes
+        maxTokens: 480,
       })
       // Verificar que no haya llegado un mensaje nuevo que invalide esta generación
       if (!reply || active?.id !== chatId || autoReplyGenRef.current !== myGen) {
@@ -953,9 +978,9 @@ export default function WhatsAppBot() {
           })
         } catch {}
 
-        // Delay proporcional al texto: más corto en multi-mensajes para que fluya natural
-        const baseDelay = parts.length > 1 ? 600 : 800
-        const typingMs = Math.max(baseDelay, Math.min(part.length * 15, parts.length > 1 ? 1500 : 2000))
+        // Delay de escritura: corto porque botDelay ya controló la espera previa
+        const baseDelay = parts.length > 1 ? 400 : 500
+        const typingMs = Math.max(baseDelay, Math.min(part.length * 10, parts.length > 1 ? 1200 : 1800))
         await new Promise(r => setTimeout(r, typingMs))
 
         // Re-verificar tras el delay
@@ -1742,29 +1767,75 @@ ${conversation}`
                         const isMediaType = ['image', 'video', 'audio', 'document', 'sticker'].includes(m.type);
                         return (
                         <div key={m.id} className={`wbv5-msg ${m.dir}`}>
-                          {/* texto - solo mostrar si NO es mensaje de media */}
-                          {m.txt && !isMediaType ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
-                          {/* imagen */}
-                          {m.type === 'image' ? (m.mediaUrl ? (
-                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} target="_blank" rel="noreferrer">
-                              <img src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} alt="img" className="wbv5-msg-img" />
-                            </a>
-                          ) : <div className="wbv5-msg-media-ph">📷 Imagen</div>) : null}
-                          {/* video */}
-                          {m.type === 'video' ? (m.mediaUrl ? (
-                            <video src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} controls className="wbv5-msg-video" />
-                          ) : <div className="wbv5-msg-media-ph">🎥 Video</div>) : null}
-                          {/* audio / voz */}
-                          {m.type === 'audio' ? (m.mediaUrl ? (
-                            <audio src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} controls className="wbv5-msg-audio" />
-                          ) : <div className="wbv5-msg-media-ph">🎵 Audio</div>) : null}
-                          {/* documento */}
+                          {/* texto — mostrar también en imagen/video/audio si tiene caption */}
+                          {m.txt ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
+
+                          {/* ── imagen ── */}
+                          {m.type === 'image' ? (m.mediaUrl ? (() => {
+                            const src = resolveMediaUrl(m.mediaUrl)
+                            return (
+                              <div style={{ position: 'relative' }}>
+                                <img
+                                  src={src} alt="img" className="wbv5-msg-img"
+                                  onError={e => {
+                                    e.target.style.display = 'none'
+                                    const dl = e.target.parentNode?.querySelector('.wbv5-media-dl')
+                                    if (dl) dl.style.display = 'flex'
+                                  }}
+                                />
+                                <a href={src} target="_blank" rel="noreferrer" download
+                                  className="wbv5-media-dl"
+                                  style={{ display: 'none', alignItems: 'center', gap: '.4rem', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '.5rem .75rem', fontSize: '.72rem', color: '#374151', textDecoration: 'none', cursor: 'pointer' }}>
+                                  📥 Ver / Descargar imagen
+                                </a>
+                              </div>
+                            )
+                          })() : <div className="wbv5-msg-media-ph">📷 Imagen</div>) : null}
+
+                          {/* ── video ── */}
+                          {m.type === 'video' ? (m.mediaUrl ? (() => {
+                            const src = resolveMediaUrl(m.mediaUrl)
+                            return (
+                              <div>
+                                <video src={src} controls className="wbv5-msg-video"
+                                  onError={e => {
+                                    e.target.style.display = 'none'
+                                    e.target.nextSibling?.style?.removeProperty('display')
+                                  }} />
+                                <a href={src} target="_blank" rel="noreferrer" download
+                                  style={{ display: 'none', fontSize: '.72rem', color: '#374151' }}>
+                                  📥 Descargar video
+                                </a>
+                              </div>
+                            )
+                          })() : <div className="wbv5-msg-media-ph">🎥 Video</div>) : null}
+
+                          {/* ── audio / nota de voz ── */}
+                          {m.type === 'audio' ? (m.mediaUrl ? (() => {
+                            const src = resolveMediaUrl(m.mediaUrl)
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem' }}>
+                                <audio src={src} controls className="wbv5-msg-audio"
+                                  onError={e => {
+                                    e.target.style.display = 'none'
+                                    e.target.nextSibling?.style?.removeProperty('display')
+                                  }} />
+                                <a href={src} target="_blank" rel="noreferrer" download
+                                  style={{ display: 'none', alignItems: 'center', gap: '.3rem', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '.4rem .65rem', fontSize: '.71rem', color: '#374151', textDecoration: 'none' }}>
+                                  🎵 Descargar audio
+                                </a>
+                              </div>
+                            )
+                          })() : <div className="wbv5-msg-media-ph">🎵 Audio</div>) : null}
+
+                          {/* ── documento ── */}
                           {m.type === 'document' ? (m.mediaUrl ? (
-                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `${MEDIA_BASE}${m.mediaUrl}`} target="_blank" rel="noreferrer" className="wbv5-msg-doc">
+                            <a href={resolveMediaUrl(m.mediaUrl)} target="_blank" rel="noreferrer" download className="wbv5-msg-doc">
                               📄 {m.fileName || 'Documento'}
                             </a>
                           ) : <div className="wbv5-msg-media-ph">📄 {m.fileName || 'Documento'}</div>) : null}
-                          {/* sticker */}
+
+                          {/* ── sticker ── */}
                           {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
                           <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ✓✓' : ' ✓') : ''}</div>
                         </div>
