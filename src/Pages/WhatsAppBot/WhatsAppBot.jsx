@@ -127,6 +127,15 @@ const DEFAULT_TRIGGERS = [
   { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
 ]
 
+const DEFAULT_PLANTILLAS = [
+  { id: 'tpl_bienvenida',  nombre: 'Bienvenida',            categoria: 'Inicio',       mensaje: 'Hola {nombre} 👋😊 ¡Bienvenido! Qué bueno tenerte por aquí 💛\n\n¿Quieres saber cómo se usa, los combos disponibles y el obsequio activo 🎁?\nResponde Sí o No ✨' },
+  { id: 'tpl_info_ofertas', nombre: 'Info + Combos + Precios', categoria: 'Ventas',    mensaje: '🔥 COMBOS MÁS PEDIDOS – PRECIOS BAJOS POR TIEMPO LIMITADO 🔥\n\n💚 *Combo 1* – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena) → *$59.000* (antes $105.000)\n💛 *Combo 3* – 2 Jabones + Sebo de Res 10g → *$63.000* (antes $79.000)\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000* (antes $159.000)\n\n🚚 Envío GRATIS a toda Colombia 💳 Pagas al recibir — sin riesgo\n⏰ Se están agotando rápido... ¿Te reservo el más vendido? 💛' },
+  { id: 'tpl_confirmacion', nombre: 'Confirmación de pedido',  categoria: 'Pedidos',   mensaje: 'Tu pedido ha sido confirmado exitosamente y eres muy importante para nosotros 💚\n\n📦 Por favor, estate pendiente del envío y del repartidor de Inter Rapidísimo 🚚\nNormalmente la entrega se realiza en 1 a 3 días hábiles, dependiendo de tu ciudad.\n\n¡Gracias por ser parte de la familia Sánate! 🙌' },
+  { id: 'tpl_seguimiento', nombre: 'Seguimiento sin compra',  categoria: 'Seguimiento', mensaje: 'Hola {nombre} 😊\n\n¿Pudiste revisar la información que te envié? 🌿\n\nHoy tenemos un descuento especial — los precios y el obsequio son *solo por hoy* ⏰\n\n¿Te reservo el más vendido antes de que se agote? 💛' },
+  { id: 'tpl_precio',      nombre: 'Precios y combos (lista)', categoria: 'Ventas',    mensaje: '💚 *Combo 1* – Tripack Mixto (3 Jabones) → *$59.000*\n💛 *Combo 2* – 3 Jabones a elección → *$59.000*\n🌿 *Combo 3* – 2 Jabones + Sebo 10g → *$63.000*\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000*\n\n🚚 Envío GRATIS | 💳 Contra entrega | Nequi *8% OFF*\n\n¿Cuál te llevas hoy? 💛' },
+  { id: 'tpl_datos',       nombre: 'Solicitud de datos',       categoria: 'Pedidos',   mensaje: '¡Excelente elección! 💚✨\n\nPara confirmar tu pedido envíame:\n1️⃣ Nombre y Apellido\n📱 Teléfono de contacto\n📍 Ciudad y Departamento\n🏠 Dirección exacta\n📦 Barrio\n\nQuedo atenta para procesarlo de inmediato 🚀' },
+]
+
 // ── Mapa de geo por código de país / área Colombia ──────────────
 const GEO_MAP = {
   col: { '1':'Bogotá·CUN','2':'Cali·VAL','4':'Medellín·ANT','5':'Barranquilla·ATL','6':'Manizales·CAL','7':'Bucaramanga·SAN','8':'Cartagena·BOL','9':'Leticia·AMA' },
@@ -418,6 +427,10 @@ export default function WhatsAppBot() {
   const [editTrigger,      setEditTrigger]      = useState(null)   // trigger en edición (null=cerrado)
   const [generatingTrigger,setGeneratingTrigger]= useState(false)
 
+  // ── Plantillas ────────────────────────────────────────────────
+  const [plantillas,    setPlantillas]    = useState(() => { try { return JSON.parse(localStorage.getItem('wa_plantillas') || 'null') || DEFAULT_PLANTILLAS } catch { return DEFAULT_PLANTILLAS } })
+  const [editPlantilla, setEditPlantilla] = useState(null)  // null=cerrado, obj=editando
+
   // ── Geo & Timing ──────────────────────────────────────────────
   const [botDelay,       setBotDelay]       = useState(() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') } catch { return 3 } })
   const [simulateTyping, setSimulateTyping] = useState(true)
@@ -692,16 +705,18 @@ export default function WhatsAppBot() {
     setIsRecording(false)
   }
 
-  const QUICK_TEMPLATES = [
-    { id: 't1', name: 'Bienvenida', category: 'Saludo',  description: '¡Hola! ¿En qué te puedo ayudar hoy?' },
-    { id: 't2', name: 'Seguimiento', category: 'Ventas', description: 'Hola {nombre}, ¿pudiste revisar la información que te envié?' },
-    { id: 't3', name: 'Pago pendiente', category: 'Cobro', description: 'Hola, te recordamos que tienes un pago pendiente. ¿Deseas proceder?' },
-    { id: 't4', name: 'Confirmación pedido', category: 'Pedidos', description: 'Tu pedido #{numero} ha sido confirmado. ¡Gracias por tu compra!' },
-  ]
-
   function sendTemplate(tpl) {
+    if (!active) return
+    const clientName = chats.find(c => c.id === active.id)?.name || active.id.split('@')[0] || 'Cliente'
+    const text = (tpl.mensaje || tpl.description || '')
+      .replace(/\{nombre\}/g, clientName)
+      .replace(/\{tienda\}/g, 'Sanate')
+      .replace(/\{telefono\}/g, active.id.split('@')[0])
     const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-    setMsgs(prev => [...prev, { id: Date.now().toString(), dir: 's', txt: `📋 ${tpl.name} — ${tpl.description}`, time: t, type: 'text', status: 'sent' }])
+    // Enviar al backend real
+    const fd = new FormData(); fd.append('text', text)
+    fetch(`${BU}/chats/${encodeURIComponent(active.id)}/send`, { method: 'POST', headers: H, body: fd }).catch(() => {})
+    setMsgs(prev => { const next = [...prev, { id: Date.now().toString(), dir: 's', txt: text, time: t, type: 'text', status: 'sent' }]; cachePut(active.id, next); return next })
     setShowTemplatesModal(false)
     scroll()
   }
@@ -1370,6 +1385,12 @@ ${conversation}`
   function saveTriggers(updated) {
     setTriggers(updated)
     try { localStorage.setItem('wa_triggers', JSON.stringify(updated)) } catch {}
+  }
+
+  // ── Plantillas helpers ─────────────────────────────────────────
+  function savePlantillas(updated) {
+    setPlantillas(updated)
+    try { localStorage.setItem('wa_plantillas', JSON.stringify(updated)) } catch {}
   }
   function toggleTrigger(id) {
     saveTriggers(triggers.map(t => t.id === id ? { ...t, active: !t.active } : t))
@@ -2057,13 +2078,14 @@ ${conversation}`
                             <button onClick={() => setShowTemplatesModal(false)}>✕</button>
                           </div>
                           <div className="wbv5-tpl-list">
-                            {QUICK_TEMPLATES.map(tpl => (
+                            {plantillas.map(tpl => (
                               <button key={tpl.id} className="wbv5-tpl-opt" onClick={() => sendTemplate(tpl)}>
-                                <span className="wbv5-tpl-cat">{tpl.category}</span>
-                                <strong>{tpl.name}</strong>
-                                <small>{tpl.description}</small>
+                                <span className="wbv5-tpl-cat">{tpl.categoria}</span>
+                                <strong>{tpl.nombre}</strong>
+                                <small style={{ whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tpl.mensaje}</small>
                               </button>
                             ))}
+                            {plantillas.length === 0 && <div style={{ padding: '1rem', color: '#9ca3af', fontSize: '.75rem', textAlign: 'center' }}>Sin plantillas — crea una en la sección 📋 Plantillas</div>}
                           </div>
                         </div>
                       </div>
@@ -2415,20 +2437,91 @@ ${conversation}`
           {/* ══ PLANTILLAS ══ */}
           {page === 'templates' && (
             <div className="wbv5-content">
-              <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>📋 Plantillas de mensajes</div>
-              <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Plantillas aprobadas por Meta para envío masivo</div>
-              <div className="wbv5-card">
-                <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Mis plantillas</div>
-                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('➕ Nueva plantilla — próximamente')}>+ Nueva</button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.2rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>📋 Plantillas de mensajes</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes rápidos para el chat y disparadores de palabras clave</div>
                 </div>
-                <div className="wbv5-card-bd">
-                  <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>📋</div>
-                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#6b7280', marginBottom: '.3rem' }}>Sin plantillas aún</div>
-                    <div style={{ fontSize: '.72rem', color: '#9ca3af' }}>Crea plantillas aprobadas por Meta para enviar mensajes masivos</div>
+                <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditPlantilla({ isNew: true, nombre: '', categoria: 'Ventas', mensaje: '' })}>+ Nueva plantilla</button>
+              </div>
+
+              {/* ── Formulario crear/editar ── */}
+              {editPlantilla && (
+                <div className="wbv5-card" style={{ border: '2px solid #2563eb', marginTop: '.75rem', marginBottom: '.75rem' }}>
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">✏️ {editPlantilla.isNew ? 'Nueva' : 'Editar'} plantilla</div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditPlantilla(null)}>✕ Cancelar</button>
+                  </div>
+                  <div className="wbv5-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+                    <div className="wbv5-form-row">
+                      <div className="wbv5-form-lbl">Nombre de la plantilla</div>
+                      <input className="wbv5-form-input" value={editPlantilla.nombre} onChange={e => setEditPlantilla(p => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Bienvenida, Confirmación de pedido..." />
+                    </div>
+                    <div className="wbv5-form-row">
+                      <div className="wbv5-form-lbl">Categoría</div>
+                      <select className="wbv5-form-input" value={editPlantilla.categoria} onChange={e => setEditPlantilla(p => ({ ...p, categoria: e.target.value }))}>
+                        <option>Inicio</option><option>Ventas</option><option>Pedidos</option><option>Seguimiento</option><option>Soporte</option><option>General</option>
+                      </select>
+                    </div>
+                    <div className="wbv5-form-row">
+                      <div className="wbv5-form-lbl" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Mensaje ({(editPlantilla.mensaje || '').length}/1000)</span>
+                        <span style={{ fontSize: '.62rem', color: '#9ca3af' }}>Variables: {'{nombre}'} {'{telefono}'} {'{tienda}'}</span>
+                      </div>
+                      <textarea className="wbv5-form-input" rows={5} value={editPlantilla.mensaje} onChange={e => setEditPlantilla(p => ({ ...p, mensaje: e.target.value }))} placeholder="Escribe el mensaje. Usa {nombre} para personalizar con el nombre del cliente." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '.5rem' }}>
+                      <button className="wbv5-btn wbv5-btn-green" onClick={() => {
+                        if (!editPlantilla.nombre.trim() || !editPlantilla.mensaje.trim()) { tip('⚠️ Completa nombre y mensaje'); return }
+                        const list = editPlantilla.isNew
+                          ? [...plantillas, { id: `tpl_${Date.now()}`, nombre: editPlantilla.nombre, categoria: editPlantilla.categoria, mensaje: editPlantilla.mensaje }]
+                          : plantillas.map(p => p.id === editPlantilla.id ? { id: p.id, nombre: editPlantilla.nombre, categoria: editPlantilla.categoria, mensaje: editPlantilla.mensaje } : p)
+                        savePlantillas(list); setEditPlantilla(null); tip('✅ Plantilla guardada')
+                      }}>💾 Guardar plantilla</button>
+                      <button className="wbv5-btn wbv5-btn-outline" onClick={() => setEditPlantilla(null)}>Cancelar</button>
+                    </div>
                   </div>
                 </div>
+              )}
+
+              {/* ── Lista de plantillas ── */}
+              <div className="wbv5-card" style={{ marginTop: '.75rem' }}>
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">Mis plantillas ({plantillas.length})</div>
+                  {plantillas.length === 0 && (
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('✅ Plantillas de ejemplo cargadas') }}>📥 Cargar ejemplos</button>
+                  )}
+                </div>
+                <div style={{ padding: 0 }}>
+                  {plantillas.map(pl => (
+                    <div key={pl.id} style={{ padding: '.75rem 1rem', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'flex-start', gap: '.75rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.2rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '.8rem', fontWeight: 700 }}>{pl.nombre}</span>
+                          <span style={{ background: '#eff6ff', color: '#3b82f6', fontSize: '.6rem', padding: '1px 7px', borderRadius: 4, fontWeight: 600 }}>{pl.categoria}</span>
+                        </div>
+                        <div style={{ fontSize: '.68rem', color: '#6b7280', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'pre-wrap' }}>{pl.mensaje}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '.3rem', flexShrink: 0 }}>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" title="Editar" onClick={() => setEditPlantilla({ ...pl, isNew: false })}>✏️</button>
+                        <button className="wbv5-btn wbv5-btn-sm" title="Duplicar" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} onClick={() => { const copy = { ...pl, id: `tpl_${Date.now()}`, nombre: pl.nombre + ' (copia)' }; savePlantillas([...plantillas, copy]); tip('✅ Plantilla duplicada') }}>📋</button>
+                        <button className="wbv5-btn wbv5-btn-sm" title="Eliminar" style={{ background: '#fee2e2', color: '#dc2626', border: 'none' }} onClick={() => { if (window.confirm(`¿Eliminar "${pl.nombre}"?`)) { savePlantillas(plantillas.filter(p => p.id !== pl.id)); tip('🗑️ Plantilla eliminada') } }}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                  {plantillas.length === 0 && (
+                    <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>📋</div>
+                      <div style={{ fontSize: '.8rem', fontWeight: 700, color: '#6b7280', marginBottom: '.3rem' }}>Sin plantillas</div>
+                      <div style={{ fontSize: '.72rem', color: '#9ca3af', marginBottom: '.75rem' }}>Crea mensajes rápidos para enviar desde el chat o en disparadores de palabras clave</div>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('✅ Plantillas de Sánate cargadas') }}>📥 Cargar plantillas de Sánate</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ fontSize: '.68rem', color: '#9ca3af', marginTop: '.75rem', lineHeight: 1.5 }}>
+                💡 <strong>Cómo usarlas:</strong> En el chat, usa el botón 📋 del input. En ⚡ Disparadores, selecciona una plantilla al configurar un trigger de palabra clave.
               </div>
             </div>
           )}
@@ -2636,10 +2729,34 @@ ${conversation}`
                         <input className="wbv5-form-input" value={editTrigger.mediaUrl || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaUrl: e.target.value }))} placeholder="https://... o ruta relativa" />
                       </div>
                     )}
+                    {/* Selector de plantilla para triggers de palabra clave */}
+                    {editTrigger.condition === 'keyword' && plantillas.length > 0 && (
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">📋 Cargar desde plantilla guardada</div>
+                        <select
+                          className="wbv5-form-input"
+                          defaultValue=""
+                          onChange={e => {
+                            if (!e.target.value) return
+                            const pl = plantillas.find(p => p.id === e.target.value)
+                            if (pl) setEditTrigger(prev => ({ ...prev, message: pl.mensaje }))
+                            e.target.value = ''
+                          }}
+                        >
+                          <option value="">— Seleccionar plantilla —</option>
+                          {plantillas.map(pl => (
+                            <option key={pl.id} value={pl.id}>{pl.nombre} ({pl.categoria})</option>
+                          ))}
+                        </select>
+                        <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.15rem' }}>
+                          💡 Al seleccionar se carga el texto en el campo de abajo 👇
+                        </div>
+                      </div>
+                    )}
                     <div className="wbv5-form-row">
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.28rem' }}>
                         <div className="wbv5-form-lbl" style={{ margin: 0 }}>
-                          {editTrigger.condition === 'keyword' ? '📋 Plantilla a enviar' : 'Mensaje'} ({(editTrigger.message || '').length}/1000 chars)
+                          {editTrigger.condition === 'keyword' ? '📋 Mensaje a enviar' : 'Mensaje'} ({(editTrigger.message || '').length}/1000 chars)
                         </div>
                         <button className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`} style={{ fontSize: '.65rem' }} onClick={() => generateTriggerMsg(editTrigger.name || 'seguimiento')} disabled={generatingTrigger}>
                           {generatingTrigger ? '⏳ Generando...' : '🤖 Generar con IA'}
@@ -3164,7 +3281,13 @@ ${conversation}`
                       <div className="wbv5-card-bd">
                         <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
                           El bot necesita un servidor Baileys corriendo. Puede ser en local, Railway, Render o cualquier servicio cloud.<br />
-                          <span style={{ color: '#dc2626', fontWeight: 600 }}>⚠️ Problema actual:</span> desde <code>https://sanate.store</code> los navegadores bloquean <code>http://localhost</code>. Usa una URL pública HTTPS.
+                          {backendUrlInput.includes('localhost') && window.location.protocol === 'https:' ? (
+                            <span style={{ color: '#dc2626', fontWeight: 600 }}>⚠️ Problema actual: desde <code>{window.location.origin}</code> los navegadores bloquean <code>http://localhost</code>. Usa Railway, Render o ngrok (URL pública HTTPS).</span>
+                          ) : backendUrlInput.includes('localhost') ? (
+                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>💡 Usando localhost — funciona en desarrollo local. Para producción usa Railway o Render.</span>
+                          ) : (
+                            <span style={{ color: '#16a34a', fontWeight: 600 }}>✅ URL correcta — usando servidor HTTPS externo.</span>
+                          )}
                         </div>
                         <div className="wbv5-form-row">
                           <div className="wbv5-form-lbl">URL base del servidor</div>
