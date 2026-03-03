@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import baseURL from '../../url';
 
-export default function NewBanner({ tipo = 'home' }) {
+export default function NewBanner({ tipo = 'home', onCreated }) {
     const [mensaje, setMensaje] = useState('');
     const [imagenPreview, setImagenPreview] = useState(null);
     const [isImageSelected, setIsImageSelected] = useState(false);
@@ -53,8 +53,9 @@ export default function NewBanner({ tipo = 'home' }) {
             if (data.mensaje) {
                 setMensaje('');
                 resetForm();
+                toggleModal();
                 toast.success(data.mensaje);
-                window.location.reload();
+                if (onCreated) onCreated();
             } else if (data.error) {
                 setMensaje('');
                 toast.error(data.error);

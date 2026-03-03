@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import baseURL from '../../url';
 
-export default function NewSubBanner() {
+export default function NewSubBanner({ onCreated }) {
     const [mensaje, setMensaje] = useState('');
     const [imagenPreviews, setImagenPreviews] = useState([]);
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -92,8 +92,9 @@ export default function NewSubBanner() {
                 toast.error(errors[0]);
                 return;
             }
+            toggleModal();
             toast.success('Sub-banners agregados.');
-            window.location.reload();
+            if (onCreated) onCreated();
         } catch (error) {
             console.error('Error:', error);
             setMensaje('');

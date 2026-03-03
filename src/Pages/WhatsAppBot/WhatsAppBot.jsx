@@ -3,7 +3,7 @@ import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
-const DEFAULT_BU     = 'http://localhost:5055/api/whatsapp'
+const DEFAULT_BU     = 'https://sanate.store/api/whatsapp'
 const DEFAULT_SECRET = 'sanate_secret_2025'
 // ── Backend URL y Secret — configurables en Ajustes ─────────────
 let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
@@ -487,6 +487,17 @@ export default function WhatsAppBot() {
   useEffect(() => { // eslint-disable-line
     document.body.classList.add('wabotPage')
     return () => document.body.classList.remove('wabotPage')
+  }, []) // eslint-disable-line
+
+  // Si localStorage tiene URL local (localhost/127.0.0.1), migrar al DEFAULT_BU público
+  useEffect(() => { // eslint-disable-line
+    const stored = (() => { try { return localStorage.getItem('wa_backend_url') || '' } catch { return '' } })()
+    const isLocal = !stored || stored.includes('localhost') || stored.includes('127.0.0.1')
+    if (isLocal && !DEFAULT_BU.includes('localhost')) {
+      try { localStorage.setItem('wa_backend_url', DEFAULT_BU) } catch {}
+      BU = DEFAULT_BU
+      setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp', ''))
+    }
   }, []) // eslint-disable-line
 
   // Mantener refs sincronizadas (evitan stale closures en callbacks asíncronos)

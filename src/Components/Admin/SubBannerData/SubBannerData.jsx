@@ -315,8 +315,11 @@ export default function SubBannerData() {
             </div>
 
             {activeTab === 'subbanner'
-                ? <NewSubBanner />
-                : <NewBanner tipo={activeTab === 'catalogo' ? 'catalogo' : 'home'} />
+                ? <NewSubBanner onCreated={cargarSubBanners} />
+                : <NewBanner
+                    tipo={activeTab === 'catalogo' ? 'catalogo' : 'home'}
+                    onCreated={activeTab === 'catalogo' ? cargarBannersCatalogo : cargarBanners}
+                  />
             }
 
             <p className='subBannerNote'>
@@ -341,7 +344,11 @@ export default function SubBannerData() {
                             onDragEnd={handleDragEnd}
                         >
                             <span className='bannerBadge'>{index === 0 ? 'Principal' : `#${index + 1}`}</span>
-                            <img src={resolveImg(item.imagen)} alt="banner" />
+                            <img
+                                src={resolveImg(item.imagen)}
+                                alt="banner"
+                                onError={(e) => { e.target.style.display = 'none'; }}
+                            />
                             <div className='bannerActions'>
                                 <button className='btnBannerDelete' onClick={() => handleEliminar(id)}>
                                     <FontAwesomeIcon icon={faTrash} />

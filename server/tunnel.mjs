@@ -25,6 +25,7 @@ if (existsSync(envPath)) {
 
 const PORT = process.env.PORT || 5005;
 const BACKEND = `http://localhost:${PORT}`;
+const HOSTINGER_PHP = "https://sanate.store/waBackendUrl.php";
 
 let currentUrl = "";
 
@@ -33,7 +34,7 @@ function updateBackendUrl(url) {
   currentUrl = url;
   console.log(`[TUNNEL] URL: ${url}`);
 
-  // Espera a que el backend esté listo antes de actualizar
+  // Actualiza backend local (con reintentos)
   const tryUpdate = (retries = 10) => {
     fetch(`${BACKEND}/api/whatsapp/settings`, {
       method: "POST",
@@ -48,6 +49,16 @@ function updateBackendUrl(url) {
       });
   };
   setTimeout(() => tryUpdate(), 5000);
+
+  // También persiste la URL en Hostinger para que el frontend la descubra automáticamente
+  fetch(HOSTINGER_PHP, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-secret": WA_SECRET },
+    body: JSON.stringify({ backendPublicUrl: url }),
+  })
+    .then((r) => r.json())
+    .then(() => console.log("[TUNNEL] URL guardada en Hostinger"))
+    .catch((err) => console.warn("[TUNNEL] No se pudo guardar en Hostinger:", err.message));
 }
 
 function startTunnel() {
