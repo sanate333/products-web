@@ -239,8 +239,12 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
     setMsgs(p => [...p, { role: 'user', txt: userMsg }])
     try {
       const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
+      const baseCtx = (trainingPrompt || aiPrompt || '').substring(0, 5500)
+      const enhancedSys = baseCtx
+        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÍTICAS WHATSAPP:\n• Mensajes cortos: máx 3-4 líneas por respuesta\n• NO uses markdown: sin **negritas**, sin listas 1. 2. 3., sin # títulos\n• Emojis: máx 2 por mensaje, úsalos como viñetas estratégicamente\n• VARÍA tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente (si escribe informal, sé informal)\n• Eres una persona real, NUNCA te presentes como IA o bot\n\nPROTOCOLO DE VENTAS:\n1. Calificar → entiende la necesidad con 1 pregunta\n2. Presentar → 1-2 beneficios clave para SU caso\n3. Manejar objeciones → empatía + reencuadre de valor\n4. Cerrar → pregunta directa de cierre\n\nCIERRES QUE FUNCIONAN:\n• "¿Lo pedimos para hoy?" 📦\n• "¿Te lo enviamos al mismo WhatsApp?"\n• "Solo hasta mañana — ¿Arrancamos? 🔥"\n• "¿Prefieres el combo A o el B?"\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 4 líneas seguidas\n❌ Listas numeradas\n❌ Decir que eres IA\n❌ Más de 2 emojis`
+        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real.\nMensajes cortos (máx 3-4 líneas). Sin markdown. Máx 2 emojis. Varía tus respuestas.\nSiempre termina con una pregunta de cierre o avance.\nNUNCA te presentes como IA.`
       const reply = await localCallAI([
-        { role: 'system', content: (trainingPrompt || aiPrompt || 'Eres un asistente de ventas.').substring(0, 6000) },
+        { role: 'system', content: enhancedSys },
         ...history,
         { role: 'user', content: userMsg },
       ])
@@ -284,7 +288,13 @@ const DEFAULT_TAGS = [
   { id: 'tg3', name: 'Cliente VIP',     color: '#8b5cf6' },
   { id: 'tg4', name: 'Soporte',         color: '#ef4444' },
   { id: 'tg5', name: 'Recurrente',      color: '#10b981' },
+  { id: 'tg6', name: 'Preparar',        color: '#2563eb' }, // azul — auto cuando detecta pedido
+  { id: 'tg7', name: 'Facturado',       color: '#16a34a' }, // verde — cambio manual
+  { id: 'tg8', name: 'Reserva',         color: '#7c3aed' },
 ]
+
+// Keywords que indican intención de pedido
+const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 'llevar', 'cuánto cuesta', 'cuanto cuesta', 'cuánto vale', 'cuanto vale', 'precio', 'pago', 'transferencia', 'domicilio', 'envío', 'envio', 'me interesa', 'lo quiero', 'cómo pago', 'como pago', 'cómo compro', 'como compro', 'quiero uno', 'quiero comprar', 'cuantos', 'disponible', 'tienes', 'hay']
 
 export default function WhatsAppBot() {
   const [page,        setPage]        = useState('overview')
@@ -299,6 +309,14 @@ export default function WhatsAppBot() {
   const [search,      setSearch]      = useState('')
   const [chatFilter,  setChatFilter]  = useState('todos')
   const [showContact, setShowContact] = useState(false)
+
+  // ── Análisis de cliente ───────────────────────────────────────
+  const [showAnalysisPanel, setShowAnalysisPanel] = useState(false)
+  const [clientAnalysis,    setClientAnalysis]    = useState(() => { try { return JSON.parse(localStorage.getItem('wa_client_analysis') || '{}') } catch { return {} } })
+  const [analysisLoading,   setAnalysisLoading]   = useState(false)
+
+  // ── Etiquetas persistentes por chat ──────────────────────────
+  const [chatsTags,         setChatsTags]         = useState(() => { try { return JSON.parse(localStorage.getItem('wa_chats_tags') || '{}') } catch { return {} } })
   const [n8nOk,       setN8nOk]       = useState(null)
   const [curFlow,     setCurFlow]     = useState('bienvenida')
   const [builderOpen, setBuilderOpen] = useState(false)
@@ -436,10 +454,18 @@ export default function WhatsAppBot() {
       autoReplyingRef.current = false
       setAiTyping(false)
     }
+    // Auto-etiquetar pedido si se detectan keywords de compra
+    if (lastIn.txt) autoTagOrder(active.id, lastIn.txt)
+
     // Debounce 2.5s: si el cliente sigue escribiendo mensajes, esperamos al último
     clearTimeout(autoReplyTimerRef.current)
     autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn), 2500)
   }, [msgs]) // eslint-disable-line
+
+  // ── Persistir etiquetas cuando el usuario las cambia manualmente ─
+  useEffect(() => { // eslint-disable-line
+    if (active?.id) saveContactTagsMap(active.id, contactTags)
+  }, [contactTags]) // eslint-disable-line
 
   // Restaurar chat activo desde localStorage cuando se conecta
   useEffect(() => { // eslint-disable-line
@@ -703,9 +729,12 @@ export default function WhatsAppBot() {
   async function openChat(c) {
     chatOpenedAtRef.current = Date.now() // marca tiempo de apertura — grace period anti-historial
     aiProcessedRef.current.clear()        // limpiar procesados del chat anterior
-    setActive(c); setShowContact(false)
+    setActive(c); setShowContact(false); setShowAnalysisPanel(false)
     activePut(c)
     saveClienteFromChat(c)  // auto-registrar cliente
+    // Restaurar etiquetas persistentes de este chat
+    const savedTags = chatsTags[c.id] || ['Nuevo lead']
+    setContactTags(savedTags)
     await loadM(c.id)
     setChats(p => p.map(x => x.id === c.id ? { ...x, unread: 0 } : x))
     fetch(`${BU}/chats/${encodeURIComponent(c.id)}/read`, { method: 'POST', headers: H }).catch(() => {})
@@ -884,9 +913,13 @@ export default function WhatsAppBot() {
         role: m.dir === 'r' ? 'user' : 'assistant',
         content: m.txt || '[archivo]',
       }))
+      // Perfil del cliente si existe
+      const profile = clientAnalysis[chatId]
+      const profileCtx = profile ? `\nPERFIL DEL CLIENTE ACTUAL:\n• Estilo: ${profile.estilo} | Tono: ${profile.tono} | Intención de compra: ${profile.intencion}\n• Intereses: ${(profile.intereses||[]).join(', ')}\n• Ángulo recomendado: ${profile.angulo || 'N/A'}\n` : ''
+
       const sysPrompt = ctx
-        ? `${ctx}\n\n---\nREGLAS DE RESPUESTA:\n1. Si es pregunta → info del producto + beneficios (sin precio aún).\n2. Si hay intención de compra → precio + oferta + cierre.\n3. Máximo 3 líneas. Tono humano. 1-2 emojis. Sin saludos genéricos repetidos.\n4. Termina con pregunta que invite a continuar.\n5. Responde como asesor real, NO como IA.`
-        : `Eres un asesor de ventas experto por WhatsApp.\nREGLAS:\n1. Si es pregunta → da info + beneficios.\n2. Si hay interés de compra → precio + cierre.\n3. Máximo 3 líneas. Tono amigable. 1-2 emojis.\n4. Termina con pregunta.\n5. Actúa como persona real.`
+        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas (celular)\n• NO uses markdown: sin negritas **, sin listas 1. 2. 3., sin # títulos\n• Usa emojis como viñetas, MÁXIMO 2 por mensaje\n• Varía tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente: si escribe informal, sé informal\n\nPROTOCOLO DE VENTAS (sigue este flujo):\n1. Primera pregunta → saluda + califica la necesidad con 1 pregunta\n2. Exploración → entiende su problema real antes de ofrecer\n3. Presentación → 1-2 beneficios clave para SU caso, no todo el catálogo\n4. Objeción precio → "¿Qué resultado esperas obtener?" + reencuadre de valor\n5. Cierre → una pregunta directa: "¿Lo pedimos para hoy?" / "¿Te lo enviamos al mismo WhatsApp?"\n\nTÉCNICAS DE CIERRE:\n• Directo: "¿Arrancamos hoy?" / "¿Lo pedimos?"\n• Urgencia: "Este precio solo es hasta mañana 🔥"\n• Elección: "¿Prefieres el combo A o el B?"\n• Silencio cliente → reactivación con nuevo ángulo de valor\n• Cliente existente → pregunta por su experiencia + recomienda siguiente producto\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!" (frases genéricas)\n❌ Más de 4 líneas seguidas\n❌ Listas numeradas\n❌ Mencionar que eres IA o bot\n❌ Repetir el mismo saludo más de una vez\n❌ Más de 2 emojis por mensaje`
+        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n• NO uses markdown, listas numeradas ni negritas **\n• Emojis: máx 2 por mensaje, como viñetas\n• Varía saludos y apertura en cada mensaje\n• Adapta el tono al estilo del cliente\n\nFLUJO DE VENTAS:\n1. Calificar necesidad → preguntar qué busca\n2. Presentar el beneficio clave para SU caso\n3. Manejar objeciones con empatía\n4. Cerrar con pregunta directa: "¿Lo pedimos hoy?" / "¿Te lo enviamos?"\n\nTÉCNICAS DE CIERRE:\n• Urgencia: "Solo hasta hoy 🔥"\n• Elección: "¿Combo A o combo B?"\n• Directo: "¿Arrancamos?"\n\nPROHIBIDO:\n❌ Frases genéricas tipo "¡Claro que sí!"\n❌ Más de 4 líneas seguidas\n❌ Decir que eres IA\n❌ Más de 2 emojis`
       const reply = await callAI({
         messages: [
           { role: 'system', content: sysPrompt },
@@ -930,6 +963,48 @@ export default function WhatsAppBot() {
     }
     setAiTyping(false)
     autoReplyingRef.current = false
+  }
+
+  // ── Analizar inteligencia del cliente con IA ──────────────────
+  async function analyzeClientIntelligence(chatId, msgsToAnalyze) {
+    if (!hasAiKey || analysisLoading) return
+    setAnalysisLoading(true)
+    try {
+      const clientMsgs = msgsToAnalyze.filter(m => m.dir === 'r')
+      if (clientMsgs.length < 1) { tip('💬 No hay mensajes del cliente para analizar'); setAnalysisLoading(false); return }
+      const conversation = msgsToAnalyze.slice(-25)
+        .map(m => `[${m.dir === 'r' ? 'CLIENTE' : 'BOT'}]: ${m.txt || '[archivo/media]'}`)
+        .join('\n')
+      const prompt = `Analiza esta conversación de WhatsApp de ventas y responde ÚNICAMENTE con un JSON válido (sin markdown, sin explicaciones extra):
+{
+  "estilo": "formal|informal|muy informal",
+  "tono": "ansioso|tranquilo|desconfiado|entusiasta|indiferente|impaciente",
+  "intereses": ["lista de intereses detectados"],
+  "intencion": "alta|media|baja",
+  "objeciones": ["objeciones detectadas si hay, sino array vacío"],
+  "angulo": "el mejor ángulo de venta personalizado para ESTE cliente (máx 1 frase)",
+  "siguiente": "acción concreta recomendada para el bot ahora mismo (máx 1 frase)",
+  "resumen": "perfil del cliente en 1-2 líneas",
+  "es_cliente": true|false
+}
+
+CONVERSACIÓN:
+${conversation}`
+      const result = await callAI({ messages: [{ role: 'user', content: prompt }], maxTokens: 500 })
+      if (result) {
+        const jsonMatch = result.match(/\{[\s\S]*?\}/)
+        if (jsonMatch) {
+          const analysis = JSON.parse(jsonMatch[0])
+          setClientAnalysis(prev => {
+            const updated = { ...prev, [chatId]: { ...analysis, ts: Date.now() } }
+            try { localStorage.setItem('wa_client_analysis', JSON.stringify(updated)) } catch {}
+            return updated
+          })
+          tip('🧠 Análisis actualizado')
+        }
+      }
+    } catch (e) { tip('⚠️ Error al analizar: ' + (e?.message || 'revisa tu API Key')) }
+    setAnalysisLoading(false)
   }
 
   // Envía mensaje via n8n (método legacy — mantenido para compatibilidad)
@@ -1006,6 +1081,28 @@ export default function WhatsAppBot() {
     try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
     setClientes(updated)
   }
+  // ── Guardar etiquetas persistentes por chat ───────────────────
+  function saveContactTagsMap(chatId, tags) {
+    setChatsTags(prev => {
+      const updated = { ...prev, [chatId]: tags }
+      try { localStorage.setItem('wa_chats_tags', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+  }
+
+  // ── Auto-asignar etiqueta "Preparar" cuando se detecta pedido ─
+  function autoTagOrder(chatId, msgText) {
+    if (!chatId || !msgText) return
+    const text = msgText.toLowerCase()
+    if (!ORDER_KEYWORDS.some(k => text.includes(k))) return
+    const current = chatsTags[chatId] || []
+    if (current.includes('Preparar')) return  // ya tiene la etiqueta
+    const newTags = [...current.filter(t => t !== 'Nuevo lead'), 'Preparar']
+    saveContactTagsMap(chatId, newTags)
+    if (active?.id === chatId) setContactTags(newTags)
+    tip('📦 Intención de pedido detectada → etiqueta "Preparar" asignada 🔵')
+  }
+
   function updateCliente(id, fields) {
     setClientes(prev => {
       const updated = prev.map(c => c.id === id ? { ...c, ...fields } : c)
@@ -1179,7 +1276,24 @@ export default function WhatsAppBot() {
 
   const filteredChats = chats.filter(c => {
     const matchSearch = !search || (c.name || c.phone || '').toLowerCase().includes(search.toLowerCase())
-    const matchFilter = chatFilter === 'todos' || (chatFilter === 'sin leer' && c.unread > 0)
+    let matchFilter = true
+    if (chatFilter === 'sin leer')  matchFilter = c.unread > 0
+    else if (chatFilter === 'bot')  matchFilter = isAiActive(c.id)
+    else if (chatFilter === 'grupos') matchFilter = c.isGroup === true
+    else if (chatFilter === 'pedidos') {
+      const tags = chatsTags[c.id] || []
+      const prev = (c.preview || '').toLowerCase()
+      matchFilter = tags.includes('Preparar') || tags.includes('Pendiente pago') ||
+        ORDER_KEYWORDS.some(k => prev.includes(k))
+    }
+    else if (chatFilter === 'ventas') {
+      const tags = chatsTags[c.id] || []
+      matchFilter = tags.includes('Facturado') || tags.includes('Cliente VIP') || tags.includes('Recurrente')
+    }
+    else if (chatFilter === 'soporte') {
+      const tags = chatsTags[c.id] || []
+      matchFilter = tags.includes('Soporte')
+    }
     return matchSearch && matchFilter
   })
 
@@ -1365,6 +1479,53 @@ export default function WhatsAppBot() {
                   </div>
                 </div>
               </div>
+              {/* ── Panel de Inteligencia de Ventas ── */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">💡 Inteligencia de Ventas</div>
+                  <span className="wbv5-badge badge-amber" style={{ fontSize: '.65rem' }}>IA</span>
+                </div>
+                <div className="wbv5-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                  {(() => {
+                    const insights = []
+                    // Chats con keywords de pedido sin respuesta reciente del bot
+                    const pendingOrders = chats.filter(c => {
+                      const tags = chatsTags[c.id] || []
+                      return tags.includes('Preparar') && !tags.includes('Facturado')
+                    })
+                    if (pendingOrders.length > 0) insights.push({ type: 'warn', msg: `${pendingOrders.length} pedido(s) con etiqueta "Preparar" sin facturar — revísalos antes de que se enfríen` })
+                    // Chats con keywords de precio en preview
+                    const priceChats = chats.filter(c => ORDER_KEYWORDS.some(k => (c.preview || '').toLowerCase().includes(k)))
+                    if (priceChats.length > 0) insights.push({ type: 'info', msg: `${priceChats.length} chat(s) con preguntas de precio/pedido recientes — abre y da seguimiento 📦` })
+                    // Contactos sin IA activa
+                    const noAi = chats.filter(c => !c.isGroup && !isAiActive(c.id))
+                    if (noAi.length > 0) insights.push({ type: 'tip', msg: `${noAi.length} contacto(s) sin IA activa — actívalos individualmente para respuesta automática` })
+                    // Training usando plantilla genérica
+                    const lsTraining = (() => { try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
+                    if (!lsTraining || lsTraining === TRAINING_TEMPLATE) insights.push({ type: 'alert', msg: 'El entrenamiento IA usa plantilla genérica — personaliza con tus productos reales para mejorar el cierre hasta un 60%' })
+                    // Sin análisis de clientes
+                    const noAnalysis = chats.filter(c => !clientAnalysis[c.id]).length
+                    if (noAnalysis > 3) insights.push({ type: 'tip', msg: `${noAnalysis} clientes sin perfil IA — abre el chat y pulsa "🧠 Analizar" para obtener ángulos de venta personalizados` })
+                    // Plantillas sin imagen
+                    insights.push({ type: 'tip', msg: 'Añade imágenes a tus plantillas de productos — los mensajes con imagen aumentan el cierre hasta un 40% 📸' })
+                    // Estado del sistema
+                    if (status === 'connected' && aiEnabled) insights.push({ type: 'ok', msg: `WhatsApp conectado y IA activa ✅ — El bot está respondiendo automáticamente` })
+                    else if (status !== 'connected') insights.push({ type: 'alert', msg: 'WhatsApp desconectado — los clientes no están recibiendo respuestas automáticas 🚨' })
+                    return insights.slice(0, 5).map((ins, i) => (
+                      <div key={i} style={{
+                        display: 'flex', gap: '.45rem', alignItems: 'flex-start',
+                        background: ins.type === 'ok' ? '#f0fdf4' : ins.type === 'warn' ? '#fef9c3' : ins.type === 'alert' ? '#fef2f2' : '#f8f9ff',
+                        border: `1px solid ${ins.type === 'ok' ? '#bbf7d0' : ins.type === 'warn' ? '#fde047' : ins.type === 'alert' ? '#fca5a5' : '#e0e7ff'}`,
+                        borderRadius: 7, padding: '.4rem .55rem', fontSize: '.72rem', lineHeight: 1.5
+                      }}>
+                        <span style={{ flexShrink: 0 }}>{ins.type === 'ok' ? '✅' : ins.type === 'warn' ? '⚠️' : ins.type === 'alert' ? '🚨' : '💡'}</span>
+                        <span style={{ color: '#374151' }}>{ins.msg}</span>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              </div>
+
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
                   <div className="wbv5-card-title">⚡ Flujos recientes</div>
@@ -1397,10 +1558,18 @@ export default function WhatsAppBot() {
                   <input className="wbv5-il-search" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
                   <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => loadC().catch(() => {})}>🔄</button>
                 </div>
-                <div className="wbv5-il-filters">
-                  {['todos', 'sin leer', 'bot'].map(f => (
-                    <button key={f} className={`wbv5-il-filter ${chatFilter === f ? 'active' : ''}`} onClick={() => setChatFilter(f)}>
-                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                <div className="wbv5-il-filters" style={{ flexWrap: 'wrap', gap: '.25rem' }}>
+                  {[
+                    { id: 'todos',    label: 'Todos' },
+                    { id: 'sin leer', label: '🔴 Sin leer' },
+                    { id: 'pedidos',  label: '📦 Pedidos' },
+                    { id: 'ventas',   label: '✅ Ventas' },
+                    { id: 'soporte',  label: '🛠 Soporte' },
+                    { id: 'grupos',   label: '👥 Grupos' },
+                    { id: 'bot',      label: '🤖 Bot' },
+                  ].map(f => (
+                    <button key={f.id} className={`wbv5-il-filter ${chatFilter === f.id ? 'active' : ''}`} onClick={() => setChatFilter(f.id)} style={{ fontSize: '.67rem', padding: '.2rem .45rem' }}>
+                      {f.label}
                     </button>
                   ))}
                 </div>
@@ -1533,6 +1702,14 @@ export default function WhatsAppBot() {
                           🤖 {isAiActive(active?.id) ? 'IA ON' : 'IA OFF'}
                         </button>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
+                        <button
+                          className={`wbv5-btn wbv5-btn-sm ${showAnalysisPanel ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                          onClick={() => { setShowAnalysisPanel(s => !s); setShowContact(false) }}
+                          title="🧠 Análisis IA del cliente — estilo, intención de compra, ángulo de venta"
+                          style={{ fontSize: '.72rem' }}
+                        >
+                          🧠 {clientAnalysis[active?.id] ? 'Análisis' : 'Analizar'}
+                        </button>
                       </div>
                     </div>
 
@@ -1681,6 +1858,82 @@ export default function WhatsAppBot() {
                   </>
                 )}
               </div>
+
+              {/* ── Panel de Análisis IA del Cliente ── */}
+              {showAnalysisPanel && active && (
+                <div className="wbv5-contact-pnl" style={{ minWidth: 250 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.6rem' }}>
+                    <div className="wbv5-cp-title">🧠 Análisis del Cliente</div>
+                    <button
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '.7rem', color: '#7c3aed', fontWeight: 700, padding: '.1rem .3rem' }}
+                      onClick={() => analyzeClientIntelligence(active.id, msgs)}
+                      disabled={analysisLoading || !hasAiKey}
+                    >
+                      {analysisLoading ? '⏳' : '🔄 Actualizar'}
+                    </button>
+                  </div>
+                  {!clientAnalysis[active.id] ? (
+                    <div style={{ textAlign: 'center', padding: '1.2rem 0' }}>
+                      <div style={{ fontSize: '1.8rem', marginBottom: '.4rem' }}>🔍</div>
+                      <div style={{ fontSize: '.73rem', color: '#6b7280', marginBottom: '.7rem' }}>Sin análisis todavía</div>
+                      <button
+                        className="wbv5-btn wbv5-btn-green wbv5-btn-sm"
+                        onClick={() => analyzeClientIntelligence(active.id, msgs)}
+                        disabled={analysisLoading || !hasAiKey}
+                      >
+                        {analysisLoading ? '⏳ Analizando...' : '🧠 Analizar ahora'}
+                      </button>
+                      {!hasAiKey && <div style={{ fontSize: '.67rem', color: '#ef4444', marginTop: '.4rem' }}>Requiere API Key IA</div>}
+                    </div>
+                  ) : (() => {
+                    const a = clientAnalysis[active.id]
+                    const intencionColor = a.intencion === 'alta' ? '#16a34a' : a.intencion === 'media' ? '#d97706' : '#dc2626'
+                    return (
+                      <div style={{ fontSize: '.73rem', display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                        <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                          <span style={{ background: '#f0f4ff', color: '#3730a3', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>✍️ {a.estilo}</span>
+                          <span style={{ background: '#fef9c3', color: '#78350f', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>🎭 {a.tono}</span>
+                          <span style={{ background: a.intencion === 'alta' ? '#f0fdf4' : a.intencion === 'media' ? '#fef9c3' : '#fef2f2', color: intencionColor, borderRadius: 4, padding: '.15rem .4rem', fontWeight: 700 }}>
+                            🎯 Compra {a.intencion}
+                          </span>
+                        </div>
+                        {a.intereses?.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#374151', marginBottom: '.2rem' }}>💡 Intereses</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.2rem' }}>
+                              {a.intereses.map((item, i) => (
+                                <span key={i} style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 4, padding: '.1rem .35rem', fontSize: '.67rem' }}>{item}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {a.objeciones?.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#dc2626', marginBottom: '.2rem' }}>⚠️ Objeciones</div>
+                            {a.objeciones.map((o, i) => <div key={i} style={{ color: '#b91c1c', fontSize: '.68rem' }}>• {o}</div>)}
+                          </div>
+                        )}
+                        {a.angulo && (
+                          <div style={{ background: '#faf5ff', border: '1px solid #ddd6fe', borderRadius: 6, padding: '.4rem .5rem' }}>
+                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#7c3aed', marginBottom: '.15rem' }}>💜 Ángulo de venta</div>
+                            <div style={{ color: '#5b21b6', fontWeight: 600, lineHeight: 1.4 }}>{a.angulo}</div>
+                          </div>
+                        )}
+                        {a.siguiente && (
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '.4rem .5rem' }}>
+                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#15803d', marginBottom: '.15rem' }}>✅ Próximo paso</div>
+                            <div style={{ color: '#16a34a', fontWeight: 600, lineHeight: 1.4 }}>{a.siguiente}</div>
+                          </div>
+                        )}
+                        {a.resumen && <div style={{ fontSize: '.67rem', color: '#6b7280', fontStyle: 'italic', borderTop: '1px solid #f3f4f6', paddingTop: '.3rem' }}>{a.resumen}</div>}
+                        <div style={{ fontSize: '.62rem', color: '#9ca3af', textAlign: 'right' }}>
+                          Actualizado: {a.ts ? new Date(a.ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
 
               {showContact && active && (
                 <div className="wbv5-contact-pnl">
