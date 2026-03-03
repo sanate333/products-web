@@ -6,3 +6,10 @@ node_modules/
 **/.env
 **/.env.*
 !**/.env.example
+
+# Directorio generado — NO commit (se genera en CI via post-build.js)
+public_html/worldmonitor/
+public_html/ai-images/
+public_html/ai-templates/
+# Claude worktree settings
+.claude/

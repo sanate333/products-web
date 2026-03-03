@@ -1,0 +1,7 @@
+# Archivos que NO se suben por FTP (ya están en el servidor o no cambian)
+worldmonitor/
+worldmonitor/**
+*.map
+*.map.br
+*.br
+.ftp-deploy-sync-state.json
