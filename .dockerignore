@@ -1,0 +1,11 @@
+server/node_modules
+generated/
+public_html/
+src/
+node_modules/
+.git/
+.claude/
+build/
+*.log
+server/certs/
+server/.env

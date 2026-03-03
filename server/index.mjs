@@ -103,6 +103,15 @@ function defaultWhatsAppDb() {
       lastStartDate: null,
       runningJobId: null,
     },
+    // ── Configuración del bot (para Chrome cerrado vía n8n) ──────────
+    settings: {
+      botEnabled:      false,
+      n8nEnabled:      false,
+      n8nWebhook:      "https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate",
+      backendPublicUrl: "",
+      openaiKey:       "",
+      systemPrompt:    "",
+    },
   };
 }
 
@@ -122,6 +131,10 @@ function readWhatsAppDb() {
       sync: {
         ...base.sync,
         ...(parsed?.sync || {}),
+      },
+      settings: {
+        ...base.settings,
+        ...(parsed?.settings || {}),
       },
     };
   } catch {
@@ -860,6 +873,38 @@ app.post("/api/whatsapp/webhook", (req, res) => {
     }
     writeWhatsAppDb(db);
     return res.json({ ok: true, accepted, deduped });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+// ── Configuración del bot para Chrome cerrado (n8n + openaiKey + prompt) ──
+app.get("/api/whatsapp/settings", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  try {
+    const db = readWhatsAppDb();
+    // Nunca devolver openaiKey completa: enmascarar por seguridad
+    const s = { ...(db.settings || {}) };
+    if (s.openaiKey) s.openaiKey = s.openaiKey.substring(0, 8) + "****";
+    return res.json({ ok: true, settings: s });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
+app.post("/api/whatsapp/settings", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  try {
+    const db = readWhatsAppDb();
+    const allowed = ["botEnabled", "n8nEnabled", "n8nWebhook", "backendPublicUrl", "openaiKey", "systemPrompt"];
+    const patch = {};
+    for (const k of allowed) {
+      if (req.body?.[k] !== undefined) patch[k] = req.body[k];
+    }
+    db.settings = { ...(db.settings || {}), ...patch };
+    writeWhatsAppDb(db);
+    console.log("[WA][settings] Actualizado:", Object.keys(patch).join(", "));
+    return res.json({ ok: true, settings: { ...db.settings, openaiKey: db.settings.openaiKey ? "****" : "" } });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
   }
@@ -1771,6 +1816,60 @@ async function storeMsg(msg) {
     });
     if (saved.ok) writeWhatsAppDb(db);
     console.log("[WA][storeMsg][persist]", { msgId, chatId: jid, direction: fromMe ? "outgoing" : "incoming", dedup: saved.dedup });
+
+    // ── Reenvío a n8n si botEnabled + n8nEnabled (opera con Chrome cerrado) ─
+    const settings = db.settings || {};
+    if (!fromMe && isNew && !saved.dedup && settings.n8nEnabled && settings.n8nWebhook) {
+      const publicBase = (settings.backendPublicUrl || "").replace(/\/$/, "");
+      const mediaFull = (url) => {
+        if (!url) return "";
+        if (url.startsWith("http")) return url;
+        return `${publicBase}${url.startsWith("/") ? "" : "/"}${url}`;
+      };
+      const msgType =
+        type === "audio"   ? "audio" :
+        (type === "image" || type === "sticker") ? "image" : "text";
+      const n8nPayload = {
+        chatId:        jid,
+        messageType:   msgType,
+        text,
+        audioUrl:      msgType === "audio" ? mediaFull(mediaUrl) : "",
+        imageUrl:      msgType === "image" ? mediaFull(mediaUrl) : "",
+        clientName:    name,
+        systemPrompt:  settings.systemPrompt || "",
+        openaiKey:     settings.openaiKey || process.env.OPENAI_API_KEY || "",
+        backendUrl:    publicBase ? `${publicBase}/api/whatsapp` : "",
+        backendSecret: WA_SECRET,
+        history:       [],
+        source:        "backend-baileys",
+      };
+      fetch(settings.n8nWebhook, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(n8nPayload),
+      }).then(async (r) => {
+        const data = await r.json().catch(() => ({}));
+        const replyText = data?.reply || data?.text || data?.message || data?.output || "";
+        console.log("[WA][n8n-forward][ok]", { chatId: jid, msgType, hasReply: !!replyText });
+        // ── Enviar respuesta de n8n directamente por Baileys ──────────────
+        if (replyText && waSocket && waStatus === "connected") {
+          try {
+            // soporte multi-mensaje: si hay saltos dobles, enviar por partes
+            const parts = replyText.split(/\n\n\n+/).map(p => p.trim()).filter(Boolean);
+            const toSend = parts.length > 1 ? parts : [replyText.trim()];
+            for (const part of toSend) {
+              await waSocket.sendMessage(jid, { text: part });
+              if (toSend.length > 1) await new Promise(res => setTimeout(res, 800));
+            }
+            console.log("[WA][n8n-auto-reply][sent]", { chatId: jid, parts: toSend.length });
+          } catch (sendErr) {
+            console.warn("[WA][n8n-auto-reply][error]", sendErr?.message || sendErr);
+          }
+        }
+      }).catch((e) => {
+        console.warn("[WA][n8n-forward][fail]", e?.message || e);
+      });
+    }
   } catch (err) {
     console.error("[WA][storeMsg][persist-error]", err?.message || err);
   }
@@ -1908,6 +2007,25 @@ app.post("/api/whatsapp/connect", (req, res) => {
   if (waStatus === "connected") return res.json({ ok: true, status: waStatus, phone: waPhone });
   if (!waIniting) initWhatsApp();
   res.json({ ok: true, status: waStatus });
+});
+
+// ── Presencia / indicador de escritura (typing simulation) ───────────────────
+// POST /api/whatsapp/chats/:chatId/presence
+// body: { action: "composing" | "paused" | "available" | "recording" }
+app.post("/api/whatsapp/chats/:chatId/presence", async (req, res) => {
+  try {
+    const chatId = toSafeString(req.params?.chatId || "", 140);
+    const action = toSafeString(req.body?.action || "composing", 30);
+    if (!chatId) return res.status(400).json({ ok: false, error: "chatId requerido" });
+    if (waSocket && waStatus === "connected") {
+      const jid = chatId.includes("@") ? chatId : `${chatId}@s.whatsapp.net`;
+      await waSocket.sendPresenceUpdate(action, jid);
+      return res.json({ ok: true, action, jid });
+    }
+    return res.json({ ok: false, error: "WhatsApp no conectado" });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
 });
 
 // Foto de perfil vía Baileys (con caché en DB)

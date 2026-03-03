@@ -1,0 +1,93 @@
+{
+  "name": "Sanate - WhatsApp Mensajes Entrantes",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-sanate",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "name": "WhatsApp Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [200, 300],
+      "webhookId": "whatsapp-sanate"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// SÁNATE WhatsApp AI Bot — n8n Code Node v2.0\n// Maneja: texto, audio (Whisper), imagen (GPT-4o Vision)\n// ═══════════════════════════════════════════════════════════════\n\nconst item = $input.first();\nconst data = item.json.body || item.json;\n\nconst {\n  chatId,\n  messageType = 'text',\n  text = '',\n  audioUrl = '',\n  imageUrl = '',\n  clientName = 'Cliente',\n  systemPrompt = '',\n  openaiKey = '',\n  history = [],\n  backendUrl = '',\n  backendSecret = ''\n} = data;\n\n// Validar datos mínimos\nif (!chatId) {\n  return [{ json: { ok: false, error: 'chatId requerido' } }];\n}\nif (!openaiKey) {\n  return [{ json: { ok: false, error: 'openaiKey requerido' } }];\n}\n\n// ── HELPERS ──────────────────────────────────────────────────\nconst OAI = 'https://api.openai.com/v1';\nconst authHeader = `Bearer ${openaiKey}`;\n\nasync function openaiChat(messages, model = 'gpt-4o-mini') {\n  const res = await fetch(`${OAI}/chat/completions`, {\n    method: 'POST',\n    headers: { 'Content-Type': 'application/json', 'Authorization': authHeader },\n    body: JSON.stringify({ model, messages, max_tokens: 1000, temperature: 0.7 })\n  });\n  const d = await res.json();\n  if (!res.ok) throw new Error(d.error?.message || 'OpenAI error');\n  return d.choices?.[0]?.message?.content || '';\n}\n\n// ── SISTEMA BASE ──────────────────────────────────────────────\nconst baseSystem = systemPrompt ||\n  `Eres el asistente de ventas de Sánate. Responde de forma cálida, natural y enfocada en cerrar la venta.\n` +\n  `FORMATO: Divide tu respuesta en 2-4 partes cortas separadas por ||||\n` +\n  `REGLAS: Siempre diagnostica antes de dar precios. Termina con pregunta de cierre.`;\n\n// ── PASO 1: PROCESAR AUDIO SI ES NECESARIO ───────────────────\nlet finalText = text;\nlet transcription = null;\n\nif (messageType === 'audio' && audioUrl) {\n  try {\n    // Descargar el audio\n    const audioResp = await fetch(audioUrl, {\n      headers: backendSecret ? { 'x-secret': backendSecret } : {}\n    });\n    if (!audioResp.ok) throw new Error(`Audio download failed: ${audioResp.status}`);\n    \n    const audioBuffer = await audioResp.arrayBuffer();\n    const audioBlob = new Blob([audioBuffer], { type: 'audio/ogg' });\n    \n    // Transcribir con Whisper\n    const formData = new FormData();\n    formData.append('file', audioBlob, 'audio.ogg');\n    formData.append('model', 'whisper-1');\n    formData.append('language', 'es');\n    \n    const whisperRes = await fetch(`${OAI}/audio/transcriptions`, {\n      method: 'POST',\n      headers: { 'Authorization': authHeader },\n      body: formData\n    });\n    const whisperData = await whisperRes.json();\n    transcription = whisperData.text || '';\n    finalText = transcription || '[Nota de voz no transcrita]';\n  } catch (e) {\n    finalText = '[Nota de voz — error al transcribir]';\n  }\n}\n\n// ── PASO 2: CONSTRUIR MENSAJES PARA IA ───────────────────────\nconst messages = [\n  { role: 'system', content: baseSystem },\n  ...((history || []).slice(-10)),\n];\n\nif (messageType === 'image' && imageUrl) {\n  // Visión: analizar imagen\n  const imagePrompt = finalText || 'El cliente envió una imagen. Analízala y responde de forma relevante.';\n  messages.push({\n    role: 'user',\n    content: [\n      { type: 'text', text: imagePrompt },\n      { type: 'image_url', image_url: { url: imageUrl, detail: 'low' } }\n    ]\n  });\n} else {\n  messages.push({ role: 'user', content: finalText || '[mensaje vacío]' });\n}\n\n// ── PASO 3: LLAMAR A OpenAI ───────────────────────────────────\nconst model = messageType === 'image' ? 'gpt-4o' : 'gpt-4o-mini';\nlet reply = '';\ntry {\n  reply = await openaiChat(messages, model);\n} catch (e) {\n  return [{ json: { ok: false, error: e.message } }];\n}\n\n// ── PASO 4: ENVIAR VIA BACKEND SI HAY URL PÚBLICA ────────────\nlet sent = false;\nconst isPublicBackend = backendUrl &&\n  !backendUrl.includes('localhost') &&\n  !backendUrl.includes('127.0.0.1') &&\n  backendUrl.startsWith('http');\n\nif (isPublicBackend && reply) {\n  const parts = reply.split('||||').map(p => p.trim()).filter(Boolean);\n  for (const part of parts) {\n    try {\n      const fd = new FormData();\n      fd.append('text', part);\n      await fetch(`${backendUrl}/chats/${encodeURIComponent(chatId)}/send`, {\n        method: 'POST',\n        headers: backendSecret ? { 'x-secret': backendSecret } : {},\n        body: fd\n      });\n      // Pequeña pausa entre mensajes\n      await new Promise(r => setTimeout(r, 600));\n    } catch (e) {\n      // Continúa con el siguiente part\n    }\n  }\n  sent = true;\n}\n\n// ── RESPUESTA AL FRONTEND ─────────────────────────────────────\nreturn [{\n  json: {\n    ok: true,\n    reply,\n    sent,\n    transcription: transcription || undefined,\n    model,\n    parts: reply.split('||||').map(p => p.trim()).filter(Boolean)\n  }\n}];"
+      },
+      "id": "a1b2c3d4-0002-4000-8000-000000000002",
+      "name": "Procesar con IA (texto + audio + imagen)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a1b2c3d4-0003-4000-8000-000000000003",
+      "name": "Responder al Frontend",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [760, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": false, \"error\": \"Error interno\" }",
+        "options": {
+          "responseCode": 500
+        }
+      },
+      "id": "a1b2c3d4-0004-4000-8000-000000000004",
+      "name": "Responder Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [760, 460]
+    }
+  ],
+  "connections": {
+    "WhatsApp Webhook": {
+      "main": [
+        [
+          {
+            "node": "Procesar con IA (texto + audio + imagen)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar con IA (texto + audio + imagen)": {
+      "main": [
+        [
+          {
+            "node": "Responder al Frontend",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
