@@ -198,33 +198,58 @@ const COLORS_AV  = ['#d1fae5', '#dbeafe', '#ede9fe', '#fef3c7', '#fee2e2']
 const COLORS_TXT = ['#065f46', '#1d4ed8', '#5b21b6', '#92400e', '#b91c1c']
 
 // ── Componente: chat de prueba del bot IA ──────────────────────
-function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, aiModel, tip }) {
+function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, tip }) {
   const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])
   const [inp,  setInp]  = React.useState('')
   const [busy, setBusy] = React.useState(false)
+
+  async function localCallAI(messages) {
+    if (openaiKey) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: aiModel || 'gpt-4o', messages, max_tokens: 300 }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'OpenAI error')
+      return data.choices?.[0]?.message?.content?.trim() || ''
+    }
+    if (geminiKey) {
+      const systemMsg = messages.find(m => m.role === 'system')
+      const userMsgs  = messages.filter(m => m.role !== 'system')
+      const parts = []
+      if (systemMsg) parts.push({ text: systemMsg.content + '\n\n' })
+      userMsgs.forEach(m => parts.push({ text: (m.role === 'user' ? '' : '[Bot]: ') + m.content }))
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.8, maxOutputTokens: 300 } }) }
+      )
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Gemini error')
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+    }
+    throw new Error('no_key')
+  }
+
   async function send() {
     if (!inp.trim() || busy) return
     const userMsg = inp.trim(); setInp(''); setBusy(true)
     setMsgs(p => [...p, { role: 'user', txt: userMsg }])
     try {
       const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
-        body: JSON.stringify({
-          model: aiModel || 'gpt-4o',
-          messages: [
-            { role: 'system', content: (trainingPrompt || aiPrompt || 'Eres un asistente de ventas.').substring(0, 6000) },
-            ...history,
-            { role: 'user', content: userMsg },
-          ],
-          max_tokens: 300,
-        }),
-      })
-      const data = await res.json()
-      const reply = data.choices?.[0]?.message?.content || '⚠️ Sin respuesta de la IA'
-      setMsgs(p => [...p, { role: 'assistant', txt: reply }])
-    } catch { setMsgs(p => [...p, { role: 'assistant', txt: '⚠️ Error al conectar con OpenAI. Verifica tu API Key.' }]) }
+      const reply = await localCallAI([
+        { role: 'system', content: (trainingPrompt || aiPrompt || 'Eres un asistente de ventas.').substring(0, 6000) },
+        ...history,
+        { role: 'user', content: userMsg },
+      ])
+      setMsgs(p => [...p, { role: 'assistant', txt: reply || '⚠️ Sin respuesta de la IA' }])
+    } catch (e) {
+      const errTxt = e?.message === 'no_key'
+        ? '⚠️ Configura tu API Key de OpenAI o Gemini en Ajustes → API & Tokens'
+        : `⚠️ Error IA: ${e?.message || 'Verifica tu API Key'}`
+      setMsgs(p => [...p, { role: 'assistant', txt: errTxt }])
+    }
     setBusy(false)
   }
   return (
@@ -2193,7 +2218,7 @@ export default function WhatsAppBot() {
                         ⚠️ Configura tu API Key (OpenAI o Gemini gratis) en <strong>Ajustes → API & Tokens</strong> para probar el bot.
                       </div>
                     ) : (
-                      <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} aiModel={aiModel} tip={tip} />
+                      <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} geminiKey={geminiKey} aiModel={aiModel} tip={tip} />
                     )}
                   </div>
                 </div>
