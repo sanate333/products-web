@@ -343,7 +343,7 @@ const DEFAULT_TAGS = [
 const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 'llevar', 'cuánto cuesta', 'cuanto cuesta', 'cuánto vale', 'cuanto vale', 'precio', 'pago', 'transferencia', 'domicilio', 'envío', 'envio', 'me interesa', 'lo quiero', 'cómo pago', 'como pago', 'cómo compro', 'como compro', 'quiero uno', 'quiero comprar', 'cuantos', 'disponible', 'tienes', 'hay']
 
 export default function WhatsAppBot() {
-  const [page,        setPage]        = useState('overview')
+  const [page,        setPage]        = useState(() => { try { return localStorage.getItem('wb_current_page') || 'chat' } catch { return 'chat' } })
   const [status,      setStatus]      = useState('disconnected')
   const [phone,       setPhone]       = useState('')
   const [qrDataUrl,   setQrDataUrl]   = useState(null)
@@ -443,6 +443,10 @@ export default function WhatsAppBot() {
   const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat — evita responder historial
   const kwFiredRef          = useRef(new Set()) // dedup para triggers de palabra clave (msgId_triggerId)
 
+  // Refs para evitar stale closures en polling y ping
+  const statusRef        = useRef('disconnected') // siempre tiene el status actual
+  const activeRef        = useRef(null)            // siempre tiene el chat activo actual
+
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
   const dragRef          = useRef({})
@@ -464,6 +468,10 @@ export default function WhatsAppBot() {
     return () => document.body.classList.remove('wabotPage')
   }, []) // eslint-disable-line
 
+  // Mantener refs sincronizadas (evitan stale closures en callbacks asíncronos)
+  useEffect(() => { statusRef.current = status }, [status]) // eslint-disable-line
+  useEffect(() => { activeRef.current = active  }, [active]) // eslint-disable-line
+
   // Polling global
   useEffect(() => { // eslint-disable-line
     ping()
@@ -471,12 +479,15 @@ export default function WhatsAppBot() {
     return () => clearInterval(t)
   }, []) // eslint-disable-line
 
-  // Polling mensajes cuando hay chat activo
+  // Polling mensajes cuando hay chat activo — 1.5s, independiente del status (usa ref)
   useEffect(() => { // eslint-disable-line
-    if (!active || status !== 'connected') return
-    const t = setInterval(() => loadM(active.id, false), 3000)
+    if (!active?.id) return
+    const chatId = active.id
+    const t = setInterval(() => {
+      if (statusRef.current === 'connected') loadM(chatId, false)
+    }, 1500)
     return () => clearInterval(t)
-  }, [active?.id, status]) // eslint-disable-line
+  }, [active?.id]) // eslint-disable-line
 
   // Cuando cambia el chat: limpiar estado de IA y cancelar cualquier respuesta pendiente
   useEffect(() => { // eslint-disable-line
@@ -556,12 +567,14 @@ export default function WhatsAppBot() {
     if (active?.id) saveContactTagsMap(active.id, contactTags)
   }, [contactTags]) // eslint-disable-line
 
-  // Restaurar chat activo desde localStorage cuando se conecta
+  // Restaurar chat activo y página desde localStorage cuando se conecta
   useEffect(() => { // eslint-disable-line
     if (status !== 'connected') return
     const saved = activeGet()
     if (saved && !active) {
       setActive(saved)
+      setPage('chat')  // volver siempre al chat, no a la sección anterior
+      try { localStorage.setItem('wb_current_page', 'chat') } catch {}
       loadM(saved.id, false)
     }
   }, [status]) // eslint-disable-line
@@ -707,7 +720,12 @@ export default function WhatsAppBot() {
       const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
       setStatus(s)
       setPhone(d.phone || '')
-      if (s === 'connected') { try { await loadC() } catch {}; setTimeout(drawQRConnected, 80) }
+      if (s === 'connected') {
+        try { await loadC() } catch {}
+        // También refrescar mensajes del chat activo para no perder mensajes nuevos
+        if (activeRef.current?.id) loadM(activeRef.current.id, false).catch(() => {})
+        setTimeout(drawQRConnected, 80)
+      }
       else if (s === 'connecting' || s === 'qr') { loadQR() }
     } catch { setServerOnline(false); setStatus('disconnected') }
   }
@@ -1540,6 +1558,7 @@ ${conversation}`
 
   function goPage(id) {
     setPage(id)
+    try { localStorage.setItem('wb_current_page', id) } catch {}
     setBuilderOpen(false)
     if (id === 'conexion') {
       if (status === 'connected') { setTimeout(drawQRConnected, 120) }
