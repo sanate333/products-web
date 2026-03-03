@@ -1533,3 +1533,18 @@
   0%, 100% { opacity: 1; }
   50% { opacity: .55; }
 }
+
+/* ── CUANDO ESTAMOS EN WHATSAPP BOT: sin scroll de página, sin menú flotante ── */
+body.wabotPage {
+  overflow: hidden !important;
+  height: 100vh !important;
+}
+body.wabotPage .containerGrid {
+  height: 100vh;
+  overflow: hidden;
+  max-height: 100vh;
+}
+/* Ocultar el dock flotante de la dashboard en esta página */
+body.wabotPage .floatingMenuDashboard {
+  display: none !important;
+}

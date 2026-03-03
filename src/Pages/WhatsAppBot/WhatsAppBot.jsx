@@ -368,6 +368,7 @@ export default function WhatsAppBot() {
   // Auto-reply deduplication: IDs ya procesados por el bot automático
   const aiProcessedRef   = useRef(new Set())
   const autoReplyingRef  = useRef(false)
+  const chatOpenedAtRef  = useRef(0) // timestamp al abrir chat — evita responder historial
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -384,6 +385,12 @@ export default function WhatsAppBot() {
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
 
+  // Ocultar FloatingMenuDashboard mientras estamos en esta página
+  useEffect(() => { // eslint-disable-line
+    document.body.classList.add('wabotPage')
+    return () => document.body.classList.remove('wabotPage')
+  }, []) // eslint-disable-line
+
   // Polling global
   useEffect(() => { // eslint-disable-line
     ping()
@@ -398,13 +405,11 @@ export default function WhatsAppBot() {
     return () => clearInterval(t)
   }, [active?.id, status]) // eslint-disable-line
 
-  // Cuando cambia el chat: reiniciar procesados para no responder mensajes anteriores
+  // Cuando cambia el chat: limpiar estado de IA (openChat ya lo hace, esto es fallback)
   useEffect(() => { // eslint-disable-line
     if (!active) return
-    // Marcar todos los mensajes actuales como ya procesados (no auto-responder historial)
-    aiProcessedRef.current.clear()
-    msgs.forEach(m => { if (m.dir === 'r') aiProcessedRef.current.add(m.id) })
     setAiTyping(false)
+    autoReplyingRef.current = false
   }, [active?.id]) // eslint-disable-line
 
   // ── Auto-reply: detectar mensajes nuevos entrantes y responder automáticamente ──
@@ -417,6 +422,8 @@ export default function WhatsAppBot() {
     if (aiProcessedRef.current.has(lastIn.id)) return
     // Marcar como procesado ANTES de llamar async para evitar duplicados
     aiProcessedRef.current.add(lastIn.id)
+    // Grace period de 4s al abrir el chat para no responder el historial
+    if (Date.now() - chatOpenedAtRef.current < 4000) return
     // Verificar que IA esté ON para este chat y haya API key
     if (!isAiActive(active.id)) return
     if (!hasAiKey) return
@@ -685,6 +692,8 @@ export default function WhatsAppBot() {
   }
 
   async function openChat(c) {
+    chatOpenedAtRef.current = Date.now() // marca tiempo de apertura — grace period anti-historial
+    aiProcessedRef.current.clear()        // limpiar procesados del chat anterior
     setActive(c); setShowContact(false)
     activePut(c)
     saveClienteFromChat(c)  // auto-registrar cliente
@@ -857,14 +866,20 @@ export default function WhatsAppBot() {
     const chatId = active.id
     setAiTyping(true)
     try {
-      const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
+      // Leer siempre de localStorage para evitar closures stale con el entrenamiento
+      const lsTraining = (function(){ try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
+      const lsPrompt   = (function(){ try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
+      const ctx = (trainingPrompt || lsTraining || aiPrompt || lsPrompt || '').substring(0, 5000)
       const history = msgs.slice(-10).map(m => ({
         role: m.dir === 'r' ? 'user' : 'assistant',
         content: m.txt || '[archivo]',
       }))
+      const sysPrompt = ctx
+        ? `${ctx}\n\n---\nREGLAS DE RESPUESTA:\n1. Si es pregunta → info del producto + beneficios (sin precio aún).\n2. Si hay intención de compra → precio + oferta + cierre.\n3. Máximo 3 líneas. Tono humano. 1-2 emojis. Sin saludos genéricos repetidos.\n4. Termina con pregunta que invite a continuar.\n5. Responde como asesor real, NO como IA.`
+        : `Eres un asesor de ventas experto por WhatsApp.\nREGLAS:\n1. Si es pregunta → da info + beneficios.\n2. Si hay interés de compra → precio + cierre.\n3. Máximo 3 líneas. Tono amigable. 1-2 emojis.\n4. Termina con pregunta.\n5. Actúa como persona real.`
       const reply = await callAI({
         messages: [
-          { role: 'system', content: `${ctx}\n\nREGLAS DE VENTA:\n1. Si el cliente hace una PREGUNTA → da información clara del producto + beneficios (no des precio todavía).\n2. Si muestra INTENCIÓN DE COMPRA → da precio + oferta + pregunta de cierre.\n3. Responde en máximo 3 líneas. Tono humano, cálido, natural. 1-2 emojis.\n4. Termina siempre con una pregunta que invite a continuar.\n5. NO expliques que eres IA. Actúa como asesor real de ventas.` },
+          { role: 'system', content: sysPrompt },
           ...history,
         ],
         maxTokens: 280,
