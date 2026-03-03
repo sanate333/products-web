@@ -127,6 +127,13 @@ const DEFAULT_TRIGGERS = [
   { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
 ]
 
+const DEFAULT_KW_TRIGGERS = [
+  { id: 'kw1', name: '🔑 Precio / Cuánto vale',    condition: 'keyword', keyword: 'precio, precios, cuanto vale, cuánto vale, cuanto cuesta, cuánto cuesta, valor, costo', delay: 0, unit: 'min', producto: 'Ventas',    message: '💚 *Combo 1* – Tripack Mixto (3 Jabones) → *$59.000*\n💛 *Combo 2* – 3 Jabones a elección → *$59.000*\n🌿 *Combo 3* – 2 Jabones + Sebo 10g → *$63.000*\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000*\n\n🚚 Envío GRATIS | 💳 Contra entrega | Nequi *8% OFF*\n\n¿Cuál te llevas hoy? 💛', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw2', name: '🔑 Combos / Productos',       condition: 'keyword', keyword: 'combo, combos, productos, catalogo, catálogo, que tienes, qué tienes, que vendes, qué vendes, info, información, informacion', delay: 0, unit: 'min', producto: 'Ventas',    message: '🔥 COMBOS MÁS PEDIDOS – PRECIOS BAJOS POR TIEMPO LIMITADO 🔥\n\n💚 *Combo 1* – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena) → *$59.000* (antes $105.000)\n💛 *Combo 3* – 2 Jabones + Sebo de Res 10g → *$63.000* (antes $79.000)\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000* (antes $159.000)\n\n🚚 Envío GRATIS a toda Colombia 💳 Pagas al recibir — sin riesgo\n⏰ ¿Te reservo el más vendido? 💛', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw3', name: '🔑 Hola / Bienvenida',        condition: 'keyword', keyword: 'hola, buenas, buenos dias, buenos días, buenas tardes, buenas noches, hi, hello, saludos', delay: 0, unit: 'min', producto: 'Inicio',    message: 'Hola {nombre} 👋😊 ¡Bienvenido a Sánate! Qué bueno tenerte por aquí 💛\n\n¿Buscas algo para *acné*, *manchas*, *piel seca* o *zonas íntimas*?\nCuéntame y te recomiendo el combo perfecto ✨', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'kw4', name: '🔑 Confirmar / Datos pedido', condition: 'keyword', keyword: 'si quiero, sí quiero, lo quiero, lo compro, confirmar, confirmo, mis datos, datos, dirección, pedir, pedido', delay: 0, unit: 'min', producto: 'Pedidos',   message: '¡Excelente elección! 💚✨\n\nPara confirmar tu pedido envíame:\n1️⃣ Nombre y Apellido\n📱 Teléfono de contacto\n📍 Ciudad y Departamento\n🏠 Dirección exacta\n📦 Barrio\n\nQuedo atenta para procesarlo de inmediato 🚀', active: true,  mediaType: null, mediaUrl: '' },
+]
+
 const DEFAULT_PLANTILLAS = [
   { id: 'tpl_bienvenida',  nombre: 'Bienvenida',            categoria: 'Inicio',       mensaje: 'Hola {nombre} 👋😊 ¡Bienvenido! Qué bueno tenerte por aquí 💛\n\n¿Quieres saber cómo se usa, los combos disponibles y el obsequio activo 🎁?\nResponde Sí o No ✨' },
   { id: 'tpl_info_ofertas', nombre: 'Info + Combos + Precios', categoria: 'Ventas',    mensaje: '🔥 COMBOS MÁS PEDIDOS – PRECIOS BAJOS POR TIEMPO LIMITADO 🔥\n\n💚 *Combo 1* – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena) → *$59.000* (antes $105.000)\n💛 *Combo 3* – 2 Jabones + Sebo de Res 10g → *$63.000* (antes $79.000)\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000* (antes $159.000)\n\n🚚 Envío GRATIS a toda Colombia 💳 Pagas al recibir — sin riesgo\n⏰ Se están agotando rápido... ¿Te reservo el más vendido? 💛' },
@@ -2794,8 +2801,11 @@ ${conversation}`
                           {t.producto && <span style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 20, padding: '.1rem .5rem', fontSize: '.62rem', fontWeight: 700 }}>📦 {t.producto}</span>}
                         </div>
                         <div style={{ fontSize: '.68rem', color: '#6b7280', display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}>
-                          <span>⏱ {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'días'}</span>
-                          <span>🎯 {t.condition === 'no_reply' ? 'Sin respuesta' : t.condition === 'seen' ? 'Visto sin responder' : t.condition === 'no_purchase' ? 'Sin compra' : t.condition === 'keyword' ? 'Keyword' : 'Primer mensaje'}</span>
+                          {t.condition === 'keyword'
+                            ? <span>🔑 Palabras: <strong style={{ color: '#5b21b6' }}>{(t.keyword || '').split(',').slice(0,3).map(k=>k.trim()).join(', ')}{(t.keyword||'').split(',').length > 3 ? '…' : ''}</strong></span>
+                            : <span>⏱ {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'días'}</span>
+                          }
+                          <span>🎯 {t.condition === 'no_reply' ? 'Sin respuesta' : t.condition === 'seen' ? 'Visto sin responder' : t.condition === 'no_purchase' ? 'Sin compra' : t.condition === 'keyword' ? '⚡ Instantáneo' : 'Primer mensaje'}</span>
                           {t.mediaType && <span>📎 {t.mediaType}</span>}
                         </div>
                         <div style={{ fontSize: '.7rem', color: '#374151', marginTop: '.2rem', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>💬 {t.message}</div>
@@ -2834,6 +2844,59 @@ ${conversation}`
                       <span style={{ background: s.color, color: s.tc, borderRadius: 20, padding: '.18rem .55rem', fontSize: '.62rem', fontWeight: 700 }}>{s.time}</span>
                     </div>
                   ))}
+                </div>
+              </div>
+
+              {/* ── Palabras Clave recomendadas ── */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div>
+                    <div className="wbv5-card-title">🔑 Disparadores de palabras clave</div>
+                    <div style={{ fontSize: '.65rem', color: '#6b7280' }}>Se disparan al instante cuando el cliente escribe esa palabra</div>
+                  </div>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => {
+                    const toAdd = DEFAULT_KW_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))
+                    if (!toAdd.length) { tip('Ya tienes todos los disparadores de palabras clave'); return }
+                    saveTriggers([...triggers, ...toAdd])
+                    tip(`✅ ${toAdd.length} disparadores de palabras clave agregados`)
+                  }}>+ Agregar todos</button>
+                </div>
+                <div className="wbv5-card-bd">
+                  <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                    Respuestas automáticas <strong>instantáneas</strong> cuando el cliente menciona una palabra clave. Funciona con IA ON y OFF.
+                  </div>
+                  {DEFAULT_KW_TRIGGERS.map((kw, i) => {
+                    const alreadyAdded = triggers.find(t => t.name === kw.name)
+                    const kwPreview = kw.keyword.split(',').slice(0, 3).map(k => k.trim()).join(', ')
+                    const colors = ['#f0fdf4','#fefce8','#eff6ff','#fdf4ff']
+                    const tcs    = ['#166534','#854d0e','#1d4ed8','#7e22ce']
+                    return (
+                      <div key={kw.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', padding: '.6rem 0', borderBottom: i < DEFAULT_KW_TRIGGERS.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: colors[i], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>🔑</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827', marginBottom: '.12rem' }}>{kw.name.replace('🔑 ', '')}</div>
+                          <div style={{ fontSize: '.63rem', color: '#6b7280' }}>Palabras: <span style={{ color: tcs[i], fontWeight: 600 }}>{kwPreview}…</span></div>
+                          <div style={{ fontSize: '.63rem', color: '#374151', marginTop: '.1rem', maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            💬 {kw.message.substring(0, 70)}…
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', alignItems: 'flex-end', flexShrink: 0 }}>
+                          <span style={{ background: colors[i], color: tcs[i], borderRadius: 20, padding: '.18rem .55rem', fontSize: '.6rem', fontWeight: 700 }}>⚡ Instantáneo</span>
+                          {alreadyAdded ? (
+                            <span style={{ fontSize: '.6rem', color: '#16a34a', fontWeight: 600 }}>✅ Ya agregado</span>
+                          ) : (
+                            <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ fontSize: '.62rem', padding: '.2rem .5rem' }} onClick={() => {
+                              saveTriggers([...triggers, { ...kw, id: `kw_${Date.now()}` }])
+                              tip(`✅ Disparador "${kw.name.replace('🔑 ', '')}" agregado`)
+                            }}>+ Agregar</button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div style={{ marginTop: '.75rem', padding: '.6rem', background: '#f0fdf4', borderRadius: 8, fontSize: '.65rem', color: '#166534', lineHeight: 1.5 }}>
+                    💡 <strong>Cómo funciona:</strong> Cuando el cliente escriba cualquiera de las palabras clave, el bot responde automáticamente con el mensaje configurado — sin importar si la IA está ON u OFF. También puedes crear tus propios disparadores con <strong>+ Nuevo disparador → 🔑 Palabra clave</strong>.
+                  </div>
                 </div>
               </div>
             </div>
