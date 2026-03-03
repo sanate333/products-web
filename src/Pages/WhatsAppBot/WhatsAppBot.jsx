@@ -418,11 +418,12 @@ export default function WhatsAppBot() {
   const [aiTyping,          setAiTyping]          = useState(false) // indicator "IA respondiendo..."
 
   // Auto-reply deduplication: IDs ya procesados por el bot automático
-  const aiProcessedRef   = useRef(new Set())
-  const autoReplyingRef  = useRef(false)
-  const autoReplyTimerRef = useRef(null)  // debounce timer
-  const autoReplyGenRef  = useRef(0)      // generación: se incrementa para cancelar respuesta en curso
-  const chatOpenedAtRef  = useRef(0) // timestamp al abrir chat — evita responder historial
+  const aiProcessedRef      = useRef(new Set())
+  const autoReplyingRef     = useRef(false)
+  const autoReplyTimerRef   = useRef(null)  // debounce timer
+  const autoReplyGenRef     = useRef(0)     // generación: se incrementa para cancelar respuesta en curso
+  const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat — evita responder historial
+  const kwFiredRef          = useRef(new Set()) // dedup para triggers de palabra clave (msgId_triggerId)
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -464,9 +465,10 @@ export default function WhatsAppBot() {
     if (!active) return
     setAiTyping(false)
     autoReplyingRef.current = false
-    autoReplyGenRef.current += 1          // invalida cualquier respuesta en vuelo del chat anterior
+    autoReplyGenRef.current += 1           // invalida cualquier respuesta en vuelo del chat anterior
     clearTimeout(autoReplyTimerRef.current) // cancela debounce pendiente del chat anterior
-    aiProcessedRef.current = new Set()    // limpia dedup — chat nuevo = pizarra en blanco
+    aiProcessedRef.current = new Set()     // limpia dedup — chat nuevo = pizarra en blanco
+    kwFiredRef.current     = new Set()     // limpia dedup de triggers de keyword
   }, [active?.id]) // eslint-disable-line
 
   // ── Auto-reply: detectar mensajes nuevos entrantes y responder automáticamente ──
@@ -487,6 +489,25 @@ export default function WhatsAppBot() {
 
     // Grace period de 4s al abrir el chat para no responder el historial
     if (Date.now() - chatOpenedAtRef.current < 4000) return
+
+    // ── Disparadores de Palabra Clave (independientes de IA ON/OFF) ──────────
+    if (lastIn.txt && isTriggerActive(active.id)) {
+      const msgLow = lastIn.txt.toLowerCase()
+      const kwTriggers = triggers.filter(t => t.active && t.condition === 'keyword' && t.keyword && t.message)
+      for (const trig of kwTriggers) {
+        const kwList = trig.keyword.split(',').map(k => k.trim().toLowerCase()).filter(Boolean)
+        if (kwList.some(kw => msgLow.includes(kw))) {
+          const dedupKey = `${lastIn.id}_${trig.id}`
+          if (!kwFiredRef.current.has(dedupKey)) {
+            kwFiredRef.current.add(dedupKey)
+            const capturedId = active.id
+            setTimeout(() => sendTriggerKeywordMsg(trig, capturedId), 900)
+          }
+          break // solo un trigger por mensaje
+        }
+      }
+    }
+
     // Verificar que IA esté ON para este chat y haya API key
     if (!isAiActive(active.id)) return
     if (!hasAiKey) return
@@ -919,10 +940,15 @@ export default function WhatsAppBot() {
   }
   function toggleAiContact(chatId) {
     setAiContactMap(prev => {
-      const next = { ...prev, [chatId]: !prev[chatId] }
+      const next = { ...prev, [chatId]: prev[chatId] !== true }
       try { localStorage.setItem('wa_ai_contact_map', JSON.stringify(next)) } catch {}
       return next
     })
+  }
+  function resetAllAiContacts() {
+    setAiContactMap({})
+    try { localStorage.setItem('wa_ai_contact_map', '{}') } catch {}
+    tip('🚫 IA desactivada en todos los contactos')
   }
   // IA activa SOLO si hay activación explícita para este contacto (true en aiContactMap)
   // Y además el global aiEnabled está ON (interruptor maestro en Ajustes).
@@ -951,6 +977,36 @@ export default function WhatsAppBot() {
   }
 
   // ── Auto-reply automático cuando llega un mensaje nuevo y la IA está ON ──
+  // ── Enviar mensaje de disparador por palabra clave ────────────
+  async function sendTriggerKeywordMsg(trigger, targetChatId) {
+    if (!targetChatId) return
+    const clientName = chats.find(c => c.id === targetChatId)?.name || targetChatId.split('@')[0] || 'Cliente'
+    const text = (trigger.message || '')
+      .replace(/\{nombre\}/g, clientName)
+      .replace(/\{tienda\}/g, 'Sanate')
+      .replace(/\{telefono\}/g, targetChatId.split('@')[0])
+    if (!text.trim()) return
+    try {
+      await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/presence`, {
+        method: 'POST', headers: HJ, body: JSON.stringify({ action: 'composing' }),
+      }).catch(() => {})
+      await new Promise(r => setTimeout(r, Math.min(900, text.length * 12)))
+      const fd = new FormData(); fd.append('text', text)
+      const r = await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/send`, { method: 'POST', headers: H, body: fd })
+      const d = await r.json()
+      const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+      const newMsg = { id: d.message?.providerMessageId || `kw_${Date.now()}`, dir: 's', txt: text, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      if (active?.id === targetChatId) {
+        setMsgs(p => { const next = [...p, newMsg]; cachePut(targetChatId, next); return next })
+        scroll()
+      }
+      tip(`⚡ Disparador "${trigger.name}" enviado`)
+      await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/presence`, {
+        method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
+      }).catch(() => {})
+    } catch { tip('⚠️ Error enviando disparador de palabra clave') }
+  }
+
   async function autoReplyToMsg(lastClientMsg, targetChatId) {
     if (!hasAiKey || !active || autoReplyingRef.current) return
     // Si el usuario cambió de chat durante el delay del debounce → abortar.
@@ -2459,21 +2515,36 @@ ${conversation}`
                           <option value="no_reply">Sin respuesta después de X tiempo</option>
                           <option value="seen">Mensaje visto pero sin responder</option>
                           <option value="no_purchase">Sin compra después de X tiempo</option>
-                          <option value="keyword">Palabra clave detectada</option>
+                          <option value="keyword">🔑 Palabra clave detectada (instantáneo)</option>
                           <option value="first_message">Primer mensaje recibido</option>
                         </select>
                       </div>
-                      <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Tiempo de espera</div>
-                        <div style={{ display: 'flex', gap: '.4rem' }}>
-                          <input className="wbv5-form-input" type="number" value={editTrigger.delay} min={1} style={{ width: 80 }} onChange={e => setEditTrigger(p => ({ ...p, delay: parseInt(e.target.value) || 1 }))} />
-                          <select className="wbv5-form-input" value={editTrigger.unit} onChange={e => setEditTrigger(p => ({ ...p, unit: e.target.value }))}>
-                            <option value="min">Minutos</option>
-                            <option value="h">Horas</option>
-                            <option value="d">Días</option>
-                          </select>
+                      {editTrigger.condition === 'keyword' ? (
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">🔑 Palabras clave <span style={{ fontWeight: 400, color: '#9ca3af' }}>(separa con coma)</span></div>
+                          <input
+                            className="wbv5-form-input"
+                            value={editTrigger.keyword || ''}
+                            onChange={e => setEditTrigger(p => ({ ...p, keyword: e.target.value }))}
+                            placeholder="Ej: precio, cuánto vale, cuanto cuesta, envío"
+                          />
+                          <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.15rem' }}>
+                            💡 Cuando el cliente escriba alguna de estas palabras, se enviará automáticamente el mensaje de abajo
+                          </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">Tiempo de espera</div>
+                          <div style={{ display: 'flex', gap: '.4rem' }}>
+                            <input className="wbv5-form-input" type="number" value={editTrigger.delay} min={1} style={{ width: 80 }} onChange={e => setEditTrigger(p => ({ ...p, delay: parseInt(e.target.value) || 1 }))} />
+                            <select className="wbv5-form-input" value={editTrigger.unit} onChange={e => setEditTrigger(p => ({ ...p, unit: e.target.value }))}>
+                              <option value="min">Minutos</option>
+                              <option value="h">Horas</option>
+                              <option value="d">Días</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
                       <div className="wbv5-form-row">
                         <div className="wbv5-form-lbl">Tipo de media (opcional)</div>
                         <select className="wbv5-form-input" value={editTrigger.mediaType || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaType: e.target.value || null }))}>
@@ -2493,7 +2564,9 @@ ${conversation}`
                     )}
                     <div className="wbv5-form-row">
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.28rem' }}>
-                        <div className="wbv5-form-lbl" style={{ margin: 0 }}>Mensaje ({(editTrigger.message || '').length}/1000 chars)</div>
+                        <div className="wbv5-form-lbl" style={{ margin: 0 }}>
+                          {editTrigger.condition === 'keyword' ? '📋 Plantilla a enviar' : 'Mensaje'} ({(editTrigger.message || '').length}/1000 chars)
+                        </div>
                         <button className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`} style={{ fontSize: '.65rem' }} onClick={() => generateTriggerMsg(editTrigger.name || 'seguimiento')} disabled={generatingTrigger}>
                           {generatingTrigger ? '⏳ Generando...' : '🤖 Generar con IA'}
                         </button>
@@ -3407,12 +3480,23 @@ ${conversation}`
                               {aiEnabled ? '🤖 ON' : '⚪ OFF'}
                             </button>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderTop: '1px solid #f3f4f6' }}>
                             <div>
-                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Override por contacto</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>Activa/desactiva IA individualmente en cada chat con el botón 🤖 del header</div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Activación por contacto</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>La IA solo responde en chats donde se activó manualmente con el botón <strong>🤖 IA OFF → ON</strong> del chat</div>
                             </div>
-                            <span className="wbv5-badge badge-blue" style={{ flexShrink: 0, marginLeft: '1rem' }}>ℹ️ Info</span>
+                            <span className="wbv5-badge badge-blue" style={{ flexShrink: 0, marginLeft: '1rem' }}>Manual</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderTop: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#dc2626' }}>Desactivar IA en todos los contactos</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>
+                                {Object.values(aiContactMap).filter(v => v === true).length} contacto(s) con IA activa ahora
+                              </div>
+                            </div>
+                            <button className="wbv5-btn wbv5-btn-sm" style={{ flexShrink: 0, marginLeft: '1rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }} onClick={resetAllAiContacts}>
+                              🚫 Desactivar todos
+                            </button>
                           </div>
                           <div style={{ marginTop: '.4rem', fontSize: '.7rem', color: '#6b7280' }}>
                             💡 Para configurar la API Key de ChatGPT ve a <strong>⚙️ Ajustes → API & Tokens → 🤖 ChatGPT</strong>
