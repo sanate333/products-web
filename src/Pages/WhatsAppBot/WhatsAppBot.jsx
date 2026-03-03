@@ -2583,7 +2583,6 @@ ${conversation}`
                 {[
                   { id: 'asistente',  label: '🚀 Asistente IA' },
                   { id: 'contexto',   label: '🏢 Contexto empresa' },
-                  { id: 'prompt',     label: '💡 Prompt del sistema' },
                   { id: 'memoria',    label: '🧠 Memoria n8n' },
                   { id: 'prueba',     label: '🧪 Probar bot' },
                 ].map(tab => (
@@ -2708,32 +2707,6 @@ ${conversation}`
                       </button>
                       <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(trainingPrompt); tip('📋 Contexto copiado') }}>📋 Copiar todo</button>
                       <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { if(window.confirm('¿Limpiar todo el contexto?')) saveTraining('') }}>🗑️ Limpiar</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab: Prompt sistema */}
-              {trainingTab === 'prompt' && (
-                <div className="wbv5-card">
-                  <div className="wbv5-card-hd">
-                    <div className="wbv5-card-title">💡 Prompt del sistema (System Prompt)</div>
-                    <span style={{ fontSize: '.68rem', color: '#6b7280' }}>{aiPrompt.length} chars</span>
-                  </div>
-                  <div className="wbv5-card-bd">
-                    <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
-                      Este es el prompt de personalidad que guía el comportamiento de ChatGPT. Se combina automáticamente con el contexto del negocio.
-                    </div>
-                    <textarea
-                      className="wbv5-form-input"
-                      rows={12}
-                      value={aiPrompt}
-                      onChange={e => saveAiPrompt(e.target.value)}
-                      style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6, fontSize: '.76rem' }}
-                    />
-                    <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem' }}>
-                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { try { localStorage.setItem('wa_ai_prompt', aiPrompt) } catch {}; tip('✅ Prompt guardado') }}>💾 Guardar prompt</button>
-                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(aiPrompt); tip('📋 Copiado') }}>📋 Copiar</button>
                     </div>
                   </div>
                 </div>
@@ -3233,16 +3206,6 @@ ${conversation}`
                               <option value="gpt-4-turbo">GPT-4 Turbo</option>
                               <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Más económico)</option>
                             </select>
-                          </div>
-                          <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">Prompt del sistema (personalidad del bot)</div>
-                            <textarea
-                              className="wbv5-form-input" rows={4}
-                              value={aiPrompt}
-                              onChange={e => saveAiPrompt(e.target.value)}
-                              style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
-                              placeholder="Eres el asistente de Sanate..."
-                            />
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Webhook n8n (procesamiento IA)</div>
