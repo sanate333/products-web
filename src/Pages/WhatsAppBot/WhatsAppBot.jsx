@@ -241,14 +241,20 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
       const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
       const baseCtx = (trainingPrompt || aiPrompt || '').substring(0, 5500)
       const enhancedSys = baseCtx
-        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÍTICAS WHATSAPP:\n• Mensajes cortos: máx 3-4 líneas por respuesta\n• NO uses markdown: sin **negritas**, sin listas 1. 2. 3., sin # títulos\n• Emojis: máx 2 por mensaje, úsalos como viñetas estratégicamente\n• VARÍA tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente (si escribe informal, sé informal)\n• Eres una persona real, NUNCA te presentes como IA o bot\n\nPROTOCOLO DE VENTAS:\n1. Calificar → entiende la necesidad con 1 pregunta\n2. Presentar → 1-2 beneficios clave para SU caso\n3. Manejar objeciones → empatía + reencuadre de valor\n4. Cerrar → pregunta directa de cierre\n\nCIERRES QUE FUNCIONAN:\n• "¿Lo pedimos para hoy?" 📦\n• "¿Te lo enviamos al mismo WhatsApp?"\n• "Solo hasta mañana — ¿Arrancamos? 🔥"\n• "¿Prefieres el combo A o el B?"\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 4 líneas seguidas\n❌ Listas numeradas\n❌ Decir que eres IA\n❌ Más de 2 emojis`
-        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real.\nMensajes cortos (máx 3-4 líneas). Sin markdown. Máx 2 emojis. Varía tus respuestas.\nSiempre termina con una pregunta de cierre o avance.\nNUNCA te presentes como IA.`
+        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÍTICAS WHATSAPP:\n• Mensajes cortos: máx 3-4 líneas POR MENSAJE\n• NEGRITAS en WhatsApp: usa *una palabra* o *frase clave* con UN asterisco a cada lado — úsalas para precios, nombres de combos, beneficios clave\n• Ejemplo: *Combo Detox* — $66.000 🌿 | *envío gratis* hoy\n• NO uses **doble asterisco** nunca — solo *uno a cada lado*\n• Emojis: máx 2 por mensaje, úsalos estratégicamente\n• VARÍA tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente (informal → informal, formal → más estructurado)\n• Eres una persona real, NUNCA te presentes como IA o bot\n\nMULTI-MENSAJE (MUY IMPORTANTE):\nCuando explicas combos, varios productos o un tema que requiere varios puntos,\nDIVIDE en 2 a 5 mensajes cortos separados por el texto exacto ||||\nEjemplo de respuesta multi-mensaje:\nTenemos 3 combos disponibles 🌿\n||||\n*Combo 1* — Jabón Avena + Arroz: ideal piel sensible 🧼 — *$66.000*\n||||\n*Combo 2* — Jabón Cúrcuma + Caléndula: regenera y calma ✨ — *$66.000*\n||||\n¿Cuál te llama más la atención? 😊\n\nPROTOCOLO DE VENTAS:\n1. Calificar → entiende la necesidad con 1 pregunta\n2. Presentar → beneficios clave con *negritas* en palabras importantes\n3. Manejar objeciones → empatía + reencuadre de valor\n4. Cerrar → pregunta directa de cierre\n\nCIERRES QUE FUNCIONAN:\n• "¿Lo pedimos para hoy?" 📦\n• "¿Te lo enviamos al mismo WhatsApp?"\n• "Solo hasta mañana — ¿Arrancamos? 🔥"\n• "¿Prefieres el *Combo A* o el *Combo B*?"\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo mensaje\n❌ Listas numeradas 1. 2. 3.\n❌ **Doble asterisco** markdown\n❌ Decir que eres IA\n❌ Más de 2 emojis por mensaje`
+        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real.\nMensajes cortos (máx 3-4 líneas). Negritas WhatsApp: *texto* (un asterisco cada lado). Máx 2 emojis. Varía tus respuestas.\nPara combos o temas complejos: divide en 2-5 mensajes separados por ||||\nSiempre termina con una pregunta de cierre o avance.\nNUNCA te presentes como IA.`
       const reply = await localCallAI([
         { role: 'system', content: enhancedSys },
         ...history,
         { role: 'user', content: userMsg },
       ])
-      setMsgs(p => [...p, { role: 'assistant', txt: reply || '⚠️ Sin respuesta de la IA' }])
+      // Soporte multi-mensaje: separar por ||||
+      const parts = (reply || '').split('||||').map(s => s.trim()).filter(Boolean)
+      if (parts.length > 1) {
+        setMsgs(p => [...p, ...parts.map(txt => ({ role: 'assistant', txt }))])
+      } else {
+        setMsgs(p => [...p, { role: 'assistant', txt: reply || '⚠️ Sin respuesta de la IA' }])
+      }
     } catch (e) {
       const errTxt = e?.message === 'no_key'
         ? '⚠️ Configura tu API Key de OpenAI o Gemini en Ajustes → API & Tokens'
@@ -918,41 +924,57 @@ export default function WhatsAppBot() {
       const profileCtx = profile ? `\nPERFIL DEL CLIENTE ACTUAL:\n• Estilo: ${profile.estilo} | Tono: ${profile.tono} | Intención de compra: ${profile.intencion}\n• Intereses: ${(profile.intereses||[]).join(', ')}\n• Ángulo recomendado: ${profile.angulo || 'N/A'}\n` : ''
 
       const sysPrompt = ctx
-        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas (celular)\n• NO uses markdown: sin negritas **, sin listas 1. 2. 3., sin # títulos\n• Usa emojis como viñetas, MÁXIMO 2 por mensaje\n• Varía tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente: si escribe informal, sé informal\n\nPROTOCOLO DE VENTAS (sigue este flujo):\n1. Primera pregunta → saluda + califica la necesidad con 1 pregunta\n2. Exploración → entiende su problema real antes de ofrecer\n3. Presentación → 1-2 beneficios clave para SU caso, no todo el catálogo\n4. Objeción precio → "¿Qué resultado esperas obtener?" + reencuadre de valor\n5. Cierre → una pregunta directa: "¿Lo pedimos para hoy?" / "¿Te lo enviamos al mismo WhatsApp?"\n\nTÉCNICAS DE CIERRE:\n• Directo: "¿Arrancamos hoy?" / "¿Lo pedimos?"\n• Urgencia: "Este precio solo es hasta mañana 🔥"\n• Elección: "¿Prefieres el combo A o el B?"\n• Silencio cliente → reactivación con nuevo ángulo de valor\n• Cliente existente → pregunta por su experiencia + recomienda siguiente producto\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!" (frases genéricas)\n❌ Más de 4 líneas seguidas\n❌ Listas numeradas\n❌ Mencionar que eres IA o bot\n❌ Repetir el mismo saludo más de una vez\n❌ Más de 2 emojis por mensaje`
-        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n• NO uses markdown, listas numeradas ni negritas **\n• Emojis: máx 2 por mensaje, como viñetas\n• Varía saludos y apertura en cada mensaje\n• Adapta el tono al estilo del cliente\n\nFLUJO DE VENTAS:\n1. Calificar necesidad → preguntar qué busca\n2. Presentar el beneficio clave para SU caso\n3. Manejar objeciones con empatía\n4. Cerrar con pregunta directa: "¿Lo pedimos hoy?" / "¿Te lo enviamos?"\n\nTÉCNICAS DE CIERRE:\n• Urgencia: "Solo hasta hoy 🔥"\n• Elección: "¿Combo A o combo B?"\n• Directo: "¿Arrancamos?"\n\nPROHIBIDO:\n❌ Frases genéricas tipo "¡Claro que sí!"\n❌ Más de 4 líneas seguidas\n❌ Decir que eres IA\n❌ Más de 2 emojis`
+        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n• NEGRITAS WhatsApp: *una palabra* con UN asterisco a cada lado — úsalas en precios, nombres de combos, beneficios destacados\n• Ejemplo correcto: *Combo Detox* — *$66.000* 🌿 | *envío gratis* hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*\n• Emojis: máx 2 por mensaje, úsalos estratégicamente como viñetas\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono: si el cliente escribe informal, responde informal\n\nMULTI-MENSAJE (MUY IMPORTANTE):\nCuando explicas combos, productos, precios o temas que necesitan varios puntos,\nDIVIDE en 2 a 5 mensajes cortos separados por el separador exacto: ||||\nCada segmento = 1 mensaje de WhatsApp independiente\nEjemplo:\nTenemos opciones para tu piel 🌿\n||||\n*Combo Avena y Arroz* — piel sensible, granitos ✨ — *$66.000*\n||||\n*Combo Cúrcuma* — cicatrices y manchas 🌻 — *$66.000*\n||||\n¿Cuál va más con lo que necesitas? 😊\n\nPROTOCOLO DE VENTAS:\n1. Califica → entiende la necesidad con 1 pregunta\n2. Presenta → beneficios clave con *negritas* para lo importante\n3. Maneja objeciones → empatía + reencuadre de valor\n4. Cierra → pregunta directa única\n\nTÉCNICAS DE CIERRE:\n• Directo: "¿Arrancamos hoy?" / "¿Lo pedimos?"\n• Urgencia: "Solo hasta mañana 🔥"\n• Elección: "¿*Combo A* o *Combo B*?"\n• Cliente existente → pregunta experiencia + cross-sell natural\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Listas numeradas 1. 2. 3.\n❌ **Doble asterisco** — solo *uno cada lado*\n❌ Decir que eres IA o bot\n❌ Más de 2 emojis por mensaje`
+        : `Eres un asesor de ventas experto por WhatsApp. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n• Negritas WhatsApp: *texto* (un asterisco cada lado) para precios y combos\n• Emojis: máx 2 por mensaje\n• Multi-mensaje: divide temas complejos en 2-5 partes separadas por ||||\n• Varía saludos y apertura en cada mensaje\n• Adapta el tono al estilo del cliente\n\nFLUJO DE VENTAS:\n1. Calificar → preguntar qué busca\n2. Presentar con *negritas* en precios/combos\n3. Manejar objeciones con empatía\n4. Cerrar con pregunta directa\n\nTÉCNICAS DE CIERRE:\n• "Solo hasta hoy 🔥" | "¿*Combo A* o *Combo B*?" | "¿Arrancamos?"\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ **Doble asterisco** | ❌ Decir que eres IA | ❌ +2 emojis`
       const reply = await callAI({
         messages: [
           { role: 'system', content: sysPrompt },
           ...history,
         ],
-        maxTokens: 280,
+        maxTokens: 480,  // más tokens para multi-mensajes
       })
       // Verificar que no haya llegado un mensaje nuevo que invalide esta generación
       if (!reply || active?.id !== chatId || autoReplyGenRef.current !== myGen) {
         setAiTyping(false); autoReplyingRef.current = false; return
       }
-      // Enviar "escribiendo..." al cliente
-      try {
-        await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
-          method: 'POST', headers: HJ, body: JSON.stringify({ action: 'composing' }),
-        })
-      } catch {}
-      // Delay natural corto: mínimo 0.8s, máximo 2s
-      const typingMs = Math.max(800, Math.min(reply.length * 18, 2000))
-      await new Promise(r => setTimeout(r, typingMs))
-      // Re-verificar después del delay
-      if (active?.id !== chatId || autoReplyGenRef.current !== myGen) {
-        setAiTyping(false); autoReplyingRef.current = false; return
+
+      // ── Soporte multi-mensaje: separar por ||||
+      const parts = reply.split('||||').map(s => s.trim()).filter(Boolean)
+
+      for (let pi = 0; pi < parts.length; pi++) {
+        const part = parts[pi]
+        // Verificar generación antes de cada segmento
+        if (active?.id !== chatId || autoReplyGenRef.current !== myGen) break
+
+        // Mostrar "escribiendo..." al cliente
+        try {
+          await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
+            method: 'POST', headers: HJ, body: JSON.stringify({ action: 'composing' }),
+          })
+        } catch {}
+
+        // Delay proporcional al texto: más corto en multi-mensajes para que fluya natural
+        const baseDelay = parts.length > 1 ? 600 : 800
+        const typingMs = Math.max(baseDelay, Math.min(part.length * 15, parts.length > 1 ? 1500 : 2000))
+        await new Promise(r => setTimeout(r, typingMs))
+
+        // Re-verificar tras el delay
+        if (active?.id !== chatId || autoReplyGenRef.current !== myGen) break
+
+        // Enviar segmento
+        const fd = new FormData(); fd.append('text', part)
+        const r = await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/send`, { method: 'POST', headers: H, body: fd })
+        const d = await r.json()
+        const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        const newMsg = { id: d.message?.providerMessageId || `${Date.now()}_${pi}`, dir: 's', txt: part, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+        setMsgs(p => { const next = [...p, newMsg]; cachePut(chatId, next); return next })
+        scroll()
+
+        // Pausa breve entre mensajes para que se vea natural (excepto el último)
+        if (pi < parts.length - 1) await new Promise(r => setTimeout(r, 350))
       }
-      // Enviar mensaje
-      const fd = new FormData(); fd.append('text', reply)
-      const r = await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/send`, { method: 'POST', headers: H, body: fd })
-      const d = await r.json()
-      const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-      const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: reply, time: t, type: 'text', mediaUrl: '', status: 'sent' }
-      setMsgs(p => { const next = [...p, newMsg]; cachePut(chatId, next); return next })
-      scroll()
-      // Quitar "escribiendo..."
+
+      // Quitar "escribiendo..." al terminar
       try {
         await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
           method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
