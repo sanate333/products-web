@@ -1,0 +1,8 @@
+open 82.29.199.122
+user u274689770 Sanate009*
+binary
+put "C:\Users\sebas\WebstormProjects\products-web\public\subbannersGet.php" subbannersGet.php
+put "C:\Users\sebas\WebstormProjects\products-web\public\subbannersPost.php" subbannersPost.php
+put "C:\Users\sebas\WebstormProjects\products-web\public\subbannerDelete.php" subbannerDelete.php
+put "C:\Users\sebas\WebstormProjects\products-web\public\crearTablas.php" crearTablas.php
+bye

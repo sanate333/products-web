@@ -1,0 +1,4 @@
+open 82.29.199.122
+user u274689770 Sanate009*
+dir *sub*
+bye

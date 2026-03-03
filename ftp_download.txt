@@ -1,0 +1,5 @@
+open 82.29.199.122
+user u274689770 Sanate009*
+binary
+get subbannersGet.php "C:\Users\sebas\WebstormProjects\products-web\downloaded_subbannersGet.php"
+bye

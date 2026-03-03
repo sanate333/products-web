@@ -3,9 +3,13 @@ import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
-const BU = 'http://localhost:5055/api/whatsapp'
-const H  = { 'x-secret': 'sanate_secret_2025' }
-const HJ = { ...H, 'Content-Type': 'application/json' }
+const DEFAULT_BU     = 'http://localhost:5055/api/whatsapp'
+const DEFAULT_SECRET = 'sanate_secret_2025'
+// ── Backend URL y Secret — configurables en Ajustes ─────────────
+let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
+let MEDIA_BASE = BU.replace('/api/whatsapp', '')
+let H          = { 'x-secret': (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })() }
+let HJ         = { ...H, 'Content-Type': 'application/json' }
 const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
 
 // ── localStorage helpers ───────────────────────────────────────
@@ -21,7 +25,8 @@ function normMsg(m) {
   const ts = m.timestamp || m.time || ''
   const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return ts.substring(11, 16) } })() : ''
   return {
-    id:       m.providerMessageId || m.id || Math.random().toString(36).slice(2),
+    id:       m.providerMessageId || m.id ||
+              `${(m.direction === 'outgoing' || m.dir === 's') ? 's' : 'r'}_${m.timestamp || m.time || ''}_${(m.text || m.txt || '').substring(0, 24)}`,
     dir:      (m.direction === 'outgoing' || m.dir === 's') ? 's' : 'r',
     txt:      m.text || m.txt || '',
     time:     hhmm,
@@ -116,8 +121,228 @@ const FLOWS_LIST = [
   { key: 'soporte',    name: 'Flujo soporte',           trigger: '🔑 Keyword',        badge: 'badge-green', runs: 84,  ctr: '47%', date: '20/02/2026' },
 ]
 
+const DEFAULT_TRIGGERS = [
+  { id: 'tr1', name: 'Sin respuesta 1h',      condition: 'no_reply',    delay: 60,   unit: 'min', producto: 'General', message: '¡Hola {nombre}! 👋 Vi que revisaste nuestra info.\n¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy 🎁', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',       delay: 180,  unit: 'min', producto: 'General', message: 'Hola {nombre} 😊 Quería enviarte nuestra mejor oferta de hoy.\n¿Cuál es tu producto favorito? 🌿\nTe armo un combo personalizado 💚', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: '🔥 ¡Último aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\n¿Lo reservamos? Responde SÍ y te lo aparto ahora mismo 💪', active: false, mediaType: null, mediaUrl: '' },
+]
+
+const DEFAULT_KW_TRIGGERS = [
+  { id: 'kw1', name: '🔑 Precio / Cuánto vale',    condition: 'keyword', keyword: 'precio, precios, cuanto vale, cuánto vale, cuanto cuesta, cuánto cuesta, valor, costo', delay: 0, unit: 'min', producto: 'Ventas',    message: '💚 *Combo 1* – Tripack Mixto (3 Jabones) → *$59.000*\n💛 *Combo 2* – 3 Jabones a elección → *$59.000*\n🌿 *Combo 3* – 2 Jabones + Sebo 10g → *$63.000*\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000*\n\n🚚 Envío GRATIS | 💳 Contra entrega | Nequi *8% OFF*\n\n¿Cuál te llevas hoy? 💛', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw2', name: '🔑 Combos / Productos',       condition: 'keyword', keyword: 'combo, combos, productos, catalogo, catálogo, que tienes, qué tienes, que vendes, qué vendes, info, información, informacion', delay: 0, unit: 'min', producto: 'Ventas',    message: '🔥 COMBOS MÁS PEDIDOS – PRECIOS BAJOS POR TIEMPO LIMITADO 🔥\n\n💚 *Combo 1* – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena) → *$59.000* (antes $105.000)\n💛 *Combo 3* – 2 Jabones + Sebo de Res 10g → *$63.000* (antes $79.000)\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000* (antes $159.000)\n\n🚚 Envío GRATIS a toda Colombia 💳 Pagas al recibir — sin riesgo\n⏰ ¿Te reservo el más vendido? 💛', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw3', name: '🔑 Hola / Bienvenida',        condition: 'keyword', keyword: 'hola, buenas, buenos dias, buenos días, buenas tardes, buenas noches, hi, hello, saludos', delay: 0, unit: 'min', producto: 'Inicio',    message: 'Hola {nombre} 👋😊 ¡Bienvenido a Sánate! Qué bueno tenerte por aquí 💛\n\n¿Buscas algo para *acné*, *manchas*, *piel seca* o *zonas íntimas*?\nCuéntame y te recomiendo el combo perfecto ✨', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'kw4', name: '🔑 Confirmar / Datos pedido', condition: 'keyword', keyword: 'si quiero, sí quiero, lo quiero, lo compro, confirmar, confirmo, mis datos, datos, dirección, pedir, pedido', delay: 0, unit: 'min', producto: 'Pedidos',   message: '¡Excelente elección! 💚✨\n\nPara confirmar tu pedido envíame:\n1️⃣ Nombre y Apellido\n📱 Teléfono de contacto\n📍 Ciudad y Departamento\n🏠 Dirección exacta\n📦 Barrio\n\nQuedo atenta para procesarlo de inmediato 🚀', active: true,  mediaType: null, mediaUrl: '' },
+]
+
+const DEFAULT_PLANTILLAS = [
+  { id: 'tpl_bienvenida',  nombre: 'Bienvenida',            categoria: 'Inicio',       mensaje: 'Hola {nombre} 👋😊 ¡Bienvenido! Qué bueno tenerte por aquí 💛\n\n¿Quieres saber cómo se usa, los combos disponibles y el obsequio activo 🎁?\nResponde Sí o No ✨' },
+  { id: 'tpl_info_ofertas', nombre: 'Info + Combos + Precios', categoria: 'Ventas',    mensaje: '🔥 COMBOS MÁS PEDIDOS – PRECIOS BAJOS POR TIEMPO LIMITADO 🔥\n\n💚 *Combo 1* – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena) → *$59.000* (antes $105.000)\n💛 *Combo 3* – 2 Jabones + Sebo de Res 10g → *$63.000* (antes $79.000)\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000* (antes $159.000)\n\n🚚 Envío GRATIS a toda Colombia 💳 Pagas al recibir — sin riesgo\n⏰ Se están agotando rápido... ¿Te reservo el más vendido? 💛' },
+  { id: 'tpl_confirmacion', nombre: 'Confirmación de pedido',  categoria: 'Pedidos',   mensaje: 'Tu pedido ha sido confirmado exitosamente y eres muy importante para nosotros 💚\n\n📦 Por favor, estate pendiente del envío y del repartidor de Inter Rapidísimo 🚚\nNormalmente la entrega se realiza en 1 a 3 días hábiles, dependiendo de tu ciudad.\n\n¡Gracias por ser parte de la familia Sánate! 🙌' },
+  { id: 'tpl_seguimiento', nombre: 'Seguimiento sin compra',  categoria: 'Seguimiento', mensaje: 'Hola {nombre} 😊\n\n¿Pudiste revisar la información que te envié? 🌿\n\nHoy tenemos un descuento especial — los precios y el obsequio son *solo por hoy* ⏰\n\n¿Te reservo el más vendido antes de que se agote? 💛' },
+  { id: 'tpl_precio',      nombre: 'Precios y combos (lista)', categoria: 'Ventas',    mensaje: '💚 *Combo 1* – Tripack Mixto (3 Jabones) → *$59.000*\n💛 *Combo 2* – 3 Jabones a elección → *$59.000*\n🌿 *Combo 3* – 2 Jabones + Sebo 10g → *$63.000*\n⭐ *Combo 5* – MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → *$119.000*\n\n🚚 Envío GRATIS | 💳 Contra entrega | Nequi *8% OFF*\n\n¿Cuál te llevas hoy? 💛' },
+  { id: 'tpl_datos',       nombre: 'Solicitud de datos',       categoria: 'Pedidos',   mensaje: '¡Excelente elección! 💚✨\n\nPara confirmar tu pedido envíame:\n1️⃣ Nombre y Apellido\n📱 Teléfono de contacto\n📍 Ciudad y Departamento\n🏠 Dirección exacta\n📦 Barrio\n\nQuedo atenta para procesarlo de inmediato 🚀' },
+]
+
+// ── Mapa de geo por código de país / área Colombia ──────────────
+const GEO_MAP = {
+  col: { '1':'Bogotá·CUN','2':'Cali·VAL','4':'Medellín·ANT','5':'Barranquilla·ATL','6':'Manizales·CAL','7':'Bucaramanga·SAN','8':'Cartagena·BOL','9':'Leticia·AMA' },
+  cc:  { '1':'USA·US 🇺🇸','52':'México·MX 🇲🇽','34':'España·ES 🇪🇸','54':'Argentina·AR 🇦🇷','55':'Brasil·BR 🇧🇷','56':'Chile·CL 🇨🇱','51':'Perú·PE 🇵🇪','58':'Venezuela·VE 🇻🇪','593':'Ecuador·EC 🇪🇨','57':'Colombia·CO 🇨🇴' },
+}
+function phoneToGeo(phone) {
+  if (!phone) return null
+  const raw = phone.replace(/\D/g, '')
+  if (raw.startsWith('57') && raw.length >= 11) {
+    const mobile = raw.substring(2, 4)
+    if (mobile.startsWith('3')) {
+      const area = raw.substring(2, 3)
+      const city = GEO_MAP.col[area]
+      if (city) { const [c,d] = city.split('·'); return { label: `${c} · ${d}`, flag: '🇨🇴' } }
+      return { label: 'Colombia · CO', flag: '🇨🇴' }
+    }
+  }
+  for (const [cc, label] of Object.entries(GEO_MAP.cc)) {
+    if (raw.startsWith(cc)) { const [c,d] = label.split(' ')[0].split('·'); return { label: `${c} · ${d}`, flag: label.split(' ')[1] || '' } }
+  }
+  return null
+}
+
+const TRAINING_TEMPLATE = `🏢 NOMBRE DEL NEGOCIO: Sanate
+🌐 SITIO WEB: sanate.store
+📱 WHATSAPP: +57 XXX XXX XXXX
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 PERSONALIDAD DEL ASISTENTE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Eres un cerrador de ventas experto, amable, cálido y natural.
+Nunca suenas como un robot. Haces pausas, usas emojis estratégicamente,
+escuchas al cliente, identificas su necesidad y ofreces la solución perfecta.
+Siempre terminas con una pregunta de cierre clara.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🛍️ PRODUCTOS Y PRECIOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Pega aquí tus productos con precios]
+Ejemplo:
+- Combo Detox 30 días: $150.000
+- Pack Energía Total: $89.000
+- Kit Bienestar Premium: $220.000
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💥 COMBOS Y OFERTAS ESPECIALES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Describe tus combos, precios, descuentos, vigencia]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💬 ESTILO DE CONVERSACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Saluda con el nombre del cliente
+2. Identifica qué necesita con 1 pregunta
+3. Ofrece el producto más adecuado
+4. Da 1-2 beneficios clave (no abrumes)
+5. Cierre: "¿Te lo reservamos?" / "¿Lo tomamos?"
+6. Si dice que va a pensar: envía oferta por tiempo limitado
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 NUNCA HACER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Dar precios sin contexto del producto
+- Responder con listas largas
+- Olvidar hacer una pregunta de cierre
+- Sonar robotico o formal en exceso
+`
+
 const COLORS_AV  = ['#d1fae5', '#dbeafe', '#ede9fe', '#fef3c7', '#fee2e2']
 const COLORS_TXT = ['#065f46', '#1d4ed8', '#5b21b6', '#92400e', '#b91c1c']
+
+// ── Resolver URL de media: blob / http completo / ruta relativa ─
+function resolveMediaUrl(url) {
+  if (!url) return ''
+  if (url.startsWith('blob:') || url.startsWith('data:')) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  // Ruta relativa → anteponer MEDIA_BASE
+  return MEDIA_BASE + (url.startsWith('/') ? url : '/' + url)
+}
+
+// ── Componente: chat de prueba del bot IA ──────────────────────
+function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, tip, msgMode, useEmojis, useStyles }) {
+  const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])
+  const [inp,  setInp]  = React.useState('')
+  const [busy, setBusy] = React.useState(false)
+
+  async function localCallAI(messages) {
+    if (openaiKey) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: aiModel || 'gpt-4o', messages, max_tokens: 480 }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'OpenAI error')
+      return data.choices?.[0]?.message?.content?.trim() || ''
+    }
+    if (geminiKey) {
+      const systemMsg = messages.find(m => m.role === 'system')
+      const userMsgs  = messages.filter(m => m.role !== 'system')
+      const parts = []
+      if (systemMsg) parts.push({ text: systemMsg.content + '\n\n' })
+      userMsgs.forEach(m => parts.push({ text: (m.role === 'user' ? '' : '[Bot]: ') + m.content }))
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+        { method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.8, maxOutputTokens: 480 } }) }
+      )
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Gemini error')
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+    }
+    throw new Error('no_key')
+  }
+
+  async function send() {
+    if (!inp.trim() || busy) return
+    const userMsg = inp.trim(); setInp(''); setBusy(true)
+    setMsgs(p => [...p, { role: 'user', txt: userMsg }])
+    try {
+      const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
+      const baseCtx = (trainingPrompt || aiPrompt || '').substring(0, 5500)
+
+      // Bloques condicionales según configuración de estilo
+      const tc_stylesBlock = (useStyles !== false)
+        ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
+        : `• Texto plano ÚNICAMENTE — sin asteriscos ni formato. PROHIBIDO *negritas*, _cursiva_ o ~tachado~`
+      const tc_emojisBlock = (useEmojis !== false)
+        ? `• Emojis: máx 2 por mensaje, úsalos estratégicamente como viñetas o énfasis`
+        : `• PROHIBIDO usar emojis — solo texto plano`
+      const tc_multiMsgBlock = (msgMode !== 'completo')
+        ? `ENVÍO POR PARTES:\nDivide en 2 a 5 mensajes separados por el separador EXACTO: ||||\n• Parte 1 → gancho o contexto — no lo reveles todo\n• Partes intermedias → desarrolla con intriga o mini-pregunta\n• Última parte → pregunta de cierre de venta\nEjemplo:\nTenemos varias opciones${(useEmojis !== false) ? ' 🌿' : ''}\n||||\n${(useStyles !== false) ? '*Combo A*' : 'Combo A'} — beneficio — ${(useStyles !== false) ? '*$66.000*' : '$66.000'}\n||||\n¿Cuál prefieres${(useEmojis !== false) ? ' 😊' : '?'}`
+        : `ENVÍO COMPLETO:\nResponde en UN solo mensaje bien organizado (máx 6 líneas). NO uses |||| separador.`
+
+      // Embudo de ventas para el Test Chat
+      const tc_salesFunnel = `EMBUDO DE VENTAS PROBADO — SIGUE ESTE ORDEN:
+PASO 2 — DIAGNÓSTICO (antes de precios): "¿Lo buscas para acné, manchas, piel seca o zonas íntimas?"
+PASO 3 — PRESENTACIÓN: Recomienda combo exacto${(useStyles !== false) ? ' con *negrita* en precios y nombres' : ''} + obsequio.
+PASO 4 — CIERRE con elección forzada: "¿Cuál te llevas, el${(useStyles !== false) ? ' *Combo 1*' : ' Combo 1'} o el${(useStyles !== false) ? ' *Combo 5*' : ' Combo 5'}? 💛"
+PASO 5 — DATOS: "¡Excelente elección! 💚✨ Envíame: Nombre / Teléfono / Ciudad / Dirección / Barrio"
+
+CATÁLOGO SÁNATE:
+• ${(useStyles !== false) ? '*Combo 1*' : 'Combo 1'} Tripack Mixto (3 Jabones) → ${(useStyles !== false) ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${(useStyles !== false) ? '*Combo 2*' : 'Combo 2'} 3 Jabones a elección → ${(useStyles !== false) ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${(useStyles !== false) ? '*Combo 3*' : 'Combo 3'} 2 Jabones + Sebo 10g → ${(useStyles !== false) ? '*$63.000*' : '$63.000'} (antes $79.000)
+• ${(useStyles !== false) ? '*Combo 5*' : 'Combo 5'} MÁS VENDIDO: 4 Jabones + Sebo + Exfoliante → ${(useStyles !== false) ? '*$119.000*' : '$119.000'} (antes $159.000)
+• Jabón individual: ${(useStyles !== false) ? '*$22.000*' : '$22.000'}
+Nequi/transferencia: ${(useStyles !== false) ? '*8% OFF*' : '8% OFF'} | Envío GRATIS a toda Colombia | Contra entrega disponible
+
+FRASES DE CIERRE (úsalas): "¡Excelente elección! 💚✨" / "Los precios son de hoy solamente" / "Se agotan rápido"
+REGLAS: ❌ Nunca precio sin diagnóstico | ❌ Nunca pregunta abierta al cierre | ✅ Siempre celebra la elección`
+
+      const enhancedSys = baseCtx
+        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÍTICAS WHATSAPP:\n• Mensajes cortos: máx 3-4 líneas POR MENSAJE\n${tc_stylesBlock}\n${tc_emojisBlock}\n• VARÍA tus respuestas — nunca repitas el mismo saludo\n• Adapta el tono al cliente\n• Eres una persona real, NUNCA te presentes como IA o bot\n\n${tc_multiMsgBlock}\n\n${tc_salesFunnel}\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Decir que eres IA`
+        : `Eres una asesora de ventas de Sánate Colombia — jabones artesanales naturales. Eres una persona real. NUNCA te presentes como IA.\n${tc_stylesBlock}\n${tc_emojisBlock}\nMensajes cortos (máx 3-4 líneas). Varía tus respuestas.\n\n${tc_multiMsgBlock}\n\n${tc_salesFunnel}`
+
+      const reply = await localCallAI([
+        { role: 'system', content: enhancedSys },
+        ...history,
+        { role: 'user', content: userMsg },
+      ])
+      // Soporte multi-mensaje: separar por ||||
+      const parts = (reply || '').split('||||').map(s => s.trim()).filter(Boolean)
+      if (parts.length > 1) {
+        setMsgs(p => [...p, ...parts.map(txt => ({ role: 'assistant', txt }))])
+      } else {
+        setMsgs(p => [...p, { role: 'assistant', txt: reply || '⚠️ Sin respuesta de la IA' }])
+      }
+    } catch (e) {
+      const errTxt = e?.message === 'no_key'
+        ? '⚠️ Configura tu API Key de OpenAI o Gemini en Ajustes → API & Tokens'
+        : `⚠️ Error IA: ${e?.message || 'Verifica tu API Key'}`
+      setMsgs(p => [...p, { role: 'assistant', txt: errTxt }])
+    }
+    setBusy(false)
+  }
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ background: '#075e54', padding: '.55rem 1rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+        <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#25d366', boxShadow: '0 0 0 3px rgba(37,211,102,.3)' }} />
+        <span style={{ color: '#fff', fontSize: '.78rem', fontWeight: 700 }}>🤖 Bot IA — Modo prueba</span>
+        <button style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '.2rem .6rem', fontSize: '.68rem', cursor: 'pointer' }} onClick={() => setMsgs([{ role: 'assistant', txt: '¡Hola! Soy tu bot de prueba. ¿En qué te puedo ayudar? 😊' }])}>🔄 Reiniciar</button>
+      </div>
+      <div style={{ background: '#e5ddd5', padding: '.75rem', minHeight: 200, maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '.35rem' }}>
+        {msgs.map((m, i) => (
+          <div key={i} style={{ maxWidth: '78%', alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', background: m.role === 'user' ? '#dcf8c6' : '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.77rem', lineHeight: 1.5, boxShadow: '0 1px 2px rgba(0,0,0,.1)' }}>
+            {m.role === 'assistant' && <div style={{ fontSize: '.58rem', color: '#7c3aed', fontWeight: 700, marginBottom: '.1rem' }}>🤖 IA</div>}
+            {m.txt}
+          </div>
+        ))}
+        {busy && <div style={{ alignSelf: 'flex-start', background: '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.75rem', color: '#9ca3af' }}>⏳ Pensando...</div>}
+      </div>
+      <div style={{ background: '#f0f0f0', padding: '.5rem .75rem', display: 'flex', gap: '.5rem' }}>
+        <input style={{ flex: 1, border: 'none', borderRadius: 24, padding: '.42rem 1rem', fontSize: '.76rem', outline: 'none', background: '#fff', fontFamily: 'inherit' }}
+          value={inp} onChange={e => setInp(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Escribe un mensaje de prueba..." disabled={busy} />
+        <button style={{ width: 36, height: 36, background: '#075e54', color: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '.9rem' }} onClick={send} disabled={busy}>{busy ? '⏳' : '➤'}</button>
+      </div>
+    </div>
+  )
+}
 
 const DEFAULT_TAGS = [
   { id: 'tg1', name: 'Nuevo lead',      color: '#3b82f6' },
@@ -125,10 +350,16 @@ const DEFAULT_TAGS = [
   { id: 'tg3', name: 'Cliente VIP',     color: '#8b5cf6' },
   { id: 'tg4', name: 'Soporte',         color: '#ef4444' },
   { id: 'tg5', name: 'Recurrente',      color: '#10b981' },
+  { id: 'tg6', name: 'Preparar',        color: '#2563eb' }, // azul — auto cuando detecta pedido
+  { id: 'tg7', name: 'Facturado',       color: '#16a34a' }, // verde — cambio manual
+  { id: 'tg8', name: 'Reserva',         color: '#7c3aed' },
 ]
 
+// Keywords que indican intención de pedido
+const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 'llevar', 'cuánto cuesta', 'cuanto cuesta', 'cuánto vale', 'cuanto vale', 'precio', 'pago', 'transferencia', 'domicilio', 'envío', 'envio', 'me interesa', 'lo quiero', 'cómo pago', 'como pago', 'cómo compro', 'como compro', 'quiero uno', 'quiero comprar', 'cuantos', 'disponible', 'tienes', 'hay']
+
 export default function WhatsAppBot() {
-  const [page,        setPage]        = useState('overview')
+  const [page,        setPage]        = useState(() => { try { return localStorage.getItem('wb_current_page') || 'chat' } catch { return 'chat' } })
   const [status,      setStatus]      = useState('disconnected')
   const [phone,       setPhone]       = useState('')
   const [qrDataUrl,   setQrDataUrl]   = useState(null)
@@ -140,6 +371,14 @@ export default function WhatsAppBot() {
   const [search,      setSearch]      = useState('')
   const [chatFilter,  setChatFilter]  = useState('todos')
   const [showContact, setShowContact] = useState(false)
+
+  // ── Análisis de cliente ───────────────────────────────────────
+  const [showAnalysisPanel, setShowAnalysisPanel] = useState(false)
+  const [clientAnalysis,    setClientAnalysis]    = useState(() => { try { return JSON.parse(localStorage.getItem('wa_client_analysis') || '{}') } catch { return {} } })
+  const [analysisLoading,   setAnalysisLoading]   = useState(false)
+
+  // ── Etiquetas persistentes por chat ──────────────────────────
+  const [chatsTags,         setChatsTags]         = useState(() => { try { return JSON.parse(localStorage.getItem('wa_chats_tags') || '{}') } catch { return {} } })
   const [n8nOk,       setN8nOk]       = useState(null)
   const [curFlow,     setCurFlow]     = useState('bienvenida')
   const [builderOpen, setBuilderOpen] = useState(false)
@@ -159,6 +398,75 @@ export default function WhatsAppBot() {
   const [contactTags,       setContactTags]       = useState(['Nuevo lead'])
   const [availableTags,     setAvailableTags]     = useState(DEFAULT_TAGS)
   const [showTagsDropdown,  setShowTagsDropdown]  = useState(false)
+  const [showStatusDropdown, setShowStatusDropdown] = useState(false)
+  const [contactStatus,     setContactStatus]     = useState('Nuevo')
+
+  // ── IA / ChatGPT ──────────────────────────────────────────────
+  const [serverOnline,       setServerOnline]       = useState(null)
+  const [aiEnabled,          setAiEnabled]          = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
+  const [aiContactMap,       setAiContactMap]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_contact_map') || '{}') } catch { return {} } })
+  // ── Disparadores por contacto (true = activos, false = pausados para ese chat) ──
+  const [triggerContactMap,  setTriggerContactMap]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_trigger_contact_map') || '{}') } catch { return {} } })
+  const [openaiKey,          setOpenaiKey]          = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
+  const [geminiKey,          setGeminiKey]          = useState(() => { try { return localStorage.getItem('wa_gemini_key') || '' } catch { return '' } })
+  const [aiModel,        setAiModel]        = useState('gpt-4o')
+  const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } })
+
+  // ── Entrenamiento IA ──────────────────────────────────────────
+  const [trainingPrompt,   setTrainingPrompt]   = useState(() => { try { return localStorage.getItem('wa_training_prompt') || TRAINING_TEMPLATE } catch { return TRAINING_TEMPLATE } })
+  const [trainingTab,      setTrainingTab]      = useState('asistente')
+  const [generatingPrompt, setGeneratingPrompt] = useState(false)
+  const [trainingChars,    setTrainingChars]     = useState(0)
+  // Wizard de entrenamiento
+  const [wizardData, setWizardData] = useState({
+    empresa: '', descripcion: '', productos: '', precios: '', combos: '',
+    estilo: 'amigable', objeciones: '', envio: '', horario: '', extra: ''
+  })
+  const [generatingWizard, setGeneratingWizard] = useState(false)
+
+  // ── Clientes ──────────────────────────────────────────────────
+  const [clientes,       setClientes]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_clientes') || '[]') } catch { return [] } })
+  const [clienteSearch,  setClienteSearch]  = useState('')
+  const [clienteDetail,  setClienteDetail]  = useState(null)  // cliente seleccionado
+
+  // ── Disparadores ──────────────────────────────────────────────
+  const [triggers,         setTriggers]         = useState(() => { try { return JSON.parse(localStorage.getItem('wa_triggers') || 'null') || DEFAULT_TRIGGERS } catch { return DEFAULT_TRIGGERS } })
+  const [editTrigger,      setEditTrigger]      = useState(null)   // trigger en edición (null=cerrado)
+  const [generatingTrigger,setGeneratingTrigger]= useState(false)
+
+  // ── Plantillas ────────────────────────────────────────────────
+  const [plantillas,    setPlantillas]    = useState(() => { try { return JSON.parse(localStorage.getItem('wa_plantillas') || 'null') || DEFAULT_PLANTILLAS } catch { return DEFAULT_PLANTILLAS } })
+  const [editPlantilla, setEditPlantilla] = useState(null)  // null=cerrado, obj=editando
+
+  // ── Geo & Timing ──────────────────────────────────────────────
+  const [botDelay,       setBotDelay]       = useState(() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') } catch { return 3 } })
+  const [simulateTyping, setSimulateTyping] = useState(true)
+
+  // ── AI Message Style ──────────────────────────────────────────
+  const [msgMode,   setMsgMode]   = useState(() => { try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })
+  const [useEmojis, setUseEmojis] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })
+  const [useStyles, setUseStyles] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })
+
+  // ── Backend URL & Secret ──────────────────────────────────────
+  const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
+  const [secretInput,     setSecretInput]     = useState(() => H['x-secret'])
+
+  // ── AI reply generator ────────────────────────────────────────
+  const [generatingAiReply, setGeneratingAiReply] = useState(false)
+  const [aiTyping,          setAiTyping]          = useState(false) // indicator "IA respondiendo..."
+
+  // Auto-reply deduplication: IDs ya procesados por el bot automático
+  const aiProcessedRef      = useRef(new Set())
+  const autoReplyingRef     = useRef(false)
+  const autoReplyTimerRef   = useRef(null)  // debounce timer
+  const autoReplyGenRef     = useRef(0)     // generación: se incrementa para cancelar respuesta en curso
+  const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat — evita responder historial
+  const kwFiredRef          = useRef(new Set()) // dedup para triggers de palabra clave (msgId_triggerId)
+  const sentTextsRef        = useRef([])         // últimos 30 textos ENVIADOS por el bot — eco prevention
+
+  // Refs para evitar stale closures en polling y ping
+  const statusRef        = useRef('disconnected') // siempre tiene el status actual
+  const activeRef        = useRef(null)            // siempre tiene el chat activo actual
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
@@ -170,31 +478,149 @@ export default function WhatsAppBot() {
   const audioChunksRef   = useRef([])
   const emojiPanelRef    = useRef(null)
   const tagsDropdownRef  = useRef(null)
+  const statusDropdownRef = useRef(null)
 
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
+
+  // Ocultar FloatingMenuDashboard mientras estamos en esta página
+  useEffect(() => { // eslint-disable-line
+    document.body.classList.add('wabotPage')
+    return () => document.body.classList.remove('wabotPage')
+  }, []) // eslint-disable-line
+
+  // Mantener refs sincronizadas (evitan stale closures en callbacks asíncronos)
+  useEffect(() => { statusRef.current = status }, [status]) // eslint-disable-line
+  useEffect(() => { activeRef.current = active  }, [active]) // eslint-disable-line
 
   // Polling global
   useEffect(() => { // eslint-disable-line
     ping()
     const t = setInterval(ping, 5000)
-    return () => clearInterval(t)
+    // Page Visibility API: re-sincronizar inmediatamente cuando el usuario vuelve al tab
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        ping()
+        if (activeRef.current?.id && statusRef.current === 'connected') {
+          loadM(activeRef.current.id, false).catch(() => {})
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVisible) }
   }, []) // eslint-disable-line
 
-  // Polling mensajes cuando hay chat activo
+  // Polling mensajes cuando hay chat activo — 1.5s, independiente del status (usa ref)
   useEffect(() => { // eslint-disable-line
-    if (!active || status !== 'connected') return
-    const t = setInterval(() => loadM(active.id, false), 3500)
+    if (!active?.id) return
+    const chatId = active.id
+    const t = setInterval(() => {
+      if (statusRef.current === 'connected') loadM(chatId, false)
+    }, 1500)
     return () => clearInterval(t)
-  }, [active?.id, status]) // eslint-disable-line
+  }, [active?.id]) // eslint-disable-line
 
-  // Restaurar chat activo desde localStorage cuando se conecta
+  // Cuando cambia el chat: limpiar estado de IA y cancelar cualquier respuesta pendiente
+  useEffect(() => { // eslint-disable-line
+    if (!active) return
+    setAiTyping(false)
+    autoReplyingRef.current = false
+    autoReplyGenRef.current += 1           // invalida cualquier respuesta en vuelo del chat anterior
+    clearTimeout(autoReplyTimerRef.current) // cancela debounce pendiente del chat anterior
+    aiProcessedRef.current = new Set()     // limpia dedup — chat nuevo = pizarra en blanco
+    kwFiredRef.current     = new Set()     // limpia dedup de triggers de keyword
+  }, [active?.id]) // eslint-disable-line
+
+  // ── Auto-reply: detectar mensajes nuevos entrantes y responder automáticamente ──
+  useEffect(() => { // eslint-disable-line
+    if (!active || !msgs.length) return
+    const incoming = msgs.filter(m => m.dir === 'r')
+    if (!incoming.length) return
+    const lastIn = incoming[incoming.length - 1]
+
+    // Dedup por ID
+    if (aiProcessedRef.current.has(lastIn.id)) return
+    // Dedup secundario por contenido (evita duplicados cuando el mismo mensaje llega
+    // con timestamps distintos entre polls y genera IDs diferentes)
+    const contentKey = `r_${(lastIn.txt || '').substring(0, 40)}`
+    if (aiProcessedRef.current.has(contentKey)) return
+
+    // ── ECO PREVENTION: ignorar mensajes que el bot envió recientemente ──────
+    // El backend a veces refleja el mensaje saliente como mensaje entrante (eco de Baileys).
+    // Si el texto coincide con algo enviado en los últimos 60s, ignorar.
+    if (lastIn.txt) {
+      const incomingText = lastIn.txt.trim().toLowerCase()
+      const isEcho = sentTextsRef.current.some(s => s.txt === incomingText)
+      if (isEcho) {
+        // Marcar como procesado para no revisarlo de nuevo
+        aiProcessedRef.current.add(lastIn.id)
+        aiProcessedRef.current.add(contentKey)
+        return
+      }
+    }
+
+    aiProcessedRef.current.add(lastIn.id)
+    aiProcessedRef.current.add(contentKey)
+
+    // Grace period de 4s al abrir el chat para no responder el historial
+    if (Date.now() - chatOpenedAtRef.current < 4000) return
+
+    // ── Disparadores de Palabra Clave (independientes de IA ON/OFF) ──────────
+    if (lastIn.txt && isTriggerActive(active.id)) {
+      const msgLow = lastIn.txt.toLowerCase()
+      const kwTriggers = triggers.filter(t => t.active && t.condition === 'keyword' && t.keyword && t.message)
+      for (const trig of kwTriggers) {
+        const kwList = trig.keyword.split(',').map(k => k.trim().toLowerCase()).filter(Boolean)
+        if (kwList.some(kw => msgLow.includes(kw))) {
+          const dedupKey = `${lastIn.id}_${trig.id}`
+          if (!kwFiredRef.current.has(dedupKey)) {
+            kwFiredRef.current.add(dedupKey)
+            const capturedId = active.id
+            setTimeout(() => sendTriggerKeywordMsg(trig, capturedId), 900)
+          }
+          break // solo un trigger por mensaje
+        }
+      }
+    }
+
+    // Verificar que IA esté ON para este chat y haya API key
+    if (!isAiActive(active.id)) return
+    if (!hasAiKey) return
+    // Si la IA ya estaba generando una respuesta → cancelarla (el cliente mandó algo nuevo)
+    if (autoReplyingRef.current) {
+      autoReplyGenRef.current += 1
+      autoReplyingRef.current = false
+      setAiTyping(false)
+    }
+    // Auto-etiquetar pedido si se detectan keywords de compra
+    if (lastIn.txt) autoTagOrder(active.id, lastIn.txt)
+
+    // Debounce: respetar el botDelay configurado en Ajustes
+    // Lee directamente de localStorage — cap en 15s para evitar valores obsoletos altos
+    const configDelay = Math.min(15, Math.max(0, parseInt(localStorage.getItem('wa_bot_delay') || '3') || 0))
+    // Mínimo 400ms (natural feel) + debounce para esperar si el cliente sigue escribiendo
+    const totalDelay = configDelay * 1000 + 400
+    // ⚠️ Capturar chatId AHORA (antes del timeout) para evitar stale closure.
+    // Si el usuario cambia de chat durante la espera, el chatId capturado ya no coincide
+    // con active.id al disparar → autoReplyToMsg aborta y NO responde en el chat incorrecto.
+    const capturedChatId = active.id
+    clearTimeout(autoReplyTimerRef.current)
+    autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn, capturedChatId), totalDelay)
+  }, [msgs]) // eslint-disable-line
+
+  // ── Persistir etiquetas cuando el usuario las cambia manualmente ─
+  useEffect(() => { // eslint-disable-line
+    if (active?.id) saveContactTagsMap(active.id, contactTags)
+  }, [contactTags]) // eslint-disable-line
+
+  // Restaurar chat activo y página desde localStorage cuando se conecta
   useEffect(() => { // eslint-disable-line
     if (status !== 'connected') return
     const saved = activeGet()
     if (saved && !active) {
       setActive(saved)
-      setShowContact(true)
+      setPage('chat')  // volver siempre al chat, no a la sección anterior
+      try { localStorage.setItem('wb_current_page', 'chat') } catch {}
       loadM(saved.id, false)
     }
   }, [status]) // eslint-disable-line
@@ -208,9 +634,10 @@ export default function WhatsAppBot() {
 
   // Redibujar QR en canvas cuando cambia la URL, la página o el status
   useEffect(() => {
-    if (page !== 'conexion' || status === 'connected') return
+    if (page !== 'conexion') return
     setTimeout(() => {
-      if (qrDataUrl) drawQR(qrDataUrl)
+      if (status === 'connected') drawQRConnected()
+      else if (qrDataUrl) drawQR(qrDataUrl)
       else drawQRWaiting()
     }, 80)
   }, [page, qrDataUrl, status]) // eslint-disable-line
@@ -263,6 +690,18 @@ export default function WhatsAppBot() {
     return () => document.removeEventListener('mousedown', handler)
   }, [showTagsDropdown])
 
+  // Close status dropdown on outside click
+  useEffect(() => {
+    if (!showStatusDropdown) return
+    const handler = e => {
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(e.target)) {
+        setShowStatusDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [showStatusDropdown])
+
   // Load tags from localStorage (shared with settings)
   useEffect(() => {
     try {
@@ -299,31 +738,48 @@ export default function WhatsAppBot() {
     setIsRecording(false)
   }
 
-  const QUICK_TEMPLATES = [
-    { id: 't1', name: 'Bienvenida', category: 'Saludo',  description: '¡Hola! ¿En qué te puedo ayudar hoy?' },
-    { id: 't2', name: 'Seguimiento', category: 'Ventas', description: 'Hola {nombre}, ¿pudiste revisar la información que te envié?' },
-    { id: 't3', name: 'Pago pendiente', category: 'Cobro', description: 'Hola, te recordamos que tienes un pago pendiente. ¿Deseas proceder?' },
-    { id: 't4', name: 'Confirmación pedido', category: 'Pedidos', description: 'Tu pedido #{numero} ha sido confirmado. ¡Gracias por tu compra!' },
-  ]
-
   function sendTemplate(tpl) {
+    if (!active) return
+    const clientName = chats.find(c => c.id === active.id)?.name || active.id.split('@')[0] || 'Cliente'
+    const text = (tpl.mensaje || tpl.description || '')
+      .replace(/\{nombre\}/g, clientName)
+      .replace(/\{tienda\}/g, 'Sanate')
+      .replace(/\{telefono\}/g, active.id.split('@')[0])
     const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-    setMsgs(prev => [...prev, { id: Date.now().toString(), dir: 's', txt: `📋 ${tpl.name} — ${tpl.description}`, time: t, type: 'text', status: 'sent' }])
+    // Enviar al backend real
+    const fd = new FormData(); fd.append('text', text)
+    fetch(`${BU}/chats/${encodeURIComponent(active.id)}/send`, { method: 'POST', headers: H, body: fd }).catch(() => {})
+    setMsgs(prev => { const next = [...prev, { id: Date.now().toString(), dir: 's', txt: text, time: t, type: 'text', status: 'sent' }]; cachePut(active.id, next); return next })
     setShowTemplatesModal(false)
     scroll()
   }
 
   // ─── API ──────────────────────────────────────────
+  // ╔══════════════════════════════════════════════════════════════╗
+  // ║  🔒 QR CRÍTICO — NO MODIFICAR ESTAS FUNCIONES              ║
+  // ║  ping · loadQR · drawQR · drawQRWaiting · regenerateQR     ║
+  // ║  Cualquier cambio en estas 5 funciones puede romper el QR  ║
+  // ╚══════════════════════════════════════════════════════════════╝
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
+      setServerOnline(prev => {
+        // Primera vez online → sincronizar settings al backend en background
+        if (prev !== true) setTimeout(() => syncSettingsToBackend({ silent: true }), 1200)
+        return true
+      })
       // IMPORTANTE: evaluar correctamente; sin paréntesis la precedencia es incorrecta
       const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
       setStatus(s)
       setPhone(d.phone || '')
-      if (s === 'connected') { try { await loadC() } catch {} }
+      if (s === 'connected') {
+        try { await loadC() } catch {}
+        // También refrescar mensajes del chat activo para no perder mensajes nuevos
+        if (activeRef.current?.id) loadM(activeRef.current.id, false).catch(() => {})
+        setTimeout(drawQRConnected, 80)
+      }
       else if (s === 'connecting' || s === 'qr') { loadQR() }
-    } catch { setStatus('disconnected') }
+    } catch { setServerOnline(false); setStatus('disconnected') }
   }
 
   async function loadQR() {
@@ -366,6 +822,41 @@ export default function WhatsAppBot() {
       if ((r+c)%2===0) ctx.fillRect(74+c*9, 74+r*9, 7, 7)
   }
 
+  // Canvas de éxito: QR skeleton en verde con checkmark overlay cuando está conectado
+  function drawQRConnected() {
+    const canvas = qrRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d'), s = 200
+    // Fondo verde muy suave
+    ctx.fillStyle = '#f0fdf4'; ctx.fillRect(0, 0, s, s)
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = '#86efac'; ctx.lineWidth = 1.5
+    ctx.strokeRect(6, 6, s - 12, s - 12); ctx.setLineDash([])
+    // Tres esquinas finder-pattern en tonos verdes
+    for (const [x, y] of [[14,14],[142,14],[14,142]]) {
+      ctx.fillStyle = '#bbf7d0'; ctx.fillRect(x, y, 44, 44)
+      ctx.fillStyle = '#f0fdf4'; ctx.fillRect(x+6, y+6, 32, 32)
+      ctx.fillStyle = '#86efac'; ctx.fillRect(x+11, y+11, 22, 22)
+    }
+    // Patrón central de puntos verdes
+    ctx.fillStyle = '#86efac'
+    for (let r=0;r<6;r++) for (let c=0;c<6;c++)
+      if ((r+c)%2===0) ctx.fillRect(74+c*9, 74+r*9, 7, 7)
+    // Overlay verde semitransparente
+    ctx.fillStyle = 'rgba(22, 163, 74, 0.78)'; ctx.fillRect(0, 0, s, s)
+    // Círculo blanco central
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.beginPath()
+    ctx.arc(s/2, s/2 - 10, 48, 0, Math.PI * 2); ctx.fill()
+    // Checkmark grande
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 9; ctx.lineCap = 'round'; ctx.lineJoin = 'round'
+    ctx.setLineDash([])
+    ctx.beginPath(); ctx.moveTo(s/2-22, s/2-8); ctx.lineTo(s/2-4, s/2+12); ctx.lineTo(s/2+26, s/2-20)
+    ctx.stroke()
+    // Texto "Conectado"
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui,sans-serif'
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+    ctx.fillText('✓ Conectado', s/2, s - 14)
+  }
+
   async function loadC() {
     const d = await (await fetch(BU + '/chats', { headers: H })).json()
     const loaded = (d.chats || []).map(normChat)
@@ -395,8 +886,14 @@ export default function WhatsAppBot() {
   }
 
   async function openChat(c) {
-    setActive(c); setShowContact(true)
+    chatOpenedAtRef.current = Date.now() // marca tiempo de apertura — grace period anti-historial
+    aiProcessedRef.current.clear()        // limpiar procesados del chat anterior
+    setActive(c); setShowContact(false); setShowAnalysisPanel(false)
     activePut(c)
+    saveClienteFromChat(c)  // auto-registrar cliente
+    // Restaurar etiquetas persistentes de este chat
+    const savedTags = chatsTags[c.id] || ['Nuevo lead']
+    setContactTags(savedTags)
     await loadM(c.id)
     setChats(p => p.map(x => x.id === c.id ? { ...x, unread: 0 } : x))
     fetch(`${BU}/chats/${encodeURIComponent(c.id)}/read`, { method: 'POST', headers: H }).catch(() => {})
@@ -424,6 +921,7 @@ export default function WhatsAppBot() {
       const d = await r.json()
       const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
       const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: inp, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      trackSentText(inp)
       setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
       setInp(''); scroll()
     } catch { tip('⚠️ Error al enviar') }
@@ -478,6 +976,725 @@ export default function WhatsAppBot() {
     } catch { setN8nOk(false); tip('⚠️ n8n no responde') }
   }
 
+  // ── IA / ChatGPT helpers ───────────────────────────────────────
+  function saveAiKey(v)     {
+    setOpenaiKey(v)
+    try { localStorage.setItem('wa_openai_key', v) } catch {}
+    // Sincronizar al backend para modo Chrome cerrado
+    setTimeout(() => syncSettingsToBackend({ silent: true }), 500)
+  }
+  function saveGeminiKey(v) { setGeminiKey(v);   try { localStorage.setItem('wa_gemini_key', v) } catch {} }
+  function saveAiPrompt(v)  { setAiPrompt(v);    try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
+
+  // ── Llamada IA universal (OpenAI o Gemini) ─────────────────────
+  async function callAI({ messages, maxTokens = 400 }) {
+    // Preferir OpenAI si hay key, fallback a Gemini
+    if (openaiKey) {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: aiModel || 'gpt-4o', messages, max_tokens: maxTokens }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'OpenAI error')
+      return data.choices?.[0]?.message?.content?.trim() || ''
+    }
+    if (geminiKey) {
+      // Convertir formato OpenAI → Gemini
+      const systemMsg = messages.find(m => m.role === 'system')
+      const userMsgs  = messages.filter(m => m.role !== 'system')
+      const parts = []
+      if (systemMsg) parts.push({ text: systemMsg.content + '\n\n' })
+      userMsgs.forEach(m => parts.push({ text: (m.role === 'user' ? '' : '[Bot]: ') + m.content }))
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts }],
+            generationConfig: { temperature: 0.8, maxOutputTokens: maxTokens },
+          }),
+        }
+      )
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Gemini error')
+      return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+    }
+    throw new Error('no_key')
+  }
+  const hasAiKey = !!(openaiKey || geminiKey)
+  function toggleAiGlobal() {
+    setAiEnabled(prev => {
+      const next = !prev
+      try { localStorage.setItem('wa_ai_enabled', JSON.stringify(next)) } catch {}
+      tip(next ? '🤖 IA activada — respuestas automáticas ON' : '🤖 IA desactivada')
+      return next
+    })
+  }
+  function toggleAiContact(chatId) {
+    setAiContactMap(prev => {
+      const next = { ...prev, [chatId]: prev[chatId] !== true }
+      try { localStorage.setItem('wa_ai_contact_map', JSON.stringify(next)) } catch {}
+      return next
+    })
+  }
+  function resetAllAiContacts() {
+    setAiContactMap({})
+    try { localStorage.setItem('wa_ai_contact_map', '{}') } catch {}
+    tip('🚫 IA desactivada en todos los contactos')
+  }
+  // IA activa SOLO si hay activación explícita para este contacto (true en aiContactMap)
+  // Y además el global aiEnabled está ON (interruptor maestro en Ajustes).
+  // Esto evita que todos los chats respondan automáticamente — cada contacto debe
+  // ser activado individualmente con el botón "🤖 IA OFF → IA ON" del header del chat.
+  function isAiActive(chatId) {
+    if (!aiEnabled) return false           // interruptor maestro apagado → nada responde
+    return aiContactMap[chatId] === true   // debe ser activación explícita por contacto
+  }
+
+  // ── Eco prevention: registra texto enviado para que el bot no responda su propio eco ──
+  function trackSentText(text) {
+    if (!text) return
+    const now = Date.now()
+    const entry = { txt: text.trim().toLowerCase().substring(0, 120), ts: now }
+    sentTextsRef.current = [
+      ...sentTextsRef.current.filter(s => now - s.ts < 60000),
+      entry,
+    ].slice(-30)
+  }
+
+  // ── Disparadores por contacto ─────────────────────────────────
+  // Por defecto los triggers están INACTIVOS — el usuario activa manualmente por contacto.
+  function isTriggerActive(chatId) {
+    if (!chatId) return false
+    const override = triggerContactMap[chatId]
+    return override === true   // DEBE ser activación explícita — default: OFF
+  }
+  function toggleTriggerContact(chatId) {
+    if (!chatId) return
+    setTriggerContactMap(prev => {
+      const updated = { ...prev, [chatId]: !isTriggerActive(chatId) }
+      try { localStorage.setItem('wa_trigger_contact_map', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+    tip(isTriggerActive(chatId) ? '⚡ Disparadores pausados para este contacto' : '⚡ Disparadores reactivados para este contacto')
+  }
+
+  // ── Auto-reply automático cuando llega un mensaje nuevo y la IA está ON ──
+  // ── Enviar mensaje de disparador por palabra clave ────────────
+  async function sendTriggerKeywordMsg(trigger, targetChatId) {
+    if (!targetChatId) return
+    const clientName = chats.find(c => c.id === targetChatId)?.name || targetChatId.split('@')[0] || 'Cliente'
+    const text = (trigger.message || '')
+      .replace(/\{nombre\}/g, clientName)
+      .replace(/\{tienda\}/g, 'Sanate')
+      .replace(/\{telefono\}/g, targetChatId.split('@')[0])
+    if (!text.trim()) return
+    try {
+      await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/presence`, {
+        method: 'POST', headers: HJ, body: JSON.stringify({ action: 'composing' }),
+      }).catch(() => {})
+      await new Promise(r => setTimeout(r, Math.min(900, text.length * 12)))
+      const fd = new FormData(); fd.append('text', text)
+      const r = await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/send`, { method: 'POST', headers: H, body: fd })
+      const d = await r.json()
+      const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+      const newMsg = { id: d.message?.providerMessageId || `kw_${Date.now()}`, dir: 's', txt: text, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+      trackSentText(text)  // eco prevention
+      if (active?.id === targetChatId) {
+        setMsgs(p => { const next = [...p, newMsg]; cachePut(targetChatId, next); return next })
+        scroll()
+      }
+      tip(`⚡ Disparador "${trigger.name}" enviado`)
+      await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/presence`, {
+        method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
+      }).catch(() => {})
+    } catch { tip('⚠️ Error enviando disparador de palabra clave') }
+  }
+
+  async function autoReplyToMsg(lastClientMsg, targetChatId) {
+    if (!hasAiKey || !active || autoReplyingRef.current) return
+    // Si el usuario cambió de chat durante el delay del debounce → abortar.
+    // targetChatId fue capturado al momento de programar el timeout (antes del delay).
+    if (targetChatId && active.id !== targetChatId) return
+    autoReplyingRef.current = true
+    const chatId = targetChatId || active.id
+    const myGen = ++autoReplyGenRef.current  // capturar generación — si cambia, abortar
+    setAiTyping(true)
+    try {
+      // Leer siempre de localStorage para evitar closures stale con el entrenamiento
+      const lsTraining = (function(){ try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
+      const lsPrompt   = (function(){ try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
+      const ctx = (trainingPrompt || lsTraining || aiPrompt || lsPrompt || '').substring(0, 5000)
+      const history = msgs.slice(-10).map(m => ({
+        role: m.dir === 'r' ? 'user' : 'assistant',
+        content: m.txt || '[archivo]',
+      }))
+      // Perfil del cliente si existe
+      const profile = clientAnalysis[chatId]
+      const profileCtx = profile ? `\nPERFIL DEL CLIENTE ACTUAL:\n• Estilo: ${profile.estilo} | Tono: ${profile.tono} | Intención de compra: ${profile.intencion}\n• Intereses: ${(profile.intereses||[]).join(', ')}\n• Ángulo recomendado: ${profile.angulo || 'N/A'}\n` : ''
+
+      // Leer preferencias de estilo desde localStorage (evita stale closures)
+      const lsMsgMode   = (function(){ try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })()
+      const lsUseEmojis = (function(){ try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })()
+      const lsUseStyles = (function(){ try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })()
+
+      // Bloque: formato de texto
+      const stylesBlock = lsUseStyles
+        ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• Ejemplo: *Combo Detox* — *$66.000* | _envío gratis_ hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
+        : `• Texto plano ÚNICAMENTE — sin asteriscos, guiones bajos ni tildes de formato\n• PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`
+
+      // Bloque: emojis
+      const emojisBlock = lsUseEmojis
+        ? `• Emojis: máx 2 por mensaje, úsalos como viñetas o énfasis estratégico`
+        : `• PROHIBIDO usar emojis — responde solo con texto plano`
+
+      // Bloque: envío por partes o completo
+      const multiMsgBlock = lsMsgMode === 'partes'
+        ? `ENVÍO POR PARTES (MUY IMPORTANTE):
+Divide tu respuesta en 2 a 5 mensajes cortos separados por el separador EXACTO: ||||
+Reglas para cada parte:
+• Parte 1 → gancho o contexto inicial — abre con intriga o dato interesante, NO reveles todo
+• Partes intermedias → desarrolla punto por punto, cada una termina dejando curiosidad o una mini-pregunta
+• Última parte → pregunta de cierre de venta ("¿Cuál prefieres?" / "¿Te lo enviamos hoy?" / "¿Arrancamos?")
+Estructura inteligente por tipo de situación:
+  - Si el cliente pregunta por productos: parte 1 = beneficio + hook | parte 2 = opción principal | parte 3 = opción alternativa | última = pregunta de decisión
+  - Si el cliente muestra objeción: parte 1 = empatía | parte 2 = reencuadre de valor | última = cierre con urgencia o elección
+  - Si el cliente ya quiere comprar: máx 2 partes — confirma + cierra directo
+Ejemplo correcto:
+Tenemos varias opciones que te pueden funcionar${lsUseEmojis ? ' 🌿' : ''}
+||||
+${lsUseStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} — ideal para piel sensible${lsUseEmojis ? ' ✨' : ''} — ${lsUseStyles ? '*$66.000*' : '$66.000'}
+||||
+${lsUseStyles ? '*Combo Cúrcuma*' : 'Combo Cúrcuma'} — manchas y cicatrices${lsUseEmojis ? ' 🌻' : ''} — ${lsUseStyles ? '*$66.000*' : '$66.000'}
+||||
+¿Cuál va más con lo que necesitas${lsUseEmojis ? ' 😊' : '?'}`
+        : `ENVÍO COMPLETO:
+Responde en UN SOLO MENSAJE bien estructurado (máx 6 líneas).
+NO uses el separador |||| — todo en un bloque.
+Organiza bien el texto con saltos de línea para que sea fácil de leer.`
+
+      // ── EMBUDO DE VENTAS PROBADO (extraído de cierres reales de SellerChat / Sánate)
+      const salesFunnelBlock = `EMBUDO DE VENTAS PROBADO — SIGUE ESTE ORDEN EXACTO:
+PASO 1 — BIENVENIDA: Recibe calurosamente. Si viene de anuncio, celebra su llegada con entusiasmo.
+PASO 2 — DIAGNÓSTICO (OBLIGATORIO antes de dar precios): Pregunta "¿Lo buscas para acné, manchas, piel seca o zonas íntimas/axilas?" — adapta tu recomendación a su problema real.
+PASO 3 — PRESENTACIÓN: Recomienda el combo exacto para su problema. Muestra precio${lsUseStyles ? ' con *negrita*' : ''} ANTES / HOY. Menciona el obsequio ${lsUseEmojis ? '🎁' : 'especial'}.
+PASO 4 — MICRO-COMPROMISO (elección forzada — OBLIGATORIO): "¿Cuál te llevas hoy, el${lsUseStyles ? ' *Combo 1*' : ' Combo 1'} o el${lsUseStyles ? ' *Combo 5*' : ' Combo 5'}? 💛" — NUNCA pregunta abierta al cierre.
+PASO 5 — DATOS + CONFIRMACIÓN: Cuando el cliente elija: "¡Excelente elección! 💚✨ Para confirmar tu pedido envíame: 1️⃣ Nombre y Apellido / 📱 Teléfono / 📍 Ciudad y Departamento / 🏠 Dirección exacta / 📦 Barrio"
+
+CATÁLOGO SÁNATE${lsUseStyles ? ' (escribe precios y nombres de combos siempre en *negrita*)' : ''}:
+• ${lsUseStyles ? '*Combo 1*' : 'Combo 1'} – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena&Arroz) → ${lsUseStyles ? '*$59.000*' : '$59.000'} (antes $105.000 — ahorras $46.000)
+• ${lsUseStyles ? '*Combo 2*' : 'Combo 2'} – 3 Jabones a elección (Cúrcuma, Avena&Arroz o Caléndula) → ${lsUseStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${lsUseStyles ? '*Combo 3*' : 'Combo 3'} – 2 Jabones + Sebo de Res 10g → ${lsUseStyles ? '*$63.000*' : '$63.000'} (antes $79.000)
+• ${lsUseStyles ? '*Combo 4*' : 'Combo 4'} – Secreto Japonés: Sebo grande + 2 Jabones (Cúrcuma+Avena) + Exfoliante → ${lsUseStyles ? '*$99.000*' : '$99.000'} (antes $119.000)
+• ${lsUseStyles ? '*Combo 5*' : 'Combo 5'} – ${lsUseEmojis ? '⭐ ' : ''}MÁS VENDIDO: 4 Jabones + Sebo 10g + Exfoliante → ${lsUseStyles ? '*$119.000*' : '$119.000'} (antes $159.000)
+• ${lsUseStyles ? '*Combo 6*' : 'Combo 6'} – Doble Sebo Grande: 2 Sebos + 2 Jabones a elección → ${lsUseStyles ? '*$136.900*' : '$136.900'} (antes $169.000)
+• Jabón individual: ${lsUseStyles ? '*$22.000*' : '$22.000'}
+Pago: contra entrega (efectivo) ó Nequi/Bancolombia (${lsUseStyles ? '*8% OFF*' : '8% OFF'} + envío más rápido ${lsUseEmojis ? '🚚💨' : ''})
+Envío: GRATIS a toda Colombia ${lsUseEmojis ? '🚚' : ''} | Entrega 1-3 días hábiles | Inter Rapidísimo
+
+FRASES DE CIERRE PROBADAS (úsalas textualmente — son las que funcionan en ventas reales):
+• Validación inmediata: "¡Excelente elección! 💚✨" / "¡Genial! 🎉" / "¡Perfecto! ✅"
+• Urgencia real: "Los precios y el obsequio son de hoy solamente${lsUseEmojis ? ' ⏰' : ''}"
+• Escasez: "Se están agotando rápido — la reposición puede tardar hasta 15 días"
+• Sin riesgo: "${lsUseEmojis ? '📦 ' : ''}Envío GRATIS${lsUseEmojis ? ' 💳' : ''} — pagas al recibir, sin riesgo"
+• Post-datos recibidos: "¡Todo listo! ✅ Tu pedido está confirmado y en proceso${lsUseEmojis ? ' 🚀' : ''}"
+• Post-confirmación: "Recuerda que tu pedido saldrá el mismo día y recibirás la guía de seguimiento por WhatsApp 💛"
+• Reserve hook: "¿Te reservo el más vendido antes de que suba nuevamente? 💛"
+
+REGLAS DE ORO:
+❌ NUNCA des precio sin diagnosticar primero qué problema tiene el cliente
+❌ NUNCA hagas preguntas abiertas al cierre — usa siempre elección forzada (A o B)
+❌ NUNCA repitas la misma frase de apertura dos veces seguidas
+✅ CELEBRA siempre cuando el cliente elige ("¡Excelente elección! 💚✨") ANTES de pedir datos
+✅ Si preguntan envíos a su ciudad → confirma que SÍ llega, luego pide los datos
+✅ Ofrece primero Nequi/transferencia (8% OFF), luego contra entrega como alternativa segura
+✅ Cuando recibas todos los datos → envía confirmación entusiasta y cierra con calidez`
+
+      const sysPrompt = ctx
+        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÍTICAS DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono: si el cliente escribe informal, responde informal\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO SIEMPRE:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Decir que eres IA o bot`
+        : `Eres una asesora de ventas de Sánate Colombia — jabones artesanales naturales 100% colombianos. Eres una persona real — NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES DE MENSAJE:\n• Mensajes cortos: máx 3-4 líneas\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y apertura\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Decir que eres IA | ❌ Precios antes del diagnóstico`
+      // Mensaje actual del cliente para que la IA NO alucine sobre otros temas
+      const currentMsgCtx = lastClientMsg.txt
+        ? `\n\n⚡ MENSAJE ACTUAL DEL CLIENTE AL QUE DEBES RESPONDER:\n"${lastClientMsg.txt}"\nResponde SOLO a esto. No inventes temas que el cliente no haya mencionado.`
+        : ''
+      const finalSysPrompt = sysPrompt + currentMsgCtx
+
+      // ── Detectar tipo de mensaje entrante ─────────────────────────
+      const msgType = lastClientMsg.type || 'text'
+      const isAudioMsg = (msgType === 'audio' || msgType === 'ptt') && lastClientMsg.mediaUrl
+      const isImageMsg = (msgType === 'image' || msgType === 'sticker') && lastClientMsg.mediaUrl
+      // Resolver URL completa del media (relativa → absoluta)
+      const mediaFull = (url) => {
+        if (!url) return ''
+        if (url.startsWith('http')) return url
+        return `${MEDIA_BASE}${url.startsWith('/') ? '' : '/'}${url}`
+      }
+      const clientNameN8n = chats.find(c => c.id === chatId)?.name || chatId.split('@')[0] || 'Cliente'
+      const lsBackendUrl = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
+      const lsSecret     = (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })()
+
+      // ── n8n como procesador IA principal (texto + audio Whisper + imagen Vision) ──
+      let reply = ''
+      let n8nHandled = false
+      try {
+        const n8nPayload = {
+          chatId,
+          messageType: isAudioMsg ? 'audio' : (isImageMsg ? 'image' : 'text'),
+          text:     lastClientMsg.txt || (isAudioMsg ? '[Nota de voz]' : (isImageMsg ? '[Imagen]' : '')),
+          audioUrl: isAudioMsg ? mediaFull(lastClientMsg.mediaUrl) : '',
+          imageUrl: isImageMsg ? mediaFull(lastClientMsg.mediaUrl) : '',
+          clientName:   clientNameN8n,
+          systemPrompt: finalSysPrompt,
+          openaiKey,
+          history,
+          backendUrl:   lsBackendUrl,
+          backendSecret: lsSecret,
+        }
+        const n8nRes = await fetch(N8N_WH, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(n8nPayload),
+          signal: AbortSignal.timeout(35000),
+        })
+        if (!n8nRes.ok) throw new Error(`n8n HTTP ${n8nRes.status}`)
+        const n8nData = await n8nRes.json()
+        if (!n8nData?.ok || !n8nData?.reply) throw new Error('n8n sin respuesta válida')
+
+        reply = n8nData.reply
+        n8nHandled = true
+
+        // Si n8n transcribió audio, mostrar la transcripción como nota en el chat
+        if (n8nData.transcription && isAudioMsg) {
+          const tMsg = {
+            id: `tr_${Date.now()}`, dir: 'r',
+            txt: `🎙️ Transcripción: "${n8nData.transcription}"`,
+            time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
+            type: 'text', status: 'transcript',
+          }
+          if (active?.id === chatId) setMsgs(p => { const next = [...p, tMsg]; cachePut(chatId, next); return next })
+        }
+
+        // Si n8n ya envió los mensajes via backend público → solo actualizar UI y salir
+        if (n8nData.sent) {
+          const sentParts = (n8nData.parts || [reply]).filter(Boolean)
+          const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+          if (active?.id === chatId) {
+            setMsgs(p => {
+              const next = [...p, ...sentParts.map((pt, i) => ({
+                id: `n8n_${Date.now()}_${i}`, dir: 's', txt: pt, time: t, type: 'text', status: 'sent',
+              }))]
+              cachePut(chatId, next)
+              return next
+            })
+            scroll()
+          }
+          setAiTyping(false); autoReplyingRef.current = false; return
+        }
+      } catch (n8nErr) {
+        // n8n no disponible o falló — fallback para texto, error para audio/imagen
+        if (isAudioMsg || isImageMsg) {
+          tip(`⚠️ n8n no disponible — no se puede procesar ${isAudioMsg ? 'la nota de voz' : 'la imagen'}`)
+          setAiTyping(false); autoReplyingRef.current = false; return
+        }
+        // Texto: fallback a OpenAI directo
+        try {
+          reply = await callAI({
+            messages: [{ role: 'system', content: finalSysPrompt }, ...history],
+            maxTokens: 480,
+          })
+        } catch (aiErr) {
+          if (aiErr?.message !== 'no_key') tip('⚠️ Error auto-respuesta IA')
+          setAiTyping(false); autoReplyingRef.current = false; return
+        }
+      }
+
+      // Verificar que no haya llegado un mensaje nuevo que invalide esta generación
+      if (!reply || active?.id !== chatId || autoReplyGenRef.current !== myGen) {
+        setAiTyping(false); autoReplyingRef.current = false; return
+      }
+
+      // ── Soporte multi-mensaje: separar por ||||
+      const parts = reply.split('||||').map(s => s.trim()).filter(Boolean)
+
+      for (let pi = 0; pi < parts.length; pi++) {
+        const part = parts[pi]
+        // Verificar generación antes de cada segmento
+        if (active?.id !== chatId || autoReplyGenRef.current !== myGen) break
+
+        // Mostrar "escribiendo..." al cliente
+        try {
+          await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
+            method: 'POST', headers: HJ, body: JSON.stringify({ action: 'composing' }),
+          })
+        } catch {}
+
+        // Delay de escritura: corto porque botDelay ya controló la espera previa
+        const baseDelay = parts.length > 1 ? 400 : 500
+        const typingMs = Math.max(baseDelay, Math.min(part.length * 10, parts.length > 1 ? 1200 : 1800))
+        await new Promise(r => setTimeout(r, typingMs))
+
+        // Re-verificar tras el delay
+        if (active?.id !== chatId || autoReplyGenRef.current !== myGen) break
+
+        // Enviar segmento
+        const fd = new FormData(); fd.append('text', part)
+        const r = await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/send`, { method: 'POST', headers: H, body: fd })
+        const d = await r.json()
+        const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+        const newMsg = { id: d.message?.providerMessageId || `${Date.now()}_${pi}`, dir: 's', txt: part, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+        trackSentText(part)  // eco prevention — evita que el bot procese su propia respuesta
+        setMsgs(p => { const next = [...p, newMsg]; cachePut(chatId, next); return next })
+        scroll()
+
+        // Pausa breve entre mensajes para que se vea natural (excepto el último)
+        if (pi < parts.length - 1) await new Promise(r => setTimeout(r, 350))
+      }
+
+      // Quitar "escribiendo..." al terminar
+      try {
+        await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/presence`, {
+          method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
+        })
+      } catch {}
+    } catch (e) {
+      if (e?.message !== 'no_key') tip('⚠️ Error auto-respuesta IA')
+    }
+    setAiTyping(false)
+    autoReplyingRef.current = false
+  }
+
+  // ── Analizar inteligencia del cliente con IA ──────────────────
+  async function analyzeClientIntelligence(chatId, msgsToAnalyze) {
+    if (!hasAiKey || analysisLoading) return
+    setAnalysisLoading(true)
+    try {
+      const clientMsgs = msgsToAnalyze.filter(m => m.dir === 'r')
+      if (clientMsgs.length < 1) { tip('💬 No hay mensajes del cliente para analizar'); setAnalysisLoading(false); return }
+      const conversation = msgsToAnalyze.slice(-25)
+        .map(m => `[${m.dir === 'r' ? 'CLIENTE' : 'BOT'}]: ${m.txt || '[archivo/media]'}`)
+        .join('\n')
+      const prompt = `Analiza esta conversación de WhatsApp de ventas y responde ÚNICAMENTE con un JSON válido (sin markdown, sin explicaciones extra):
+{
+  "estilo": "formal|informal|muy informal",
+  "tono": "ansioso|tranquilo|desconfiado|entusiasta|indiferente|impaciente",
+  "intereses": ["lista de intereses detectados"],
+  "intencion": "alta|media|baja",
+  "objeciones": ["objeciones detectadas si hay, sino array vacío"],
+  "angulo": "el mejor ángulo de venta personalizado para ESTE cliente (máx 1 frase)",
+  "siguiente": "acción concreta recomendada para el bot ahora mismo (máx 1 frase)",
+  "resumen": "perfil del cliente en 1-2 líneas",
+  "es_cliente": true|false
+}
+
+CONVERSACIÓN:
+${conversation}`
+      const result = await callAI({ messages: [{ role: 'user', content: prompt }], maxTokens: 500 })
+      if (result) {
+        const jsonMatch = result.match(/\{[\s\S]*?\}/)
+        if (jsonMatch) {
+          const analysis = JSON.parse(jsonMatch[0])
+          setClientAnalysis(prev => {
+            const updated = { ...prev, [chatId]: { ...analysis, ts: Date.now() } }
+            try { localStorage.setItem('wa_client_analysis', JSON.stringify(updated)) } catch {}
+            return updated
+          })
+          tip('🧠 Análisis actualizado')
+        }
+      }
+    } catch (e) { tip('⚠️ Error al analizar: ' + (e?.message || 'revisa tu API Key')) }
+    setAnalysisLoading(false)
+  }
+
+  // Envía mensaje via n8n (método legacy — mantenido para compatibilidad)
+  async function sendAiReply(chatId, userMsg) {
+    if (!openaiKey && !N8N_WH) return
+    try {
+      const payload = {
+        chatId, message: userMsg, model: aiModel,
+        systemPrompt: (trainingPrompt || aiPrompt),
+        openaiKey, botDelay,
+        phone: active?.phone || '', contactName: active?.name || '',
+      }
+      await fetch(N8N_WH, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload), mode: 'no-cors' })
+    } catch {}
+  }
+
+  // ── Entrenamiento helpers ──────────────────────────────────────
+  // ── Guardar URL del backend Baileys ──────────────────────────
+  function saveBackendUrl() {
+    const base   = backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '')
+    if (!base) { tip('⚠️ Ingresa una URL válida'); return }
+    const newBU  = base + '/api/whatsapp'
+    const newSec = secretInput.trim() || DEFAULT_SECRET
+    BU         = newBU
+    MEDIA_BASE = base
+    H          = { 'x-secret': newSec }
+    HJ         = { ...H, 'Content-Type': 'application/json' }
+    try { localStorage.setItem('wa_backend_url', newBU)   } catch {}
+    try { localStorage.setItem('wa_secret',      newSec)  } catch {}
+    tip('✅ Backend URL guardada — reconectando...')
+    setTimeout(() => {
+      setServerOnline(null); ping()
+      // Sincronizar settings al backend con la nueva URL
+      syncSettingsToBackend({ buOverride: newBU, secOverride: newSec, baseOverride: base })
+    }, 800)
+  }
+
+  // ── Sincronizar settings al backend (para operación con Chrome cerrado) ──
+  // Lee desde localStorage para evitar stale closures en setTimeout
+  function syncSettingsToBackend({ buOverride, secOverride, baseOverride, silent = false } = {}) {
+    const curBU   = buOverride   || BU
+    const curSec  = secOverride  || (H['x-secret'] || DEFAULT_SECRET)
+    const curBase = baseOverride || MEDIA_BASE
+    const isPublic = curBase && !curBase.includes('localhost') && !curBase.includes('127.0.0.1')
+    // Leer siempre de localStorage — evita problemas de stale closure
+    const lsKey      = (() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })()
+    const lsTraining = (() => { try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
+    const lsPrompt   = (() => { try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
+    const lsAiOn     = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })()
+    const sysP = (lsTraining || lsPrompt || '').substring(0, 8000)
+    const payload = {
+      botEnabled:       lsAiOn,
+      n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pública
+      n8nWebhook:       N8N_WH,
+      backendPublicUrl: isPublic ? curBase : '',
+      openaiKey:        lsKey,
+      systemPrompt:     sysP,
+    }
+    fetch(curBU.replace('/api/whatsapp', '') + '/api/whatsapp/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-secret': curSec },
+      body: JSON.stringify(payload),
+    }).then(r => r.json()).then(d => {
+      if (d?.ok && !silent) tip('☁️ Configuración sincronizada al backend')
+    }).catch(() => {
+      if (!silent) console.warn('[syncSettings] Backend no alcanzable')
+    })
+  }
+
+  function saveTraining(v) {
+    setTrainingPrompt(v); setTrainingChars(v.length)
+    try { localStorage.setItem('wa_training_prompt', v) } catch {}
+    // Sincronizar prompt actualizado al backend
+    setTimeout(() => syncSettingsToBackend({ silent: true }), 600)
+  }
+  async function generateWinnerPrompt() {
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) en Ajustes → API'); return }
+    setGeneratingPrompt(true); tip('🤖 Generando prompt ganador con IA...')
+    try {
+      const generated = await callAI({
+        messages: [
+          { role: 'system', content: 'Eres el mejor experto en ventas conversacionales por WhatsApp del mundo. Genera prompts de sistema para bots de ventas que sean naturales, empáticos y cierren ventas de forma efectiva.' },
+          { role: 'user', content: `Basándote en este contexto de negocio, genera un prompt de sistema completo y optimizado para un bot de WhatsApp que sea el mejor cerrador de ventas del mundo. Incluye personalidad, tono, técnicas de cierre, manejo de objeciones y reglas de comportamiento.\n\nContexto actual:\n${trainingPrompt.substring(0, 2000)}` },
+        ],
+        maxTokens: 1500,
+      })
+      if (generated) {
+        saveTraining(trainingPrompt + '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🏆 PROMPT GANADOR GENERADO POR IA\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n' + generated)
+        tip('✅ Prompt ganador generado y agregado')
+      }
+    } catch (e) {
+      tip(e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error generando prompt')
+    }
+    setGeneratingPrompt(false)
+  }
+
+  // ── Clientes helpers ───────────────────────────────────────────
+  function saveClienteFromChat(chat) {
+    if (!chat?.id) return
+    const existing = JSON.parse(localStorage.getItem('wa_clientes') || '[]')
+    if (existing.find(c => c.id === chat.id)) return // ya guardado
+    const geo = phoneToGeo(chat.phone || '')
+    const newCliente = {
+      id: chat.id, name: chat.name || '', phone: chat.phone || chat.id,
+      pais: geo?.label?.split('·')[0]?.trim() || '', ciudad: geo?.label || '',
+      flag: geo?.flag || '', totalPedidos: 0, noRecibidos: 0,
+      etiqueta: 'Nuevo lead', primerMensaje: new Date().toLocaleDateString('es-CO'),
+      ultimoMensaje: new Date().toLocaleDateString('es-CO'),
+      direccion: '', notas: '', fotoUrl: chat.photoUrl || '',
+    }
+    const updated = [newCliente, ...existing]
+    try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
+    setClientes(updated)
+  }
+  // ── Guardar etiquetas persistentes por chat ───────────────────
+  function saveContactTagsMap(chatId, tags) {
+    setChatsTags(prev => {
+      const updated = { ...prev, [chatId]: tags }
+      try { localStorage.setItem('wa_chats_tags', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+  }
+
+  // ── Auto-asignar etiqueta "Preparar" cuando se detecta pedido ─
+  function autoTagOrder(chatId, msgText) {
+    if (!chatId || !msgText) return
+    const text = msgText.toLowerCase()
+    if (!ORDER_KEYWORDS.some(k => text.includes(k))) return
+    const current = chatsTags[chatId] || []
+    if (current.includes('Preparar')) return  // ya tiene la etiqueta
+    const newTags = [...current.filter(t => t !== 'Nuevo lead'), 'Preparar']
+    saveContactTagsMap(chatId, newTags)
+    if (active?.id === chatId) setContactTags(newTags)
+    tip('📦 Intención de pedido detectada → etiqueta "Preparar" asignada 🔵')
+  }
+
+  function updateCliente(id, fields) {
+    setClientes(prev => {
+      const updated = prev.map(c => c.id === id ? { ...c, ...fields } : c)
+      try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+  }
+  function deleteCliente(id) {
+    setClientes(prev => {
+      const updated = prev.filter(c => c.id !== id)
+      try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+    if (clienteDetail?.id === id) setClienteDetail(null)
+  }
+
+  // ── Disparadores helpers ───────────────────────────────────────
+  function saveTriggers(updated) {
+    setTriggers(updated)
+    try { localStorage.setItem('wa_triggers', JSON.stringify(updated)) } catch {}
+  }
+
+  // ── Plantillas helpers ─────────────────────────────────────────
+  function savePlantillas(updated) {
+    setPlantillas(updated)
+    try { localStorage.setItem('wa_plantillas', JSON.stringify(updated)) } catch {}
+  }
+  function toggleTrigger(id) {
+    saveTriggers(triggers.map(t => t.id === id ? { ...t, active: !t.active } : t))
+  }
+  function deleteTrigger(id) {
+    saveTriggers(triggers.filter(t => t.id !== id))
+  }
+  function saveTriggerEdit(trigger) {
+    const existing = triggers.find(t => t.id === trigger.id)
+    if (existing) { saveTriggers(triggers.map(t => t.id === trigger.id ? trigger : t)) }
+    else { saveTriggers([...triggers, trigger]) }
+    setEditTrigger(null)
+    tip('✅ Disparador guardado')
+  }
+  async function generateTriggerMsg(triggerName) {
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) primero'); return }
+    const producto = editTrigger?.producto || 'General'
+    const condition = editTrigger?.condition || 'no_reply'
+    const delay = editTrigger?.delay || 60
+    const unit = editTrigger?.unit || 'min'
+    setGeneratingTrigger(true); tip('🤖 Generando mensaje ganador con IA...')
+    try {
+      const condLabel = { no_reply: 'sin respuesta', seen: 'visto sin responder', no_purchase: 'sin compra', keyword: 'por palabra clave', first_message: 'primer mensaje' }[condition] || condition
+      const timeLabel = `${delay} ${unit === 'min' ? 'minutos' : unit === 'h' ? 'horas' : 'días'}`
+      const contextSnip = trainingPrompt ? trainingPrompt.substring(0, 600) : ''
+      const msg = await callAI({
+        messages: [
+          { role: 'system', content: `Eres el mejor cerrador de ventas del mundo por WhatsApp.${contextSnip ? ` Contexto del negocio: "${contextSnip}"` : ''}\n\nReglas de oro:\n1. Primero conecta emocionalmente (1 frase)\n2. Menciona el producto "${producto}" naturalmente\n3. Da 1 beneficio clave (no precio aún)\n4. Cierra con UNA pregunta irresistible\n5. Máximo 3-4 líneas, 1-2 emojis, tono humano y cálido` },
+          { role: 'user', content: `Genera el mensaje perfecto de seguimiento para WhatsApp.\nTrigger: "${triggerName}"\nProducto/Plantilla: "${producto}"\nSituación: cliente ${condLabel} después de ${timeLabel}\nUsa {nombre} para personalizar. Responde SOLO el mensaje, sin explicaciones.` },
+        ],
+        maxTokens: 250,
+      })
+      if (msg && editTrigger) setEditTrigger(prev => ({ ...prev, message: msg }))
+      tip('✅ Mensaje ganador generado ✨')
+    } catch (e) {
+      tip(e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error generando mensaje')
+    }
+    setGeneratingTrigger(false)
+  }
+
+  // ── Generar respuesta IA + enviar con simulación de escritura ──
+  async function generateAiReply() {
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) en Ajustes → API'); return }
+    const lastClientMsg = [...msgs].reverse().find(m => m.dir === 'r')
+    if (!lastClientMsg) { tip('⚠️ No hay mensajes del cliente para analizar'); return }
+    setGeneratingAiReply(true); setAiTyping(true); tip('🤖 Analizando ángulo de venta...')
+    try {
+      const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
+      const history = msgs.slice(-12).map(m => ({ role: m.dir === 'r' ? 'user' : 'assistant', content: m.txt || '[archivo]' }))
+      const reply = await callAI({
+        messages: [
+          { role: 'system', content: `Eres el mejor asesor de ventas por WhatsApp del mundo.\n\nContexto del negocio:\n${ctx}\n\nREGLAS ABSOLUTAS:\n1. Si el cliente hizo una PREGUNTA o pide información → da info clara del producto + beneficios + modo de uso (NO des precio todavía).\n2. Si el cliente muestra INTERÉS DE COMPRA ("cuánto cuesta", "lo quiero", "cómo pago") → da precio + oferta irresistible + pregunta de cierre.\n3. Primero CONECTA emocionalmente (1 frase cálida), luego informa o vende.\n4. Máximo 3-4 líneas. Tono humano y natural. 1-2 emojis estratégicos.\n5. Termina SIEMPRE con una pregunta que invite a seguir o a comprar.\n6. Nunca suenes a robot. Sé como una persona real escribiendo en WhatsApp.` },
+          ...history,
+          { role: 'user', content: `El cliente acaba de escribir: "${lastClientMsg.txt}"\n\nAnaliza si es una pregunta informativa o si hay intención de compra, y genera LA MEJOR respuesta de ventas posible. Responde SOLO el mensaje para enviar al cliente, sin explicaciones adicionales.` },
+        ],
+        maxTokens: 350,
+      })
+      if (!reply) { tip('⚠️ No se generó respuesta'); setGeneratingAiReply(false); return }
+
+      // ── Simular escritura + enviar automáticamente ──
+      if (active && status === 'connected') {
+        tip('✍️ Enviando con efecto de escritura...')
+        // 1. Enviar indicador "escribiendo..."
+        try {
+          await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/presence`, {
+            method: 'POST', headers: HJ,
+            body: JSON.stringify({ action: 'composing' }),
+          })
+        } catch { /* si falla presence, igual enviamos */ }
+        // 2. Esperar tiempo proporcional al largo del mensaje (mínimo 0.8s, máximo 2s)
+        const typingMs = Math.max(800, Math.min(reply.length * 18, 2000))
+        await new Promise(r => setTimeout(r, typingMs))
+        // 3. Enviar el mensaje real
+        try {
+          const fd = new FormData(); fd.append('text', reply)
+          const r = await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/send`, { method: 'POST', headers: H, body: fd })
+          const d = await r.json()
+          const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+          const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: reply, time: t, type: 'text', mediaUrl: '', status: 'sent' }
+          setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
+          scroll()
+          tip('✅ Respuesta enviada con éxito 🚀')
+        } catch { tip('⚠️ Error al enviar la respuesta') }
+        // 4. Desactivar indicador
+        try {
+          await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/presence`, {
+            method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
+          })
+        } catch { /* ignorar */ }
+      } else {
+        // No conectado: poner en el input para envío manual
+        setInp(reply)
+        tip('✅ Respuesta IA lista — revísala y envía 🚀')
+      }
+    } catch (e) {
+      const msg = e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error al generar respuesta con IA'
+      tip(msg)
+    }
+    setGeneratingAiReply(false)
+    setAiTyping(false)
+  }
+
+  // ── Generar entrenamiento ganador desde el wizard ──────────────
+  async function generateTrainingWizard() {
+    if (!hasAiKey) { tip('⚠️ Configura tu API Key (OpenAI o Gemini) primero'); return }
+    const { empresa, descripcion, productos, precios, combos, estilo, objeciones, envio, horario, extra } = wizardData
+    if (!empresa && !productos) { tip('⚠️ Llena al menos el nombre de empresa y tus productos'); return }
+    setGeneratingWizard(true); tip('🤖 Generando entrenamiento ganador...')
+    try {
+      const estiloLabel = { amigable: 'amigable y cercano', profesional: 'profesional y formal', energico: 'energético y motivador', suave: 'suave y empático' }[estilo] || estilo
+      const generated = await callAI({
+        messages: [
+          { role: 'system', content: 'Eres el mejor experto del mundo en entrenar bots de ventas por WhatsApp. Generas prompts de sistema completos, naturales y altamente efectivos que convierten conversaciones en ventas. El bot PRIMERO debe conservar la conversación siendo amigable e informativo, y DESPUÉS buscar el cierre de ventas de forma natural y sin presión.' },
+          { role: 'user', content: `Genera el entrenamiento completo para un bot de WhatsApp cerrador de ventas con esta información del negocio:\n\n🏢 NEGOCIO: ${empresa || 'Tienda online'}\n📝 DESCRIPCIÓN: ${descripcion || 'Productos y servicios'}\n🛍️ PRODUCTOS: ${productos || 'No especificado'}\n💰 PRECIOS: ${precios || 'No especificado'}\n🎁 COMBOS/OFERTAS: ${combos || 'Sin combos especiales'}\n💬 ESTILO: ${estiloLabel}\n🔄 OBJECIONES COMUNES: ${objeciones || '"Está muy caro", "Necesito pensarlo"'}\n🚚 ENVÍO/LOGÍSTICA: ${envio || 'No especificado'}\n🕐 HORARIO: ${horario || 'No especificado'}\n✨ INFO ADICIONAL: ${extra || 'Ninguna'}\n\nEl entrenamiento DEBE incluir en formato claro con emojis:\n1. 🎯 Personalidad del asistente (primero conecta, luego vende)\n2. 🛍️ Productos y precios detallados\n3. 💥 Combos y ofertas especiales\n4. 💬 Estilo de conversación (conectar → informar → cerrar)\n5. ✅ Técnicas de cierre natural\n6. 🔄 Manejo de objeciones\n7. 🚫 Reglas de nunca hacer\n\nIMPORTANTE: El bot SIEMPRE conserva primero e intenta cierre de ventas después de forma natural y sin presión.` },
+        ],
+        maxTokens: 2500,
+      })
+      if (generated) {
+        saveTraining(generated)
+        setTrainingTab('contexto')
+        tip('🎉 Entrenamiento ganador generado y guardado ✨')
+      } else tip('⚠️ No se generó contenido. Verifica tu API Key')
+    } catch (e) {
+      tip(e?.message === 'no_key' ? '⚠️ Configura OpenAI o Gemini en Ajustes → API' : '⚠️ Error generando entrenamiento')
+    }
+    setGeneratingWizard(false)
+  }
+
   function copyText(txt) {
     navigator.clipboard?.writeText(txt).then(() => tip('📋 Copiado!')).catch(() => tip('📋 ' + txt.substring(0, 40)))
   }
@@ -503,37 +1720,57 @@ export default function WhatsAppBot() {
 
   const filteredChats = chats.filter(c => {
     const matchSearch = !search || (c.name || c.phone || '').toLowerCase().includes(search.toLowerCase())
-    const matchFilter = chatFilter === 'todos' || (chatFilter === 'sin leer' && c.unread > 0)
+    let matchFilter = true
+    if (chatFilter === 'sin leer')  matchFilter = c.unread > 0
+    else if (chatFilter === 'bot')  matchFilter = isAiActive(c.id)
+    else if (chatFilter === 'grupos') matchFilter = c.isGroup === true
+    else if (chatFilter === 'pedidos') {
+      const tags = chatsTags[c.id] || []
+      const prev = (c.preview || '').toLowerCase()
+      matchFilter = tags.includes('Preparar') || tags.includes('Pendiente pago') ||
+        ORDER_KEYWORDS.some(k => prev.includes(k))
+    }
+    else if (chatFilter === 'ventas') {
+      const tags = chatsTags[c.id] || []
+      matchFilter = tags.includes('Facturado') || tags.includes('Cliente VIP') || tags.includes('Recurrente')
+    }
+    else if (chatFilter === 'soporte') {
+      const tags = chatsTags[c.id] || []
+      matchFilter = tags.includes('Soporte')
+    }
     return matchSearch && matchFilter
   })
 
   const NAV = [
-    { id: 'overview',  label: '📊 Resumen',           section: 'Principal',       badge: 0 },
-    { id: 'chat',      label: '💬 Chats',              section: 'Principal',       badge: unread },
-    { id: 'flujos',    label: '🌊 Flujos',             section: 'Automatización',  badge: 0 },
-    { id: 'templates', label: '📋 Plantillas',         section: 'Automatización',  badge: 0 },
-    { id: 'conexion',  label: '📱 Conexión WhatsApp',  section: 'Configuración',   badge: 0 },
-    { id: 'config',    label: '⚙️ Ajustes',            section: 'Configuración',   badge: 0 },
+    { id: 'overview',       label: '📊 Resumen',            section: 'Principal',       badge: 0 },
+    { id: 'chat',           label: '💬 Chats',               section: 'Principal',       badge: unread },
+    { id: 'clientes',       label: '👥 Clientes',            section: 'Principal',       badge: clientes.filter(c => c.etiqueta === 'Nuevo lead').length },
+    { id: 'flujos',         label: '🌊 Flujos',              section: 'Automatización',  badge: 0 },
+    { id: 'templates',      label: '📋 Plantillas',          section: 'Automatización',  badge: 0 },
+    { id: 'disparadores',   label: '⚡ Disparadores',        section: 'Automatización',  badge: triggers.filter(t => t.active).length },
+    { id: 'entrenamiento',  label: '🧠 Entrenamiento IA',    section: 'Automatización',  badge: 0 },
+    { id: 'conexion',       label: '📱 Conexión WhatsApp',   section: 'Configuración',   badge: 0 },
+    { id: 'config',         label: '⚙️ Ajustes',             section: 'Configuración',   badge: 0 },
   ]
 
   function goPage(id) {
     setPage(id)
+    try { localStorage.setItem('wb_current_page', id) } catch {}
     setBuilderOpen(false)
     if (id === 'conexion') {
-      // Solo cargar QR si está en modo connecting (no llamar logout automáticamente)
-      if (status === 'connecting' || status === 'qr') setTimeout(loadQR, 150)
-      else if (status === 'disconnected') {
+      if (status === 'connected') { setTimeout(drawQRConnected, 120) }
+      else if (status === 'connecting' || status === 'qr') { setTimeout(loadQR, 150) }
+      else {
         // Verificar estado real del backend antes de actuar
         setTimeout(async () => {
           const d = await fetch(BU + '/status', { headers: H }).then(r => r.json()).catch(() => ({}))
           const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
           setStatus(s); setPhone(d.phone || '')
           if (s === 'connecting' || s === 'qr') { loadQR() }
-          else if (s === 'connected') { loadC().catch(() => {}) }
-          else { regenerateQR() } // confirmado disconnected: auto-iniciar generación QR
+          else if (s === 'connected') { loadC().catch(() => {}); setTimeout(drawQRConnected, 150) }
+          else { regenerateQR() }
         }, 100)
       }
-      // si connected: mostrar estado conectado sin hacer nada
     }
   }
 
@@ -562,19 +1799,19 @@ export default function WhatsAppBot() {
 
   return (
     <div className="containerGrid">
-      <Header />
+      <Header noFloat />
       <div className="wbv5-root">
 
         {/* ── SIDEBAR ── */}
         <div className="wbv5-sidebar">
-          <div className="wbv5-sb-logo">
+          <div className="wbv5-sb-logo" style={{ display: 'none' }}>
             <div className="wbv5-sb-icon">🌿</div>
             <div>
               <div className="wbv5-sb-name">Sanate Bot</div>
               <div className="wbv5-sb-sub">WhatsApp Automation</div>
             </div>
           </div>
-          <div className="wbv5-sb-acct">
+          <div className="wbv5-sb-acct" style={{ display: 'none' }}>
             <div className="wbv5-sb-ava">S</div>
             <div className="wbv5-sb-uname">sanate.store</div>
           </div>
@@ -595,9 +1832,27 @@ export default function WhatsAppBot() {
           ))}
           <div className="wbv5-sb-footer">
             <div className={`wbv5-status-badge ${status === 'connected' ? 'green' : status === 'connecting' ? 'amber' : 'gray'}`}>
-              {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando...' : '⏳ No conectado'}
+              {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando...' : serverOnline === false ? '🔌 Sin servidor' : '⏳ No conectado'}
             </div>
             <div style={{ marginTop: '.3rem', fontSize: '.62rem', color: '#9ca3af' }}>n8n + Baileys</div>
+            <button
+              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+              style={{ marginTop: '.4rem', width: '100%', fontSize: '.65rem', padding: '.28rem .5rem' }}
+              onClick={toggleAiGlobal}
+              title="Activar/desactivar IA global"
+            >
+              🤖 IA {aiEnabled ? 'ON' : 'OFF'}
+            </button>
+            {/* Contador de contactos con triggers pausados */}
+            {Object.values(triggerContactMap).filter(v => v === false).length > 0 && (
+              <div
+                style={{ marginTop: '.3rem', background: '#fef3c7', borderRadius: 6, padding: '.25rem .5rem', fontSize: '.6rem', color: '#92400e', fontWeight: 700, textAlign: 'center', cursor: 'pointer' }}
+                onClick={() => goPage('disparadores')}
+                title="Contactos con disparadores pausados"
+              >
+                ⚡ {Object.values(triggerContactMap).filter(v => v === false).length} pausado(s)
+              </div>
+            )}
           </div>
         </div>
 
@@ -669,6 +1924,53 @@ export default function WhatsAppBot() {
                   </div>
                 </div>
               </div>
+              {/* ── Panel de Inteligencia de Ventas ── */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">💡 Inteligencia de Ventas</div>
+                  <span className="wbv5-badge badge-amber" style={{ fontSize: '.65rem' }}>IA</span>
+                </div>
+                <div className="wbv5-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                  {(() => {
+                    const insights = []
+                    // Chats con keywords de pedido sin respuesta reciente del bot
+                    const pendingOrders = chats.filter(c => {
+                      const tags = chatsTags[c.id] || []
+                      return tags.includes('Preparar') && !tags.includes('Facturado')
+                    })
+                    if (pendingOrders.length > 0) insights.push({ type: 'warn', msg: `${pendingOrders.length} pedido(s) con etiqueta "Preparar" sin facturar — revísalos antes de que se enfríen` })
+                    // Chats con keywords de precio en preview
+                    const priceChats = chats.filter(c => ORDER_KEYWORDS.some(k => (c.preview || '').toLowerCase().includes(k)))
+                    if (priceChats.length > 0) insights.push({ type: 'info', msg: `${priceChats.length} chat(s) con preguntas de precio/pedido recientes — abre y da seguimiento 📦` })
+                    // Contactos sin IA activa
+                    const noAi = chats.filter(c => !c.isGroup && !isAiActive(c.id))
+                    if (noAi.length > 0) insights.push({ type: 'tip', msg: `${noAi.length} contacto(s) sin IA activa — actívalos individualmente para respuesta automática` })
+                    // Training usando plantilla genérica
+                    const lsTraining = (() => { try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
+                    if (!lsTraining || lsTraining === TRAINING_TEMPLATE) insights.push({ type: 'alert', msg: 'El entrenamiento IA usa plantilla genérica — personaliza con tus productos reales para mejorar el cierre hasta un 60%' })
+                    // Sin análisis de clientes
+                    const noAnalysis = chats.filter(c => !clientAnalysis[c.id]).length
+                    if (noAnalysis > 3) insights.push({ type: 'tip', msg: `${noAnalysis} clientes sin perfil IA — abre el chat y pulsa "🧠 Analizar" para obtener ángulos de venta personalizados` })
+                    // Plantillas sin imagen
+                    insights.push({ type: 'tip', msg: 'Añade imágenes a tus plantillas de productos — los mensajes con imagen aumentan el cierre hasta un 40% 📸' })
+                    // Estado del sistema
+                    if (status === 'connected' && aiEnabled) insights.push({ type: 'ok', msg: `WhatsApp conectado y IA activa ✅ — El bot está respondiendo automáticamente` })
+                    else if (status !== 'connected') insights.push({ type: 'alert', msg: 'WhatsApp desconectado — los clientes no están recibiendo respuestas automáticas 🚨' })
+                    return insights.slice(0, 5).map((ins, i) => (
+                      <div key={i} style={{
+                        display: 'flex', gap: '.45rem', alignItems: 'flex-start',
+                        background: ins.type === 'ok' ? '#f0fdf4' : ins.type === 'warn' ? '#fef9c3' : ins.type === 'alert' ? '#fef2f2' : '#f8f9ff',
+                        border: `1px solid ${ins.type === 'ok' ? '#bbf7d0' : ins.type === 'warn' ? '#fde047' : ins.type === 'alert' ? '#fca5a5' : '#e0e7ff'}`,
+                        borderRadius: 7, padding: '.4rem .55rem', fontSize: '.72rem', lineHeight: 1.5
+                      }}>
+                        <span style={{ flexShrink: 0 }}>{ins.type === 'ok' ? '✅' : ins.type === 'warn' ? '⚠️' : ins.type === 'alert' ? '🚨' : '💡'}</span>
+                        <span style={{ color: '#374151' }}>{ins.msg}</span>
+                      </div>
+                    ))
+                  })()}
+                </div>
+              </div>
+
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
                   <div className="wbv5-card-title">⚡ Flujos recientes</div>
@@ -701,10 +2003,18 @@ export default function WhatsAppBot() {
                   <input className="wbv5-il-search" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
                   <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => loadC().catch(() => {})}>🔄</button>
                 </div>
-                <div className="wbv5-il-filters">
-                  {['todos', 'sin leer', 'bot'].map(f => (
-                    <button key={f} className={`wbv5-il-filter ${chatFilter === f ? 'active' : ''}`} onClick={() => setChatFilter(f)}>
-                      {f.charAt(0).toUpperCase() + f.slice(1)}
+                <div className="wbv5-il-filters" style={{ flexWrap: 'wrap', gap: '.25rem' }}>
+                  {[
+                    { id: 'todos',    label: 'Todos' },
+                    { id: 'sin leer', label: '🔴 Sin leer' },
+                    { id: 'pedidos',  label: '📦 Pedidos' },
+                    { id: 'ventas',   label: '✅ Ventas' },
+                    { id: 'soporte',  label: '🛠 Soporte' },
+                    { id: 'grupos',   label: '👥 Grupos' },
+                    { id: 'bot',      label: '🤖 Bot' },
+                  ].map(f => (
+                    <button key={f.id} className={`wbv5-il-filter ${chatFilter === f.id ? 'active' : ''}`} onClick={() => setChatFilter(f.id)} style={{ fontSize: '.67rem', padding: '.2rem .45rem' }}>
+                      {f.label}
                     </button>
                   ))}
                 </div>
@@ -730,6 +2040,7 @@ export default function WhatsAppBot() {
                         <div className="wbv5-ci-name">
                           {c.name || c.phone || c.id.split('@')[0]}
                           {c.isGroup && <span style={{ marginLeft: 4, fontSize: '.62rem', color: '#7c3aed' }}>·grupo</span>}
+                          {!isTriggerActive(c.id) && <span className="wbv5-trigger-paused-badge" title="Disparadores pausados">⚡ pausa</span>}
                         </div>
                         <div className="wbv5-ci-prev">{c.preview || 'Sin mensajes'}</div>
                       </div>
@@ -761,51 +2072,172 @@ export default function WhatsAppBot() {
                           {active.isGroup && <span style={{ fontSize: '.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginRight: 5 }}>Grupo</span>}
                           {active.name || active.phone || active.id}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', flexWrap: 'wrap' }}>
-                          <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
-                          {contactTags.map(tag => {
-                            const td = availableTags.find(t => t.name === tag)
-                            return <span key={tag} className="wbv5-tag-chip" style={{ '--tc': td?.color || '#3b82f6', fontSize: '.62rem', padding: '1px 7px' }}>{tag}</span>
-                          })}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                          {aiTyping ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem', fontSize: '.7rem', color: '#7c3aed', fontWeight: 600 }}>
+                              <span style={{ display: 'inline-flex', gap: 2 }}>
+                                {[0,1,2].map(i => (
+                                  <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: '#7c3aed', display: 'inline-block', animation: `wbv5-pulse 0.9s ease-in-out ${i*0.22}s infinite` }} />
+                                ))}
+                              </span>
+                              🤖 IA respondiendo...
+                            </div>
+                          ) : (
+                            <>
+                              <div className="wbv5-cw-sub">🟢 {active.phone || cleanPhone('', active.id)}</div>
+                              {(() => { const geo = phoneToGeo(active.phone || cleanPhone('', active.id)); return geo ? <span className="wbv5-geo-badge">{geo.flag} {geo.label}</span> : null })()}
+                            </>
+                          )}
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0 }}>
+                      <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, alignItems: 'center' }}>
+                        {/* Dropdown de estado/etiqueta principal */}
+                        <div style={{ position: 'relative' }} ref={statusDropdownRef}>
+                          <button
+                            className="wbv5-btn wbv5-btn-outline wbv5-btn-sm"
+                            onClick={() => setShowStatusDropdown(o => !o)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}
+                          >
+                            <span style={{
+                              width: 8, height: 8, borderRadius: '50%',
+                              background: contactStatus === 'Facturado' ? '#10b981' : contactStatus === 'Pendiente' ? '#f59e0b' : '#3b82f6'
+                            }} />
+                            {contactStatus} ▾
+                          </button>
+                          {showStatusDropdown && (
+                            <div style={{
+                              position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: '#fff',
+                              border: '1px solid #e5e7eb', borderRadius: 10, boxShadow: '0 6px 20px rgba(0,0,0,.12)',
+                              zIndex: 300, minWidth: 160, overflow: 'hidden'
+                            }}>
+                              {['Nuevo', 'Pendiente', 'Facturado', 'Archivado'].map(st => (
+                                <button key={st} onClick={() => { setContactStatus(st); setShowStatusDropdown(false) }}
+                                  style={{
+                                    display: 'flex', alignItems: 'center', gap: '.5rem', width: '100%',
+                                    padding: '.5rem .75rem', background: 'none', border: 'none', cursor: 'pointer',
+                                    fontSize: '.78rem', color: '#374151', textAlign: 'left', transition: 'background .1s'
+                                  }}
+                                  onMouseEnter={e => e.currentTarget.style.background = '#f9fafb'}
+                                  onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                                >
+                                  <span style={{
+                                    width: 8, height: 8, borderRadius: '50%',
+                                    background: st === 'Facturado' ? '#10b981' : st === 'Pendiente' ? '#f59e0b' : st === 'Archivado' ? '#6b7280' : '#3b82f6'
+                                  }} />
+                                  {st}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        {/* Botón Disparadores por contacto */}
+                        <button
+                          className={`wbv5-btn wbv5-btn-sm ${isTriggerActive(active?.id) ? 'wbv5-btn-trigger-on' : 'wbv5-btn-trigger-off'}`}
+                          onClick={() => toggleTriggerContact(active?.id)}
+                          title={isTriggerActive(active?.id) ? '⚡ Disparadores activos — clic para pausar' : '⚡ Disparadores pausados — clic para reactivar'}
+                        >
+                          ⚡ {isTriggerActive(active?.id) ? 'Auto ON' : 'Auto OFF'}
+                        </button>
+                        {/* Botón IA por contacto */}
+                        <button
+                          className={`wbv5-btn wbv5-btn-sm ${isAiActive(active?.id) ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                          onClick={() => toggleAiContact(active?.id)}
+                          title={isAiActive(active?.id) ? 'IA activa — clic para desactivar' : 'IA inactiva — clic para activar'}
+                        >
+                          🤖 {isAiActive(active?.id) ? 'IA ON' : 'IA OFF'}
+                        </button>
                         <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>📋 Datos</button>
+                        <button
+                          className={`wbv5-btn wbv5-btn-sm ${showAnalysisPanel ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                          onClick={() => { setShowAnalysisPanel(s => !s); setShowContact(false) }}
+                          title="🧠 Análisis IA del cliente — estilo, intención de compra, ángulo de venta"
+                          style={{ fontSize: '.72rem' }}
+                        >
+                          🧠 {clientAnalysis[active?.id] ? 'Análisis' : 'Analizar'}
+                        </button>
                       </div>
                     </div>
 
                     <div className="wbv5-cw-msgs" ref={msgsRef}>
                       {msgs.length === 0 ? (
                         <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '.72rem', padding: '2rem 0' }}>Sin mensajes aún</div>
-                      ) : msgs.map((m) => (
+                      ) : msgs.map((m) => {
+                        const isMediaType = ['image', 'video', 'audio', 'document', 'sticker'].includes(m.type);
+                        return (
                         <div key={m.id} className={`wbv5-msg ${m.dir}`}>
-                          {/* texto */}
+                          {/* texto — mostrar también en imagen/video/audio si tiene caption */}
                           {m.txt ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
-                          {/* imagen */}
-                          {m.type === 'image' ? (m.mediaUrl ? (
-                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer">
-                              <img src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} alt="img" className="wbv5-msg-img" />
-                            </a>
-                          ) : <div className="wbv5-msg-media-ph">📷 Imagen</div>) : null}
-                          {/* video */}
-                          {m.type === 'video' ? (m.mediaUrl ? (
-                            <video src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-video" />
-                          ) : <div className="wbv5-msg-media-ph">🎥 Video</div>) : null}
-                          {/* audio / voz */}
-                          {m.type === 'audio' ? (m.mediaUrl ? (
-                            <audio src={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} controls className="wbv5-msg-audio" />
-                          ) : <div className="wbv5-msg-media-ph">🎵 Audio</div>) : null}
-                          {/* documento */}
+
+                          {/* ── imagen ── */}
+                          {m.type === 'image' ? (m.mediaUrl ? (() => {
+                            const src = resolveMediaUrl(m.mediaUrl)
+                            return (
+                              <div style={{ position: 'relative' }}>
+                                <img
+                                  src={src} alt="img" className="wbv5-msg-img"
+                                  onError={e => {
+                                    e.target.style.display = 'none'
+                                    const dl = e.target.parentNode?.querySelector('.wbv5-media-dl')
+                                    if (dl) dl.style.display = 'flex'
+                                  }}
+                                />
+                                <a href={src} target="_blank" rel="noreferrer" download
+                                  className="wbv5-media-dl"
+                                  style={{ display: 'none', alignItems: 'center', gap: '.4rem', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '.5rem .75rem', fontSize: '.72rem', color: '#374151', textDecoration: 'none', cursor: 'pointer' }}>
+                                  📥 Ver / Descargar imagen
+                                </a>
+                              </div>
+                            )
+                          })() : <div className="wbv5-msg-media-ph">📷 Imagen</div>) : null}
+
+                          {/* ── video ── */}
+                          {m.type === 'video' ? (m.mediaUrl ? (() => {
+                            const src = resolveMediaUrl(m.mediaUrl)
+                            return (
+                              <div>
+                                <video src={src} controls className="wbv5-msg-video"
+                                  onError={e => {
+                                    e.target.style.display = 'none'
+                                    e.target.nextSibling?.style?.removeProperty('display')
+                                  }} />
+                                <a href={src} target="_blank" rel="noreferrer" download
+                                  style={{ display: 'none', fontSize: '.72rem', color: '#374151' }}>
+                                  📥 Descargar video
+                                </a>
+                              </div>
+                            )
+                          })() : <div className="wbv5-msg-media-ph">🎥 Video</div>) : null}
+
+                          {/* ── audio / nota de voz ── */}
+                          {m.type === 'audio' ? (m.mediaUrl ? (() => {
+                            const src = resolveMediaUrl(m.mediaUrl)
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem' }}>
+                                <audio src={src} controls className="wbv5-msg-audio"
+                                  onError={e => {
+                                    e.target.style.display = 'none'
+                                    e.target.nextSibling?.style?.removeProperty('display')
+                                  }} />
+                                <a href={src} target="_blank" rel="noreferrer" download
+                                  style={{ display: 'none', alignItems: 'center', gap: '.3rem', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '.4rem .65rem', fontSize: '.71rem', color: '#374151', textDecoration: 'none' }}>
+                                  🎵 Descargar audio
+                                </a>
+                              </div>
+                            )
+                          })() : <div className="wbv5-msg-media-ph">🎵 Audio</div>) : null}
+
+                          {/* ── documento ── */}
                           {m.type === 'document' ? (m.mediaUrl ? (
-                            <a href={m.mediaUrl.startsWith('blob') ? m.mediaUrl : `http://localhost:5055${m.mediaUrl}`} target="_blank" rel="noreferrer" className="wbv5-msg-doc">
+                            <a href={resolveMediaUrl(m.mediaUrl)} target="_blank" rel="noreferrer" download className="wbv5-msg-doc">
                               📄 {m.fileName || 'Documento'}
                             </a>
                           ) : <div className="wbv5-msg-media-ph">📄 {m.fileName || 'Documento'}</div>) : null}
-                          {/* sticker */}
+
+                          {/* ── sticker ── */}
                           {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
                           <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ✓✓' : ' ✓') : ''}</div>
                         </div>
-                      ))}
+                      )})}
                     </div>
 
                     {/* inputs ocultos para adjuntos */}
@@ -822,13 +2254,14 @@ export default function WhatsAppBot() {
                             <button onClick={() => setShowTemplatesModal(false)}>✕</button>
                           </div>
                           <div className="wbv5-tpl-list">
-                            {QUICK_TEMPLATES.map(tpl => (
+                            {plantillas.map(tpl => (
                               <button key={tpl.id} className="wbv5-tpl-opt" onClick={() => sendTemplate(tpl)}>
-                                <span className="wbv5-tpl-cat">{tpl.category}</span>
-                                <strong>{tpl.name}</strong>
-                                <small>{tpl.description}</small>
+                                <span className="wbv5-tpl-cat">{tpl.categoria}</span>
+                                <strong>{tpl.nombre}</strong>
+                                <small style={{ whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tpl.mensaje}</small>
                               </button>
                             ))}
+                            {plantillas.length === 0 && <div style={{ padding: '1rem', color: '#9ca3af', fontSize: '.75rem', textAlign: 'center' }}>Sin plantillas — crea una en la sección 📋 Plantillas</div>}
                           </div>
                         </div>
                       </div>
@@ -894,6 +2327,16 @@ export default function WhatsAppBot() {
                             onKeyDown={e => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
                             placeholder={sending ? 'Enviando...' : 'Escribe un mensaje...'}
                           />
+                          {aiEnabled && (
+                            <button
+                              className={`wbv5-cw-ai-reply-btn${generatingAiReply ? ' loading' : ''}`}
+                              title="🤖 Generar respuesta IA — analiza el último mensaje y genera el mejor ángulo de venta"
+                              onClick={generateAiReply}
+                              disabled={generatingAiReply || !msgs.some(m => m.dir === 'r')}
+                            >
+                              {generatingAiReply ? '⏳' : '🤖'}
+                            </button>
+                          )}
                           {inp.trim() ? (
                             <button className="wbv5-cw-send" onClick={send} disabled={sending}>
                               {sending ? '⏳' : '➤'}
@@ -908,6 +2351,82 @@ export default function WhatsAppBot() {
                 )}
               </div>
 
+              {/* ── Panel de Análisis IA del Cliente ── */}
+              {showAnalysisPanel && active && (
+                <div className="wbv5-contact-pnl" style={{ minWidth: 250 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.6rem' }}>
+                    <div className="wbv5-cp-title">🧠 Análisis del Cliente</div>
+                    <button
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '.7rem', color: '#7c3aed', fontWeight: 700, padding: '.1rem .3rem' }}
+                      onClick={() => analyzeClientIntelligence(active.id, msgs)}
+                      disabled={analysisLoading || !hasAiKey}
+                    >
+                      {analysisLoading ? '⏳' : '🔄 Actualizar'}
+                    </button>
+                  </div>
+                  {!clientAnalysis[active.id] ? (
+                    <div style={{ textAlign: 'center', padding: '1.2rem 0' }}>
+                      <div style={{ fontSize: '1.8rem', marginBottom: '.4rem' }}>🔍</div>
+                      <div style={{ fontSize: '.73rem', color: '#6b7280', marginBottom: '.7rem' }}>Sin análisis todavía</div>
+                      <button
+                        className="wbv5-btn wbv5-btn-green wbv5-btn-sm"
+                        onClick={() => analyzeClientIntelligence(active.id, msgs)}
+                        disabled={analysisLoading || !hasAiKey}
+                      >
+                        {analysisLoading ? '⏳ Analizando...' : '🧠 Analizar ahora'}
+                      </button>
+                      {!hasAiKey && <div style={{ fontSize: '.67rem', color: '#ef4444', marginTop: '.4rem' }}>Requiere API Key IA</div>}
+                    </div>
+                  ) : (() => {
+                    const a = clientAnalysis[active.id]
+                    const intencionColor = a.intencion === 'alta' ? '#16a34a' : a.intencion === 'media' ? '#d97706' : '#dc2626'
+                    return (
+                      <div style={{ fontSize: '.73rem', display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
+                        <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                          <span style={{ background: '#f0f4ff', color: '#3730a3', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>✍️ {a.estilo}</span>
+                          <span style={{ background: '#fef9c3', color: '#78350f', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>🎭 {a.tono}</span>
+                          <span style={{ background: a.intencion === 'alta' ? '#f0fdf4' : a.intencion === 'media' ? '#fef9c3' : '#fef2f2', color: intencionColor, borderRadius: 4, padding: '.15rem .4rem', fontWeight: 700 }}>
+                            🎯 Compra {a.intencion}
+                          </span>
+                        </div>
+                        {a.intereses?.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#374151', marginBottom: '.2rem' }}>💡 Intereses</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.2rem' }}>
+                              {a.intereses.map((item, i) => (
+                                <span key={i} style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 4, padding: '.1rem .35rem', fontSize: '.67rem' }}>{item}</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {a.objeciones?.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#dc2626', marginBottom: '.2rem' }}>⚠️ Objeciones</div>
+                            {a.objeciones.map((o, i) => <div key={i} style={{ color: '#b91c1c', fontSize: '.68rem' }}>• {o}</div>)}
+                          </div>
+                        )}
+                        {a.angulo && (
+                          <div style={{ background: '#faf5ff', border: '1px solid #ddd6fe', borderRadius: 6, padding: '.4rem .5rem' }}>
+                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#7c3aed', marginBottom: '.15rem' }}>💜 Ángulo de venta</div>
+                            <div style={{ color: '#5b21b6', fontWeight: 600, lineHeight: 1.4 }}>{a.angulo}</div>
+                          </div>
+                        )}
+                        {a.siguiente && (
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '.4rem .5rem' }}>
+                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#15803d', marginBottom: '.15rem' }}>✅ Próximo paso</div>
+                            <div style={{ color: '#16a34a', fontWeight: 600, lineHeight: 1.4 }}>{a.siguiente}</div>
+                          </div>
+                        )}
+                        {a.resumen && <div style={{ fontSize: '.67rem', color: '#6b7280', fontStyle: 'italic', borderTop: '1px solid #f3f4f6', paddingTop: '.3rem' }}>{a.resumen}</div>}
+                        <div style={{ fontSize: '.62rem', color: '#9ca3af', textAlign: 'right' }}>
+                          Actualizado: {a.ts ? new Date(a.ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+              )}
+
               {showContact && active && (
                 <div className="wbv5-contact-pnl">
                   <div className="wbv5-cp-title">👤 Contacto</div>
@@ -920,6 +2439,21 @@ export default function WhatsAppBot() {
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Teléfono</div><div className="wbv5-cp-val">{active.phone || '+' + active.id}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Último mensaje</div><div className="wbv5-cp-val">{active.preview || '—'}</div></div>
                   <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Estado bot</div><div className="wbv5-cp-val"><span className="wbv5-badge badge-green">🤖 Activo</span></div></div>
+                  <div className="wbv5-cp-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div>
+                      <div className="wbv5-cp-lbl">Respuesta IA</div>
+                      <div className="wbv5-cp-val" style={{ fontSize: '.68rem', color: isAiActive(active?.id) ? '#16a34a' : '#6b7280' }}>
+                        {isAiActive(active?.id) ? 'ChatGPT activo' : 'Manual'}
+                      </div>
+                    </div>
+                    <button
+                      className={`wbv5-btn wbv5-btn-sm ${isAiActive(active?.id) ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                      style={{ fontSize: '.65rem', padding: '.22rem .55rem' }}
+                      onClick={() => toggleAiContact(active?.id)}
+                    >
+                      {isAiActive(active?.id) ? '🤖 ON' : '⚪ OFF'}
+                    </button>
+                  </div>
                   {/* Etiquetas */}
                   <div className="wbv5-cp-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '.4rem' }}>
                     <div className="wbv5-cp-lbl">Etiquetas</div>
@@ -1079,21 +2613,664 @@ export default function WhatsAppBot() {
           {/* ══ PLANTILLAS ══ */}
           {page === 'templates' && (
             <div className="wbv5-content">
-              <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>📋 Plantillas de mensajes</div>
-              <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Plantillas aprobadas por Meta para envío masivo</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.2rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>📋 Plantillas de mensajes</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes rápidos para el chat y disparadores de palabras clave</div>
+                </div>
+                <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditPlantilla({ isNew: true, nombre: '', categoria: 'Ventas', mensaje: '' })}>+ Nueva plantilla</button>
+              </div>
+
+              {/* ── Formulario crear/editar ── */}
+              {editPlantilla && (
+                <div className="wbv5-card" style={{ border: '2px solid #2563eb', marginTop: '.75rem', marginBottom: '.75rem' }}>
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">✏️ {editPlantilla.isNew ? 'Nueva' : 'Editar'} plantilla</div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditPlantilla(null)}>✕ Cancelar</button>
+                  </div>
+                  <div className="wbv5-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
+                    <div className="wbv5-form-row">
+                      <div className="wbv5-form-lbl">Nombre de la plantilla</div>
+                      <input className="wbv5-form-input" value={editPlantilla.nombre} onChange={e => setEditPlantilla(p => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Bienvenida, Confirmación de pedido..." />
+                    </div>
+                    <div className="wbv5-form-row">
+                      <div className="wbv5-form-lbl">Categoría</div>
+                      <select className="wbv5-form-input" value={editPlantilla.categoria} onChange={e => setEditPlantilla(p => ({ ...p, categoria: e.target.value }))}>
+                        <option>Inicio</option><option>Ventas</option><option>Pedidos</option><option>Seguimiento</option><option>Soporte</option><option>General</option>
+                      </select>
+                    </div>
+                    <div className="wbv5-form-row">
+                      <div className="wbv5-form-lbl" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span>Mensaje ({(editPlantilla.mensaje || '').length}/1000)</span>
+                        <span style={{ fontSize: '.62rem', color: '#9ca3af' }}>Variables: {'{nombre}'} {'{telefono}'} {'{tienda}'}</span>
+                      </div>
+                      <textarea className="wbv5-form-input" rows={5} value={editPlantilla.mensaje} onChange={e => setEditPlantilla(p => ({ ...p, mensaje: e.target.value }))} placeholder="Escribe el mensaje. Usa {nombre} para personalizar con el nombre del cliente." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '.5rem' }}>
+                      <button className="wbv5-btn wbv5-btn-green" onClick={() => {
+                        if (!editPlantilla.nombre.trim() || !editPlantilla.mensaje.trim()) { tip('⚠️ Completa nombre y mensaje'); return }
+                        const list = editPlantilla.isNew
+                          ? [...plantillas, { id: `tpl_${Date.now()}`, nombre: editPlantilla.nombre, categoria: editPlantilla.categoria, mensaje: editPlantilla.mensaje }]
+                          : plantillas.map(p => p.id === editPlantilla.id ? { id: p.id, nombre: editPlantilla.nombre, categoria: editPlantilla.categoria, mensaje: editPlantilla.mensaje } : p)
+                        savePlantillas(list); setEditPlantilla(null); tip('✅ Plantilla guardada')
+                      }}>💾 Guardar plantilla</button>
+                      <button className="wbv5-btn wbv5-btn-outline" onClick={() => setEditPlantilla(null)}>Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Lista de plantillas ── */}
+              <div className="wbv5-card" style={{ marginTop: '.75rem' }}>
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">Mis plantillas ({plantillas.length})</div>
+                  {plantillas.length === 0 && (
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('✅ Plantillas de ejemplo cargadas') }}>📥 Cargar ejemplos</button>
+                  )}
+                </div>
+                <div style={{ padding: 0 }}>
+                  {plantillas.map(pl => (
+                    <div key={pl.id} style={{ padding: '.75rem 1rem', borderBottom: '1px solid #f3f4f6', display: 'flex', alignItems: 'flex-start', gap: '.75rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', marginBottom: '.2rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '.8rem', fontWeight: 700 }}>{pl.nombre}</span>
+                          <span style={{ background: '#eff6ff', color: '#3b82f6', fontSize: '.6rem', padding: '1px 7px', borderRadius: 4, fontWeight: 600 }}>{pl.categoria}</span>
+                        </div>
+                        <div style={{ fontSize: '.68rem', color: '#6b7280', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'pre-wrap' }}>{pl.mensaje}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '.3rem', flexShrink: 0 }}>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" title="Editar" onClick={() => setEditPlantilla({ ...pl, isNew: false })}>✏️</button>
+                        <button className="wbv5-btn wbv5-btn-sm" title="Duplicar" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} onClick={() => { const copy = { ...pl, id: `tpl_${Date.now()}`, nombre: pl.nombre + ' (copia)' }; savePlantillas([...plantillas, copy]); tip('✅ Plantilla duplicada') }}>📋</button>
+                        <button className="wbv5-btn wbv5-btn-sm" title="Eliminar" style={{ background: '#fee2e2', color: '#dc2626', border: 'none' }} onClick={() => { if (window.confirm(`¿Eliminar "${pl.nombre}"?`)) { savePlantillas(plantillas.filter(p => p.id !== pl.id)); tip('🗑️ Plantilla eliminada') } }}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                  {plantillas.length === 0 && (
+                    <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>📋</div>
+                      <div style={{ fontSize: '.8rem', fontWeight: 700, color: '#6b7280', marginBottom: '.3rem' }}>Sin plantillas</div>
+                      <div style={{ fontSize: '.72rem', color: '#9ca3af', marginBottom: '.75rem' }}>Crea mensajes rápidos para enviar desde el chat o en disparadores de palabras clave</div>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('✅ Plantillas de Sánate cargadas') }}>📥 Cargar plantillas de Sánate</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ fontSize: '.68rem', color: '#9ca3af', marginTop: '.75rem', lineHeight: 1.5 }}>
+                💡 <strong>Cómo usarlas:</strong> En el chat, usa el botón 📋 del input. En ⚡ Disparadores, selecciona una plantilla al configurar un trigger de palabra clave.
+              </div>
+            </div>
+          )}
+
+          {/* ══ CLIENTES ══ */}
+          {page === 'clientes' && (
+            <div className="wbv5-content">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>👥 Clientes</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Clientes que han escrito al WhatsApp — guardados automáticamente</div>
+                </div>
+                <div style={{ display: 'flex', gap: '.4rem' }}>
+                  <input className="wbv5-il-search" placeholder="Buscar cliente..." value={clienteSearch} onChange={e => setClienteSearch(e.target.value)} style={{ width: 180 }} />
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(clientes.map(c => `${c.name}\t${c.phone}\t${c.pais}\t${c.etiqueta}\t${c.primerMensaje}`).join('\n')); tip('📋 Tabla copiada') }}>📋 Exportar</button>
+                </div>
+              </div>
+              {clienteDetail ? (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setClienteDetail(null)}>← Volver</button>
+                    <div className="wbv5-card-title" style={{ marginLeft: '.5rem' }}>{clienteDetail.name || clienteDetail.phone}</div>
+                    <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { updateCliente(clienteDetail.id, clienteDetail); tip('✅ Guardado'); setClienteDetail(null) }}>💾 Guardar</button>
+                      <button className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={() => { if(window.confirm('¿Eliminar cliente?')) deleteCliente(clienteDetail.id) }}>🗑️</button>
+                    </div>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div className="wbv5-cli-form-grid">
+                      {[
+                        { lbl: 'Nombre', key: 'name' }, { lbl: 'Teléfono', key: 'phone' },
+                        { lbl: 'País / Región', key: 'ciudad' }, { lbl: 'Dirección', key: 'direccion' },
+                        { lbl: 'Etiqueta', key: 'etiqueta' }, { lbl: 'Total Pedidos', key: 'totalPedidos', type: 'number' },
+                        { lbl: 'No recibidos', key: 'noRecibidos', type: 'number' }, { lbl: 'Primer mensaje', key: 'primerMensaje' },
+                        { lbl: 'Último mensaje', key: 'ultimoMensaje' },
+                      ].map(f => (
+                        <div key={f.key} className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">{f.lbl}</div>
+                          <input className="wbv5-form-input" type={f.type || 'text'} value={clienteDetail[f.key] || ''} onChange={e => setClienteDetail(prev => ({ ...prev, [f.key]: e.target.value }))} />
+                        </div>
+                      ))}
+                      <div className="wbv5-form-row" style={{ gridColumn: '1/-1' }}>
+                        <div className="wbv5-form-lbl">Notas</div>
+                        <textarea className="wbv5-form-input" rows={3} value={clienteDetail.notas || ''} onChange={e => setClienteDetail(prev => ({ ...prev, notas: e.target.value }))} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+                      </div>
+                    </div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ marginTop: '.4rem' }} onClick={() => { const t = `Nombre: ${clienteDetail.name}\nTeléfono: ${clienteDetail.phone}\nPaís: ${clienteDetail.ciudad}\nDirección: ${clienteDetail.direccion}\nPedidos: ${clienteDetail.totalPedidos}\nEtiqueta: ${clienteDetail.etiqueta}`; navigator.clipboard?.writeText(t); tip('📋 Datos copiados') }}>📋 Copiar datos</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="wbv5-card">
+                  <div style={{ padding: 0 }}>
+                    {clientes.filter(c => !clienteSearch || (c.name+c.phone+c.ciudad).toLowerCase().includes(clienteSearch.toLowerCase())).length === 0 ? (
+                      <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>👥</div>
+                        <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#6b7280' }}>Sin clientes aún</div>
+                        <div style={{ fontSize: '.72rem', color: '#9ca3af' }}>Los clientes se guardan automáticamente cuando escriben al WhatsApp</div>
+                      </div>
+                    ) : (
+                      <table className="wbv5-flows-table">
+                        <thead><tr><th>Cliente</th><th>Teléfono</th><th>Región</th><th>Etiqueta</th><th>Pedidos</th><th>Primer msg</th><th></th></tr></thead>
+                        <tbody>
+                          {clientes.filter(c => !clienteSearch || (c.name+c.phone+c.ciudad).toLowerCase().includes(clienteSearch.toLowerCase())).map(c => (
+                            <tr key={c.id}>
+                              <td style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                                {c.fotoUrl ? <img src={c.fotoUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#dbeafe', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 800, flexShrink: 0 }}>{(c.name || c.phone).substring(0,2).toUpperCase()}</div>}
+                                <span style={{ fontWeight: 600 }}>{c.name || '—'}</span>
+                              </td>
+                              <td style={{ fontSize: '.72rem', color: '#6b7280' }}>{c.phone}</td>
+                              <td style={{ fontSize: '.7rem' }}>{c.flag} {c.ciudad || '—'}</td>
+                              <td><span style={{ background: c.etiqueta === 'Nuevo lead' ? '#dbeafe' : c.etiqueta === 'Cliente VIP' ? '#ede9fe' : '#dcfce7', color: c.etiqueta === 'Nuevo lead' ? '#1d4ed8' : c.etiqueta === 'Cliente VIP' ? '#5b21b6' : '#166534', borderRadius: 20, padding: '.15rem .55rem', fontSize: '.65rem', fontWeight: 700 }}>{c.etiqueta}</span></td>
+                              <td style={{ textAlign: 'center' }}>{c.totalPedidos}</td>
+                              <td style={{ fontSize: '.65rem', color: '#9ca3af' }}>{c.primerMensaje}</td>
+                              <td>
+                                <button className="wbv5-flow-3btn" onClick={() => setClienteDetail({...c})}>✏️</button>
+                                <button className="wbv5-flow-3btn" onClick={() => { navigator.clipboard?.writeText(`${c.name} | ${c.phone} | ${c.ciudad}`); tip('📋 Copiado') }}>📋</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ══ DISPARADORES ══ */}
+          {page === 'disparadores' && (
+            <div className="wbv5-content">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.2rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>⚡ Disparadores</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes automáticos basados en tiempo e interacción del cliente</div>
+                </div>
+                <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditTrigger({ id: `tr${Date.now()}`, name: '', condition: 'no_reply', delay: 60, unit: 'min', producto: '', message: '', active: true, mediaType: null, mediaUrl: '' })}>+ Nuevo disparador</button>
+              </div>
+
+              {/* ── Banner: contactos con disparadores pausados ── */}
+              {Object.values(triggerContactMap).filter(v => v === false).length > 0 && (
+                <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '.65rem 1rem', marginBottom: '.75rem', display: 'flex', alignItems: 'center', gap: '.75rem' }}>
+                  <span style={{ fontSize: '1.1rem' }}>⚡</span>
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '.76rem', fontWeight: 700, color: '#92400e' }}>
+                      {Object.values(triggerContactMap).filter(v => v === false).length} contacto(s) con disparadores pausados
+                    </span>
+                    <span style={{ fontSize: '.66rem', color: '#b45309', marginLeft: '.4rem' }}>
+                      — Actívalo en cada chat desde el botón ⚡ Auto OFF del header
+                    </span>
+                  </div>
+                  <button
+                    className="wbv5-btn wbv5-btn-sm"
+                    style={{ background: '#f59e0b', color: '#fff', border: 'none', flexShrink: 0 }}
+                    onClick={() => {
+                      setTriggerContactMap({})
+                      try { localStorage.setItem('wa_trigger_contact_map', '{}') } catch {}
+                      tip('⚡ Disparadores reactivados para todos los contactos')
+                    }}
+                  >
+                    🔄 Reactivar todos
+                  </button>
+                </div>
+              )}
+
+              {/* Panel de edición de disparador */}
+              {editTrigger && (
+                <div className="wbv5-card" style={{ border: '2px solid #2563eb' }}>
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">✏️ {editTrigger.id.startsWith('tr') && triggers.find(t => t.id === editTrigger.id) ? 'Editar' : 'Nuevo'} Disparador</div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>✕</button>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div className="wbv5-cli-form-grid">
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Nombre del disparador</div>
+                        <input className="wbv5-form-input" value={editTrigger.name} onChange={e => setEditTrigger(p => ({ ...p, name: e.target.value }))} placeholder="Ej: Sin respuesta 1 hora" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">📦 Producto / Plantilla <span style={{ fontWeight: 400, color: '#9ca3af' }}>(nombre del producto a promover)</span></div>
+                        <input
+                          className="wbv5-form-input"
+                          value={editTrigger.producto || ''}
+                          onChange={e => setEditTrigger(p => ({ ...p, producto: e.target.value }))}
+                          placeholder="Ej: Combo Detox 30 días, Pack Energía Total..."
+                          list="productos-list"
+                        />
+                        <datalist id="productos-list">
+                          {trainingPrompt.match(/^[-•·]\s*(.+?):/gm)?.slice(0, 12).map((m, i) => (
+                            <option key={i} value={m.replace(/^[-•·]\s*/, '').replace(/:.*/, '').trim()} />
+                          ))}
+                        </datalist>
+                        <div style={{ fontSize: '.6rem', color: '#9ca3af', marginTop: '.15rem' }}>💡 La IA genera el mensaje específico para este producto cuando presionas 🤖 Generar</div>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Condición</div>
+                        <select className="wbv5-form-input" value={editTrigger.condition} onChange={e => setEditTrigger(p => ({ ...p, condition: e.target.value }))}>
+                          <option value="no_reply">Sin respuesta después de X tiempo</option>
+                          <option value="seen">Mensaje visto pero sin responder</option>
+                          <option value="no_purchase">Sin compra después de X tiempo</option>
+                          <option value="keyword">🔑 Palabra clave detectada (instantáneo)</option>
+                          <option value="first_message">Primer mensaje recibido</option>
+                        </select>
+                      </div>
+                      {editTrigger.condition === 'keyword' ? (
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">🔑 Palabras clave <span style={{ fontWeight: 400, color: '#9ca3af' }}>(separa con coma)</span></div>
+                          <input
+                            className="wbv5-form-input"
+                            value={editTrigger.keyword || ''}
+                            onChange={e => setEditTrigger(p => ({ ...p, keyword: e.target.value }))}
+                            placeholder="Ej: precio, cuánto vale, cuanto cuesta, envío"
+                          />
+                          <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.15rem' }}>
+                            💡 Cuando el cliente escriba alguna de estas palabras, se enviará automáticamente el mensaje de abajo
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">Tiempo de espera</div>
+                          <div style={{ display: 'flex', gap: '.4rem' }}>
+                            <input className="wbv5-form-input" type="number" value={editTrigger.delay} min={1} style={{ width: 80 }} onChange={e => setEditTrigger(p => ({ ...p, delay: parseInt(e.target.value) || 1 }))} />
+                            <select className="wbv5-form-input" value={editTrigger.unit} onChange={e => setEditTrigger(p => ({ ...p, unit: e.target.value }))}>
+                              <option value="min">Minutos</option>
+                              <option value="h">Horas</option>
+                              <option value="d">Días</option>
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">Tipo de media (opcional)</div>
+                        <select className="wbv5-form-input" value={editTrigger.mediaType || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaType: e.target.value || null }))}>
+                          <option value="">Solo texto</option>
+                          <option value="image">🖼️ Imagen</option>
+                          <option value="video">🎥 Video</option>
+                          <option value="audio">🎵 Audio</option>
+                          <option value="document">📄 Documento</option>
+                        </select>
+                      </div>
+                    </div>
+                    {editTrigger.mediaType && (
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">URL del archivo media</div>
+                        <input className="wbv5-form-input" value={editTrigger.mediaUrl || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaUrl: e.target.value }))} placeholder="https://... o ruta relativa" />
+                      </div>
+                    )}
+                    {/* Selector de plantilla para triggers de palabra clave */}
+                    {editTrigger.condition === 'keyword' && plantillas.length > 0 && (
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">📋 Cargar desde plantilla guardada</div>
+                        <select
+                          className="wbv5-form-input"
+                          defaultValue=""
+                          onChange={e => {
+                            if (!e.target.value) return
+                            const pl = plantillas.find(p => p.id === e.target.value)
+                            if (pl) setEditTrigger(prev => ({ ...prev, message: pl.mensaje }))
+                            e.target.value = ''
+                          }}
+                        >
+                          <option value="">— Seleccionar plantilla —</option>
+                          {plantillas.map(pl => (
+                            <option key={pl.id} value={pl.id}>{pl.nombre} ({pl.categoria})</option>
+                          ))}
+                        </select>
+                        <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.15rem' }}>
+                          💡 Al seleccionar se carga el texto en el campo de abajo 👇
+                        </div>
+                      </div>
+                    )}
+                    <div className="wbv5-form-row">
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.28rem' }}>
+                        <div className="wbv5-form-lbl" style={{ margin: 0 }}>
+                          {editTrigger.condition === 'keyword' ? '📋 Mensaje a enviar' : 'Mensaje'} ({(editTrigger.message || '').length}/1000 chars)
+                        </div>
+                        <button className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`} style={{ fontSize: '.65rem' }} onClick={() => generateTriggerMsg(editTrigger.name || 'seguimiento')} disabled={generatingTrigger}>
+                          {generatingTrigger ? '⏳ Generando...' : '🤖 Generar con IA'}
+                        </button>
+                      </div>
+                      <textarea className="wbv5-form-input" rows={4} value={editTrigger.message} onChange={e => setEditTrigger(p => ({ ...p, message: e.target.value }))} placeholder="Escribe el mensaje o genera con IA. Usa {nombre} para personalizar." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
+                      <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.18rem' }}>Variables: {'{nombre}'} {'{telefono}'} {'{tienda}'}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => saveTriggerEdit(editTrigger)}>💾 Guardar disparador</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>Cancelar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Lista de disparadores */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Mis plantillas</div>
-                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('➕ Nueva plantilla — próximamente')}>+ Nueva</button>
+                  <div className="wbv5-card-title">Disparadores configurados</div>
+                  <span style={{ fontSize: '.68rem', color: '#6b7280' }}>{triggers.filter(t => t.active).length} activos de {triggers.length}</span>
+                </div>
+                <div style={{ padding: 0 }}>
+                  {triggers.length === 0 ? (
+                    <div className="wbv5-empty-state" style={{ padding: '2rem' }}>
+                      <div style={{ fontSize: '2rem' }}>⚡</div>
+                      <div>Sin disparadores. Crea uno para automatizar seguimientos.</div>
+                    </div>
+                  ) : triggers.map(t => (
+                    <div key={t.id} className="wbv5-trigger-row">
+                      <div className="wbv5-tr-left">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.18rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#111827' }}>{t.name || 'Sin nombre'}</span>
+                          <span className={`wbv5-badge ${t.active ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '.6rem' }}>{t.active ? '✅ Activo' : '⏸ Pausado'}</span>
+                          {t.producto && <span style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 20, padding: '.1rem .5rem', fontSize: '.62rem', fontWeight: 700 }}>📦 {t.producto}</span>}
+                        </div>
+                        <div style={{ fontSize: '.68rem', color: '#6b7280', display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}>
+                          {t.condition === 'keyword'
+                            ? <span>🔑 Palabras: <strong style={{ color: '#5b21b6' }}>{(t.keyword || '').split(',').slice(0,3).map(k=>k.trim()).join(', ')}{(t.keyword||'').split(',').length > 3 ? '…' : ''}</strong></span>
+                            : <span>⏱ {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'días'}</span>
+                          }
+                          <span>🎯 {t.condition === 'no_reply' ? 'Sin respuesta' : t.condition === 'seen' ? 'Visto sin responder' : t.condition === 'no_purchase' ? 'Sin compra' : t.condition === 'keyword' ? '⚡ Instantáneo' : 'Primer mensaje'}</span>
+                          {t.mediaType && <span>📎 {t.mediaType}</span>}
+                        </div>
+                        <div style={{ fontSize: '.7rem', color: '#374151', marginTop: '.2rem', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>💬 {t.message}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '.3rem', flexShrink: 0, alignItems: 'center' }}>
+                        <button className={`wbv5-btn wbv5-btn-sm ${t.active ? 'wbv5-btn-outline' : 'wbv5-btn-green'}`} onClick={() => toggleTrigger(t.id)}>{t.active ? '⏸' : '▶'}</button>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger({...t})}>✏️</button>
+                        <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#fee2e2', color: '#991b1b' }} onClick={() => deleteTrigger(t.id)}>🗑️</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Flujos de seguimiento recomendados */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">🏆 Secuencias de seguimiento recomendadas</div>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTriggers([...triggers, ...DEFAULT_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))]); tip('✅ Secuencias agregadas') }}>+ Agregar todas</button>
                 </div>
                 <div className="wbv5-card-bd">
-                  <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
-                    <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>📋</div>
-                    <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#6b7280', marginBottom: '.3rem' }}>Sin plantillas aún</div>
-                    <div style={{ fontSize: '.72rem', color: '#9ca3af' }}>Crea plantillas aprobadas por Meta para enviar mensajes masivos</div>
+                  <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                    Las 3 mejores secuencias de cierre de ventas optimizadas con IA para WhatsApp
+                  </div>
+                  {[
+                    { icon: '⚡', title: '1h sin respuesta', desc: 'Reactivación amable — pregunta de interés', time: '1 hora', color: '#dbeafe', tc: '#1d4ed8' },
+                    { icon: '👁️', title: 'Visto sin responder 3h', desc: 'Oferta personalizada — urgencia suave', time: '3 horas', color: '#fef3c7', tc: '#92400e' },
+                    { icon: '🔥', title: 'Cierre 24h', desc: 'Última oportunidad — descuento + CTA directo', time: '24 horas', color: '#dcfce7', tc: '#166534' },
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{s.icon}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827' }}>{s.title}</div>
+                        <div style={{ fontSize: '.65rem', color: '#6b7280' }}>{s.desc}</div>
+                      </div>
+                      <span style={{ background: s.color, color: s.tc, borderRadius: 20, padding: '.18rem .55rem', fontSize: '.62rem', fontWeight: 700 }}>{s.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Palabras Clave recomendadas ── */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div>
+                    <div className="wbv5-card-title">🔑 Disparadores de palabras clave</div>
+                    <div style={{ fontSize: '.65rem', color: '#6b7280' }}>Se disparan al instante cuando el cliente escribe esa palabra</div>
+                  </div>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => {
+                    const toAdd = DEFAULT_KW_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))
+                    if (!toAdd.length) { tip('Ya tienes todos los disparadores de palabras clave'); return }
+                    saveTriggers([...triggers, ...toAdd])
+                    tip(`✅ ${toAdd.length} disparadores de palabras clave agregados`)
+                  }}>+ Agregar todos</button>
+                </div>
+                <div className="wbv5-card-bd">
+                  <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                    Respuestas automáticas <strong>instantáneas</strong> cuando el cliente menciona una palabra clave. Funciona con IA ON y OFF.
+                  </div>
+                  {DEFAULT_KW_TRIGGERS.map((kw, i) => {
+                    const alreadyAdded = triggers.find(t => t.name === kw.name)
+                    const kwPreview = kw.keyword.split(',').slice(0, 3).map(k => k.trim()).join(', ')
+                    const colors = ['#f0fdf4','#fefce8','#eff6ff','#fdf4ff']
+                    const tcs    = ['#166534','#854d0e','#1d4ed8','#7e22ce']
+                    return (
+                      <div key={kw.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', padding: '.6rem 0', borderBottom: i < DEFAULT_KW_TRIGGERS.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: colors[i], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>🔑</div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827', marginBottom: '.12rem' }}>{kw.name.replace('🔑 ', '')}</div>
+                          <div style={{ fontSize: '.63rem', color: '#6b7280' }}>Palabras: <span style={{ color: tcs[i], fontWeight: 600 }}>{kwPreview}…</span></div>
+                          <div style={{ fontSize: '.63rem', color: '#374151', marginTop: '.1rem', maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            💬 {kw.message.substring(0, 70)}…
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', alignItems: 'flex-end', flexShrink: 0 }}>
+                          <span style={{ background: colors[i], color: tcs[i], borderRadius: 20, padding: '.18rem .55rem', fontSize: '.6rem', fontWeight: 700 }}>⚡ Instantáneo</span>
+                          {alreadyAdded ? (
+                            <span style={{ fontSize: '.6rem', color: '#16a34a', fontWeight: 600 }}>✅ Ya agregado</span>
+                          ) : (
+                            <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ fontSize: '.62rem', padding: '.2rem .5rem' }} onClick={() => {
+                              saveTriggers([...triggers, { ...kw, id: `kw_${Date.now()}` }])
+                              tip(`✅ Disparador "${kw.name.replace('🔑 ', '')}" agregado`)
+                            }}>+ Agregar</button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                  <div style={{ marginTop: '.75rem', padding: '.6rem', background: '#f0fdf4', borderRadius: 8, fontSize: '.65rem', color: '#166534', lineHeight: 1.5 }}>
+                    💡 <strong>Cómo funciona:</strong> Cuando el cliente escriba cualquiera de las palabras clave, el bot responde automáticamente con el mensaje configurado — sin importar si la IA está ON u OFF. También puedes crear tus propios disparadores con <strong>+ Nuevo disparador → 🔑 Palabra clave</strong>.
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ══ ENTRENAMIENTO IA ══ */}
+          {page === 'entrenamiento' && (
+            <div className="wbv5-content">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
+                <div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>🧠 Entrenamiento IA</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Dale contexto completo a tu bot para que sea el mejor cerrador de ventas del mundo</div>
+                </div>
+                <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
+                  <button className={`wbv5-btn wbv5-btn-sm ${generatingPrompt ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`} onClick={generateWinnerPrompt} disabled={generatingPrompt}>
+                    {generatingPrompt ? '⏳ Generando...' : '🤖 Generar prompt ganador'}
+                  </button>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTraining(trainingPrompt); tip('✅ Entrenamiento guardado') }}>💾 Guardar</button>
+                </div>
+              </div>
+
+              {/* Tabs */}
+              <div style={{ display: 'flex', gap: '.3rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'asistente',  label: '🚀 Asistente IA' },
+                  { id: 'contexto',   label: '🏢 Contexto empresa' },
+                  { id: 'memoria',    label: '🧠 Memoria n8n' },
+                  { id: 'prueba',     label: '🧪 Probar bot' },
+                ].map(tab => (
+                  <button key={tab.id} className={`wbv5-btn wbv5-btn-sm ${trainingTab === tab.id ? 'wbv5-btn-blue' : 'wbv5-btn-outline'}`} onClick={() => setTrainingTab(tab.id)}>{tab.label}</button>
+                ))}
+              </div>
+
+              {/* Tab: Asistente IA — Wizard */}
+              {trainingTab === 'asistente' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">🚀 Asistente de entrenamiento IA</div>
+                    <span className="wbv5-badge" style={{ background: '#ede9fe', color: '#5b21b6' }}>✨ Wizard</span>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.73rem', color: '#374151', marginBottom: '.85rem', lineHeight: 1.6, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '.65rem .9rem' }}>
+                      🎯 <strong>¿Cómo funciona?</strong> Llena los datos de tu negocio y la IA genera automáticamente el entrenamiento ganador. El bot primero <strong>conserva la conversación siendo amigable</strong>, y después busca el <strong>cierre de ventas de forma natural</strong>.
+                    </div>
+                    <div style={{ display: 'grid', gap: '.6rem' }}>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🏢 Nombre de tu empresa / negocio *</div>
+                        <input className="wbv5-form-input" value={wizardData.empresa} onChange={e => setWizardData(p => ({ ...p, empresa: e.target.value }))} placeholder="Ej: Sanate Colombia" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">📝 ¿Qué vendes? Descripción breve</div>
+                        <input className="wbv5-form-input" value={wizardData.descripcion} onChange={e => setWizardData(p => ({ ...p, descripcion: e.target.value }))} placeholder="Ej: Suplementos naturales para salud y bienestar" />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🛍️ Productos principales *</div>
+                        <textarea className="wbv5-form-input" rows={3} value={wizardData.productos} onChange={e => setWizardData(p => ({ ...p, productos: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 días\n- Pack Energía Total\n- Kit Bienestar Premium'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">💰 Precios de tus productos *</div>
+                        <textarea className="wbv5-form-input" rows={3} value={wizardData.precios} onChange={e => setWizardData(p => ({ ...p, precios: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 días: $150.000\n- Pack Energía Total: $89.000\n- Kit Bienestar Premium: $220.000'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🎁 Combos y ofertas especiales</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.combos} onChange={e => setWizardData(p => ({ ...p, combos: e.target.value }))} placeholder="Ej: 2x1 en Detox, envío gratis por compras +$200.000" style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">💬 Estilo de comunicación del bot</div>
+                        <select className="wbv5-form-input" value={wizardData.estilo} onChange={e => setWizardData(p => ({ ...p, estilo: e.target.value }))}>
+                          <option value="amigable">😊 Amigable y cercano</option>
+                          <option value="profesional">👔 Profesional y formal</option>
+                          <option value="energico">⚡ Energético y motivador</option>
+                          <option value="suave">🌸 Suave y empático</option>
+                        </select>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">🔄 Objeciones comunes (cómo las manejas)</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.objeciones} onChange={e => setWizardData(p => ({ ...p, objeciones: e.target.value }))} placeholder={'Ej: "Está muy caro" → Ofrezco plan de pago o combo más económico'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">🚚 Envío y logística</div>
+                          <input className="wbv5-form-input" value={wizardData.envio} onChange={e => setWizardData(p => ({ ...p, envio: e.target.value }))} placeholder="Ej: Todo Colombia, 2-3 días, $12.000" />
+                        </div>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">🕐 Horario de atención</div>
+                          <input className="wbv5-form-input" value={wizardData.horario} onChange={e => setWizardData(p => ({ ...p, horario: e.target.value }))} placeholder="Ej: Lun-Sáb 8am-6pm" />
+                        </div>
+                      </div>
+                      <div className="wbv5-form-row">
+                        <div className="wbv5-form-lbl">✨ Info adicional (métodos de pago, certificaciones, testimonios...)</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.extra} onChange={e => setWizardData(p => ({ ...p, extra: e.target.value }))} placeholder="Nequi, Bancolombia, contraentrega, 500+ clientes satisfechos..." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                      </div>
+                    </div>
+                    {!hasAiKey && (
+                      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.6rem .9rem', fontSize: '.73rem', color: '#713f12', marginTop: '.75rem' }}>
+                        ⚠️ Necesitas una <strong>API Key</strong> configurada en <strong>Ajustes → API & Tokens</strong>. Puedes usar OpenAI (de pago) o <strong>Google Gemini gratis</strong> (aistudio.google.com/apikey).
+                      </div>
+                    )}
+                    <div style={{ display: 'flex', gap: '.5rem', marginTop: '.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <button
+                        className={`wbv5-btn wbv5-btn-sm ${generatingWizard ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`}
+                        onClick={generateTrainingWizard}
+                        disabled={generatingWizard || !hasAiKey}
+                        style={{ flex: 1, minWidth: 200, fontSize: '.78rem', padding: '.55rem 1rem' }}
+                      >
+                        {generatingWizard ? '⏳ Generando entrenamiento ganador...' : '🎯 Generar entrenamiento ganador'}
+                      </button>
+                      <button
+                        className="wbv5-btn wbv5-btn-outline wbv5-btn-sm"
+                        onClick={() => setWizardData({ empresa: '', descripcion: '', productos: '', precios: '', combos: '', estilo: 'amigable', objeciones: '', envio: '', horario: '', extra: '' })}
+                      >
+                        🗑️ Limpiar
+                      </button>
+                    </div>
+                    <div style={{ fontSize: '.65rem', color: '#9ca3af', marginTop: '.4rem', lineHeight: 1.5 }}>
+                      💡 El resultado se guardará automáticamente en <strong>Contexto empresa</strong>. Puedes editarlo después.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Contexto empresa */}
+              {trainingTab === 'contexto' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd">
+                    <div className="wbv5-card-title">🏢 Contexto del negocio</div>
+                    <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
+                      <span style={{ fontSize: '.68rem', color: trainingPrompt.length > 70000 ? '#dc2626' : trainingPrompt.length > 50000 ? '#f59e0b' : '#16a34a', fontWeight: 700 }}>
+                        {trainingPrompt.length.toLocaleString()} / 80,000 chars
+                      </span>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => saveTraining(TRAINING_TEMPLATE)}>📋 Plantilla</button>
+                    </div>
+                  </div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
+                      📝 Escribe aquí TODO sobre tu negocio: productos, precios, combos, forma de hablar, objeciones comunes, política de envío, historia... <strong>Entre más contexto, mejor vende la IA.</strong>
+                    </div>
+                    <textarea
+                      className="wbv5-training-area"
+                      value={trainingPrompt}
+                      onChange={e => saveTraining(e.target.value)}
+                      maxLength={80000}
+                      placeholder="Pega aquí el contexto completo de tu empresa...&#10;&#10;Incluye:&#10;- Nombre y descripción del negocio&#10;- Todos los productos con precios&#10;- Combos y ofertas especiales&#10;- Forma de hablar (formal/informal)&#10;- Técnicas de cierre de venta&#10;- Manejo de objeciones&#10;- Datos de contacto y envío"
+                    />
+                    <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
+                      <button className={`wbv5-btn wbv5-btn-sm ${generatingPrompt ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`} onClick={generateWinnerPrompt} disabled={generatingPrompt}>
+                        {generatingPrompt ? '⏳ Generando con IA...' : '✨ Generar prompt ganador con IA'}
+                      </button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(trainingPrompt); tip('📋 Contexto copiado') }}>📋 Copiar todo</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { if(window.confirm('¿Limpiar todo el contexto?')) saveTraining('') }}>🗑️ Limpiar</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Memoria n8n */}
+              {trainingTab === 'memoria' && (
+                <div className="wbv5-content" style={{ padding: 0, gap: '.75rem' }}>
+                  <div className="wbv5-card">
+                    <div className="wbv5-card-hd"><div className="wbv5-card-title">🧠 Memoria de clientes (n8n)</div><span className="wbv5-badge badge-blue">Via n8n</span></div>
+                    <div className="wbv5-card-bd">
+                      <div style={{ fontSize: '.76rem', color: '#374151', lineHeight: 1.6, marginBottom: '.75rem' }}>
+                        La memoria del cliente se guarda en n8n usando <strong>nodos de memoria</strong>. Cada número de WhatsApp tiene su propio historial.
+                      </div>
+                      {[
+                        { icon: '📱', title: 'Identificación por número', desc: 'Cada cliente se identifica por su número de WhatsApp (chatId). La IA siempre sabe con quién habla.' },
+                        { icon: '🛒', title: 'Historial de pedidos', desc: 'n8n guarda qué productos pidió, cuándo y cuánto pagó. La IA lo usa para personalizar respuestas.' },
+                        { icon: '💬', title: 'Contexto de conversación', desc: 'Los últimos 20 mensajes se incluyen en cada llamada a ChatGPT para mantener coherencia.' },
+                        { icon: '🔄', title: 'Reconocimiento automático', desc: 'Cuando el cliente vuelve a escribir, la IA lo reconoce y saluda por su nombre con su historial.' },
+                      ].map((item, i) => (
+                        <div key={i} style={{ display: 'flex', gap: '.75rem', padding: '.55rem 0', borderBottom: i < 3 ? '1px solid #f3f4f6' : 'none' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>{item.icon}</div>
+                          <div>
+                            <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827' }}>{item.title}</div>
+                            <div style={{ fontSize: '.68rem', color: '#6b7280', marginTop: '.08rem', lineHeight: 1.4 }}>{item.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: '.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.72rem', color: '#166534' }}>
+                        💡 <strong>Configurar en n8n:</strong> Agrega un nodo "Window Buffer Memory" o "Postgres Chat Memory" en tu flujo de WhatsApp. El webhook ya recibe el <code style={{ background: 'rgba(0,0,0,.07)', padding: '1px 4px', borderRadius: 3 }}>chatId</code> para identificar al cliente.
+                      </div>
+                      <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" style={{ marginTop: '.6rem' }} onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n para configurar ↗</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab: Probar bot */}
+              {trainingTab === 'prueba' && (
+                <div className="wbv5-card">
+                  <div className="wbv5-card-hd"><div className="wbv5-card-title">🧪 Probar bot IA</div></div>
+                  <div className="wbv5-card-bd">
+                    <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
+                      Prueba cómo responderá tu bot antes de activarlo. Requiere API Key de OpenAI configurada.
+                    </div>
+                    {!hasAiKey ? (
+                      <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12' }}>
+                        ⚠️ Configura tu API Key (OpenAI o Gemini gratis) en <strong>Ajustes → API & Tokens</strong> para probar el bot.
+                      </div>
+                    ) : (
+                      <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} geminiKey={geminiKey} aiModel={aiModel} tip={tip} msgMode={msgMode} useEmojis={useEmojis} useStyles={useStyles} />
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1102,18 +3279,51 @@ export default function WhatsAppBot() {
             <div className="wbv5-content">
               <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>📱 Conexión WhatsApp</div>
               <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Vincula tu WhatsApp al bot para recibir y enviar mensajes automáticamente</div>
-              <div className="wbv5-qr-card">
-                {/* Canvas QR — solo visible cuando NO está conectado */}
-                {status !== 'connected' && (
-                  <div className="wbv5-qr-box">
-                    <canvas ref={qrRef} width="200" height="200" />
-                    {status === 'connecting' && !qrDataUrl && (
-                      <div style={{ position: 'absolute', bottom: 6, left: 0, right: 0, textAlign: 'center', fontSize: '.65rem', color: '#9ca3af' }}>
-                        Generando QR...
-                      </div>
-                    )}
+
+              {/* ── Banner: servidor Baileys offline ── */}
+              {serverOnline === false && (
+                <div className="wbv5-server-offline-banner">
+                  <div className="wbv5-sob-icon">⚠️</div>
+                  <div className="wbv5-sob-body">
+                    <div className="wbv5-sob-title">Servidor Baileys no disponible</div>
+                    <div className="wbv5-sob-desc">
+                      El backend no responde en <code>{BU.replace('/api/whatsapp','')}</code>.
+                      Si accedes desde <strong>sanate.store (HTTPS)</strong>, el navegador bloquea conexiones HTTP a localhost.
+                      Despliega el servidor en Railway/Render y configura la URL en <strong>Ajustes → Conexión WA</strong>.
+                    </div>
                   </div>
-                )}
+                  <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>🔄 Reintentar</button>
+                    <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#7c3aed', color: '#fff' }} onClick={() => { goPage('config'); setCfgTab('conn') }}>⚙️ Configurar URL</button>
+                  </div>
+                </div>
+              )}
+
+              <div className="wbv5-qr-card">
+                {/* Canvas QR — siempre visible; muestra skeleton, QR real o checkmark verde */}
+                <div className="wbv5-qr-box" style={{ position: 'relative' }}>
+                  {serverOnline === false && status !== 'connected' ? (
+                    <div className="wbv5-qr-offline">
+                      <div style={{ fontSize: '2.2rem' }}>🔌</div>
+                      <div style={{ fontSize: '.72rem', color: '#6b7280', textAlign: 'center', marginTop: '.3rem', lineHeight: 1.4 }}>Servidor<br/>no disponible</div>
+                    </div>
+                  ) : (
+                    <>
+                      <canvas ref={qrRef} width="200" height="200" style={{ borderRadius: 10, display: 'block' }} />
+                      {status === 'connecting' && !qrDataUrl && (
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,.45)', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, textAlign: 'center', padding: '.25rem 0', fontSize: '.64rem', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.3rem' }}>
+                          <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#fbbf24', animation: 'wbv5-pulse 1s ease-in-out infinite' }} />
+                          Generando QR...
+                        </div>
+                      )}
+                      {status === 'connected' && (
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(22,163,74,.9)', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, textAlign: 'center', padding: '.28rem 0', fontSize: '.67rem', color: '#fff', fontWeight: 700 }}>
+                          ✅ WhatsApp vinculado
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
                 <div className="wbv5-qr-info">
                   {status === 'connected' ? (
                     <>
@@ -1129,6 +3339,21 @@ export default function WhatsAppBot() {
                       )}
                       <button className="wbv5-btn wbv5-btn-red" onClick={disconnectWA} style={{ width: '100%' }}>
                         🔌 Desvincular WhatsApp
+                      </button>
+                    </>
+                  ) : serverOnline === false ? (
+                    <>
+                      <h3 style={{ color: '#dc2626', margin: '0 0 .35rem' }}>🔌 Servidor no disponible</h3>
+                      <p style={{ opacity: .9, margin: '0 0 .6rem' }}>
+                        El servidor Baileys no responde. Inícialo localmente o despliégalo en Railway para generar el código QR.
+                      </p>
+                      <div className="wbv5-qr-steps">
+                        <span>💻 Local: <code style={{ background: 'rgba(255,255,255,.2)', padding: '1px 5px', borderRadius: 4, fontSize: '.68rem' }}>node server.js</code></span>
+                        <span>☁️ Railway: verifica que el servicio esté activo</span>
+                        <span>🔑 Puerto por defecto: <strong>5055</strong></span>
+                      </div>
+                      <button className="wbv5-btn" style={{ marginTop: '1rem', width: '100%', background: '#fff', color: '#075e54', fontSize: '.85rem', padding: '.55rem 1rem', fontWeight: 700 }} onClick={ping}>
+                        🔄 Verificar conexión
                       </button>
                     </>
                   ) : (
@@ -1276,26 +3501,92 @@ export default function WhatsAppBot() {
 
                   {/* Conexión WA */}
                   {cfgTab === 'conn' && (
+                    <>
+                    {/* ── Backend URL ── */}
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
-                        <div className="wbv5-card-title">📱 WhatsApp / Baileys</div>
+                        <div className="wbv5-card-title">🔌 Servidor Baileys</div>
+                        <span className={`wbv5-badge ${serverOnline === true ? 'badge-green' : serverOnline === false ? 'badge-red' : 'badge-amber'}`}>
+                          {serverOnline === true ? '✅ Online' : serverOnline === false ? '❌ Offline' : '⏳ Verificando'}
+                        </span>
+                      </div>
+                      <div className="wbv5-card-bd">
+                        <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                          El bot necesita un servidor Baileys corriendo. Puede ser en local, Railway, Render o cualquier servicio cloud.<br />
+                          {backendUrlInput.includes('localhost') && window.location.protocol === 'https:' ? (
+                            <span style={{ color: '#dc2626', fontWeight: 600 }}>⚠️ Problema actual: desde <code>{window.location.origin}</code> los navegadores bloquean <code>http://localhost</code>. Usa Railway, Render o ngrok (URL pública HTTPS).</span>
+                          ) : backendUrlInput.includes('localhost') ? (
+                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>💡 Usando localhost — funciona en desarrollo local. Para producción usa Railway o Render.</span>
+                          ) : (
+                            <span style={{ color: '#16a34a', fontWeight: 600 }}>✅ URL correcta — usando servidor HTTPS externo.</span>
+                          )}
+                        </div>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">URL base del servidor</div>
+                          <input
+                            className="wbv5-form-input"
+                            value={backendUrlInput}
+                            onChange={e => setBackendUrlInput(e.target.value)}
+                            placeholder="https://tu-app.railway.app  ó  http://localhost:5055"
+                          />
+                          <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                            Se usará: <code>{backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '') || 'http://localhost:5055'}/api/whatsapp</code>
+                          </div>
+                        </div>
+                        <div className="wbv5-form-row">
+                          <div className="wbv5-form-lbl">Secret Token</div>
+                          <input
+                            className="wbv5-form-input"
+                            type="password"
+                            value={secretInput}
+                            onChange={e => setSecretInput(e.target.value)}
+                            placeholder="sanate_secret_2025"
+                          />
+                        </div>
+                        {/* Opciones de deploy */}
+                        <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.65rem .9rem', marginBottom: '.75rem' }}>
+                          <div style={{ fontSize: '.72rem', fontWeight: 700, color: '#166534', marginBottom: '.4rem' }}>🚀 Opciones de deploy del servidor</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
+                            {[
+                              { icon: '🚂', name: 'Railway (recomendado)', url: 'https://railway.app', desc: 'Gratis hasta 500h/mes, siempre HTTPS' },
+                              { icon: '🌐', name: 'Render', url: 'https://render.com', desc: 'Free tier disponible, HTTPS automático' },
+                              { icon: '🔧', name: 'ngrok (local HTTPS)', url: 'https://ngrok.com', desc: 'Expone localhost:5055 con URL pública temporal' },
+                            ].map((opt, i) => (
+                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.7rem' }}>
+                                <span>{opt.icon}</span>
+                                <span style={{ fontWeight: 600, color: '#166534', minWidth: '150px' }}>{opt.name}</span>
+                                <span style={{ color: '#6b7280', flex: 1 }}>{opt.desc}</span>
+                                <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.15rem .45rem' }} onClick={() => window.open(opt.url, '_blank')}>Abrir ↗</button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={saveBackendUrl}>💾 Guardar y reconectar</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp','')); setSecretInput(DEFAULT_SECRET) }}>↩️ Restaurar defaults</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => syncSettingsToBackend()} title="Sincroniza OpenAI key, prompt y configuración n8n al backend para que el bot funcione con Chrome cerrado">☁️ Sincronizar al Backend</button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* ── WhatsApp Status ── */}
+                    <div className="wbv5-card">
+                      <div className="wbv5-card-hd">
+                        <div className="wbv5-card-title">📱 WhatsApp</div>
                         <span className={`wbv5-badge ${status === 'connected' ? 'badge-green' : status === 'connecting' ? 'badge-amber' : 'badge-red'}`}>
                           {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando' : '❌ Desconectado'}
                         </span>
                       </div>
                       <div className="wbv5-card-bd">
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">Server URL (Baileys)</div><input className="wbv5-form-input" defaultValue="/api/whatsapp" /></div>
-                        <div className="wbv5-form-row"><div className="wbv5-form-lbl">Secret Token</div><input className="wbv5-form-input" type="password" defaultValue="sanate_secret_2025" /></div>
+                        {phone && <div style={{ fontSize: '.76rem', color: '#166534', background: '#f0fdf4', borderRadius: 8, padding: '.5rem .75rem', marginBottom: '.6rem' }}>📱 <strong>{phone}</strong></div>}
                         <div className="wbv5-form-row">
                           <div className="wbv5-form-lbl">Webhook n8n (producción)</div>
                           <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto' }}>📋</span></div>
                         </div>
-                        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('✅ Configuración guardada')}>💾 Guardar</button>
-                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
-                        </div>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ver QR / Conexión →</button>
                       </div>
                     </div>
+                    </>
                   )}
 
                   {/* Respuestas rápidas */}
@@ -1395,6 +3686,89 @@ export default function WhatsAppBot() {
                   {/* API & Tokens */}
                   {cfgTab === 'api' && (
                     <>
+                      {/* Estado IA Key */}
+                      {!openaiKey && !geminiKey && (
+                        <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12', marginBottom: '.75rem' }}>
+                          ⚠️ <strong>Sin API Key configurada.</strong> Agrega una de las dos opciones abajo para activar la IA. El botón 🤖 en el chat necesita al menos una key para funcionar.
+                        </div>
+                      )}
+                      {/* ChatGPT / OpenAI */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🤖 ChatGPT / OpenAI</div>
+                          <span className={`wbv5-badge ${openaiKey ? 'badge-green' : 'badge-amber'}`}>
+                            {openaiKey ? '✅ Conectado' : '⏳ Sin configurar'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Conecta tu API de OpenAI para respuestas automáticas con IA. El botón 🤖 en el chat usará esta key para generar respuestas perfectas.
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">OpenAI API Key</div>
+                            <input
+                              className="wbv5-form-input" type="password"
+                              placeholder="sk-proj-..."
+                              value={openaiKey}
+                              onChange={e => saveAiKey(e.target.value)}
+                            />
+                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ API Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Obtén tu key en platform.openai.com/api-keys</div>}
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Modelo</div>
+                            <select className="wbv5-form-input" value={aiModel} onChange={e => setAiModel(e.target.value)}>
+                              <option value="gpt-4o">GPT-4o (Recomendado)</option>
+                              <option value="gpt-4o-mini">GPT-4o mini (Rápido y económico)</option>
+                              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Más económico)</option>
+                            </select>
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Webhook n8n (procesamiento IA)</div>
+                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>📋</span></div>
+                            <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>El webhook recibe el mensaje, llama a ChatGPT y responde automáticamente.</div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-green'}`}
+                              onClick={toggleAiGlobal}
+                            >
+                              {aiEnabled ? '⏸ Desactivar IA' : '🚀 Activar IA'}
+                            </button>
+                            <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ↗</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>Obtener API Key ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Google Gemini — alternativa gratuita */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">✨ Google Gemini (alternativa gratuita)</div>
+                          <span className={`wbv5-badge ${geminiKey ? 'badge-green' : 'badge-amber'}`}>
+                            {geminiKey ? '✅ Conectado' : '⏳ Sin configurar'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Gemini 1.5 Flash es <strong>gratis hasta 60 req/min</strong>. Úsalo si no tienes OpenAI. El bot usa OpenAI primero y Gemini como respaldo automático.
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Google Gemini API Key</div>
+                            <input
+                              className="wbv5-form-input" type="password"
+                              placeholder="AIzaSy..."
+                              value={geminiKey}
+                              onChange={e => saveGeminiKey(e.target.value)}
+                            />
+                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ Gemini Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Obtén tu key gratis en aistudio.google.com/apikey</div>}
+                          </div>
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Obtener Gemini Key gratis ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
                           <div className="wbv5-card-title">🔑 Baileys (Railway)</div>
@@ -1442,33 +3816,151 @@ export default function WhatsAppBot() {
 
                   {/* Comportamiento bot */}
                   {cfgTab === 'bot' && (
-                    <div className="wbv5-card">
-                      <div className="wbv5-card-hd"><div className="wbv5-card-title">🤖 Comportamiento del bot</div></div>
-                      <div className="wbv5-card-bd">
-                        {[
-                          { label: 'Activar bot automáticamente', desc: 'El bot responde a todos los mensajes entrantes', on: true },
-                          { label: 'Guardar contactos en CRM', desc: 'Guarda nombre y teléfono de cada nuevo contacto', on: true },
-                          { label: 'Notificaciones en tiempo real', desc: 'Recibe notificaciones al llegar mensajes nuevos', on: true },
-                          { label: 'Modo silencioso fuera de horario', desc: 'El bot envía mensaje de ausencia y no notifica', on: false },
-                          { label: 'Transferir a humano cuando lo pide', desc: 'Desactiva el bot si el usuario escribe "agente"', on: true },
-                        ].map((opt, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
-                            <div>
-                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>{opt.label}</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{opt.desc}</div>
-                            </div>
-                            <span
-                              className={`wbv5-badge ${opt.on ? 'badge-green' : 'badge-red'}`}
-                              style={{ cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}
-                              onClick={() => tip(`⚙️ ${opt.label} — ${opt.on ? 'desactivado' : 'activado'}`)}
-                            >
-                              {opt.on ? '✅ ON' : '❌ OFF'}
-                            </span>
+                    <>
+                      {/* Timing del bot */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">⏱️ Tiempos de respuesta</div></div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Simula un comportamiento humano — la IA esperará antes de responder para que no parezca robot.
                           </div>
-                        ))}
-                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.75rem' }} onClick={() => tip('✅ Configuración guardada')}>💾 Guardar</button>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Pausa antes de responder (segundos): <strong>{botDelay}s</strong></div>
+                            <input type="range" min={0} max={15} value={botDelay} onChange={e => { const v = parseInt(e.target.value); setBotDelay(v); try { localStorage.setItem('wa_bot_delay', String(v)) } catch {} }} style={{ width: '100%', accentColor: '#25d366' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.6rem', color: '#9ca3af' }}><span>0s (inmediato)</span><span>5s</span><span>10s</span><span>15s (natural)</span></div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.5rem 0', borderTop: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Simular "escribiendo..."</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af' }}>Muestra el indicador de escritura antes de cada respuesta</div>
+                            </div>
+                            <button className={`wbv5-btn wbv5-btn-sm ${simulateTyping ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`} onClick={() => setSimulateTyping(s => !s)}>{simulateTyping ? '✅ ON' : '⚪ OFF'}</button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                      {/* Estilo de mensajes */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">📨 Estilo de mensajes</div></div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Controla cómo el bot estructura y formatea sus respuestas en WhatsApp.
+                          </div>
+                          {/* Envío Por Partes / Completo */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Envío de mensajes</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>
+                                {msgMode === 'partes' ? 'Por partes: varios mensajes con gancho e intriga' : 'Completo: un solo bloque de texto'}
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '.35rem', flexShrink: 0, marginLeft: '1rem' }}>
+                              <button
+                                className={`wbv5-btn wbv5-btn-sm ${msgMode === 'partes' ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                                onClick={() => { setMsgMode('partes'); try { localStorage.setItem('wa_msg_mode', 'partes') } catch {} }}
+                              >Por partes</button>
+                              <button
+                                className={`wbv5-btn wbv5-btn-sm ${msgMode === 'completo' ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                                onClick={() => { setMsgMode('completo'); try { localStorage.setItem('wa_msg_mode', 'completo') } catch {} }}
+                              >Completo</button>
+                            </div>
+                          </div>
+                          {/* Uso de Emojis */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Uso de Emojis</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useEmojis ? 'El bot usa emojis estratégicos en sus respuestas' : 'Sin emojis — respuestas más formales y textuales'}</div>
+                            </div>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${useEmojis ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                              style={{ flexShrink: 0, marginLeft: '1rem' }}
+                              onClick={() => { const nv = !useEmojis; setUseEmojis(nv); try { localStorage.setItem('wa_use_emojis', String(nv)) } catch {} }}
+                            >{useEmojis ? '✅ Activo' : '⚪ Inactivo'}</button>
+                          </div>
+                          {/* Uso de Estilos */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Uso de estilos</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useStyles ? 'Usa *negrita*, _cursiva_, ~tachado~ en WhatsApp' : 'Sin formato — texto plano únicamente'}</div>
+                            </div>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${useStyles ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
+                              style={{ flexShrink: 0, marginLeft: '1rem' }}
+                              onClick={() => { const nv = !useStyles; setUseStyles(nv); try { localStorage.setItem('wa_use_styles', String(nv)) } catch {} }}
+                            >{useStyles ? '✅ Activo' : '⚪ Inactivo'}</button>
+                          </div>
+                        </div>
+                      </div>
+                      {/* IA global */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🤖 Inteligencia Artificial</div>
+                          <span className={`wbv5-badge ${aiEnabled ? 'badge-green' : 'badge-amber'}`}>{aiEnabled ? '✅ Activa' : '⏳ Desactivada'}</span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Respuestas automáticas con ChatGPT</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>Todos los mensajes entrantes son respondidos automáticamente por IA via n8n</div>
+                            </div>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
+                              style={{ flexShrink: 0, marginLeft: '1rem' }}
+                              onClick={toggleAiGlobal}
+                            >
+                              {aiEnabled ? '🤖 ON' : '⚪ OFF'}
+                            </button>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderTop: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Activación por contacto</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>La IA solo responde en chats donde se activó manualmente con el botón <strong>🤖 IA OFF → ON</strong> del chat</div>
+                            </div>
+                            <span className="wbv5-badge badge-blue" style={{ flexShrink: 0, marginLeft: '1rem' }}>Manual</span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderTop: '1px solid #f3f4f6' }}>
+                            <div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#dc2626' }}>Desactivar IA en todos los contactos</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>
+                                {Object.values(aiContactMap).filter(v => v === true).length} contacto(s) con IA activa ahora
+                              </div>
+                            </div>
+                            <button className="wbv5-btn wbv5-btn-sm" style={{ flexShrink: 0, marginLeft: '1rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }} onClick={resetAllAiContacts}>
+                              🚫 Desactivar todos
+                            </button>
+                          </div>
+                          <div style={{ marginTop: '.4rem', fontSize: '.7rem', color: '#6b7280' }}>
+                            💡 Para configurar la API Key de ChatGPT ve a <strong>⚙️ Ajustes → API & Tokens → 🤖 ChatGPT</strong>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">⚙️ Comportamiento del bot</div></div>
+                        <div className="wbv5-card-bd">
+                          {[
+                            { label: 'Activar bot automáticamente', desc: 'El bot responde a todos los mensajes entrantes', on: true },
+                            { label: 'Guardar contactos en CRM', desc: 'Guarda nombre y teléfono de cada nuevo contacto', on: true },
+                            { label: 'Notificaciones en tiempo real', desc: 'Recibe notificaciones al llegar mensajes nuevos', on: true },
+                            { label: 'Modo silencioso fuera de horario', desc: 'El bot envía mensaje de ausencia y no notifica', on: false },
+                            { label: 'Transferir a humano cuando lo pide', desc: 'Desactiva el bot si el usuario escribe "agente"', on: true },
+                          ].map((opt, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
+                              <div>
+                                <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>{opt.label}</div>
+                                <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{opt.desc}</div>
+                              </div>
+                              <span
+                                className={`wbv5-badge ${opt.on ? 'badge-green' : 'badge-red'}`}
+                                style={{ cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}
+                                onClick={() => tip(`⚙️ ${opt.label} — ${opt.on ? 'desactivado' : 'activado'}`)}
+                              >
+                                {opt.on ? '✅ ON' : '❌ OFF'}
+                              </span>
+                            </div>
+                          ))}
+                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.75rem' }} onClick={() => tip('✅ Configuración guardada')}>💾 Guardar</button>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* Empresa */}

@@ -94,6 +94,7 @@ export default function Navbar() {
                                 <Profile />
                                 <div className='menuLinks'>
                                     <Anchor to='/' onClick={() => setIsOpen(false)}>Inicio</Anchor>
+                                    <Anchor to='/catalogo' onClick={() => setIsOpen(false)}>Catálogo</Anchor>
                                     <Anchor to='/' onClick={() => setIsOpen(false)}>Contacto</Anchor>
                                 </div>
                                 <div className='menuFooter'>

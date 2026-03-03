@@ -7,210 +7,263 @@ import Swal from 'sweetalert2';
 import baseURL, { resolveImg } from '../../url';
 import './SubBannerData.css';
 import NewSubBanner from '../SubBannerData/NewSubBanner';
-
-const ORDER_KEY = 'subBannerOrder';
-const getEndpoints = [
-    'subbannersGet.php',
-    'subbannerGet.php',
-    'subBannerGet.php',
-];
-const postEndpoints = [
-    'subbannersPost.php',
-    'subbannerPost.php',
-    'subBannerPost.php',
-];
-const deleteEndpoints = [
-    'subbannerDelete.php',
-    'subbannersDelete.php',
-    'subBannerDelete.php',
-];
+import NewBanner from '../NewBanner/NewBanner';
 
 export default function SubBannerData() {
+    const [activeTab, setActiveTab] = useState('banner');
+    const [banners, setBanners] = useState([]);
     const [subBanners, setSubBanners] = useState([]);
+    const [catalogoBanners, setCatalogoBanners] = useState([]);
     const [draggingId, setDraggingId] = useState(null);
 
     useEffect(() => {
+        cargarBanners();
         cargarSubBanners();
+        cargarBannersCatalogo();
     }, []);
 
-    const getBannerId = (item) => item.idSubBanner || item.idBanner || item.id || item.id_sub_banner || item.id_subbanner;
-    const getOrder = () => JSON.parse(localStorage.getItem(ORDER_KEY)) || [];
-    const persistOrder = (items) => {
-        const order = items.map((item) => getBannerId(item)).filter(Boolean);
-        localStorage.setItem(ORDER_KEY, JSON.stringify(order));
-    };
-    const applyOrder = (items) => {
-        const order = getOrder();
-        if (!order.length) return items;
-        const byId = new Map(items.map((item) => [getBannerId(item), item]));
-        const ordered = order.map((id) => byId.get(id)).filter(Boolean);
-        const remaining = items.filter((item) => !order.includes(getBannerId(item)));
-        return [...ordered, ...remaining];
-    };
-
-    const cargarSubBanners = () => {
-        const load = async () => {
-            for (const endpoint of getEndpoints) {
-                try {
-                    const response = await fetch(`${baseURL}/${endpoint}`, {
-                        method: 'GET',
-                    });
-                    if (!response.ok) {
-                        continue;
-                    }
-                    const data = await response.json();
-                    const ordered = applyOrder(data.subbanner || data.subbanners || data.banner || []);
-                    setSubBanners(ordered);
-                    return;
-                } catch (error) {
-                    console.error('Error al cargar sub banners:', error);
-                }
+    // ===== BANNERS PRINCIPALES (HOME) =====
+    const cargarBanners = async () => {
+        try {
+            const response = await fetch(`${baseURL}/bannersGet.php`);
+            if (response.ok) {
+                const data = await response.json();
+                setBanners(data.banner || []);
             }
-        };
-        load();
+        } catch (error) {
+            console.error('Error al cargar banners:', error);
+        }
     };
 
-    const eliminarSubBanner = (idSubBanner) => {
+    const eliminarBanner = (idBanner) => {
         Swal.fire({
-            title: 'Estas seguro?',
-            text: 'No podras revertir esto.',
+            title: '¿Estás seguro?',
+            text: 'No podrás revertir esto.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Si, eliminar',
+            confirmButtonText: 'Sí, eliminar',
             cancelButtonText: 'Cancelar',
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                const runDelete = async () => {
-                    for (const endpoint of deleteEndpoints) {
-                        try {
-                            const response = await fetch(`${baseURL}/${endpoint}?idSubBanner=${idSubBanner}`, {
-                                method: 'DELETE',
-                            });
-                            if (!response.ok) {
-                                continue;
-                            }
-                            const data = await response.json();
-                            Swal.fire('Eliminado', data.mensaje, 'success');
-                            cargarSubBanners();
-                            return;
-                        } catch (error) {
-                            console.error('Error al eliminar sub banner:', error);
-                        }
+                try {
+                    const response = await fetch(`${baseURL}/bannerDelete.php?idBanner=${idBanner}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        Swal.fire('Eliminado', 'Banner eliminado', 'success');
+                        cargarBanners();
                     }
-                    toast.error('Error al eliminar sub banner.');
-                };
-                runDelete();
+                } catch (error) {
+                    toast.error('Error al eliminar banner.');
+                }
             }
         });
     };
 
-    const moveBanner = (sourceId, targetId) => {
-        if (!sourceId || !targetId || sourceId === targetId) return;
-        const items = [...subBanners];
-        const sourceIndex = items.findIndex((item) => getBannerId(item) === sourceId);
-        const targetIndex = items.findIndex((item) => getBannerId(item) === targetId);
-        if (sourceIndex < 0 || targetIndex < 0) return;
-        const [moved] = items.splice(sourceIndex, 1);
-        items.splice(targetIndex, 0, moved);
-        setSubBanners(items);
-        persistOrder(items);
-    };
-    const handleDragStart = (id) => setDraggingId(id);
-    const handleDragOver = (event) => event.preventDefault();
-    const handleDrop = (id) => {
-        moveBanner(draggingId, id);
-        setDraggingId(null);
-    };
-    const handleTouchMove = (event, id) => {
-        const touch = event.touches[0];
-        if (!touch) return;
-        const target = document.elementFromPoint(touch.clientX, touch.clientY);
-        const card = target?.closest?.('[data-subbanner-id]');
-        const targetId = card?.getAttribute?.('data-subbanner-id');
-        if (targetId) {
-            moveBanner(id, targetId);
-        }
-    };
-    const handleReplace = async (item, file) => {
+    const reemplazarBanner = async (idBanner, file) => {
         if (!file) return;
         const formData = new FormData();
         formData.append('imagen', file);
 
         try {
-            let uploaded = false;
-            for (const endpoint of postEndpoints) {
-                try {
-                    const response = await fetch(`${baseURL}/${endpoint}`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                    let data = {};
-                    try {
-                        data = await response.json();
-                    } catch (parseError) {
-                        data = {};
-                    }
-                    if (response.ok && !data.error) {
-                        uploaded = true;
-                        break;
-                    }
-                } catch (error) {
-                    console.error('Error al reemplazar sub banner:', error);
-                }
+            const response = await fetch(`${baseURL}/bannersPost.php`, {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                await fetch(`${baseURL}/bannerDelete.php?idBanner=${idBanner}`, { method: 'DELETE' });
+                cargarBanners();
             }
-            if (!uploaded) {
-                toast.error('Error de conexion. Intentalo de nuevo.');
-                return;
+        } catch (error) {
+            toast.error('Error al reemplazar banner.');
+        }
+    };
+
+    // ===== SUB-BANNERS =====
+    const cargarSubBanners = async () => {
+        try {
+            const response = await fetch(`${baseURL}/subbannersGet.php`);
+            if (response.ok) {
+                const data = await response.json();
+                setSubBanners(data.subbanner || []);
             }
-            let deleted = false;
-            for (const endpoint of deleteEndpoints) {
+        } catch (error) {
+            console.error('Error al cargar sub-banners:', error);
+        }
+    };
+
+    const eliminarSubBanner = (idSubBanner) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'No podrás revertir esto.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+        }).then(async (result) => {
+            if (result.isConfirmed) {
                 try {
-                    const response = await fetch(`${baseURL}/${endpoint}?idSubBanner=${getBannerId(item)}`, {
+                    const response = await fetch(`${baseURL}/subbannerDelete.php?idSubBanner=${idSubBanner}`, {
                         method: 'DELETE',
                     });
                     if (response.ok) {
-                        deleted = true;
-                        break;
+                        Swal.fire('Eliminado', 'Sub-banner eliminado', 'success');
+                        cargarSubBanners();
                     }
                 } catch (error) {
-                    console.error('Error al eliminar sub banner:', error);
+                    toast.error('Error al eliminar sub-banner.');
                 }
             }
-            if (!deleted) {
-                toast.error('No se pudo eliminar el sub banner anterior.');
+        });
+    };
+
+    const reemplazarSubBanner = async (idSubBanner, file) => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('imagen', file);
+
+        try {
+            const response = await fetch(`${baseURL}/subbannersPost.php`, {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                await fetch(`${baseURL}/subbannerDelete.php?idSubBanner=${idSubBanner}`, { method: 'DELETE' });
+                cargarSubBanners();
             }
-            cargarSubBanners();
         } catch (error) {
-            console.error('Error al reemplazar sub banner:', error);
-            toast.error('Error de conexion. Intentalo de nuevo.');
+            toast.error('Error al reemplazar sub-banner.');
         }
     };
+
+    // ===== BANNERS CATÁLOGO =====
+    const cargarBannersCatalogo = async () => {
+        try {
+            const response = await fetch(`${baseURL}/bannersGet.php?tipo=catalogo`);
+            if (response.ok) {
+                const data = await response.json();
+                setCatalogoBanners(data.banner || []);
+            }
+        } catch (error) {
+            console.error('Error al cargar banners de catálogo:', error);
+        }
+    };
+
+    const eliminarBannerCatalogo = (idBanner) => {
+        Swal.fire({
+            title: '¿Estás seguro?',
+            text: 'No podrás revertir esto.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+        }).then(async (result) => {
+            if (result.isConfirmed) {
+                try {
+                    const response = await fetch(`${baseURL}/bannerDelete.php?idBanner=${idBanner}`, {
+                        method: 'DELETE',
+                    });
+                    if (response.ok) {
+                        Swal.fire('Eliminado', 'Banner de catálogo eliminado', 'success');
+                        cargarBannersCatalogo();
+                    }
+                } catch (error) {
+                    toast.error('Error al eliminar banner de catálogo.');
+                }
+            }
+        });
+    };
+
+    const reemplazarBannerCatalogo = async (idBanner, file) => {
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('imagen', file);
+
+        try {
+            const response = await fetch(`${baseURL}/bannersPost.php`, {
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {
+                await fetch(`${baseURL}/bannerDelete.php?idBanner=${idBanner}`, { method: 'DELETE' });
+                cargarBannersCatalogo();
+            }
+        } catch (error) {
+            toast.error('Error al reemplazar banner de catálogo.');
+        }
+    };
+
+    // ===== RENDERIZADO =====
+    const currentItems = activeTab === 'banner' ? banners : activeTab === 'subbanner' ? subBanners : catalogoBanners;
+    const handleEliminar = activeTab === 'banner' ? eliminarBanner : activeTab === 'subbanner' ? eliminarSubBanner : eliminarBannerCatalogo;
+    const handleReemplazar = activeTab === 'banner' ? reemplazarBanner : activeTab === 'subbanner' ? reemplazarSubBanner : reemplazarBannerCatalogo;
+    const getBannerId = (item) => item.idBanner || item.idSubBanner || item.id;
 
     return (
         <div className='BannerContainer'>
             <ToastContainer />
-            <NewSubBanner />
-            <p className='subBannerNote'>Minimo recomendado: 4 imagenes.</p>
+
+            {/* TABS */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                <button
+                    onClick={() => setActiveTab('banner')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'banner' ? '#24b5ff' : '#eaf7ff',
+                        color: activeTab === 'banner' ? '#fff' : '#169fdf',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: activeTab === 'banner' ? 'bold' : 'normal'
+                    }}
+                >
+                    Banner
+                </button>
+                <button
+                    onClick={() => setActiveTab('subbanner')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'subbanner' ? '#24b5ff' : '#eaf7ff',
+                        color: activeTab === 'subbanner' ? '#fff' : '#169fdf',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: activeTab === 'subbanner' ? 'bold' : 'normal'
+                    }}
+                >
+                    Sub-Banner
+                </button>
+                <button
+                    onClick={() => setActiveTab('catalogo')}
+                    style={{
+                        padding: '10px 20px',
+                        background: activeTab === 'catalogo' ? '#24b5ff' : '#eaf7ff',
+                        color: activeTab === 'catalogo' ? '#fff' : '#169fdf',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: activeTab === 'catalogo' ? 'bold' : 'normal'
+                    }}
+                >
+                    Banner Catálogo
+                </button>
+            </div>
+
+            {activeTab === 'subbanner' ? <NewSubBanner /> : <NewBanner />}
+
+            <p className='subBannerNote'>
+                {activeTab === 'banner' && 'Banner principal del home'}
+                {activeTab === 'subbanner' && 'Sub-banners debajo del banner principal'}
+                {activeTab === 'catalogo' && 'Banners que aparecen en la página de catálogo'}
+            </p>
+
             <div className='BannerWrap'>
-                {subBanners.map((item, index) => (
-                    <div
-                        key={getBannerId(item)}
-                        className={`cardBanner ${draggingId === getBannerId(item) ? 'dragging' : ''}`}
-                        draggable
-                        data-subbanner-id={getBannerId(item)}
-                        onDragStart={() => handleDragStart(getBannerId(item))}
-                        onDragOver={handleDragOver}
-                        onDrop={() => handleDrop(getBannerId(item))}
-                        onTouchStart={() => handleDragStart(getBannerId(item))}
-                        onTouchMove={(event) => handleTouchMove(event, getBannerId(item))}
-                        onTouchEnd={() => setDraggingId(null)}
-                    >
+                {currentItems.map((item, index) => (
+                    <div key={getBannerId(item)} className='cardBanner'>
                         <span className='bannerBadge'>{index === 0 ? 'Principal' : `#${index + 1}`}</span>
-                        <img src={resolveImg(item.imagen)} alt="sub banner" />
+                        <img src={resolveImg(item.imagen)} alt="banner" />
                         <div className='bannerActions'>
-                            <button className='btnBannerDelete' onClick={() => eliminarSubBanner(getBannerId(item))}>
+                            <button className='btnBannerDelete' onClick={() => handleEliminar(getBannerId(item))}>
                                 <FontAwesomeIcon icon={faTrash} />
                             </button>
                             <label className='btnBannerReplace'>
@@ -218,7 +271,7 @@ export default function SubBannerData() {
                                 <input
                                     type="file"
                                     accept="image/*"
-                                    onChange={(event) => handleReplace(item, event.target.files[0])}
+                                    onChange={(event) => handleReemplazar(getBannerId(item), event.target.files[0])}
                                 />
                             </label>
                         </div>

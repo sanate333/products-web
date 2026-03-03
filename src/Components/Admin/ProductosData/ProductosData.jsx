@@ -12,6 +12,7 @@ import baseURL from '../../url';
 import NewProduct from '../NewProduct/NewProduct';
 import moneda from '../../moneda';
 import { Link as Anchor } from "react-router-dom";
+import ProductSectionsEditor from '../ProductSectionsEditor/ProductSectionsEditor';
 export default function ProductosData() {
     const [productos, setProductos] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
@@ -54,6 +55,7 @@ export default function ProductosData() {
     const [dragPointerId, setDragPointerId] = useState(null);
     const [aiImages, setAiImages] = useState([]);
     const [aiSlots, setAiSlots] = useState([]);
+    const [landingConfig, setLandingConfig] = useState(null);
     const AI_BASE = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
     const AI_PREFIX = AI_BASE ? `${AI_BASE}/api` : '/api';
 
@@ -102,6 +104,8 @@ export default function ProductosData() {
         );
         const savedSlots = JSON.parse(localStorage.getItem(`landingSlots_${producto.idProducto}`) || '[]');
         setAiSlots(Array.isArray(savedSlots) ? savedSlots : []);
+        const savedLanding = (() => { try { return JSON.parse(localStorage.getItem(`landingConfig_${producto.idProducto}`) || 'null'); } catch { return null; } })();
+        setLandingConfig(savedLanding);
     }, [producto]);
 
     const cargarProductos = () => {
@@ -683,6 +687,12 @@ export default function ProductosData() {
                                 >
                                     Editar Imagenes
                                 </button>
+                                <button
+                                    className={selectedSection === 'secciones' ? 'selected' : ''}
+                                    onClick={() => handleSectionChange('secciones')}
+                                >
+                                    Landing IA
+                                </button>
                             </div>
                             <span className="close" onClick={cerrarModal}>
                                 &times;
@@ -1108,7 +1118,19 @@ export default function ProductosData() {
                             </div>
                         </div>
 
-
+                        <div className='sectionLanding' style={{ display: selectedSection === 'secciones' ? 'block' : 'none' }}>
+                            <ProductSectionsEditor
+                                value={landingConfig}
+                                onChange={(next) => {
+                                    setLandingConfig(next);
+                                    if (producto?.idProducto) {
+                                        try { localStorage.setItem(`landingConfig_${producto.idProducto}`, JSON.stringify(next)); } catch {}
+                                    }
+                                }}
+                                productName={producto?.titulo || ''}
+                                category={producto?.categoria || ''}
+                            />
+                        </div>
 
                     </div>
                 </div>
