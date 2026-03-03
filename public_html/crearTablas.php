@@ -56,17 +56,27 @@ try {
     $consultaBanner = "CREATE TABLE IF NOT EXISTS `banner` (
         idBanner INT(11) AUTO_INCREMENT PRIMARY KEY,
         imagen VARCHAR(900) NOT NULL,
+        tipo VARCHAR(50) NOT NULL DEFAULT 'home',
+        orden INT DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     crearTablaSiNoExiste($conexion, 'banner', $consultaBanner);
+
+    // Migrar columnas de banner si ya existe la tabla
+    try { $conexion->exec("ALTER TABLE `banner` ADD COLUMN IF NOT EXISTS tipo VARCHAR(50) NOT NULL DEFAULT 'home'"); } catch (Exception $e) {}
+    try { $conexion->exec("ALTER TABLE `banner` ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0"); } catch (Exception $e) {}
 
     // Crear tabla 'subbanner' si no existe
     $consultaSubBanner = "CREATE TABLE IF NOT EXISTS `subbanner` (
         idSubBanner INT(11) AUTO_INCREMENT PRIMARY KEY,
         imagen VARCHAR(900) NOT NULL,
+        orden INT DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )";
     crearTablaSiNoExiste($conexion, 'subbanner', $consultaSubBanner);
+
+    // Migrar columna de subbanner si ya existe la tabla
+    try { $conexion->exec("ALTER TABLE `subbanner` ADD COLUMN IF NOT EXISTS orden INT DEFAULT 0"); } catch (Exception $e) {}
 
     // Crear tabla 'productos' si no existe
     $consultaProductos = "CREATE TABLE IF NOT EXISTS `productos` (

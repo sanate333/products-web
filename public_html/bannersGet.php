@@ -24,12 +24,13 @@ try {
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Consulta para obtener todos los banners con las imágenes
-        $sqlSelect = "SELECT idBanner, imagen FROM `banner`";
-        $stmt = $conexion->query($sqlSelect);
+        $tipo = isset($_GET['tipo']) ? $_GET['tipo'] : 'home';
+        $sqlSelect = "SELECT idBanner, imagen, tipo, orden FROM `banner` WHERE tipo = :tipo ORDER BY orden ASC, idBanner ASC";
+        $stmt = $conexion->prepare($sqlSelect);
+        $stmt->bindParam(':tipo', $tipo);
+        $stmt->execute();
         $banners = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Respuesta JSON con los banners y sus imágenes  
         echo json_encode(["banner" => $banners]);
     } else {
         echo json_encode(["error" => "Método no permitido"]);

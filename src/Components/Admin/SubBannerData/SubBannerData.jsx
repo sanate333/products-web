@@ -15,6 +15,7 @@ export default function SubBannerData() {
     const [subBanners, setSubBanners] = useState([]);
     const [catalogoBanners, setCatalogoBanners] = useState([]);
     const [draggingId, setDraggingId] = useState(null);
+    const [dragOverId, setDragOverId] = useState(null);
 
     useEffect(() => {
         cargarBanners();
@@ -25,7 +26,7 @@ export default function SubBannerData() {
     // ===== BANNERS PRINCIPALES (HOME) =====
     const cargarBanners = async () => {
         try {
-            const response = await fetch(`${baseURL}/bannersGet.php`);
+            const response = await fetch(`${baseURL}/bannersGet.php?tipo=home`);
             if (response.ok) {
                 const data = await response.json();
                 setBanners(data.banner || []);
@@ -64,6 +65,7 @@ export default function SubBannerData() {
         if (!file) return;
         const formData = new FormData();
         formData.append('imagen', file);
+        formData.append('tipo', 'home');
 
         try {
             const response = await fetch(`${baseURL}/bannersPost.php`, {
@@ -178,6 +180,7 @@ export default function SubBannerData() {
         if (!file) return;
         const formData = new FormData();
         formData.append('imagen', file);
+        formData.append('tipo', 'catalogo');
 
         try {
             const response = await fetch(`${baseURL}/bannersPost.php`, {
@@ -193,11 +196,73 @@ export default function SubBannerData() {
         }
     };
 
+    // ===== DRAG TO REORDER =====
+    const handleDragStart = (id) => {
+        setDraggingId(id);
+    };
+
+    const handleDragOver = (e, id) => {
+        e.preventDefault();
+        if (id !== draggingId) setDragOverId(id);
+    };
+
+    const handleDrop = async (droppedOnId) => {
+        if (!draggingId || draggingId === droppedOnId) {
+            setDraggingId(null);
+            setDragOverId(null);
+            return;
+        }
+
+        if (activeTab === 'subbanner') {
+            const list = [...subBanners];
+            const fromIdx = list.findIndex(i => i.idSubBanner === draggingId);
+            const toIdx = list.findIndex(i => i.idSubBanner === droppedOnId);
+            if (fromIdx === -1 || toIdx === -1) { setDraggingId(null); setDragOverId(null); return; }
+            const [moved] = list.splice(fromIdx, 1);
+            list.splice(toIdx, 0, moved);
+            setSubBanners(list);
+            const items = list.map((item, idx) => ({ idSubBanner: item.idSubBanner, orden: idx }));
+            try {
+                await fetch(`${baseURL}/subbannerReorder.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items })
+                });
+            } catch (e) { toast.error('Error al guardar orden.'); }
+        } else {
+            const list = activeTab === 'banner' ? [...banners] : [...catalogoBanners];
+            const setter = activeTab === 'banner' ? setBanners : setCatalogoBanners;
+            const fromIdx = list.findIndex(i => i.idBanner === draggingId);
+            const toIdx = list.findIndex(i => i.idBanner === droppedOnId);
+            if (fromIdx === -1 || toIdx === -1) { setDraggingId(null); setDragOverId(null); return; }
+            const [moved] = list.splice(fromIdx, 1);
+            list.splice(toIdx, 0, moved);
+            setter(list);
+            const items = list.map((item, idx) => ({ idBanner: item.idBanner, orden: idx }));
+            try {
+                await fetch(`${baseURL}/bannerReorder.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items })
+                });
+            } catch (e) { toast.error('Error al guardar orden.'); }
+        }
+
+        setDraggingId(null);
+        setDragOverId(null);
+    };
+
+    const handleDragEnd = () => {
+        setDraggingId(null);
+        setDragOverId(null);
+    };
+
     // ===== RENDERIZADO =====
     const currentItems = activeTab === 'banner' ? banners : activeTab === 'subbanner' ? subBanners : catalogoBanners;
     const handleEliminar = activeTab === 'banner' ? eliminarBanner : activeTab === 'subbanner' ? eliminarSubBanner : eliminarBannerCatalogo;
     const handleReemplazar = activeTab === 'banner' ? reemplazarBanner : activeTab === 'subbanner' ? reemplazarSubBanner : reemplazarBannerCatalogo;
     const getBannerId = (item) => item.idBanner || item.idSubBanner || item.id;
+    const isCatalogoTab = activeTab === 'catalogo';
 
     return (
         <div className='BannerContainer'>
@@ -249,34 +314,50 @@ export default function SubBannerData() {
                 </button>
             </div>
 
-            {activeTab === 'subbanner' ? <NewSubBanner /> : <NewBanner />}
+            {activeTab === 'subbanner'
+                ? <NewSubBanner />
+                : <NewBanner tipo={activeTab === 'catalogo' ? 'catalogo' : 'home'} />
+            }
 
             <p className='subBannerNote'>
-                {activeTab === 'banner' && 'Banner principal del home'}
-                {activeTab === 'subbanner' && 'Sub-banners debajo del banner principal'}
-                {activeTab === 'catalogo' && 'Banners que aparecen en la página de catálogo'}
+                {activeTab === 'banner' && 'Banner principal del home — arrastra para reordenar'}
+                {activeTab === 'subbanner' && 'Sub-banners debajo del banner principal — arrastra para reordenar'}
+                {activeTab === 'catalogo' && 'Banners de la página de catálogo — arrastra para reordenar'}
             </p>
 
             <div className='BannerWrap'>
-                {currentItems.map((item, index) => (
-                    <div key={getBannerId(item)} className='cardBanner'>
-                        <span className='bannerBadge'>{index === 0 ? 'Principal' : `#${index + 1}`}</span>
-                        <img src={resolveImg(item.imagen)} alt="banner" />
-                        <div className='bannerActions'>
-                            <button className='btnBannerDelete' onClick={() => handleEliminar(getBannerId(item))}>
-                                <FontAwesomeIcon icon={faTrash} />
-                            </button>
-                            <label className='btnBannerReplace'>
-                                Cambiar
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(event) => handleReemplazar(getBannerId(item), event.target.files[0])}
-                                />
-                            </label>
+                {currentItems.map((item, index) => {
+                    const id = getBannerId(item);
+                    const isDragging = draggingId === id;
+                    const isOver = dragOverId === id;
+                    return (
+                        <div
+                            key={id}
+                            className={`cardBanner${isDragging ? ' dragging' : ''}${isOver ? ' dragOver' : ''}${isCatalogoTab ? ' cardBannerCatalogo' : ''}`}
+                            draggable
+                            onDragStart={() => handleDragStart(id)}
+                            onDragOver={(e) => handleDragOver(e, id)}
+                            onDrop={() => handleDrop(id)}
+                            onDragEnd={handleDragEnd}
+                        >
+                            <span className='bannerBadge'>{index === 0 ? 'Principal' : `#${index + 1}`}</span>
+                            <img src={resolveImg(item.imagen)} alt="banner" />
+                            <div className='bannerActions'>
+                                <button className='btnBannerDelete' onClick={() => handleEliminar(id)}>
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                                <label className='btnBannerReplace'>
+                                    Cambiar
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(event) => handleReemplazar(id, event.target.files[0])}
+                                    />
+                                </label>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
