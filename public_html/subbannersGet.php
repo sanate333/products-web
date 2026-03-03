@@ -24,8 +24,7 @@ try {
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        // Consulta para obtener todos los sub-banners con las imágenes
-        $sqlSelect = "SELECT idSubBanner, imagen FROM `subbanner`";
+        $sqlSelect = "SELECT idSubBanner, imagen, orden FROM `subbanner` ORDER BY orden ASC, idSubBanner ASC";
         $stmt = $conexion->query($sqlSelect);
         $subbanners = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

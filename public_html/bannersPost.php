@@ -43,9 +43,11 @@ try {
             $rutaImagenCompleta = $rutaweb . $rutaImagen;
 
             // Almacenar enlace completo en la base de datos
-            $sqlInsert = "INSERT INTO `banner` (imagen) VALUES (:imagen)";
+            $tipo = isset($_POST['tipo']) ? $_POST['tipo'] : 'home';
+            $sqlInsert = "INSERT INTO `banner` (imagen, tipo) VALUES (:imagen, :tipo)";
             $stmt = $conexion->prepare($sqlInsert);
             $stmt->bindParam(':imagen', $rutaImagenCompleta);
+            $stmt->bindParam(':tipo', $tipo);
             $stmt->execute();
 
             // Obtener el ID de la última inserción

@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import baseURL from '../../url';
 
-export default function NewBanner() {
+export default function NewBanner({ tipo = 'home' }) {
     const [mensaje, setMensaje] = useState('');
     const [imagenPreview, setImagenPreview] = useState(null);
     const [isImageSelected, setIsImageSelected] = useState(false);
@@ -42,6 +42,7 @@ export default function NewBanner() {
         setMensaje('Procesando...');
 
         try {
+            formData.append('tipo', tipo);
             const response = await fetch(`${baseURL}/bannersPost.php`, {
                 method: 'POST',
                 body: formData
