@@ -1829,6 +1829,17 @@ async function storeMsg(msg) {
       const msgType =
         type === "audio"   ? "audio" :
         (type === "image" || type === "sticker") ? "image" : "text";
+
+      // ── FIX: Construir historial de últimos 10 mensajes para contexto IA ──
+      const chatMsgs = db.messages
+        .filter(m => String(m.chatId) === String(jid))
+        .sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0))
+        .slice(-10)
+        .map(m => ({
+          role: m.direction === "outgoing" ? "assistant" : "user",
+          content: m.text || "[media]",
+        }));
+
       const n8nPayload = {
         chatId:        jid,
         messageType:   msgType,
@@ -1840,35 +1851,72 @@ async function storeMsg(msg) {
         openaiKey:     settings.openaiKey || process.env.OPENAI_API_KEY || "",
         backendUrl:    publicBase ? `${publicBase}/api/whatsapp` : "",
         backendSecret: WA_SECRET,
-        history:       [],
+        history:       chatMsgs,
         source:        "backend-baileys",
       };
-      fetch(settings.n8nWebhook, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(n8nPayload),
-      }).then(async (r) => {
-        const data = await r.json().catch(() => ({}));
-        const replyText = data?.reply || data?.text || data?.message || data?.output || "";
-        console.log("[WA][n8n-forward][ok]", { chatId: jid, msgType, hasReply: !!replyText });
-        // ── Enviar respuesta de n8n directamente por Baileys ──────────────
-        if (replyText && waSocket && waStatus === "connected") {
-          try {
-            // soporte multi-mensaje: si hay saltos dobles, enviar por partes
-            const parts = replyText.split(/\n\n\n+/).map(p => p.trim()).filter(Boolean);
-            const toSend = parts.length > 1 ? parts : [replyText.trim()];
-            for (const part of toSend) {
-              await waSocket.sendMessage(jid, { text: part });
-              if (toSend.length > 1) await new Promise(res => setTimeout(res, 800));
+
+      // ── FIX: Retry lógica — hasta 2 reintentos con backoff ──
+      const callN8n = async (attempt = 1) => {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 30000);
+          const r = await fetch(settings.n8nWebhook, {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify(n8nPayload),
+            signal:  controller.signal,
+          });
+          clearTimeout(timeout);
+          const data = await r.json().catch(() => ({}));
+          const replyText = data?.reply || data?.text || data?.message || data?.output || "";
+          console.log("[WA][n8n-forward][ok]", { chatId: jid, msgType, hasReply: !!replyText, attempt });
+
+          // ── Enviar respuesta de n8n directamente por Baileys ──────────────
+          if (replyText && waSocket && waStatus === "connected") {
+            try {
+              // FIX: usar separador |||| que es el que usa el workflow n8n
+              const parts = replyText.split(/\|\|\|\|/).map(p => p.trim()).filter(Boolean);
+              const toSend = parts.length > 0 ? parts : [replyText.trim()];
+              for (const part of toSend) {
+                await waSocket.sendMessage(jid, { text: part });
+
+                // ── FIX: Guardar cada parte del reply del bot en la DB ──────
+                const replyMsgId = randomId("n8n_reply");
+                saveMessage(readWhatsAppDb(), {
+                  providerMessageId: replyMsgId,
+                  chatId:    jid,
+                  from:      waPhone || "agent@sanate.store",
+                  to:        jid,
+                  timestamp: nowIso(),
+                  type:      "text",
+                  text:      part,
+                  status:    "sent",
+                  direction: "outgoing",
+                  chatName:  name,
+                  rawPayload: { source: "n8n-auto-reply" },
+                });
+                const freshDb = readWhatsAppDb();
+                writeWhatsAppDb(freshDb);
+
+                if (toSend.length > 1) await new Promise(res => setTimeout(res, 800));
+              }
+              console.log("[WA][n8n-auto-reply][sent]", { chatId: jid, parts: toSend.length });
+            } catch (sendErr) {
+              console.warn("[WA][n8n-auto-reply][error]", sendErr?.message || sendErr);
             }
-            console.log("[WA][n8n-auto-reply][sent]", { chatId: jid, parts: toSend.length });
-          } catch (sendErr) {
-            console.warn("[WA][n8n-auto-reply][error]", sendErr?.message || sendErr);
           }
+        } catch (e) {
+          console.warn(`[WA][n8n-forward][fail][attempt=${attempt}]`, e?.message || e);
+          if (attempt < 3) {
+            const delay = attempt * 3000; // 3s, 6s
+            console.log(`[WA][n8n-forward][retry] attempt ${attempt + 1} in ${delay}ms`);
+            await new Promise(res => setTimeout(res, delay));
+            return callN8n(attempt + 1);
+          }
+          console.error("[WA][n8n-forward][exhausted] all retries failed for", jid);
         }
-      }).catch((e) => {
-        console.warn("[WA][n8n-forward][fail]", e?.message || e);
-      });
+      };
+      callN8n();
     }
   } catch (err) {
     console.error("[WA][storeMsg][persist-error]", err?.message || err);

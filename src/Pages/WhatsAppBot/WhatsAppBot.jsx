@@ -869,16 +869,22 @@ export default function WhatsAppBot() {
   }
 
   async function loadC() {
-    const d = await (await fetch(BU + '/chats', { headers: H })).json()
-    const loaded = (d.chats || []).map(normChat)
-    setChats(loaded)
-    // Auto-fetch fotos de perfil en segundo plano (primeros 30 chats)
-    loaded.slice(0, 30).forEach(c => {
-      fetch(`${BU}/chats/${encodeURIComponent(c.id)}/photo`, { headers: H })
-        .then(r => r.json())
-        .then(p => { if (p.ok && p.photoUrl) setChats(prev => prev.map(x => x.id === c.id ? { ...x, photoUrl: p.photoUrl } : x)) })
-        .catch(() => {})
-    })
+    try {
+      const r = await fetch(BU + '/chats', { headers: H })
+      if (!r.ok) { console.warn('[WA][loadC] HTTP', r.status); return }
+      const d = await r.json()
+      const loaded = (d.chats || []).map(normChat)
+      setChats(loaded)
+      // Auto-fetch fotos de perfil en segundo plano (primeros 30 chats)
+      loaded.slice(0, 30).forEach(c => {
+        fetch(`${BU}/chats/${encodeURIComponent(c.id)}/photo`, { headers: H })
+          .then(r => r.json())
+          .then(p => { if (p.ok && p.photoUrl) setChats(prev => prev.map(x => x.id === c.id ? { ...x, photoUrl: p.photoUrl } : x)) })
+          .catch(() => {})
+      })
+    } catch (err) {
+      console.warn('[WA][loadC] error:', err?.message || err)
+    }
   }
 
   async function loadM(chatId, sc = true) {

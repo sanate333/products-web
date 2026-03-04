@@ -23,7 +23,8 @@
       "name": "Procesar con IA (texto + audio + imagen)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [500, 300]
+      "position": [500, 300],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -42,7 +43,7 @@
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={ \"ok\": false, \"error\": \"Error interno\" }",
+        "responseBody": "={{ JSON.stringify({ ok: false, error: $json.error || 'Error interno' }) }}",
         "options": {
           "responseCode": 500
         }
