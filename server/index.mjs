@@ -111,7 +111,14 @@ function defaultWhatsAppDb() {
       backendPublicUrl: "",
       openaiKey:       "",
       systemPrompt:    "",
+      // ── Typebot ──
+      typebotEnabled:  false,
+      typebotApiBase:  "",        // e.g. "https://typebot.io/api/v1" or self-hosted
+      typebotPublicId: "",        // public ID of the published bot
+      typebotApiToken: "",        // Bearer token for API auth (optional for self-hosted)
     },
+    // ── Typebot sesiones activas: { [jid]: { sessionId, resultId, lastInput, createdAt } }
+    typebotSessions: {},
   };
 }
 
@@ -659,11 +666,23 @@ app.get("/api/health", (req, res) => {
 app.get("/api/whatsapp/chats", (req, res) => {
   try {
     const db = readWhatsAppDb();
-    const sorted = [...db.chats].sort((a, b) => {
+    let filtered = [...db.chats];
+    // ── Búsqueda por nombre o teléfono ─────────────────────────────
+    const q = (req.query?.q || req.query?.search || "").trim().toLowerCase();
+    if (q) {
+      const qDigits = q.replace(/[^\d]/g, "");
+      filtered = filtered.filter((c) => {
+        const name  = (c.name || "").toLowerCase();
+        const phone = (c.phone || c.chatId || "").replace(/[^\d]/g, "");
+        return name.includes(q) || phone.includes(qDigits) || (c.chatId || "").toLowerCase().includes(q);
+      });
+    }
+    const sorted = filtered.sort((a, b) => {
       return new Date(b?.lastMessageAt || b?.updatedAt || 0).getTime()
         - new Date(a?.lastMessageAt || a?.updatedAt || 0).getTime();
     });
-    const { items, nextCursor, limit } = paginateByCursor(sorted, req.query?.cursor, req.query?.limit);
+    // Default 200 chats (antes era 50)
+    const { items, nextCursor, limit } = paginateByCursor(sorted, req.query?.cursor, req.query?.limit || 200);
     return res.json({
       ok: true,
       chats: items.map((chat) => ({
@@ -883,9 +902,10 @@ app.get("/api/whatsapp/settings", (req, res) => {
   if (!checkWaSecret(req, res)) return;
   try {
     const db = readWhatsAppDb();
-    // Nunca devolver openaiKey completa: enmascarar por seguridad
+    // Nunca devolver openaiKey/typebotApiToken completas: enmascarar por seguridad
     const s = { ...(db.settings || {}) };
     if (s.openaiKey) s.openaiKey = s.openaiKey.substring(0, 8) + "****";
+    if (s.typebotApiToken) s.typebotApiToken = s.typebotApiToken.substring(0, 8) + "****";
     return res.json({ ok: true, settings: s });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
@@ -896,7 +916,10 @@ app.post("/api/whatsapp/settings", (req, res) => {
   if (!checkWaSecret(req, res)) return;
   try {
     const db = readWhatsAppDb();
-    const allowed = ["botEnabled", "n8nEnabled", "n8nWebhook", "backendPublicUrl", "openaiKey", "systemPrompt"];
+    const allowed = [
+      "botEnabled", "n8nEnabled", "n8nWebhook", "backendPublicUrl", "openaiKey", "systemPrompt",
+      "typebotEnabled", "typebotApiBase", "typebotPublicId", "typebotApiToken",
+    ];
     const patch = {};
     for (const k of allowed) {
       if (req.body?.[k] !== undefined) patch[k] = req.body[k];
@@ -904,7 +927,10 @@ app.post("/api/whatsapp/settings", (req, res) => {
     db.settings = { ...(db.settings || {}), ...patch };
     writeWhatsAppDb(db);
     console.log("[WA][settings] Actualizado:", Object.keys(patch).join(", "));
-    return res.json({ ok: true, settings: { ...db.settings, openaiKey: db.settings.openaiKey ? "****" : "" } });
+    const masked = { ...db.settings };
+    if (masked.openaiKey) masked.openaiKey = "****";
+    if (masked.typebotApiToken) masked.typebotApiToken = "****";
+    return res.json({ ok: true, settings: masked });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
   }
@@ -1711,6 +1737,185 @@ let waPhone         = "";
 let waIniting       = false;
 let downloadMediaFn = null; // set after Baileys dynamic import
 
+// ── Typebot: sesiones en memoria (jid → { sessionId, resultId, lastInput, createdAt }) ─
+const typebotSessionsMap = new Map();
+
+// Cargar sesiones persistidas de la DB al iniciar
+try {
+  const _db = readWhatsAppDb();
+  if (_db.typebotSessions && typeof _db.typebotSessions === "object") {
+    for (const [k, v] of Object.entries(_db.typebotSessions)) {
+      typebotSessionsMap.set(k, v);
+    }
+    console.log("[Typebot] Cargadas", typebotSessionsMap.size, "sesiones desde DB");
+  }
+} catch {}
+
+function persistTypebotSessions() {
+  try {
+    const db = readWhatsAppDb();
+    db.typebotSessions = Object.fromEntries(typebotSessionsMap);
+    writeWhatsAppDb(db);
+  } catch {}
+}
+
+/** Extraer texto plano de los mensajes richText de Typebot */
+function typebotExtractText(messages) {
+  const parts = [];
+  for (const msg of (messages || [])) {
+    if (msg.type === "text") {
+      if (msg.content?.richText) {
+        const lines = msg.content.richText.map(block =>
+          (block.children || []).map(child => {
+            if (child.bold) return `*${child.text || ""}*`;
+            if (child.italic) return `_${child.text || ""}_`;
+            if (child.url) return child.url;
+            return child.text || "";
+          }).join("")
+        );
+        parts.push(lines.join("\n"));
+      } else if (msg.content?.markdown) {
+        parts.push(msg.content.markdown);
+      } else if (typeof msg.content === "string") {
+        parts.push(msg.content);
+      }
+    } else if (msg.type === "image") {
+      parts.push(msg.content?.url || "[imagen]");
+    } else if (msg.type === "video") {
+      parts.push(msg.content?.url || "[video]");
+    } else if (msg.type === "audio") {
+      parts.push(msg.content?.url || "[audio]");
+    }
+  }
+  return parts.filter(Boolean);
+}
+
+/** Formatear opciones de Typebot como lista numerada para WhatsApp */
+function typebotFormatChoices(input) {
+  if (!input?.items?.length) return "";
+  return "\n\n" + input.items.map((item, i) => `${i + 1}. ${item.content}`).join("\n");
+}
+
+/** Resolver respuesta de usuario a opciones de Typebot (por número o texto) */
+function typebotResolveChoice(userText, lastInput) {
+  if (!lastInput?.items?.length) return userText;
+  const trimmed = userText.trim();
+  const num = parseInt(trimmed);
+  if (num >= 1 && num <= lastInput.items.length) {
+    return lastInput.items[num - 1].content;
+  }
+  const match = lastInput.items.find(
+    item => item.content.toLowerCase() === trimmed.toLowerCase()
+  );
+  if (match) return match.content;
+  return userText;
+}
+
+/** Manejar mensaje entrante con Typebot: start o continue sesión */
+async function handleTypebotMessage(jid, messageText, senderName, settings) {
+  const apiBase = (settings.typebotApiBase || "").replace(/\/$/, "");
+  const publicId = settings.typebotPublicId || "";
+  if (!apiBase || !publicId) {
+    console.warn("[Typebot] apiBase o publicId no configurado");
+    return [];
+  }
+
+  const headers = { "Content-Type": "application/json" };
+  if (settings.typebotApiToken) {
+    headers["Authorization"] = `Bearer ${settings.typebotApiToken}`;
+  }
+
+  const existing = typebotSessionsMap.get(jid);
+  let tbResponse;
+
+  try {
+    if (!existing) {
+      // ── NUEVA SESIÓN: startChat ──────────────────────────────────────
+      console.log("[Typebot][startChat]", { jid, publicId });
+      const r = await fetch(`${apiBase}/typebots/${publicId}/startChat`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          message: { type: "text", text: messageText },
+          prefilledVariables: {
+            Phone: jid.split("@")[0],
+            Name: senderName || "",
+            nombre: senderName || "",
+            telefono: jid.split("@")[0],
+          },
+        }),
+      });
+      if (!r.ok) {
+        const errText = await r.text().catch(() => "");
+        console.error("[Typebot][startChat][error]", r.status, errText);
+        return [];
+      }
+      tbResponse = await r.json();
+      typebotSessionsMap.set(jid, {
+        sessionId: tbResponse.sessionId,
+        resultId:  tbResponse.resultId || "",
+        lastInput: tbResponse.input || null,
+        createdAt: nowIso(),
+      });
+      persistTypebotSessions();
+    } else {
+      // ── SESIÓN EXISTENTE: continueChat ───────────────────────────────
+      // Resolver si la última input era tipo choice
+      const resolvedText = typebotResolveChoice(messageText, existing.lastInput);
+      console.log("[Typebot][continueChat]", { jid, sessionId: existing.sessionId, resolvedText });
+      const r = await fetch(`${apiBase}/sessions/${existing.sessionId}/continueChat`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          message: { type: "text", text: resolvedText },
+        }),
+      });
+      if (!r.ok) {
+        // Sesión expirada o error → reiniciar
+        console.warn("[Typebot][continueChat][error]", r.status, "→ reiniciando sesión");
+        typebotSessionsMap.delete(jid);
+        persistTypebotSessions();
+        return handleTypebotMessage(jid, messageText, senderName, settings);
+      }
+      tbResponse = await r.json();
+      // Actualizar sesión
+      const session = typebotSessionsMap.get(jid);
+      if (session) {
+        session.lastInput = tbResponse.input || null;
+      }
+      persistTypebotSessions();
+    }
+  } catch (err) {
+    console.error("[Typebot][error]", err?.message || err);
+    // Limpiar sesión por seguridad
+    typebotSessionsMap.delete(jid);
+    persistTypebotSessions();
+    return [];
+  }
+
+  // ── Extraer respuestas de texto ────────────────────────────────────
+  const replies = typebotExtractText(tbResponse.messages);
+
+  // Si hay input de tipo choice, agregar opciones al último mensaje
+  if (tbResponse.input?.type === "choice input" && tbResponse.input.items?.length) {
+    const choicesText = typebotFormatChoices(tbResponse.input);
+    if (replies.length > 0) {
+      replies[replies.length - 1] += choicesText;
+    } else {
+      replies.push(choicesText.trim());
+    }
+  }
+
+  // Si la conversación terminó (no hay más input), limpiar sesión
+  if (!tbResponse.input) {
+    typebotSessionsMap.delete(jid);
+    persistTypebotSessions();
+    console.log("[Typebot][session-ended]", jid);
+  }
+
+  return replies;
+}
+
 // ── Chat store en memoria ───────────────────────────────────────────────────
 const WA_HISTORY_DAYS = 15;
 const waChats    = new Map(); // jid → { id, name, phone, lastMsg, lastMsgTime, unread }
@@ -1742,11 +1947,14 @@ async function storeMsg(msg) {
 
   const text    = extractText(msg);
   const fromMe  = Boolean(msg.key?.fromMe);
-  const name    = (!fromMe && msg.pushName) ? msg.pushName : (waChats.get(jid)?.name || jid.split("@")[0]);
+  const pushName = (!fromMe && msg.pushName) ? msg.pushName : "";
+  const name    = pushName || (waChats.get(jid)?.name || jid.split("@")[0]);
 
   // Actualizar/crear chat en memoria
   const chat = waChats.get(jid) || { id: jid, name, phone: jid.split("@")[0], unread: 0, lastMsg: "", lastMsgTime: 0 };
-  chat.name        = name;
+  // Solo actualizar nombre si pushName es real (no sobreescribir con JID)
+  if (pushName) chat.name = pushName;
+  else if (!chat.name || chat.name === jid.split("@")[0]) chat.name = name;
   chat.lastMsg     = text;
   chat.lastMsgTime = ts;
   if (!fromMe) chat.unread = (chat.unread || 0) + 1;
@@ -1918,10 +2126,71 @@ async function storeMsg(msg) {
       };
       callN8n();
     }
+
+    // ── Reenvío a Typebot si typebotEnabled (flujo conversacional) ─────
+    if (!fromMe && isNew && !saved.dedup && settings.typebotEnabled) {
+      (async () => {
+        try {
+          const replies = await handleTypebotMessage(jid, text, name, settings);
+          if (replies.length && waSocket && waStatus === "connected") {
+            for (const reply of replies) {
+              if (!reply.trim()) continue;
+              await waSocket.sendMessage(jid, { text: reply });
+              // Persistir respuesta del bot en DB
+              const replyMsgId = randomId("tb_reply");
+              saveMessage(readWhatsAppDb(), {
+                providerMessageId: replyMsgId,
+                chatId:    jid,
+                from:      waPhone || "agent@sanate.store",
+                to:        jid,
+                timestamp: nowIso(),
+                type:      "text",
+                text:      reply,
+                status:    "sent",
+                direction: "outgoing",
+                chatName:  name,
+                rawPayload: { source: "typebot-auto-reply" },
+              });
+              writeWhatsAppDb(readWhatsAppDb());
+              if (replies.length > 1) await new Promise(r => setTimeout(r, 600));
+            }
+            console.log("[Typebot][auto-reply][sent]", { chatId: jid, parts: replies.length });
+          }
+        } catch (tbErr) {
+          console.error("[Typebot][auto-reply][error]", tbErr?.message || tbErr);
+        }
+      })();
+    }
   } catch (err) {
     console.error("[WA][storeMsg][persist-error]", err?.message || err);
   }
 }
+
+// ── Typebot: endpoint para ver/resetear sesiones ─────────────────────────
+app.get("/api/whatsapp/typebot/sessions", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  const sessions = [];
+  for (const [jid, s] of typebotSessionsMap) {
+    sessions.push({ jid, ...s });
+  }
+  res.json({ ok: true, sessions, total: sessions.length });
+});
+
+app.delete("/api/whatsapp/typebot/sessions/:jid", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  const jid = req.params.jid;
+  typebotSessionsMap.delete(jid);
+  persistTypebotSessions();
+  res.json({ ok: true, deleted: jid });
+});
+
+app.delete("/api/whatsapp/typebot/sessions", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  const count = typebotSessionsMap.size;
+  typebotSessionsMap.clear();
+  persistTypebotSessions();
+  res.json({ ok: true, cleared: count });
+});
 
 function checkWaSecret(req, res) {
   if (req.headers["x-secret"] !== WA_SECRET) {
@@ -2016,6 +2285,51 @@ async function initWhatsApp() {
             lastMsgTime: 0,
           });
         }
+      }
+    });
+
+    // ── Capturar nombres de contactos desde Baileys ──────────────────────
+    sock.ev.on("contacts.update", (contacts) => {
+      for (const c of contacts) {
+        if (!c.id) continue;
+        const name = c.notify || c.verifiedName || c.name || "";
+        if (!name) continue;
+        // Actualizar en memoria
+        const existing = waChats.get(c.id);
+        if (existing) {
+          existing.name = name;
+          waChats.set(c.id, existing);
+        }
+        // Actualizar en DB persistente
+        try {
+          const db = readWhatsAppDb();
+          const chatIdx = db.chats.findIndex(ch => String(ch.chatId) === String(c.id));
+          if (chatIdx >= 0 && (!db.chats[chatIdx].name || db.chats[chatIdx].name === c.id.split("@")[0])) {
+            db.chats[chatIdx].name = name;
+            writeWhatsAppDb(db);
+          }
+        } catch {}
+      }
+    });
+
+    sock.ev.on("contacts.upsert", (contacts) => {
+      for (const c of contacts) {
+        if (!c.id) continue;
+        const name = c.notify || c.verifiedName || c.name || "";
+        if (!name) continue;
+        const existing = waChats.get(c.id);
+        if (existing) {
+          existing.name = name;
+          waChats.set(c.id, existing);
+        }
+        try {
+          const db = readWhatsAppDb();
+          const chatIdx = db.chats.findIndex(ch => String(ch.chatId) === String(c.id));
+          if (chatIdx >= 0 && (!db.chats[chatIdx].name || db.chats[chatIdx].name === c.id.split("@")[0])) {
+            db.chats[chatIdx].name = name;
+            writeWhatsAppDb(db);
+          }
+        } catch {}
       }
     });
 

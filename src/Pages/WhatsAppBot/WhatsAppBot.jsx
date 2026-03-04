@@ -15,10 +15,13 @@ const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
 // ── localStorage helpers ───────────────────────────────────────
 const MSGS_KEY   = 'wb_msgs_'
 const ACTIVE_KEY = 'wb_active_chat'
+const CHATS_KEY  = 'wb_master_chats'
 function cacheGet(chatId)        { try { return JSON.parse(localStorage.getItem(MSGS_KEY + chatId) || '[]') } catch { return [] } }
 function cachePut(chatId, msgs)  { try { localStorage.setItem(MSGS_KEY + chatId, JSON.stringify(msgs.slice(-200))) } catch {} }
 function activeGet()             { try { return JSON.parse(localStorage.getItem(ACTIVE_KEY) || 'null') } catch { return null } }
 function activePut(c)            { try { localStorage.setItem(ACTIVE_KEY, c ? JSON.stringify(c) : 'null') } catch {} }
+function chatsMasterGet()        { try { return JSON.parse(localStorage.getItem(CHATS_KEY) || '[]') } catch { return [] } }
+function chatsMasterPut(chats)   { try { localStorage.setItem(CHATS_KEY, JSON.stringify(chats.slice(0, 500))) } catch {} }
 
 // ── campo: normalizar mensajes del backend ─────────────────────
 function normMsg(m) {
@@ -65,6 +68,7 @@ function normChat(c) {
     photoUrl: c.photoUrl || '',
     preview:  c.lastMessagePreview || c.preview || '',
     time:     hhmm,
+    _ts:      ts ? new Date(ts).getTime() : 0,  // timestamp numérico para sort
     unread:   c.unreadCount ?? c.unread ?? 0,
   }
 }
@@ -363,7 +367,7 @@ export default function WhatsAppBot() {
   const [status,      setStatus]      = useState('disconnected')
   const [phone,       setPhone]       = useState('')
   const [qrDataUrl,   setQrDataUrl]   = useState(null)
-  const [chats,       setChats]       = useState([])
+  const [chats,       setChats]       = useState(() => chatsMasterGet())
   const [active,      setActive]      = useState(null)
   const [msgs,        setMsgs]        = useState([])
   const [inp,         setInp]         = useState('')
@@ -450,6 +454,13 @@ export default function WhatsAppBot() {
   // ── Backend URL & Secret ──────────────────────────────────────
   const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
   const [secretInput,     setSecretInput]     = useState(() => H['x-secret'])
+
+  // ── Typebot ─────────────────────────────────────────────────────
+  const [typebotEnabled,  setTypebotEnabled]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_typebot_enabled') || 'false') } catch { return false } })
+  const [typebotApiBase,  setTypebotApiBase]  = useState(() => { try { return localStorage.getItem('wa_typebot_api_base') || '' } catch { return '' } })
+  const [typebotPublicId, setTypebotPublicId] = useState(() => { try { return localStorage.getItem('wa_typebot_public_id') || '' } catch { return '' } })
+  const [typebotApiToken, setTypebotApiToken] = useState(() => { try { return localStorage.getItem('wa_typebot_api_token') || '' } catch { return '' } })
+  const [typebotSessions, setTypebotSessions] = useState([])
 
   // ── AI reply generator ────────────────────────────────────────
   const [generatingAiReply, setGeneratingAiReply] = useState(false)
@@ -873,17 +884,48 @@ export default function WhatsAppBot() {
       const r = await fetch(BU + '/chats', { headers: H })
       if (!r.ok) { console.warn('[WA][loadC] HTTP', r.status); return }
       const d = await r.json()
-      const loaded = (d.chats || []).map(normChat)
-      setChats(loaded)
-      // Auto-fetch fotos de perfil en segundo plano (primeros 30 chats)
-      loaded.slice(0, 30).forEach(c => {
+      const serverChats = (d.chats || []).map(normChat)
+      // ── Merge: combinar server + localStorage master list ──────────
+      const cached = chatsMasterGet()
+      const map = new Map()
+      // Primero cargar cached (para no perder chats antiguos)
+      cached.forEach(c => { if (c.id) map.set(c.id, c) })
+      // Server data sobreescribe (tiene info más reciente)
+      serverChats.forEach(c => {
+        const old = map.get(c.id)
+        map.set(c.id, {
+          ...c,
+          // Preservar nombre si el server devuelve solo JID
+          name: c.name || (old?.name || ''),
+          // Preservar foto
+          photoUrl: c.photoUrl || (old?.photoUrl || ''),
+        })
+      })
+      const merged = [...map.values()].sort((a, b) => {
+        // Ordenar por timestamp ISO (no hh:mm)
+        const ta = a._ts || 0, tb = b._ts || 0
+        if (ta || tb) return tb - ta
+        // Fallback: comparar time strings
+        return (b.time || '').localeCompare(a.time || '')
+      })
+      setChats(merged)
+      chatsMasterPut(merged)
+      // Auto-fetch fotos de perfil en segundo plano (primeros 30 chats sin foto real)
+      merged.filter(c => !c.photoUrl || c.photoUrl.includes('ui-avatars')).slice(0, 30).forEach(c => {
         fetch(`${BU}/chats/${encodeURIComponent(c.id)}/photo`, { headers: H })
           .then(r => r.json())
-          .then(p => { if (p.ok && p.photoUrl) setChats(prev => prev.map(x => x.id === c.id ? { ...x, photoUrl: p.photoUrl } : x)) })
+          .then(p => {
+            if (p.ok && p.photoUrl) {
+              setChats(prev => prev.map(x => x.id === c.id ? { ...x, photoUrl: p.photoUrl } : x))
+            }
+          })
           .catch(() => {})
       })
     } catch (err) {
       console.warn('[WA][loadC] error:', err?.message || err)
+      // Si falla el servidor, cargar de localStorage
+      const cached = chatsMasterGet()
+      if (cached.length) setChats(cached)
     }
   }
 
@@ -1472,6 +1514,11 @@ ${conversation}`
     const lsPrompt   = (() => { try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
     const lsAiOn     = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })()
     const sysP = (lsTraining || lsPrompt || '').substring(0, 8000)
+    // Leer Typebot config de localStorage
+    const lsTbEnabled  = (() => { try { return JSON.parse(localStorage.getItem('wa_typebot_enabled') || 'false') } catch { return false } })()
+    const lsTbApiBase  = (() => { try { return localStorage.getItem('wa_typebot_api_base') || '' } catch { return '' } })()
+    const lsTbPublicId = (() => { try { return localStorage.getItem('wa_typebot_public_id') || '' } catch { return '' } })()
+    const lsTbToken    = (() => { try { return localStorage.getItem('wa_typebot_api_token') || '' } catch { return '' } })()
     const payload = {
       botEnabled:       lsAiOn,
       n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pública
@@ -1479,6 +1526,10 @@ ${conversation}`
       backendPublicUrl: isPublic ? curBase : '',
       openaiKey:        lsKey,
       systemPrompt:     sysP,
+      typebotEnabled:   lsTbEnabled,
+      typebotApiBase:   lsTbApiBase,
+      typebotPublicId:  lsTbPublicId,
+      typebotApiToken:  lsTbToken,
     }
     fetch(curBU.replace('/api/whatsapp', '') + '/api/whatsapp/settings', {
       method: 'POST',
@@ -1736,7 +1787,16 @@ ${conversation}`
   const statusCls = { connected: 'si-connected', connecting: 'si-connecting', disconnected: 'si-disconnected' }
 
   const filteredChats = chats.filter(c => {
-    const matchSearch = !search || (c.name || c.phone || '').toLowerCase().includes(search.toLowerCase())
+    let matchSearch = true
+    if (search) {
+      const q = search.toLowerCase()
+      const qDigits = search.replace(/[^\d]/g, '')
+      const nameMatch = (c.name || '').toLowerCase().includes(q)
+      const phoneDigits = (c.phone || c.id || '').replace(/[^\d]/g, '')
+      const phoneMatch = qDigits.length >= 3 && phoneDigits.includes(qDigits)
+      const idMatch = (c.id || '').toLowerCase().includes(q)
+      matchSearch = nameMatch || phoneMatch || idMatch
+    }
     let matchFilter = true
     if (chatFilter === 'sin leer')  matchFilter = c.unread > 0
     else if (chatFilter === 'bot')  matchFilter = isAiActive(c.id)
@@ -1938,6 +1998,25 @@ ${conversation}`
                   </div>
                   <div style={{ fontSize: '.7rem', color: '#6b7280' }}>
                     Webhook: <code style={{ background: '#f3f4f6', padding: '.1rem .3rem', borderRadius: '4px' }}>{N8N_WH}</code>
+                  </div>
+                </div>
+              </div>
+              {/* ── Typebot Status ── */}
+              <div className="wbv5-card">
+                <div className="wbv5-card-hd">
+                  <div className="wbv5-card-title">🤖 Typebot</div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setCfgTab('typebot'); goPage('config') }}>Configurar →</button>
+                </div>
+                <div className="wbv5-card-bd">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
+                    <span className={`wbv5-badge ${typebotEnabled && typebotPublicId ? 'badge-green' : 'badge-red'}`}>
+                      {typebotEnabled && typebotPublicId ? '✅ Activo' : '❌ Inactivo'}
+                    </span>
+                    <span style={{ fontSize: '.72rem', color: '#6b7280' }}>
+                      {typebotEnabled && typebotPublicId
+                        ? `Flujo: ${typebotPublicId}`
+                        : 'Configura Typebot para flujos conversacionales automatizados'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -3505,6 +3584,12 @@ ${conversation}`
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
                   ))}
+                  <div className="wbv5-cfg-section-title">Integraciones</div>
+                  {[
+                    { id: 'typebot',  label: '🤖 Typebot' },
+                  ].map(t => (
+                    <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
+                  ))}
                   <div className="wbv5-cfg-section-title">Técnico</div>
                   {[
                     { id: 'api',      label: '🔑 API & Tokens' },
@@ -3698,6 +3783,165 @@ ${conversation}`
                         ))}
                       </div>
                     </div>
+                  )}
+
+                  {/* Typebot */}
+                  {cfgTab === 'typebot' && (
+                    <>
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🤖 Typebot - Flujos conversacionales</div>
+                          <span className={`wbv5-badge ${typebotEnabled ? 'badge-green' : 'badge-red'}`}>
+                            {typebotEnabled ? '✅ Activo' : '❌ Inactivo'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Conecta un flujo de Typebot para respuestas automatizadas con lógica conversacional avanzada.
+                            Typebot maneja sesiones, opciones, formularios y flujos de venta de forma visual.<br/>
+                            <strong>Typebot se ejecuta en paralelo a n8n</strong> — si ambos están activos, cada uno responde por su lado.
+                          </div>
+
+                          <div className="wbv5-form-row" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.75rem' }}>
+                            <div className="wbv5-form-lbl" style={{ minWidth: '80px' }}>Activar</div>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+                              <input type="checkbox" checked={typebotEnabled} onChange={e => {
+                                const v = e.target.checked
+                                setTypebotEnabled(v)
+                                try { localStorage.setItem('wa_typebot_enabled', JSON.stringify(v)) } catch {}
+                                setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
+                              }} />
+                              <span style={{ fontSize: '.72rem' }}>{typebotEnabled ? 'Typebot activo — responde automáticamente' : 'Typebot desactivado'}</span>
+                            </label>
+                          </div>
+
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">URL base de la API</div>
+                            <input
+                              className="wbv5-form-input"
+                              value={typebotApiBase}
+                              onChange={e => setTypebotApiBase(e.target.value)}
+                              placeholder="https://typebot.io/api/v1  ó  https://tu-typebot.com/api/v1"
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              Para Typebot Cloud: <code>https://typebot.io/api/v1</code> — Para self-hosted: <code>https://tu-dominio.com/api/v1</code>
+                            </div>
+                          </div>
+
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Public ID del bot</div>
+                            <input
+                              className="wbv5-form-input"
+                              value={typebotPublicId}
+                              onChange={e => setTypebotPublicId(e.target.value)}
+                              placeholder="mi-bot-de-ventas"
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              Lo encuentras en Typebot Dashboard → Share → Public ID del flujo publicado
+                            </div>
+                          </div>
+
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">API Token (opcional)</div>
+                            <input
+                              className="wbv5-form-input"
+                              type="password"
+                              value={typebotApiToken}
+                              onChange={e => setTypebotApiToken(e.target.value)}
+                              placeholder="Opcional — solo si tu instancia lo requiere"
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              En Typebot Cloud: My Account → API Tokens. Para self-hosted público puede no ser necesario.
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
+                            <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => {
+                              try {
+                                localStorage.setItem('wa_typebot_api_base', typebotApiBase)
+                                localStorage.setItem('wa_typebot_public_id', typebotPublicId)
+                                localStorage.setItem('wa_typebot_api_token', typebotApiToken)
+                              } catch {}
+                              syncSettingsToBackend()
+                              tip('💾 Typebot configuración guardada y sincronizada')
+                            }}>💾 Guardar y sincronizar</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => {
+                              fetch(BU + '/typebot/sessions', { headers: H })
+                                .then(r => r.json())
+                                .then(d => {
+                                  if (d.ok) {
+                                    setTypebotSessions(d.sessions || [])
+                                    tip(`📊 ${d.total} sesiones activas de Typebot`)
+                                  }
+                                })
+                                .catch(() => tip('⚠️ Error al consultar sesiones'))
+                            }}>📊 Ver sesiones activas</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ color: '#dc2626' }} onClick={() => {
+                              if (!window.confirm('¿Limpiar todas las sesiones activas de Typebot? Los usuarios empezarán una nueva conversación.')) return
+                              fetch(BU + '/typebot/sessions', { method: 'DELETE', headers: H })
+                                .then(r => r.json())
+                                .then(d => {
+                                  if (d.ok) {
+                                    setTypebotSessions([])
+                                    tip(`🗑️ ${d.cleared} sesiones eliminadas`)
+                                  }
+                                })
+                                .catch(() => tip('⚠️ Error al limpiar sesiones'))
+                            }}>🗑️ Limpiar sesiones</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Sesiones activas de Typebot */}
+                      {typebotSessions.length > 0 && (
+                        <div className="wbv5-card">
+                          <div className="wbv5-card-hd">
+                            <div className="wbv5-card-title">📊 Sesiones Typebot activas ({typebotSessions.length})</div>
+                          </div>
+                          <div className="wbv5-card-bd">
+                            <div style={{ maxHeight: '200px', overflow: 'auto' }}>
+                              {typebotSessions.map((s, i) => (
+                                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.35rem 0', borderBottom: '1px solid #f3f4f6', fontSize: '.7rem' }}>
+                                  <span style={{ flex: 1, fontFamily: 'monospace' }}>{s.jid?.split('@')[0] || s.jid}</span>
+                                  <span style={{ color: '#9ca3af' }}>{s.createdAt ? new Date(s.createdAt).toLocaleString('es-CO') : ''}</span>
+                                  <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.1rem .3rem', color: '#dc2626' }} onClick={() => {
+                                    fetch(`${BU}/typebot/sessions/${encodeURIComponent(s.jid)}`, { method: 'DELETE', headers: H })
+                                      .then(r => r.json())
+                                      .then(d => {
+                                        if (d.ok) {
+                                          setTypebotSessions(prev => prev.filter(x => x.jid !== s.jid))
+                                          tip('🗑️ Sesión eliminada')
+                                        }
+                                      })
+                                      .catch(() => {})
+                                  }}>X</button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Guía rápida */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">📖 Guía rápida de Typebot</div>
+                        </div>
+                        <div className="wbv5-card-bd" style={{ fontSize: '.7rem', lineHeight: 1.6, color: '#4b5563' }}>
+                          <ol style={{ paddingLeft: '1.2rem', margin: 0 }}>
+                            <li>Crea un flujo en <strong>typebot.io</strong> (o tu instancia self-hosted)</li>
+                            <li>Publica el flujo y copia el <strong>Public ID</strong> (en Share)</li>
+                            <li>Pega la URL base de la API y el Public ID arriba</li>
+                            <li>Activa el interruptor y haz clic en "Guardar y sincronizar"</li>
+                            <li>Cada mensaje entrante de WhatsApp iniciará o continuará el flujo</li>
+                          </ol>
+                          <div style={{ marginTop: '.5rem', padding: '.5rem', background: '#fffbeb', borderRadius: 6, border: '1px solid #fde68a' }}>
+                            <strong>Variables disponibles en Typebot:</strong> <code>Phone</code>, <code>Name</code>, <code>nombre</code>, <code>telefono</code><br/>
+                            <strong>Opciones tipo choice:</strong> se envían como lista numerada (1, 2, 3...) y el usuario responde con el número
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* API & Tokens */}
