@@ -455,12 +455,19 @@ export default function WhatsAppBot() {
   const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
   const [secretInput,     setSecretInput]     = useState(() => H['x-secret'])
 
-  // ── Typebot ─────────────────────────────────────────────────────
-  const [typebotEnabled,  setTypebotEnabled]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_typebot_enabled') || 'false') } catch { return false } })
-  const [typebotApiBase,  setTypebotApiBase]  = useState(() => { try { return localStorage.getItem('wa_typebot_api_base') || '' } catch { return '' } })
-  const [typebotPublicId, setTypebotPublicId] = useState(() => { try { return localStorage.getItem('wa_typebot_public_id') || '' } catch { return '' } })
-  const [typebotApiToken, setTypebotApiToken] = useState(() => { try { return localStorage.getItem('wa_typebot_api_token') || '' } catch { return '' } })
-  const [typebotSessions, setTypebotSessions] = useState([])
+  // ── Bot Nativo (flujo conversacional sin APIs externas) ──────
+  const [nbEnabled, setNbEnabled] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_nb_enabled') || 'false') } catch { return false } })
+  const [nbWelcome, setNbWelcome] = useState(() => { try { return localStorage.getItem('wa_nb_welcome') || '¡Hola {{nombre}}! 👋 Bienvenido/a a *Sanate Store* 🌿\n¿En qué te puedo ayudar hoy?' } catch { return '' } })
+  const [nbMenu, setNbMenu] = useState(() => { try { return localStorage.getItem('wa_nb_menu') || '1. 🛒 Ver productos\n2. 📦 Estado de mi pedido\n3. 💬 Hablar con un asesor\n4. ℹ️ Más información' } catch { return '' } })
+  const [nbMenuMap, setNbMenuMap] = useState(() => { try { return localStorage.getItem('wa_nb_menu_map') || '{"1":{"reply":"📋 Puedes ver todo nuestro catálogo en:\\nhttps://sanate.store\\n\\n¿Te interesa algo en especial?","next":"free"},"2":{"reply":"📦 Envíame tu número de pedido o tu nombre completo para buscarlo.","next":"free"},"3":{"reply":"🙋 ¡Perfecto! Un asesor te atenderá pronto.","next":"escalated"},"4":{"reply":"ℹ️ Somos *Sanate Store* — productos naturales 🌿\\n📍 Envíos a todo el país\\n💳 Pagos seguros","next":"menu"}}' } catch { return '{}' } })
+  const [nbTTL, setNbTTL] = useState(() => { try { return parseInt(localStorage.getItem('wa_nb_ttl') || '24') || 24 } catch { return 24 } })
+  const [nbEscalate, setNbEscalate] = useState(() => { try { return localStorage.getItem('wa_nb_escalate') || 'agente,humano,persona,asesor,ayuda real,hablar con alguien' } catch { return '' } })
+  const [nbDelay, setNbDelay] = useState(() => { try { return parseInt(localStorage.getItem('wa_nb_delay') || '800') || 800 } catch { return 800 } })
+  const [nbAskName, setNbAskName] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_nb_ask_name') || 'true') } catch { return true } })
+  const [nbAskNameMsg, setNbAskNameMsg] = useState(() => { try { return localStorage.getItem('wa_nb_ask_name_msg') || 'Antes de continuar, ¿cómo te llamas? 😊' } catch { return '' } })
+  const [nbFallback, setNbFallback] = useState(() => { try { return localStorage.getItem('wa_nb_fallback') || 'No entendí tu mensaje 😅 Escribe *menu* para ver las opciones.' } catch { return '' } })
+  const [nbSessions, setNbSessions] = useState([])
+  const [nbLeads, setNbLeads] = useState([])
 
   // ── AI reply generator ────────────────────────────────────────
   const [generatingAiReply, setGeneratingAiReply] = useState(false)
@@ -801,6 +808,10 @@ export default function WhatsAppBot() {
         setTimeout(drawQRConnected, 80)
       }
       else if (s === 'connecting' || s === 'qr') { loadQR() }
+      // Auto-heal: si el servidor dice "disconnected" sin QR, pedir que reconecte
+      else if (s === 'disconnected' && !d.hasQR) {
+        try { await fetch(BU + '/connect', { method: 'POST', headers: H }) } catch {}
+      }
     } catch { setServerOnline(false); setStatus('disconnected') }
   }
 
@@ -1088,6 +1099,8 @@ export default function WhatsAppBot() {
       const next = !prev
       try { localStorage.setItem('wa_ai_enabled', JSON.stringify(next)) } catch {}
       tip(next ? '🤖 IA activada — respuestas automáticas ON' : '🤖 IA desactivada')
+      // Sincronizar al backend para que el servidor sepa el estado
+      setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
       return next
     })
   }
@@ -1095,6 +1108,8 @@ export default function WhatsAppBot() {
     setAiContactMap(prev => {
       const next = { ...prev, [chatId]: prev[chatId] !== true }
       try { localStorage.setItem('wa_ai_contact_map', JSON.stringify(next)) } catch {}
+      // Sincronizar mapa de contactos al backend
+      setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
       return next
     })
   }
@@ -1514,11 +1529,19 @@ ${conversation}`
     const lsPrompt   = (() => { try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
     const lsAiOn     = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })()
     const sysP = (lsTraining || lsPrompt || '').substring(0, 8000)
-    // Leer Typebot config de localStorage
-    const lsTbEnabled  = (() => { try { return JSON.parse(localStorage.getItem('wa_typebot_enabled') || 'false') } catch { return false } })()
-    const lsTbApiBase  = (() => { try { return localStorage.getItem('wa_typebot_api_base') || '' } catch { return '' } })()
-    const lsTbPublicId = (() => { try { return localStorage.getItem('wa_typebot_public_id') || '' } catch { return '' } })()
-    const lsTbToken    = (() => { try { return localStorage.getItem('wa_typebot_api_token') || '' } catch { return '' } })()
+    // Leer Bot Nativo config de localStorage
+    const lsNbEnabled   = (() => { try { return JSON.parse(localStorage.getItem('wa_nb_enabled') || 'false') } catch { return false } })()
+    const lsNbWelcome   = (() => { try { return localStorage.getItem('wa_nb_welcome') || '' } catch { return '' } })()
+    const lsNbMenu      = (() => { try { return localStorage.getItem('wa_nb_menu') || '' } catch { return '' } })()
+    const lsNbMenuMap   = (() => { try { return localStorage.getItem('wa_nb_menu_map') || '{}' } catch { return '{}' } })()
+    const lsNbTTL       = (() => { try { return parseInt(localStorage.getItem('wa_nb_ttl') || '24') || 24 } catch { return 24 } })()
+    const lsNbEscalate  = (() => { try { return localStorage.getItem('wa_nb_escalate') || '' } catch { return '' } })()
+    const lsNbDelay     = (() => { try { return parseInt(localStorage.getItem('wa_nb_delay') || '800') || 800 } catch { return 800 } })()
+    const lsNbAskName   = (() => { try { return JSON.parse(localStorage.getItem('wa_nb_ask_name') || 'true') } catch { return true } })()
+    const lsNbAskNameMsg= (() => { try { return localStorage.getItem('wa_nb_ask_name_msg') || '' } catch { return '' } })()
+    const lsNbFallback  = (() => { try { return localStorage.getItem('wa_nb_fallback') || '' } catch { return '' } })()
+    // Leer mapa de contactos con AI activa
+    const lsAiContactMap = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_contact_map') || '{}') } catch { return {} } })()
     const payload = {
       botEnabled:       lsAiOn,
       n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pública
@@ -1526,10 +1549,17 @@ ${conversation}`
       backendPublicUrl: isPublic ? curBase : '',
       openaiKey:        lsKey,
       systemPrompt:     sysP,
-      typebotEnabled:   lsTbEnabled,
-      typebotApiBase:   lsTbApiBase,
-      typebotPublicId:  lsTbPublicId,
-      typebotApiToken:  lsTbToken,
+      aiContactMap:     lsAiContactMap,
+      nativeBotEnabled:       lsNbEnabled,
+      nativeBotWelcome:       lsNbWelcome,
+      nativeBotMenu:          lsNbMenu,
+      nativeBotMenuMap:       lsNbMenuMap,
+      nativeBotSessionTTL:    lsNbTTL,
+      nativeBotEscalateWords: lsNbEscalate,
+      nativeBotReplyDelay:    lsNbDelay,
+      nativeBotAskName:       lsNbAskName,
+      nativeBotAskNameMsg:    lsNbAskNameMsg,
+      nativeBotFallback:      lsNbFallback,
     }
     fetch(curBU.replace('/api/whatsapp', '') + '/api/whatsapp/settings', {
       method: 'POST',
@@ -2001,21 +2031,21 @@ ${conversation}`
                   </div>
                 </div>
               </div>
-              {/* ── Typebot Status ── */}
+              {/* ── Bot Nativo Status ── */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">🤖 Typebot</div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setCfgTab('typebot'); goPage('config') }}>Configurar →</button>
+                  <div className="wbv5-card-title">🤖 Bot Nativo</div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setCfgTab('nativebot'); goPage('config') }}>Configurar →</button>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
-                    <span className={`wbv5-badge ${typebotEnabled && typebotPublicId ? 'badge-green' : 'badge-red'}`}>
-                      {typebotEnabled && typebotPublicId ? '✅ Activo' : '❌ Inactivo'}
+                    <span className={`wbv5-badge ${nbEnabled ? 'badge-green' : 'badge-red'}`}>
+                      {nbEnabled ? '✅ Activo' : '❌ Inactivo'}
                     </span>
                     <span style={{ fontSize: '.72rem', color: '#6b7280' }}>
-                      {typebotEnabled && typebotPublicId
-                        ? `Flujo: ${typebotPublicId}`
-                        : 'Configura Typebot para flujos conversacionales automatizados'}
+                      {nbEnabled
+                        ? 'Flujo conversacional con menú, captura de leads y escalación'
+                        : 'Activa el bot para respuestas automáticas con menú'}
                     </span>
                   </div>
                 </div>
@@ -3584,16 +3614,16 @@ ${conversation}`
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
                   ))}
-                  <div className="wbv5-cfg-section-title">Integraciones</div>
+                  <div className="wbv5-cfg-section-title">Bot & IA</div>
                   {[
-                    { id: 'typebot',  label: '🤖 Typebot' },
+                    { id: 'nativebot',  label: '🤖 Bot Nativo + IA' },
+                    { id: 'bot',      label: '⚙️ Comportamiento bot' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
                   ))}
                   <div className="wbv5-cfg-section-title">Técnico</div>
                   {[
-                    { id: 'api',      label: '🔑 API & Tokens' },
-                    { id: 'bot',      label: '🤖 Comportamiento bot' },
+                    { id: 'api',      label: '🔑 Tokens & APIs' },
                     { id: 'empresa',  label: '🏢 Empresa' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
@@ -3785,134 +3815,295 @@ ${conversation}`
                     </div>
                   )}
 
-                  {/* Typebot */}
-                  {cfgTab === 'typebot' && (
+                  {/* Bot Nativo */}
+                  {cfgTab === 'nativebot' && (
                     <>
+                      {/* ── API Key de IA (OpenAI / Gemini) ── */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">🤖 Typebot - Flujos conversacionales</div>
-                          <span className={`wbv5-badge ${typebotEnabled ? 'badge-green' : 'badge-red'}`}>
-                            {typebotEnabled ? '✅ Activo' : '❌ Inactivo'}
+                          <div className="wbv5-card-title">🧠 IA — API Key</div>
+                          <span className={`wbv5-badge ${hasAiKey ? 'badge-green' : 'badge-amber'}`}>
+                            {hasAiKey ? '✅ Configurada' : '⚠️ Sin key'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Conecta un flujo de Typebot para respuestas automatizadas con lógica conversacional avanzada.
-                            Typebot maneja sesiones, opciones, formularios y flujos de venta de forma visual.<br/>
-                            <strong>Typebot se ejecuta en paralelo a n8n</strong> — si ambos están activos, cada uno responde por su lado.
+                            La API Key potencia las respuestas del Bot Nativo con IA. Cuando el cliente escribe algo fuera del menú, la IA genera respuestas inteligentes de venta.
+                            <br /><strong>Sin API Key:</strong> solo responde el flujo de menú. <strong>Con API Key:</strong> respuestas conversacionales inteligentes + cierre de ventas.
+                          </div>
+                          {!openaiKey && !geminiKey && (
+                            <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.5rem .75rem', fontSize: '.72rem', color: '#713f12', marginBottom: '.75rem' }}>
+                              ⚠️ Sin API Key — el bot solo usará el flujo de menú sin IA.
+                            </div>
+                          )}
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">OpenAI API Key</div>
+                            <input
+                              className="wbv5-form-input" type="password"
+                              placeholder="sk-proj-..."
+                              value={openaiKey}
+                              onChange={e => saveAiKey(e.target.value)}
+                            />
+                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ API Key guardada</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Obtén tu key en platform.openai.com/api-keys</div>}
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Modelo IA</div>
+                            <select className="wbv5-form-input" value={aiModel} onChange={e => setAiModel(e.target.value)}>
+                              <option value="gpt-4o">GPT-4o (Recomendado)</option>
+                              <option value="gpt-4o-mini">GPT-4o mini (Rápido y económico)</option>
+                              <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Más económico)</option>
+                            </select>
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Google Gemini (alternativa gratis)</div>
+                            <input
+                              className="wbv5-form-input" type="password"
+                              placeholder="AIzaSy..."
+                              value={geminiKey}
+                              onChange={e => saveGeminiKey(e.target.value)}
+                            />
+                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>✅ Gemini Key guardada</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Gratis en aistudio.google.com/apikey — se usa como respaldo si OpenAI falla</div>}
+                          </div>
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                            <button
+                              className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-green'}`}
+                              onClick={toggleAiGlobal}
+                            >
+                              {aiEnabled ? '⏸ Desactivar IA global' : '🚀 Activar IA global'}
+                            </button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>OpenAI Key ↗</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Gemini Key ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Configuración principal ── */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🤖 Bot Nativo - Flujo conversacional</div>
+                          <span className={`wbv5-badge ${nbEnabled ? 'badge-green' : 'badge-red'}`}>
+                            {nbEnabled ? '✅ Activo' : '❌ Inactivo'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
+                            Bot conversacional integrado. Detecta nombres, muestra menú, captura leads y escala a humano.
+                            {hasAiKey ? <><br /><span style={{ color: '#16a34a', fontWeight: 600 }}>✅ Con API Key: las respuestas libres se potencian con IA inteligente.</span></> : <><br /><span style={{ color: '#f59e0b' }}>⚠️ Sin API Key: solo responde el flujo de menú básico.</span></>}
                           </div>
 
                           <div className="wbv5-form-row" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.75rem' }}>
                             <div className="wbv5-form-lbl" style={{ minWidth: '80px' }}>Activar</div>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                              <input type="checkbox" checked={typebotEnabled} onChange={e => {
+                              <input type="checkbox" checked={nbEnabled} onChange={e => {
                                 const v = e.target.checked
-                                setTypebotEnabled(v)
-                                try { localStorage.setItem('wa_typebot_enabled', JSON.stringify(v)) } catch {}
+                                setNbEnabled(v)
+                                try { localStorage.setItem('wa_nb_enabled', JSON.stringify(v)) } catch {}
                                 setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
                               }} />
-                              <span style={{ fontSize: '.72rem' }}>{typebotEnabled ? 'Typebot activo — responde automáticamente' : 'Typebot desactivado'}</span>
+                              <span style={{ fontSize: '.72rem' }}>{nbEnabled ? 'Bot activo — responde automáticamente' : 'Bot desactivado'}</span>
                             </label>
                           </div>
 
+                          <div className="wbv5-form-row" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.5rem' }}>
+                            <div className="wbv5-form-lbl" style={{ minWidth: '130px' }}>Preguntar nombre</div>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
+                              <input type="checkbox" checked={nbAskName} onChange={e => {
+                                const v = e.target.checked
+                                setNbAskName(v)
+                                try { localStorage.setItem('wa_nb_ask_name', JSON.stringify(v)) } catch {}
+                              }} />
+                              <span style={{ fontSize: '.72rem' }}>{nbAskName ? 'Si no se detecta nombre, preguntarlo' : 'No preguntar nombre'}</span>
+                            </label>
+                          </div>
+
+                          {nbAskName && (
+                            <div className="wbv5-form-row">
+                              <div className="wbv5-form-lbl">Mensaje para pedir nombre</div>
+                              <input
+                                className="wbv5-form-input"
+                                value={nbAskNameMsg}
+                                onChange={e => setNbAskNameMsg(e.target.value)}
+                                placeholder="Antes de continuar, ¿cómo te llamas?"
+                              />
+                            </div>
+                          )}
+
                           <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">URL base de la API</div>
-                            <input
+                            <div className="wbv5-form-lbl">Mensaje de bienvenida</div>
+                            <textarea
                               className="wbv5-form-input"
-                              value={typebotApiBase}
-                              onChange={e => setTypebotApiBase(e.target.value)}
-                              placeholder="https://typebot.io/api/v1  ó  https://tu-typebot.com/api/v1"
+                              rows={3}
+                              value={nbWelcome}
+                              onChange={e => setNbWelcome(e.target.value)}
+                              placeholder="¡Hola {{nombre}}! 👋 Bienvenido/a a tu tienda"
+                              style={{ resize: 'vertical', fontFamily: 'inherit' }}
                             />
                             <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              Para Typebot Cloud: <code>https://typebot.io/api/v1</code> — Para self-hosted: <code>https://tu-dominio.com/api/v1</code>
+                              Usa <code>{'{{nombre}}'}</code> para insertar el nombre del cliente y <code>{'{{telefono}}'}</code> para su teléfono
                             </div>
                           </div>
 
                           <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">Public ID del bot</div>
-                            <input
+                            <div className="wbv5-form-lbl">Menú de opciones</div>
+                            <textarea
                               className="wbv5-form-input"
-                              value={typebotPublicId}
-                              onChange={e => setTypebotPublicId(e.target.value)}
-                              placeholder="mi-bot-de-ventas"
+                              rows={4}
+                              value={nbMenu}
+                              onChange={e => setNbMenu(e.target.value)}
+                              placeholder={"1. 🛒 Ver productos\n2. 📦 Estado de mi pedido\n3. 💬 Hablar con asesor"}
+                              style={{ resize: 'vertical', fontFamily: 'inherit' }}
                             />
                             <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              Lo encuentras en Typebot Dashboard → Share → Public ID del flujo publicado
+                              Lista de opciones que se muestra al cliente. El cliente responde con el número.
                             </div>
                           </div>
 
                           <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">API Token (opcional)</div>
-                            <input
+                            <div className="wbv5-form-lbl">Respuestas por opción (JSON)</div>
+                            <textarea
                               className="wbv5-form-input"
-                              type="password"
-                              value={typebotApiToken}
-                              onChange={e => setTypebotApiToken(e.target.value)}
-                              placeholder="Opcional — solo si tu instancia lo requiere"
+                              rows={6}
+                              value={nbMenuMap}
+                              onChange={e => setNbMenuMap(e.target.value)}
+                              style={{ resize: 'vertical', fontFamily: 'monospace', fontSize: '.68rem' }}
                             />
                             <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              En Typebot Cloud: My Account → API Tokens. Para self-hosted público puede no ser necesario.
+                              JSON que mapea cada número a su respuesta. <code>next</code>: "menu" (vuelve al menú), "free" (conversación libre), "escalated" (pasa a humano)
                             </div>
                           </div>
 
-                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginTop: '.5rem' }}>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Mensaje fallback</div>
+                            <input
+                              className="wbv5-form-input"
+                              value={nbFallback}
+                              onChange={e => setNbFallback(e.target.value)}
+                              placeholder="No entendí tu mensaje. Escribe *menu* para ver las opciones."
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              Se envía cuando el cliente escribe algo que no coincide con ninguna opción del menú
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginTop: '.75rem' }}>
                             <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => {
                               try {
-                                localStorage.setItem('wa_typebot_api_base', typebotApiBase)
-                                localStorage.setItem('wa_typebot_public_id', typebotPublicId)
-                                localStorage.setItem('wa_typebot_api_token', typebotApiToken)
+                                localStorage.setItem('wa_nb_enabled', JSON.stringify(nbEnabled))
+                                localStorage.setItem('wa_nb_welcome', nbWelcome)
+                                localStorage.setItem('wa_nb_menu', nbMenu)
+                                localStorage.setItem('wa_nb_menu_map', nbMenuMap)
+                                localStorage.setItem('wa_nb_ttl', String(nbTTL))
+                                localStorage.setItem('wa_nb_escalate', nbEscalate)
+                                localStorage.setItem('wa_nb_delay', String(nbDelay))
+                                localStorage.setItem('wa_nb_ask_name', JSON.stringify(nbAskName))
+                                localStorage.setItem('wa_nb_ask_name_msg', nbAskNameMsg)
+                                localStorage.setItem('wa_nb_fallback', nbFallback)
                               } catch {}
                               syncSettingsToBackend()
-                              tip('💾 Typebot configuración guardada y sincronizada')
+                              tip('💾 Bot Nativo configuración guardada')
                             }}>💾 Guardar y sincronizar</button>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => {
-                              fetch(BU + '/typebot/sessions', { headers: H })
+                              fetch(BU + '/bot/sessions', { headers: H })
                                 .then(r => r.json())
                                 .then(d => {
                                   if (d.ok) {
-                                    setTypebotSessions(d.sessions || [])
-                                    tip(`📊 ${d.total} sesiones activas de Typebot`)
+                                    setNbSessions(d.sessions || [])
+                                    tip(`📊 ${d.total} sesiones activas`)
                                   }
                                 })
-                                .catch(() => tip('⚠️ Error al consultar sesiones'))
-                            }}>📊 Ver sesiones activas</button>
+                                .catch(() => tip('⚠️ Error'))
+                            }}>📊 Ver sesiones</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => {
+                              fetch(BU + '/bot/leads', { headers: H })
+                                .then(r => r.json())
+                                .then(d => {
+                                  if (d.ok) {
+                                    setNbLeads(d.leads || [])
+                                    tip(`📋 ${d.total} leads capturados`)
+                                  }
+                                })
+                                .catch(() => tip('⚠️ Error'))
+                            }}>📋 Ver leads</button>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ color: '#dc2626' }} onClick={() => {
-                              if (!window.confirm('¿Limpiar todas las sesiones activas de Typebot? Los usuarios empezarán una nueva conversación.')) return
-                              fetch(BU + '/typebot/sessions', { method: 'DELETE', headers: H })
+                              if (!window.confirm('¿Limpiar todas las sesiones? Los clientes empezarán desde el inicio.')) return
+                              fetch(BU + '/bot/sessions', { method: 'DELETE', headers: H })
                                 .then(r => r.json())
-                                .then(d => {
-                                  if (d.ok) {
-                                    setTypebotSessions([])
-                                    tip(`🗑️ ${d.cleared} sesiones eliminadas`)
-                                  }
-                                })
-                                .catch(() => tip('⚠️ Error al limpiar sesiones'))
+                                .then(d => { if (d.ok) { setNbSessions([]); tip(`🗑️ ${d.cleared} sesiones eliminadas`) } })
+                                .catch(() => tip('⚠️ Error'))
                             }}>🗑️ Limpiar sesiones</button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Sesiones activas de Typebot */}
-                      {typebotSessions.length > 0 && (
+                      {/* ── Ajustes avanzados ── */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">⚙️ Ajustes avanzados</div>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Duración de sesión (horas)</div>
+                            <input
+                              className="wbv5-form-input"
+                              type="number" min="1" max="72"
+                              value={nbTTL}
+                              onChange={e => setNbTTL(Math.max(1, Math.min(72, parseInt(e.target.value) || 24)))}
+                              style={{ maxWidth: '120px' }}
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              Después de este tiempo la sesión expira y el cliente vuelve al inicio. Recomendado: 24h.
+                            </div>
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Delay entre mensajes (ms)</div>
+                            <input
+                              className="wbv5-form-input"
+                              type="number" min="300" max="3000" step="100"
+                              value={nbDelay}
+                              onChange={e => setNbDelay(Math.max(300, Math.min(3000, parseInt(e.target.value) || 800)))}
+                              style={{ maxWidth: '120px' }}
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              El bot muestra "escribiendo..." durante este tiempo antes de responder. Más natural.
+                            </div>
+                          </div>
+                          <div className="wbv5-form-row">
+                            <div className="wbv5-form-lbl">Palabras para escalar a humano</div>
+                            <input
+                              className="wbv5-form-input"
+                              value={nbEscalate}
+                              onChange={e => setNbEscalate(e.target.value)}
+                              placeholder="agente,humano,persona,asesor,hablar con alguien"
+                            />
+                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
+                              Si el cliente escribe alguna de estas palabras, el bot se detiene y avisa que un humano lo atenderá. Separar con comas.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Sesiones activas ── */}
+                      {nbSessions.length > 0 && (
                         <div className="wbv5-card">
                           <div className="wbv5-card-hd">
-                            <div className="wbv5-card-title">📊 Sesiones Typebot activas ({typebotSessions.length})</div>
+                            <div className="wbv5-card-title">📊 Sesiones activas ({nbSessions.length})</div>
                           </div>
                           <div className="wbv5-card-bd">
                             <div style={{ maxHeight: '200px', overflow: 'auto' }}>
-                              {typebotSessions.map((s, i) => (
+                              {nbSessions.map((s, i) => (
                                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.35rem 0', borderBottom: '1px solid #f3f4f6', fontSize: '.7rem' }}>
                                   <span style={{ flex: 1, fontFamily: 'monospace' }}>{s.jid?.split('@')[0] || s.jid}</span>
-                                  <span style={{ color: '#9ca3af' }}>{s.createdAt ? new Date(s.createdAt).toLocaleString('es-CO') : ''}</span>
+                                  <span style={{ color: '#2563eb', fontSize: '.62rem' }}>{s.name || '?'}</span>
+                                  <span className={`wbv5-badge ${s.step === 'escalated' ? 'badge-amber' : s.step === 'menu' ? 'badge-blue' : 'badge-green'}`} style={{ fontSize: '.58rem' }}>
+                                    {s.step || '?'}
+                                  </span>
+                                  <span style={{ color: '#6b7280', fontSize: '.62rem' }}>msgs: {s.msgCount || 0}</span>
+                                  <span style={{ color: '#9ca3af', fontSize: '.6rem' }}>{s.createdAt ? new Date(s.createdAt).toLocaleString('es-CO') : ''}</span>
                                   <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.1rem .3rem', color: '#dc2626' }} onClick={() => {
-                                    fetch(`${BU}/typebot/sessions/${encodeURIComponent(s.jid)}`, { method: 'DELETE', headers: H })
+                                    fetch(`${BU}/bot/sessions/${encodeURIComponent(s.jid)}`, { method: 'DELETE', headers: H })
                                       .then(r => r.json())
-                                      .then(d => {
-                                        if (d.ok) {
-                                          setTypebotSessions(prev => prev.filter(x => x.jid !== s.jid))
-                                          tip('🗑️ Sesión eliminada')
-                                        }
-                                      })
+                                      .then(d => { if (d.ok) { setNbSessions(prev => prev.filter(x => x.jid !== s.jid)); tip('🗑️ Eliminada') } })
                                       .catch(() => {})
                                   }}>X</button>
                                 </div>
@@ -3922,22 +4113,71 @@ ${conversation}`
                         </div>
                       )}
 
-                      {/* Guía rápida */}
+                      {/* ── Leads capturados ── */}
+                      {nbLeads.length > 0 && (
+                        <div className="wbv5-card">
+                          <div className="wbv5-card-hd">
+                            <div className="wbv5-card-title">📋 Leads capturados ({nbLeads.length})</div>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ color: '#dc2626', fontSize: '.6rem' }} onClick={() => {
+                              if (!window.confirm('¿Borrar todos los leads?')) return
+                              fetch(BU + '/bot/leads', { method: 'DELETE', headers: H })
+                                .then(r => r.json())
+                                .then(d => { if (d.ok) { setNbLeads([]); tip(`🗑️ ${d.cleared} leads borrados`) } })
+                                .catch(() => {})
+                            }}>🗑️ Borrar todos</button>
+                          </div>
+                          <div className="wbv5-card-bd">
+                            <div style={{ maxHeight: '250px', overflow: 'auto' }}>
+                              <table style={{ width: '100%', fontSize: '.68rem', borderCollapse: 'collapse' }}>
+                                <thead>
+                                  <tr style={{ background: '#f9fafb', textAlign: 'left' }}>
+                                    <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Tel</th>
+                                    <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Nombre</th>
+                                    <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Interés</th>
+                                    <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Fecha</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {nbLeads.map((l, i) => (
+                                    <tr key={i} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                      <td style={{ padding: '.3rem .4rem', fontFamily: 'monospace' }}>{l.phone || '-'}</td>
+                                      <td style={{ padding: '.3rem .4rem' }}>{l.name || '-'}</td>
+                                      <td style={{ padding: '.3rem .4rem', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{l.interest || '-'}</td>
+                                      <td style={{ padding: '.3rem .4rem', color: '#9ca3af' }}>{l.capturedAt ? new Date(l.capturedAt).toLocaleString('es-CO') : ''}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ── Cómo funciona ── */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">📖 Guía rápida de Typebot</div>
+                          <div className="wbv5-card-title">📖 Cómo funciona el Bot Nativo</div>
                         </div>
                         <div className="wbv5-card-bd" style={{ fontSize: '.7rem', lineHeight: 1.6, color: '#4b5563' }}>
-                          <ol style={{ paddingLeft: '1.2rem', margin: 0 }}>
-                            <li>Crea un flujo en <strong>typebot.io</strong> (o tu instancia self-hosted)</li>
-                            <li>Publica el flujo y copia el <strong>Public ID</strong> (en Share)</li>
-                            <li>Pega la URL base de la API y el Public ID arriba</li>
-                            <li>Activa el interruptor y haz clic en "Guardar y sincronizar"</li>
-                            <li>Cada mensaje entrante de WhatsApp iniciará o continuará el flujo</li>
-                          </ol>
-                          <div style={{ marginTop: '.5rem', padding: '.5rem', background: '#fffbeb', borderRadius: 6, border: '1px solid #fde68a' }}>
-                            <strong>Variables disponibles en Typebot:</strong> <code>Phone</code>, <code>Name</code>, <code>nombre</code>, <code>telefono</code><br/>
-                            <strong>Opciones tipo choice:</strong> se envían como lista numerada (1, 2, 3...) y el usuario responde con el número
+                          <div style={{ padding: '.5rem', background: '#eff6ff', borderRadius: 6, border: '1px solid #bfdbfe', marginBottom: '.5rem' }}>
+                            <strong>Flujo automático:</strong><br/>
+                            1. Cliente escribe por primera vez → el bot detecta su nombre (de WhatsApp o del mensaje)<br/>
+                            2. Si no tiene nombre → le pregunta "¿Cómo te llamas?"<br/>
+                            3. Envía bienvenida personalizada + menú de opciones<br/>
+                            4. Cliente elige opción (1, 2, 3...) → bot responde según configuración<br/>
+                            5. Si escribe "agente/humano/asesor" → bot se detiene, avisa que un humano atenderá<br/>
+                            6. Escribe "menu" en cualquier momento → vuelve al menú
+                          </div>
+                          <div style={{ padding: '.5rem', background: '#ecfdf5', borderRadius: 6, border: '1px solid #a7f3d0', marginBottom: '.5rem' }}>
+                            <strong>Captura de leads:</strong> Cada nuevo contacto se guarda automáticamente con su teléfono, nombre detectado y primer mensaje. Sin configurar nada extra.
+                          </div>
+                          <div style={{ padding: '.5rem', background: '#fffbeb', borderRadius: 6, border: '1px solid #fde68a' }}>
+                            <strong>Respuestas por opción (JSON):</strong> Cada clave es el número de la opción. <code>reply</code> es lo que el bot responde. <code>next</code> define qué pasa después:
+                            <ul style={{ margin: '.3rem 0 0', paddingLeft: '1rem' }}>
+                              <li><code>"menu"</code> — vuelve a mostrar el menú</li>
+                              <li><code>"free"</code> — conversación libre (el bot no responde más, pero puede tomar la IA u operador)</li>
+                              <li><code>"escalated"</code> — pasa a un humano (bot deja de responder)</li>
+                            </ul>
                           </div>
                         </div>
                       </div>

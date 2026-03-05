@@ -58,6 +58,27 @@ if (process.env.OPENAI_API_KEY) {
   console.warn("OPENAI_API_KEY no configurada - IA deshabilitada");
 }
 
+/** Llamar a OpenAI Chat Completions (usa la key del settings o env) */
+async function callOpenAIChat({ messages, maxTokens = 400, settings = {} }) {
+  const apiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
+  if (!apiKey) return null;
+  try {
+    const client = apiKey === process.env.OPENAI_API_KEY && openai
+      ? openai
+      : new OpenAI({ apiKey });
+    const r = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages,
+      max_tokens: maxTokens,
+      temperature: 0.7,
+    });
+    return r.choices?.[0]?.message?.content?.trim() || null;
+  } catch (e) {
+    console.warn("[callOpenAIChat] Error:", e?.message || e);
+    return null;
+  }
+}
+
 const PORT = process.env.PORT || 5055;
 const SERVER_BUILD = process.env.SERVER_BUILD || "2026-02-20-edit-fallback-dalle2";
 const aiImagesStoreFile = path.join(generatedDir, "ai-images-store.json");
@@ -111,14 +132,27 @@ function defaultWhatsAppDb() {
       backendPublicUrl: "",
       openaiKey:       "",
       systemPrompt:    "",
-      // ── Typebot ──
-      typebotEnabled:  false,
-      typebotApiBase:  "",        // e.g. "https://typebot.io/api/v1" or self-hosted
-      typebotPublicId: "",        // public ID of the published bot
-      typebotApiToken: "",        // Bearer token for API auth (optional for self-hosted)
+      // ── Bot Nativo (flujo conversacional sin APIs externas) ──
+      nativeBotEnabled:  false,
+      nativeBotWelcome:  "¡Hola {{nombre}}! 👋 Bienvenido/a a *Sanate Store* 🌿\n¿En qué te puedo ayudar hoy?",
+      nativeBotMenu:     "1. 🛒 Ver productos\n2. 📦 Estado de mi pedido\n3. 💬 Hablar con un asesor\n4. ℹ️ Más información",
+      nativeBotMenuMap:  JSON.stringify({
+        "1": { reply: "📋 Puedes ver todo nuestro catálogo en:\nhttps://sanate.store\n\n¿Te interesa algo en especial? Escríbeme el nombre del producto 🔍", next: "free" },
+        "2": { reply: "📦 Por favor envíame tu número de pedido o tu nombre completo para buscarlo.", next: "free" },
+        "3": { reply: "🙋 ¡Perfecto! Un asesor te atenderá pronto.\nMientras tanto, ¿puedes contarme brevemente qué necesitas?", next: "escalated" },
+        "4": { reply: "ℹ️ Somos *Sanate Store* — productos naturales para tu bienestar 🌿\n📍 Envíos a todo el país\n💳 Pagos seguros\n🕐 Horario: Lun-Sáb 8am-6pm\n\n¿Algo más en lo que te pueda ayudar?", next: "menu" },
+      }),
+      nativeBotSessionTTL:   24,  // horas que dura una sesión antes de reiniciar
+      nativeBotEscalateWords: "agente,humano,persona,asesor,ayuda real,hablar con alguien",
+      nativeBotReplyDelay:   800,  // ms de delay entre mensajes múltiples
+      nativeBotAskName:      true, // preguntar nombre si no lo tiene
+      nativeBotAskNameMsg:   "Antes de continuar, ¿cómo te llamas? 😊",
+      nativeBotFallback:     "No entendí tu mensaje 😅 Por favor elige una opción del menú o escribe *menu* para verlas de nuevo.",
     },
-    // ── Typebot sesiones activas: { [jid]: { sessionId, resultId, lastInput, createdAt } }
-    typebotSessions: {},
+    // ── Bot Nativo: sesiones activas { [jid]: { step, name, data, createdAt, msgCount } }
+    nativeBotSessions: {},
+    // ── Leads capturados
+    leads: [],
   };
 }
 
@@ -902,10 +936,9 @@ app.get("/api/whatsapp/settings", (req, res) => {
   if (!checkWaSecret(req, res)) return;
   try {
     const db = readWhatsAppDb();
-    // Nunca devolver openaiKey/typebotApiToken completas: enmascarar por seguridad
+    // Nunca devolver openaiKey completa: enmascarar por seguridad
     const s = { ...(db.settings || {}) };
     if (s.openaiKey) s.openaiKey = s.openaiKey.substring(0, 8) + "****";
-    if (s.typebotApiToken) s.typebotApiToken = s.typebotApiToken.substring(0, 8) + "****";
     return res.json({ ok: true, settings: s });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
@@ -918,7 +951,10 @@ app.post("/api/whatsapp/settings", (req, res) => {
     const db = readWhatsAppDb();
     const allowed = [
       "botEnabled", "n8nEnabled", "n8nWebhook", "backendPublicUrl", "openaiKey", "systemPrompt",
-      "typebotEnabled", "typebotApiBase", "typebotPublicId", "typebotApiToken",
+      "aiContactMap",
+      "nativeBotEnabled", "nativeBotWelcome", "nativeBotMenu", "nativeBotMenuMap",
+      "nativeBotSessionTTL", "nativeBotEscalateWords", "nativeBotReplyDelay",
+      "nativeBotAskName", "nativeBotAskNameMsg", "nativeBotFallback",
     ];
     const patch = {};
     for (const k of allowed) {
@@ -929,7 +965,6 @@ app.post("/api/whatsapp/settings", (req, res) => {
     console.log("[WA][settings] Actualizado:", Object.keys(patch).join(", "));
     const masked = { ...db.settings };
     if (masked.openaiKey) masked.openaiKey = "****";
-    if (masked.typebotApiToken) masked.typebotApiToken = "****";
     return res.json({ ok: true, settings: masked });
   } catch (err) {
     return res.status(500).json({ ok: false, error: err?.message || String(err) });
@@ -1736,184 +1771,273 @@ let waQR            = null;           // data-url PNG
 let waPhone         = "";
 let waIniting       = false;
 let downloadMediaFn = null; // set after Baileys dynamic import
+let waReconnectAttempt = 0; // for exponential backoff
 
-// ── Typebot: sesiones en memoria (jid → { sessionId, resultId, lastInput, createdAt }) ─
-const typebotSessionsMap = new Map();
+// ═══════════════════════════════════════════════════════════════════════════
+// ── BOT NATIVO: Motor de flujo conversacional (sin APIs externas) ───────
+// ═══════════════════════════════════════════════════════════════════════════
+// Estados (steps): "new" → "ask_name" → "menu" → "free" → "escalated"
+// - "new":       primera vez que escribe — se le da bienvenida
+// - "ask_name":  esperando que diga su nombre
+// - "menu":      esperando que elija del menú
+// - "free":      conversación libre (esperando input abierto)
+// - "escalated": derivado a humano — el bot ya no responde
 
-// Cargar sesiones persistidas de la DB al iniciar
+const nativeBotSessions = new Map();
+
+// Cargar sesiones persistidas al iniciar
 try {
   const _db = readWhatsAppDb();
-  if (_db.typebotSessions && typeof _db.typebotSessions === "object") {
-    for (const [k, v] of Object.entries(_db.typebotSessions)) {
-      typebotSessionsMap.set(k, v);
+  if (_db.nativeBotSessions && typeof _db.nativeBotSessions === "object") {
+    for (const [k, v] of Object.entries(_db.nativeBotSessions)) {
+      nativeBotSessions.set(k, v);
     }
-    console.log("[Typebot] Cargadas", typebotSessionsMap.size, "sesiones desde DB");
+    console.log("[NativeBot] Cargadas", nativeBotSessions.size, "sesiones desde DB");
   }
 } catch {}
 
-function persistTypebotSessions() {
+function persistNativeBotSessions() {
   try {
     const db = readWhatsAppDb();
-    db.typebotSessions = Object.fromEntries(typebotSessionsMap);
+    db.nativeBotSessions = Object.fromEntries(nativeBotSessions);
     writeWhatsAppDb(db);
   } catch {}
 }
 
-/** Extraer texto plano de los mensajes richText de Typebot */
-function typebotExtractText(messages) {
-  const parts = [];
-  for (const msg of (messages || [])) {
-    if (msg.type === "text") {
-      if (msg.content?.richText) {
-        const lines = msg.content.richText.map(block =>
-          (block.children || []).map(child => {
-            if (child.bold) return `*${child.text || ""}*`;
-            if (child.italic) return `_${child.text || ""}_`;
-            if (child.url) return child.url;
-            return child.text || "";
-          }).join("")
-        );
-        parts.push(lines.join("\n"));
-      } else if (msg.content?.markdown) {
-        parts.push(msg.content.markdown);
-      } else if (typeof msg.content === "string") {
-        parts.push(msg.content);
-      }
-    } else if (msg.type === "image") {
-      parts.push(msg.content?.url || "[imagen]");
-    } else if (msg.type === "video") {
-      parts.push(msg.content?.url || "[video]");
-    } else if (msg.type === "audio") {
-      parts.push(msg.content?.url || "[audio]");
-    }
-  }
-  return parts.filter(Boolean);
-}
-
-/** Formatear opciones de Typebot como lista numerada para WhatsApp */
-function typebotFormatChoices(input) {
-  if (!input?.items?.length) return "";
-  return "\n\n" + input.items.map((item, i) => `${i + 1}. ${item.content}`).join("\n");
-}
-
-/** Resolver respuesta de usuario a opciones de Typebot (por número o texto) */
-function typebotResolveChoice(userText, lastInput) {
-  if (!lastInput?.items?.length) return userText;
-  const trimmed = userText.trim();
-  const num = parseInt(trimmed);
-  if (num >= 1 && num <= lastInput.items.length) {
-    return lastInput.items[num - 1].content;
-  }
-  const match = lastInput.items.find(
-    item => item.content.toLowerCase() === trimmed.toLowerCase()
-  );
-  if (match) return match.content;
-  return userText;
-}
-
-/** Manejar mensaje entrante con Typebot: start o continue sesión */
-async function handleTypebotMessage(jid, messageText, senderName, settings) {
-  const apiBase = (settings.typebotApiBase || "").replace(/\/$/, "");
-  const publicId = settings.typebotPublicId || "";
-  if (!apiBase || !publicId) {
-    console.warn("[Typebot] apiBase o publicId no configurado");
-    return [];
-  }
-
-  const headers = { "Content-Type": "application/json" };
-  if (settings.typebotApiToken) {
-    headers["Authorization"] = `Bearer ${settings.typebotApiToken}`;
-  }
-
-  const existing = typebotSessionsMap.get(jid);
-  let tbResponse;
-
+/** Guardar un lead capturado en la DB */
+function saveLead(leadData) {
   try {
-    if (!existing) {
-      // ── NUEVA SESIÓN: startChat ──────────────────────────────────────
-      console.log("[Typebot][startChat]", { jid, publicId });
-      const r = await fetch(`${apiBase}/typebots/${publicId}/startChat`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          message: { type: "text", text: messageText },
-          prefilledVariables: {
-            Phone: jid.split("@")[0],
-            Name: senderName || "",
-            nombre: senderName || "",
-            telefono: jid.split("@")[0],
-          },
-        }),
-      });
-      if (!r.ok) {
-        const errText = await r.text().catch(() => "");
-        console.error("[Typebot][startChat][error]", r.status, errText);
-        return [];
-      }
-      tbResponse = await r.json();
-      typebotSessionsMap.set(jid, {
-        sessionId: tbResponse.sessionId,
-        resultId:  tbResponse.resultId || "",
-        lastInput: tbResponse.input || null,
-        createdAt: nowIso(),
-      });
-      persistTypebotSessions();
-    } else {
-      // ── SESIÓN EXISTENTE: continueChat ───────────────────────────────
-      // Resolver si la última input era tipo choice
-      const resolvedText = typebotResolveChoice(messageText, existing.lastInput);
-      console.log("[Typebot][continueChat]", { jid, sessionId: existing.sessionId, resolvedText });
-      const r = await fetch(`${apiBase}/sessions/${existing.sessionId}/continueChat`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          message: { type: "text", text: resolvedText },
-        }),
-      });
-      if (!r.ok) {
-        // Sesión expirada o error → reiniciar
-        console.warn("[Typebot][continueChat][error]", r.status, "→ reiniciando sesión");
-        typebotSessionsMap.delete(jid);
-        persistTypebotSessions();
-        return handleTypebotMessage(jid, messageText, senderName, settings);
-      }
-      tbResponse = await r.json();
-      // Actualizar sesión
-      const session = typebotSessionsMap.get(jid);
-      if (session) {
-        session.lastInput = tbResponse.input || null;
-      }
-      persistTypebotSessions();
-    }
+    const db = readWhatsAppDb();
+    if (!db.leads) db.leads = [];
+    db.leads.push({
+      id:         randomId("lead_"),
+      ...leadData,
+      source:     "native-bot",
+      capturedAt: nowIso(),
+    });
+    if (db.leads.length > 500) db.leads = db.leads.slice(-500);
+    writeWhatsAppDb(db);
+    console.log("[NativeBot][lead]", leadData.phone, leadData.name);
   } catch (err) {
-    console.error("[Typebot][error]", err?.message || err);
-    // Limpiar sesión por seguridad
-    typebotSessionsMap.delete(jid);
-    persistTypebotSessions();
-    return [];
+    console.error("[NativeBot][lead-error]", err?.message || err);
+  }
+}
+
+/** Comprobar si la sesión expiró */
+function nativeBotSessionExpired(session, ttlHours) {
+  if (!session?.createdAt) return true;
+  const ttl = (ttlHours || 24) * 60 * 60 * 1000;
+  return Date.now() - new Date(session.createdAt).getTime() > ttl;
+}
+
+/** Comprobar si el mensaje pide escalar a un humano */
+function shouldEscalate(text, escalateWords) {
+  if (!escalateWords) return false;
+  const words = escalateWords.split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
+  const lc = text.toLowerCase().trim();
+  return words.some(w => lc.includes(w));
+}
+
+/** Detectar nombre de un texto corto (heurística simple) */
+function extractNameFromText(text) {
+  const clean = (text || "").trim();
+  // Si es muy largo (>50 chars) probablemente no es un nombre
+  if (clean.length > 50) return null;
+  // Remover "me llamo", "soy", "mi nombre es", etc.
+  const stripped = clean
+    .replace(/^(me llamo|soy|mi nombre es|hola,?\s*(me llamo|soy)?)\s*/i, "")
+    .replace(/^(i'?m|my name is|i am)\s*/i, "")
+    .trim();
+  if (!stripped || stripped.length < 2 || stripped.length > 40) return null;
+  // Si tiene más de 4 palabras, probablemente no es un nombre
+  if (stripped.split(/\s+/).length > 4) return null;
+  // Capitalizar primera letra de cada palabra
+  return stripped.replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/** Reemplazar variables en template: {{nombre}}, {{telefono}} */
+function templateReplace(template, vars) {
+  return (template || "").replace(/\{\{(\w+)\}\}/g, (m, key) => {
+    return vars[key] !== undefined ? vars[key] : m;
+  });
+}
+
+/** Parsear el menuMap (JSON string → objeto) */
+function parseMenuMap(menuMapStr) {
+  try {
+    if (typeof menuMapStr === "object") return menuMapStr;
+    return JSON.parse(menuMapStr || "{}");
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Motor principal del bot nativo.
+ * Recibe un mensaje y devuelve las respuestas a enviar.
+ * NO hace fetch a ninguna API externa.
+ */
+function handleNativeBotMessage(jid, messageText, pushName, settings) {
+  const text = (messageText || "").trim();
+  const lc = text.toLowerCase();
+  const ttl = settings.nativeBotSessionTTL || 24;
+  const phone = jid.split("@")[0];
+
+  // Obtener o crear sesión
+  let session = nativeBotSessions.get(jid);
+
+  // Si sesión expirada → reset
+  if (session && nativeBotSessionExpired(session, ttl)) {
+    console.log("[NativeBot][session-expired]", jid);
+    session = null;
+    nativeBotSessions.delete(jid);
   }
 
-  // ── Extraer respuestas de texto ────────────────────────────────────
-  const replies = typebotExtractText(tbResponse.messages);
-
-  // Si hay input de tipo choice, agregar opciones al último mensaje
-  if (tbResponse.input?.type === "choice input" && tbResponse.input.items?.length) {
-    const choicesText = typebotFormatChoices(tbResponse.input);
-    if (replies.length > 0) {
-      replies[replies.length - 1] += choicesText;
-    } else {
-      replies.push(choicesText.trim());
+  // ── Escalación a humano (funciona en cualquier estado) ──
+  if (shouldEscalate(text, settings.nativeBotEscalateWords)) {
+    console.log("[NativeBot][escalate]", jid);
+    if (session) session.step = "escalated";
+    else {
+      session = { step: "escalated", name: pushName || "", phone, createdAt: nowIso(), msgCount: 1 };
+      nativeBotSessions.set(jid, session);
     }
+    persistNativeBotSessions();
+    return ["🙋 ¡Entendido! Te voy a comunicar con un asesor humano.\n\nUn momento por favor, alguien del equipo te atenderá pronto. 🙏"];
   }
 
-  // Si la conversación terminó (no hay más input), limpiar sesión
-  if (!tbResponse.input) {
-    typebotSessionsMap.delete(jid);
-    persistTypebotSessions();
-    console.log("[Typebot][session-ended]", jid);
+  // ── Si está escalado, el bot NO responde (lo atiende un humano) ──
+  if (session?.step === "escalated") {
+    return []; // silencio — el humano responde
   }
 
-  return replies;
+  // ── Detectar si pide menú de nuevo ──
+  if (session && (lc === "menu" || lc === "menú" || lc === "opciones" || lc === "inicio" || lc === "hola")) {
+    session.step = "menu";
+    session.msgCount = (session.msgCount || 0) + 1;
+    persistNativeBotSessions();
+    const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
+    return [menu];
+  }
+
+  // ── NUEVA CONVERSACIÓN ──
+  if (!session) {
+    const detectedName = pushName || extractNameFromText(text) || "";
+    session = {
+      step:      "new",
+      name:      detectedName,
+      phone,
+      createdAt: nowIso(),
+      msgCount:  1,
+      firstMsg:  text,
+    };
+    nativeBotSessions.set(jid, session);
+
+    // Guardar lead desde el primer mensaje
+    saveLead({ phone, name: detectedName, interest: text });
+
+    const replies = [];
+
+    // Si no tenemos nombre Y la config pide preguntar nombre
+    if (!detectedName && settings.nativeBotAskName) {
+      session.step = "ask_name";
+      const askMsg = settings.nativeBotAskNameMsg || "¿Cómo te llamas? 😊";
+      replies.push(askMsg);
+    } else {
+      // Tenemos nombre (de pushName o del mensaje) → bienvenida + menú
+      session.step = "menu";
+      const vars = { nombre: detectedName || "amigo/a", telefono: phone };
+      const welcome = templateReplace(settings.nativeBotWelcome || "¡Hola {{nombre}}! 👋", vars);
+      const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
+      replies.push(welcome + "\n\n" + menu);
+    }
+
+    persistNativeBotSessions();
+    return replies;
+  }
+
+  // ── Esperando nombre ──
+  if (session.step === "ask_name") {
+    const name = extractNameFromText(text) || text.trim().substring(0, 40);
+    session.name = name;
+    session.step = "menu";
+    session.msgCount = (session.msgCount || 0) + 1;
+
+    // Actualizar lead con el nombre
+    saveLead({ phone, name, interest: session.firstMsg || "" });
+
+    const vars = { nombre: name, telefono: phone };
+    const welcome = templateReplace(settings.nativeBotWelcome || "¡Hola {{nombre}}! 👋", vars);
+    const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
+
+    persistNativeBotSessions();
+    return [welcome + "\n\n" + menu];
+  }
+
+  // ── Esperando selección de menú ──
+  if (session.step === "menu") {
+    session.msgCount = (session.msgCount || 0) + 1;
+    const menuMap = parseMenuMap(settings.nativeBotMenuMap);
+
+    // Buscar la opción elegida (por número o por texto)
+    const choice = text.trim();
+    let matched = menuMap[choice]; // buscar por número directo ("1", "2", etc.)
+
+    if (!matched) {
+      // Buscar por texto parcial en las opciones del menú
+      for (const [key, val] of Object.entries(menuMap)) {
+        if (val.label && lc.includes(val.label.toLowerCase())) {
+          matched = val;
+          break;
+        }
+      }
+    }
+
+    if (matched) {
+      const vars = { nombre: session.name || "amigo/a", telefono: phone };
+      const reply = templateReplace(matched.reply || "Ok", vars);
+      session.step = matched.next || "menu"; // "free", "menu", "escalated"
+      session.lastChoice = choice;
+
+      // Si la opción escaló a humano
+      if (session.step === "escalated") {
+        persistNativeBotSessions();
+        return [reply];
+      }
+
+      // Actualizar lead con el interés
+      saveLead({ phone, name: session.name || "", interest: choice + " - " + (matched.reply || "").substring(0, 50) });
+
+      persistNativeBotSessions();
+      return [reply];
+    }
+
+    // No entendió → fallback
+    const fallback = settings.nativeBotFallback || "No entendí tu mensaje 😅 Escribe *menu* para ver las opciones.";
+    persistNativeBotSessions();
+    return [fallback];
+  }
+
+  // ── Conversación libre ──
+  if (session.step === "free") {
+    session.msgCount = (session.msgCount || 0) + 1;
+
+    // Si escribe "menu" ya se manejó arriba
+    // Después de 5 mensajes en free, sugerir menú de nuevo
+    if ((session.msgCount || 0) % 5 === 0) {
+      persistNativeBotSessions();
+      const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
+      return ["¿Necesitas algo más? Aquí tienes las opciones:\n\n" + menu];
+    }
+
+    persistNativeBotSessions();
+    // En modo libre: devolver flag para que el caller use IA si hay API key
+    return { needsAI: true, context: `Cliente "${session.name || "desconocido"}" en conversación libre. Mensaje anterior: "${session.lastChoice || ""}"` };
+  }
+
+  // Fallback genérico — también intentar con IA si está disponible
+  session.msgCount = (session.msgCount || 0) + 1;
+  persistNativeBotSessions();
+  return { needsAI: true, context: `Cliente "${session.name || "desconocido"}", no coincidió con ninguna opción del menú.` };
 }
 
 // ── Chat store en memoria ───────────────────────────────────────────────────
@@ -2027,7 +2151,12 @@ async function storeMsg(msg) {
 
     // ── Reenvío a n8n si botEnabled + n8nEnabled (opera con Chrome cerrado) ─
     const settings = db.settings || {};
-    if (!fromMe && isNew && !saved.dedup && settings.n8nEnabled && settings.n8nWebhook) {
+    const isGroup = jid.endsWith("@g.us");
+    // ── Verificar si la IA está activa para este chat (per-chat map) ──
+    const aiContactMap = settings.aiContactMap || {};
+    const aiActiveForChat = settings.botEnabled && aiContactMap[jid] === true;
+
+    if (!fromMe && isNew && !saved.dedup && settings.n8nEnabled && settings.n8nWebhook && !isGroup && aiActiveForChat) {
       const publicBase = (settings.backendPublicUrl || "").replace(/\/$/, "");
       const mediaFull = (url) => {
         if (!url) return "";
@@ -2127,17 +2256,60 @@ async function storeMsg(msg) {
       callN8n();
     }
 
-    // ── Reenvío a Typebot si typebotEnabled (flujo conversacional) ─────
-    if (!fromMe && isNew && !saved.dedup && settings.typebotEnabled) {
+    // ── Bot Nativo: flujo conversacional ────────────────────────────────
+    // Solo responde si: no es grupo, está habilitado, y la IA está activa para este chat (o no hay aiContactMap = modo legacy)
+    const nbActiveForChat = !isGroup && settings.nativeBotEnabled && (Object.keys(aiContactMap).length === 0 || aiActiveForChat);
+    if (!fromMe && isNew && !saved.dedup && nbActiveForChat) {
+      const replyDelay = Math.max(300, Math.min(3000, settings.nativeBotReplyDelay || 800));
       (async () => {
         try {
-          const replies = await handleTypebotMessage(jid, text, name, settings);
+          const result = handleNativeBotMessage(jid, text, name, settings);
+
+          let replies = [];
+          // Si handleNativeBotMessage devolvió un objeto con needsAI, intentar OpenAI
+          if (result && result.needsAI) {
+            const aiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
+            if (aiKey) {
+              // Obtener historial de mensajes para contexto
+              const chatMsgs = (waMessages.get(jid) || []).slice(-8).map(m => ({
+                role: m.dir === "s" ? "assistant" : "user",
+                content: m.txt || "[media]",
+              }));
+              const sysPrompt = settings.systemPrompt
+                ? settings.systemPrompt
+                : `Eres la asesora de ventas de Sanate Store — productos naturales colombianos. Responde de forma amable, breve y natural en español. Máximo 3-4 líneas. ${result.context || ""}`;
+              const aiReply = await callOpenAIChat({
+                messages: [{ role: "system", content: sysPrompt }, ...chatMsgs, { role: "user", content: text }],
+                maxTokens: 300,
+                settings,
+              });
+              if (aiReply) {
+                // Soportar respuestas multi-parte con separador ||||
+                replies = aiReply.split(/\|\|\|\|/).map(p => p.trim()).filter(Boolean);
+                console.log("[NativeBot][AI-enhanced]", { chatId: jid, parts: replies.length });
+              }
+            }
+            // Si no hay API key o falló, usar fallback del bot nativo
+            if (!replies.length) {
+              const fallback = settings.nativeBotFallback || "No entendí tu mensaje 😅 Escribe *menu* para ver las opciones.";
+              replies = [fallback];
+            }
+          } else if (Array.isArray(result)) {
+            replies = result;
+          }
+
           if (replies.length && waSocket && waStatus === "connected") {
-            for (const reply of replies) {
+            // Simular "escribiendo..." antes de la primera respuesta
+            try { await waSocket.presenceSubscribe(jid); } catch {}
+            try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
+            await new Promise(r => setTimeout(r, Math.min(replyDelay, 1500)));
+
+            for (let i = 0; i < replies.length; i++) {
+              const reply = replies[i];
               if (!reply.trim()) continue;
               await waSocket.sendMessage(jid, { text: reply });
               // Persistir respuesta del bot en DB
-              const replyMsgId = randomId("tb_reply");
+              const replyMsgId = randomId("bot_reply");
               saveMessage(readWhatsAppDb(), {
                 providerMessageId: replyMsgId,
                 chatId:    jid,
@@ -2149,15 +2321,20 @@ async function storeMsg(msg) {
                 status:    "sent",
                 direction: "outgoing",
                 chatName:  name,
-                rawPayload: { source: "typebot-auto-reply" },
+                rawPayload: { source: "native-bot-reply" },
               });
               writeWhatsAppDb(readWhatsAppDb());
-              if (replies.length > 1) await new Promise(r => setTimeout(r, 600));
+              if (i < replies.length - 1) {
+                try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
+                await new Promise(r => setTimeout(r, replyDelay));
+              }
             }
-            console.log("[Typebot][auto-reply][sent]", { chatId: jid, parts: replies.length });
+            // Quitar estado "escribiendo"
+            try { await waSocket.sendPresenceUpdate("paused", jid); } catch {}
+            console.log("[NativeBot][reply][sent]", { chatId: jid, parts: replies.length });
           }
-        } catch (tbErr) {
-          console.error("[Typebot][auto-reply][error]", tbErr?.message || tbErr);
+        } catch (botErr) {
+          console.error("[NativeBot][reply][error]", botErr?.message || botErr);
         }
       })();
     }
@@ -2166,30 +2343,57 @@ async function storeMsg(msg) {
   }
 }
 
-// ── Typebot: endpoint para ver/resetear sesiones ─────────────────────────
-app.get("/api/whatsapp/typebot/sessions", (req, res) => {
+// ── Bot Nativo: endpoints para ver/resetear sesiones y leads ──────────────
+app.get("/api/whatsapp/bot/sessions", (req, res) => {
   if (!checkWaSecret(req, res)) return;
   const sessions = [];
-  for (const [jid, s] of typebotSessionsMap) {
+  for (const [jid, s] of nativeBotSessions) {
     sessions.push({ jid, ...s });
   }
   res.json({ ok: true, sessions, total: sessions.length });
 });
 
-app.delete("/api/whatsapp/typebot/sessions/:jid", (req, res) => {
+app.delete("/api/whatsapp/bot/sessions/:jid", (req, res) => {
   if (!checkWaSecret(req, res)) return;
   const jid = req.params.jid;
-  typebotSessionsMap.delete(jid);
-  persistTypebotSessions();
+  nativeBotSessions.delete(jid);
+  persistNativeBotSessions();
   res.json({ ok: true, deleted: jid });
 });
 
-app.delete("/api/whatsapp/typebot/sessions", (req, res) => {
+app.delete("/api/whatsapp/bot/sessions", (req, res) => {
   if (!checkWaSecret(req, res)) return;
-  const count = typebotSessionsMap.size;
-  typebotSessionsMap.clear();
-  persistTypebotSessions();
+  const count = nativeBotSessions.size;
+  nativeBotSessions.clear();
+  persistNativeBotSessions();
   res.json({ ok: true, cleared: count });
+});
+
+// ── Leads capturados ─────────────────────────────────────────────────────
+app.get("/api/whatsapp/bot/leads", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  try {
+    const db = readWhatsAppDb();
+    const leads = db.leads || [];
+    const limit = Math.min(200, parseInt(req.query?.limit) || 50);
+    const recent = leads.slice(-limit).reverse();
+    res.json({ ok: true, leads: recent, total: leads.length });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err?.message || "Error reading leads" });
+  }
+});
+
+app.delete("/api/whatsapp/bot/leads", (req, res) => {
+  if (!checkWaSecret(req, res)) return;
+  try {
+    const db = readWhatsAppDb();
+    const count = (db.leads || []).length;
+    db.leads = [];
+    writeWhatsAppDb(db);
+    res.json({ ok: true, cleared: count });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err?.message || "Error" });
+  }
 });
 
 function checkWaSecret(req, res) {
@@ -2222,7 +2426,7 @@ async function initWhatsApp() {
       printQRInTerminal: false,
       logger: pino({ level: "silent" }),
       browser: ["Sanate Bot", "Chrome", "1.0"],
-      syncFullHistory: true,
+      syncFullHistory: false,
     });
 
     sock.ev.on("creds.update", saveCreds);
@@ -2237,9 +2441,15 @@ async function initWhatsApp() {
         const loggedOut = code === DisconnectReason.loggedOut;
         console.log("[WA] Conexion cerrada, loggedOut:", loggedOut, "code:", code);
         waStatus = "disconnected"; waQR = null; waPhone = ""; waSocket = null; waIniting = false;
-        if (!loggedOut) setTimeout(initWhatsApp, 6000);
+        if (!loggedOut) {
+          waReconnectAttempt++;
+          const delay = Math.min(5000 * Math.pow(1.5, waReconnectAttempt - 1), 60000);
+          console.log(`[WA] Reconectando en ${Math.round(delay/1000)}s (intento ${waReconnectAttempt})`);
+          setTimeout(initWhatsApp, delay);
+        }
       } else if (connection === "open") {
         waStatus = "connected"; waQR = null;
+        waReconnectAttempt = 0; // reset backoff on successful connection
         waPhone  = sock.user?.id?.split(":")[0] || sock.user?.id || "";
         console.log("[WA] Conectado:", waPhone);
       }
@@ -2250,11 +2460,19 @@ async function initWhatsApp() {
       for (const m of msgs) storeMsg(m).catch(e => console.error("[WA][storeMsg]", e?.message));
     });
 
-    // ── Historial inicial: últimos 15 días al reconectar ──────────────────
+    // ── Historial inicial al reconectar (procesado en batches para no bloquear event loop)
     sock.ev.on("messaging-history.set", ({ chats: histChats, messages: histMsgs }) => {
       console.log("[WA] Historial recibido: chats:", histChats?.length, "msgs:", histMsgs?.length);
-      if (Array.isArray(histMsgs)) {
-        for (const m of histMsgs) storeMsg(m);
+      if (Array.isArray(histMsgs) && histMsgs.length > 0) {
+        // Procesar en batches de 50 con setImmediate para no bloquear el event loop
+        let idx = 0;
+        const batch = () => {
+          const end = Math.min(idx + 50, histMsgs.length);
+          for (; idx < end; idx++) storeMsg(histMsgs[idx]).catch(() => {});
+          if (idx < histMsgs.length) setImmediate(batch);
+          else console.log("[WA] Historial mensajes procesado:", histMsgs.length);
+        };
+        setImmediate(batch);
       }
       if (Array.isArray(histChats)) {
         for (const c of histChats) {
@@ -2337,12 +2555,34 @@ async function initWhatsApp() {
   } catch (err) {
     console.error("[WA] Error init:", err?.message || err);
     waStatus = "disconnected"; waIniting = false;
-    setTimeout(initWhatsApp, 10000);
+    waReconnectAttempt++;
+    const delay = Math.min(5000 * Math.pow(1.5, waReconnectAttempt - 1), 60000);
+    console.log(`[WA] Reintentando init en ${Math.round(delay/1000)}s (intento ${waReconnectAttempt})`);
+    setTimeout(initWhatsApp, delay);
   }
 }
 
 // Arrancar WhatsApp al iniciar
 initWhatsApp();
+
+// ── WATCHDOG: auto-heal si la conexión se cae ──────────────────────────────
+// Cada 30s verifica que Baileys esté sano; si lleva >90s desconectado, reinicia
+let _lastConnectedAt = 0;
+setInterval(() => {
+  if (waStatus === "connected") { _lastConnectedAt = Date.now(); return; }
+  // Si está en "connecting" por más de 2 minutos, algo falló — reiniciar
+  if (waStatus === "connecting" && !waQR && (Date.now() - _lastConnectedAt > 120_000)) {
+    console.log("[WA][watchdog] connecting sin QR por >2min, reiniciando...");
+    waIniting = false;
+    initWhatsApp();
+    return;
+  }
+  // Si está disconnected y no se está iniciando, intentar reconectar
+  if (waStatus === "disconnected" && !waIniting) {
+    console.log("[WA][watchdog] disconnected, auto-reconectando...");
+    initWhatsApp();
+  }
+}, 30_000);
 
 // ── Rutas API WhatsApp (estado, QR, desvinculación) ───────────────────────
 app.get("/api/whatsapp/status", (req, res) => {
