@@ -148,6 +148,11 @@ function defaultWhatsAppDb() {
       nativeBotAskName:      true, // preguntar nombre si no lo tiene
       nativeBotAskNameMsg:   "Antes de continuar, ¿cómo te llamas? 😊",
       nativeBotFallback:     "No entendí tu mensaje 😅 Por favor elige una opción del menú o escribe *menu* para verlas de nuevo.",
+      // ── Estilo de mensajes IA ──
+      msgMode:       "partes",   // "partes" = multi-mensaje con ||||, "completo" = un solo mensaje
+      useEmojis:     true,
+      useStyles:     true,       // *negritas* y _cursiva_
+      botDelay:      3,          // segundos de espera antes de responder
     },
     // ── Bot Nativo: sesiones activas { [jid]: { step, name, data, createdAt, msgCount } }
     nativeBotSessions: {},
@@ -955,6 +960,7 @@ app.post("/api/whatsapp/settings", (req, res) => {
       "nativeBotEnabled", "nativeBotWelcome", "nativeBotMenu", "nativeBotMenuMap",
       "nativeBotSessionTTL", "nativeBotEscalateWords", "nativeBotReplyDelay",
       "nativeBotAskName", "nativeBotAskNameMsg", "nativeBotFallback",
+      "msgMode", "useEmojis", "useStyles", "botDelay",
     ];
     const patch = {};
     for (const k of allowed) {
@@ -1873,13 +1879,12 @@ function parseMenuMap(menuMapStr) {
 }
 
 /**
- * Motor principal del bot nativo.
- * Recibe un mensaje y devuelve las respuestas a enviar.
- * NO hace fetch a ninguna API externa.
+ * Motor del bot — ahora TODO va a IA.
+ * Solo mantiene: sesiones, leads, escalación a humano.
+ * Ya NO hay menú de opciones ni fallback de texto fijo.
  */
 function handleNativeBotMessage(jid, messageText, pushName, settings) {
   const text = (messageText || "").trim();
-  const lc = text.toLowerCase();
   const ttl = settings.nativeBotSessionTTL || 24;
   const phone = jid.split("@")[0];
 
@@ -1888,21 +1893,21 @@ function handleNativeBotMessage(jid, messageText, pushName, settings) {
 
   // Si sesión expirada → reset
   if (session && nativeBotSessionExpired(session, ttl)) {
-    console.log("[NativeBot][session-expired]", jid);
+    console.log("[Bot][session-expired]", jid);
     session = null;
     nativeBotSessions.delete(jid);
   }
 
   // ── Escalación a humano (funciona en cualquier estado) ──
   if (shouldEscalate(text, settings.nativeBotEscalateWords)) {
-    console.log("[NativeBot][escalate]", jid);
+    console.log("[Bot][escalate]", jid);
     if (session) session.step = "escalated";
     else {
       session = { step: "escalated", name: pushName || "", phone, createdAt: nowIso(), msgCount: 1 };
       nativeBotSessions.set(jid, session);
     }
     persistNativeBotSessions();
-    return ["🙋 ¡Entendido! Te voy a comunicar con un asesor humano.\n\nUn momento por favor, alguien del equipo te atenderá pronto. 🙏"];
+    return ["Claro, ya te comunico con alguien del equipo. Dame un momento."];
   }
 
   // ── Si está escalado, el bot NO responde (lo atiende un humano) ──
@@ -1910,20 +1915,11 @@ function handleNativeBotMessage(jid, messageText, pushName, settings) {
     return []; // silencio — el humano responde
   }
 
-  // ── Detectar si pide menú de nuevo ──
-  if (session && (lc === "menu" || lc === "menú" || lc === "opciones" || lc === "inicio" || lc === "hola")) {
-    session.step = "menu";
-    session.msgCount = (session.msgCount || 0) + 1;
-    persistNativeBotSessions();
-    const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
-    return [menu];
-  }
-
-  // ── NUEVA CONVERSACIÓN ──
+  // ── NUEVA CONVERSACIÓN → guardar lead y pasar a IA ──
   if (!session) {
     const detectedName = pushName || extractNameFromText(text) || "";
     session = {
-      step:      "new",
+      step:      "free",
       name:      detectedName,
       phone,
       createdAt: nowIso(),
@@ -1931,113 +1927,15 @@ function handleNativeBotMessage(jid, messageText, pushName, settings) {
       firstMsg:  text,
     };
     nativeBotSessions.set(jid, session);
-
-    // Guardar lead desde el primer mensaje
     saveLead({ phone, name: detectedName, interest: text });
-
-    const replies = [];
-
-    // Si no tenemos nombre Y la config pide preguntar nombre
-    if (!detectedName && settings.nativeBotAskName) {
-      session.step = "ask_name";
-      const askMsg = settings.nativeBotAskNameMsg || "¿Cómo te llamas? 😊";
-      replies.push(askMsg);
-    } else {
-      // Tenemos nombre (de pushName o del mensaje) → bienvenida + menú
-      session.step = "menu";
-      const vars = { nombre: detectedName || "amigo/a", telefono: phone };
-      const welcome = templateReplace(settings.nativeBotWelcome || "¡Hola {{nombre}}! 👋", vars);
-      const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
-      replies.push(welcome + "\n\n" + menu);
-    }
-
     persistNativeBotSessions();
-    return replies;
+    return { needsAI: true, context: `Primera conversación. Cliente: "${detectedName || "desconocido"}". Mensaje: "${text}"` };
   }
 
-  // ── Esperando nombre ──
-  if (session.step === "ask_name") {
-    const name = extractNameFromText(text) || text.trim().substring(0, 40);
-    session.name = name;
-    session.step = "menu";
-    session.msgCount = (session.msgCount || 0) + 1;
-
-    // Actualizar lead con el nombre
-    saveLead({ phone, name, interest: session.firstMsg || "" });
-
-    const vars = { nombre: name, telefono: phone };
-    const welcome = templateReplace(settings.nativeBotWelcome || "¡Hola {{nombre}}! 👋", vars);
-    const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
-
-    persistNativeBotSessions();
-    return [welcome + "\n\n" + menu];
-  }
-
-  // ── Esperando selección de menú ──
-  if (session.step === "menu") {
-    session.msgCount = (session.msgCount || 0) + 1;
-    const menuMap = parseMenuMap(settings.nativeBotMenuMap);
-
-    // Buscar la opción elegida (por número o por texto)
-    const choice = text.trim();
-    let matched = menuMap[choice]; // buscar por número directo ("1", "2", etc.)
-
-    if (!matched) {
-      // Buscar por texto parcial en las opciones del menú
-      for (const [key, val] of Object.entries(menuMap)) {
-        if (val.label && lc.includes(val.label.toLowerCase())) {
-          matched = val;
-          break;
-        }
-      }
-    }
-
-    if (matched) {
-      const vars = { nombre: session.name || "amigo/a", telefono: phone };
-      const reply = templateReplace(matched.reply || "Ok", vars);
-      session.step = matched.next || "menu"; // "free", "menu", "escalated"
-      session.lastChoice = choice;
-
-      // Si la opción escaló a humano
-      if (session.step === "escalated") {
-        persistNativeBotSessions();
-        return [reply];
-      }
-
-      // Actualizar lead con el interés
-      saveLead({ phone, name: session.name || "", interest: choice + " - " + (matched.reply || "").substring(0, 50) });
-
-      persistNativeBotSessions();
-      return [reply];
-    }
-
-    // No entendió → fallback
-    const fallback = settings.nativeBotFallback || "No entendí tu mensaje 😅 Escribe *menu* para ver las opciones.";
-    persistNativeBotSessions();
-    return [fallback];
-  }
-
-  // ── Conversación libre ──
-  if (session.step === "free") {
-    session.msgCount = (session.msgCount || 0) + 1;
-
-    // Si escribe "menu" ya se manejó arriba
-    // Después de 5 mensajes en free, sugerir menú de nuevo
-    if ((session.msgCount || 0) % 5 === 0) {
-      persistNativeBotSessions();
-      const menu = settings.nativeBotMenu || "1. Info\n2. Asesor";
-      return ["¿Necesitas algo más? Aquí tienes las opciones:\n\n" + menu];
-    }
-
-    persistNativeBotSessions();
-    // En modo libre: devolver flag para que el caller use IA si hay API key
-    return { needsAI: true, context: `Cliente "${session.name || "desconocido"}" en conversación libre. Mensaje anterior: "${session.lastChoice || ""}"` };
-  }
-
-  // Fallback genérico — también intentar con IA si está disponible
+  // ── Conversación existente → siempre IA ──
   session.msgCount = (session.msgCount || 0) + 1;
   persistNativeBotSessions();
-  return { needsAI: true, context: `Cliente "${session.name || "desconocido"}", no coincidió con ninguna opción del menú.` };
+  return { needsAI: true, context: `Cliente "${session.name || "desconocido"}", mensaje #${session.msgCount}.` };
 }
 
 // ── Chat store en memoria ───────────────────────────────────────────────────
@@ -2256,43 +2154,110 @@ async function storeMsg(msg) {
       callN8n();
     }
 
-    // ── Bot Nativo: flujo conversacional ────────────────────────────────
-    // Solo responde si: no es grupo, está habilitado, y la IA está activa para este chat (o no hay aiContactMap = modo legacy)
+    // ── Bot IA: respuesta inteligente server-side ──────────────────────
+    // Funciona sin Chrome abierto — todo corre en el servidor
     const nbActiveForChat = !isGroup && settings.nativeBotEnabled && (Object.keys(aiContactMap).length === 0 || aiActiveForChat);
     if (!fromMe && isNew && !saved.dedup && nbActiveForChat) {
       const replyDelay = Math.max(300, Math.min(3000, settings.nativeBotReplyDelay || 800));
+      // Espera configurable antes de responder (como el frontend)
+      const botDelaySec = Math.min(15, Math.max(0, settings.botDelay || 3));
       (async () => {
         try {
+          // Esperar el delay configurado (simula que la persona lee el mensaje)
+          if (botDelaySec > 0) await new Promise(r => setTimeout(r, botDelaySec * 1000));
+
           const result = handleNativeBotMessage(jid, text, name, settings);
 
           let replies = [];
-          // Si handleNativeBotMessage devolvió un objeto con needsAI, intentar OpenAI
           if (result && result.needsAI) {
             const aiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
             if (aiKey) {
-              // Obtener historial de mensajes para contexto
-              const chatMsgs = (waMessages.get(jid) || []).slice(-8).map(m => ({
+              const chatMsgs = (waMessages.get(jid) || []).slice(-10).map(m => ({
                 role: m.dir === "s" ? "assistant" : "user",
                 content: m.txt || "[media]",
               }));
-              const sysPrompt = settings.systemPrompt
-                ? settings.systemPrompt
-                : `Eres la asesora de ventas de Sanate Store — productos naturales colombianos. Responde de forma amable, breve y natural en español. Máximo 3-4 líneas. ${result.context || ""}`;
+              const clientSession = nativeBotSessions.get(jid);
+              const clientName = clientSession?.name || name || "";
+              const msgCount = clientSession?.msgCount || 1;
+
+              // ── Construir prompt completo (mismo que el frontend) ──
+              const useEmojis = settings.useEmojis !== false;
+              const useStyles = settings.useStyles !== false;
+              const msgMode = settings.msgMode || "partes";
+
+              const stylesBlock = useStyles
+                ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• Ejemplo: *Combo Detox* — *$66.000* | _envío gratis_ hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
+                : `• Texto plano ÚNICAMENTE — sin asteriscos, guiones bajos ni tildes de formato\n• PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`;
+
+              const emojisBlock = useEmojis
+                ? `• Emojis: máx 1 por mensaje, NO al final de cada mensaje, VARÍA siempre — algunos mensajes van SIN emoji`
+                : `• PROHIBIDO usar emojis — responde solo con texto plano`;
+
+              const multiMsgBlock = msgMode === "partes"
+                ? `ENVÍO POR PARTES (MUY IMPORTANTE):
+Divide tu respuesta en 2 a 5 mensajes cortos separados por el separador EXACTO: ||||
+Reglas para cada parte:
+• Parte 1 → gancho o contexto inicial — abre con intriga o dato interesante, NO reveles todo
+• Partes intermedias → desarrolla punto por punto, cada una termina dejando curiosidad
+• Última parte → pregunta de cierre de venta ("¿Cuál prefieres?" / "¿Te lo enviamos hoy?")
+Estructura inteligente:
+  - Si pregunta por productos: parte 1 = beneficio + hook | parte 2 = opción principal | parte 3 = alternativa | última = pregunta de decisión
+  - Si muestra objeción: parte 1 = empatía | parte 2 = reencuadre de valor | última = cierre con urgencia
+  - Si ya quiere comprar: máx 2 partes — confirma + cierra directo
+Ejemplo correcto:
+Tenemos varias opciones que te pueden funcionar${useEmojis ? ' 🌿' : ''}
+||||
+${useStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} — ideal para piel sensible${useEmojis ? ' ✨' : ''} — ${useStyles ? '*$66.000*' : '$66.000'}
+||||
+${useStyles ? '*Combo Cúrcuma*' : 'Combo Cúrcuma'} — manchas y cicatrices — ${useStyles ? '*$66.000*' : '$66.000'}
+||||
+¿Cuál va más con lo que necesitas?`
+                : `ENVÍO COMPLETO:
+Responde en UN SOLO MENSAJE bien estructurado (máx 6 líneas).
+NO uses el separador |||| — todo en un bloque.`;
+
+              const salesFunnelBlock = `EMBUDO DE VENTAS — SIGUE ESTE ORDEN:
+PASO 1 — BIENVENIDA: Recibe calurosamente.
+PASO 2 — DIAGNÓSTICO (OBLIGATORIO antes de dar precios): Pregunta "¿Lo buscas para acné, manchas, piel seca o zonas íntimas?" — adapta tu recomendación.
+PASO 3 — PRESENTACIÓN: Recomienda el combo exacto para su problema. Muestra precio${useStyles ? ' con *negrita*' : ''}.
+PASO 4 — MICRO-COMPROMISO (elección forzada): "¿Cuál te llevas, el${useStyles ? ' *Combo 1*' : ' Combo 1'} o el${useStyles ? ' *Combo 5*' : ' Combo 5'}?" — NUNCA pregunta abierta al cierre.
+PASO 5 — DATOS: Cuando elija: pide Nombre / Teléfono / Ciudad / Dirección / Barrio
+
+CATÁLOGO SÁNATE${useStyles ? ' (precios y combos en *negrita*)' : ''}:
+• ${useStyles ? '*Combo 1*' : 'Combo 1'} – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena&Arroz) → ${useStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${useStyles ? '*Combo 2*' : 'Combo 2'} – 3 Jabones a elección → ${useStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${useStyles ? '*Combo 3*' : 'Combo 3'} – 2 Jabones + Sebo de Res 10g → ${useStyles ? '*$63.000*' : '$63.000'} (antes $79.000)
+• ${useStyles ? '*Combo 4*' : 'Combo 4'} – Secreto Japonés: Sebo grande + 2 Jabones + Exfoliante → ${useStyles ? '*$99.000*' : '$99.000'} (antes $119.000)
+• ${useStyles ? '*Combo 5*' : 'Combo 5'} – ${useEmojis ? '⭐ ' : ''}MÁS VENDIDO: 4 Jabones + Sebo 10g + Exfoliante → ${useStyles ? '*$119.000*' : '$119.000'} (antes $159.000)
+• ${useStyles ? '*Combo 6*' : 'Combo 6'} – Doble Sebo: 2 Sebos + 2 Jabones → ${useStyles ? '*$136.900*' : '$136.900'} (antes $169.000)
+• Jabón individual: ${useStyles ? '*$22.000*' : '$22.000'}
+Pago: contra entrega ó Nequi/Bancolombia (${useStyles ? '*8% OFF*' : '8% OFF'} + envío más rápido)
+Envío: GRATIS a toda Colombia | 1-3 días hábiles
+
+REGLAS DE ORO:
+❌ NUNCA des precio sin diagnosticar primero
+❌ NUNCA hagas preguntas abiertas al cierre — usa elección forzada (A o B)
+✅ CELEBRA cuando el cliente elige antes de pedir datos
+✅ Ofrece primero Nequi/transferencia (8% OFF), luego contra entrega`;
+
+              const ctx = settings.systemPrompt || "";
+              const sysPrompt = ctx
+                ? `${ctx}\n\nINSTRUCCIONES DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Decir que eres IA o bot\n\n${result.context || ""}\n${clientName ? "El cliente se llama: " + clientName : ""}\nMensaje número ${msgCount} de esta conversación.\n\nMENSAJE ACTUAL DEL CLIENTE:\n"${text}"\nResponde SOLO a esto.`
+                : `Eres una asesora de ventas de Sánate Colombia — jabones artesanales naturales 100% colombianos. Eres una persona real — NUNCA te presentes como IA.\n\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y apertura\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Decir que eres IA | ❌ Precios antes del diagnóstico\n\n${result.context || ""}\n${clientName ? "El cliente se llama: " + clientName : ""}\nMensaje número ${msgCount}.\n\nMENSAJE ACTUAL DEL CLIENTE:\n"${text}"\nResponde SOLO a esto.`;
+
               const aiReply = await callOpenAIChat({
                 messages: [{ role: "system", content: sysPrompt }, ...chatMsgs, { role: "user", content: text }],
-                maxTokens: 300,
+                maxTokens: 480,
                 settings,
               });
               if (aiReply) {
-                // Soportar respuestas multi-parte con separador ||||
                 replies = aiReply.split(/\|\|\|\|/).map(p => p.trim()).filter(Boolean);
-                console.log("[NativeBot][AI-enhanced]", { chatId: jid, parts: replies.length });
+                console.log("[Bot][AI-reply]", { chatId: jid, parts: replies.length });
               }
             }
-            // Si no hay API key o falló, usar fallback del bot nativo
+            // Si no hay API key o falló, respuesta genérica amigable
             if (!replies.length) {
-              const fallback = settings.nativeBotFallback || "No entendí tu mensaje 😅 Escribe *menu* para ver las opciones.";
-              replies = [fallback];
+              replies = ["Hola! Dame un momento, ya te atiendo."];
             }
           } else if (Array.isArray(result)) {
             replies = result;
@@ -2302,7 +2267,9 @@ async function storeMsg(msg) {
             // Simular "escribiendo..." antes de la primera respuesta
             try { await waSocket.presenceSubscribe(jid); } catch {}
             try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
-            await new Promise(r => setTimeout(r, Math.min(replyDelay, 1500)));
+            // Delay de escritura proporcional al largo del primer mensaje
+            const firstDelay = Math.max(400, Math.min(replies[0].length * 12, 1500));
+            await new Promise(r => setTimeout(r, firstDelay));
 
             for (let i = 0; i < replies.length; i++) {
               const reply = replies[i];
@@ -2321,20 +2288,22 @@ async function storeMsg(msg) {
                 status:    "sent",
                 direction: "outgoing",
                 chatName:  name,
-                rawPayload: { source: "native-bot-reply" },
+                rawPayload: { source: "bot-ai-reply" },
               });
               writeWhatsAppDb(readWhatsAppDb());
+              // Delay entre mensajes: simula escritura natural
               if (i < replies.length - 1) {
                 try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
-                await new Promise(r => setTimeout(r, replyDelay));
+                const typingMs = Math.max(400, Math.min(replies[i + 1].length * 10, 1200));
+                await new Promise(r => setTimeout(r, typingMs));
               }
             }
             // Quitar estado "escribiendo"
             try { await waSocket.sendPresenceUpdate("paused", jid); } catch {}
-            console.log("[NativeBot][reply][sent]", { chatId: jid, parts: replies.length });
+            console.log("[Bot][AI-reply][sent]", { chatId: jid, parts: replies.length });
           }
         } catch (botErr) {
-          console.error("[NativeBot][reply][error]", botErr?.message || botErr);
+          console.error("[Bot][AI-reply][error]", botErr?.message || botErr);
         }
       })();
     }
