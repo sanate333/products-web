@@ -2034,7 +2034,7 @@ ${conversation}`
               {/* ── Bot Nativo Status ── */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">🤖 Bot Nativo</div>
+                  <div className="wbv5-card-title">🤖 Bot IA</div>
                   <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setCfgTab('nativebot'); goPage('config') }}>Configurar →</button>
                 </div>
                 <div className="wbv5-card-bd">
@@ -3616,7 +3616,7 @@ ${conversation}`
                   ))}
                   <div className="wbv5-cfg-section-title">Bot & IA</div>
                   {[
-                    { id: 'nativebot',  label: '🤖 Bot Nativo + IA' },
+                    { id: 'nativebot',  label: '🤖 Bot IA' },
                     { id: 'bot',      label: '⚙️ Comportamiento bot' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
@@ -3828,12 +3828,12 @@ ${conversation}`
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            La API Key potencia las respuestas del Bot Nativo con IA. Cuando el cliente escribe algo fuera del menú, la IA genera respuestas inteligentes de venta.
-                            <br /><strong>Sin API Key:</strong> solo responde el flujo de menú. <strong>Con API Key:</strong> respuestas conversacionales inteligentes + cierre de ventas.
+                            La API Key permite que el Bot IA responda de forma inteligente y humanizada a cada mensaje del cliente.
+                            <br /><strong>Sin API Key:</strong> el bot no puede responder. <strong>Con API Key:</strong> respuestas conversacionales naturales en varios mensajes.
                           </div>
                           {!openaiKey && !geminiKey && (
                             <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.5rem .75rem', fontSize: '.72rem', color: '#713f12', marginBottom: '.75rem' }}>
-                              ⚠️ Sin API Key — el bot solo usará el flujo de menú sin IA.
+                              Configura una API Key para que el bot pueda responder mensajes.
                             </div>
                           )}
                           <div className="wbv5-form-row">
@@ -3878,18 +3878,18 @@ ${conversation}`
                         </div>
                       </div>
 
-                      {/* ── Configuración principal ── */}
+                      {/* ── Bot IA - Configuración ── */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">🤖 Bot Nativo - Flujo conversacional</div>
+                          <div className="wbv5-card-title">🤖 Bot IA - Respuestas inteligentes</div>
                           <span className={`wbv5-badge ${nbEnabled ? 'badge-green' : 'badge-red'}`}>
                             {nbEnabled ? '✅ Activo' : '❌ Inactivo'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Bot conversacional integrado. Detecta nombres, muestra menú, captura leads y escala a humano.
-                            {hasAiKey ? <><br /><span style={{ color: '#16a34a', fontWeight: 600 }}>✅ Con API Key: las respuestas libres se potencian con IA inteligente.</span></> : <><br /><span style={{ color: '#f59e0b' }}>⚠️ Sin API Key: solo responde el flujo de menú básico.</span></>}
+                            La IA responde a todos los mensajes de forma natural y humana. Captura leads, detecta nombres y escala a humano cuando es necesario.
+                            {!hasAiKey && <><br /><span style={{ color: '#f59e0b', fontWeight: 600 }}>Configura una API Key arriba para activar las respuestas inteligentes.</span></>}
                           </div>
 
                           <div className="wbv5-form-row" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.75rem' }}>
@@ -3901,137 +3901,50 @@ ${conversation}`
                                 try { localStorage.setItem('wa_nb_enabled', JSON.stringify(v)) } catch {}
                                 setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
                               }} />
-                              <span style={{ fontSize: '.72rem' }}>{nbEnabled ? 'Bot activo — responde automáticamente' : 'Bot desactivado'}</span>
+                              <span style={{ fontSize: '.72rem' }}>{nbEnabled ? 'Bot IA activo — responde todos los mensajes' : 'Bot desactivado'}</span>
                             </label>
-                          </div>
-
-                          <div className="wbv5-form-row" style={{ display: 'flex', alignItems: 'center', gap: '.75rem', marginBottom: '.5rem' }}>
-                            <div className="wbv5-form-lbl" style={{ minWidth: '130px' }}>Preguntar nombre</div>
-                            <label style={{ display: 'flex', alignItems: 'center', gap: '.5rem', cursor: 'pointer' }}>
-                              <input type="checkbox" checked={nbAskName} onChange={e => {
-                                const v = e.target.checked
-                                setNbAskName(v)
-                                try { localStorage.setItem('wa_nb_ask_name', JSON.stringify(v)) } catch {}
-                              }} />
-                              <span style={{ fontSize: '.72rem' }}>{nbAskName ? 'Si no se detecta nombre, preguntarlo' : 'No preguntar nombre'}</span>
-                            </label>
-                          </div>
-
-                          {nbAskName && (
-                            <div className="wbv5-form-row">
-                              <div className="wbv5-form-lbl">Mensaje para pedir nombre</div>
-                              <input
-                                className="wbv5-form-input"
-                                value={nbAskNameMsg}
-                                onChange={e => setNbAskNameMsg(e.target.value)}
-                                placeholder="Antes de continuar, ¿cómo te llamas?"
-                              />
-                            </div>
-                          )}
-
-                          <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">Mensaje de bienvenida</div>
-                            <textarea
-                              className="wbv5-form-input"
-                              rows={3}
-                              value={nbWelcome}
-                              onChange={e => setNbWelcome(e.target.value)}
-                              placeholder="¡Hola {{nombre}}! 👋 Bienvenido/a a tu tienda"
-                              style={{ resize: 'vertical', fontFamily: 'inherit' }}
-                            />
-                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              Usa <code>{'{{nombre}}'}</code> para insertar el nombre del cliente y <code>{'{{telefono}}'}</code> para su teléfono
-                            </div>
-                          </div>
-
-                          <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">Menú de opciones</div>
-                            <textarea
-                              className="wbv5-form-input"
-                              rows={4}
-                              value={nbMenu}
-                              onChange={e => setNbMenu(e.target.value)}
-                              placeholder={"1. 🛒 Ver productos\n2. 📦 Estado de mi pedido\n3. 💬 Hablar con asesor"}
-                              style={{ resize: 'vertical', fontFamily: 'inherit' }}
-                            />
-                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              Lista de opciones que se muestra al cliente. El cliente responde con el número.
-                            </div>
-                          </div>
-
-                          <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">Respuestas por opción (JSON)</div>
-                            <textarea
-                              className="wbv5-form-input"
-                              rows={6}
-                              value={nbMenuMap}
-                              onChange={e => setNbMenuMap(e.target.value)}
-                              style={{ resize: 'vertical', fontFamily: 'monospace', fontSize: '.68rem' }}
-                            />
-                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              JSON que mapea cada número a su respuesta. <code>next</code>: "menu" (vuelve al menú), "free" (conversación libre), "escalated" (pasa a humano)
-                            </div>
-                          </div>
-
-                          <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">Mensaje fallback</div>
-                            <input
-                              className="wbv5-form-input"
-                              value={nbFallback}
-                              onChange={e => setNbFallback(e.target.value)}
-                              placeholder="No entendí tu mensaje. Escribe *menu* para ver las opciones."
-                            />
-                            <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              Se envía cuando el cliente escribe algo que no coincide con ninguna opción del menú
-                            </div>
                           </div>
 
                           <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', marginTop: '.75rem' }}>
                             <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => {
                               try {
                                 localStorage.setItem('wa_nb_enabled', JSON.stringify(nbEnabled))
-                                localStorage.setItem('wa_nb_welcome', nbWelcome)
-                                localStorage.setItem('wa_nb_menu', nbMenu)
-                                localStorage.setItem('wa_nb_menu_map', nbMenuMap)
                                 localStorage.setItem('wa_nb_ttl', String(nbTTL))
                                 localStorage.setItem('wa_nb_escalate', nbEscalate)
                                 localStorage.setItem('wa_nb_delay', String(nbDelay))
-                                localStorage.setItem('wa_nb_ask_name', JSON.stringify(nbAskName))
-                                localStorage.setItem('wa_nb_ask_name_msg', nbAskNameMsg)
-                                localStorage.setItem('wa_nb_fallback', nbFallback)
                               } catch {}
                               syncSettingsToBackend()
-                              tip('💾 Bot Nativo configuración guardada')
-                            }}>💾 Guardar y sincronizar</button>
+                              tip('Bot IA configuracion guardada')
+                            }}>Guardar y sincronizar</button>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => {
                               fetch(BU + '/bot/sessions', { headers: H })
                                 .then(r => r.json())
                                 .then(d => {
                                   if (d.ok) {
                                     setNbSessions(d.sessions || [])
-                                    tip(`📊 ${d.total} sesiones activas`)
+                                    tip(`${d.total} sesiones activas`)
                                   }
                                 })
-                                .catch(() => tip('⚠️ Error'))
-                            }}>📊 Ver sesiones</button>
+                                .catch(() => tip('Error'))
+                            }}>Ver sesiones</button>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => {
                               fetch(BU + '/bot/leads', { headers: H })
                                 .then(r => r.json())
                                 .then(d => {
                                   if (d.ok) {
                                     setNbLeads(d.leads || [])
-                                    tip(`📋 ${d.total} leads capturados`)
+                                    tip(`${d.total} leads capturados`)
                                   }
                                 })
-                                .catch(() => tip('⚠️ Error'))
-                            }}>📋 Ver leads</button>
+                                .catch(() => tip('Error'))
+                            }}>Ver leads</button>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ color: '#dc2626' }} onClick={() => {
-                              if (!window.confirm('¿Limpiar todas las sesiones? Los clientes empezarán desde el inicio.')) return
+                              if (!window.confirm('Limpiar todas las sesiones? Los clientes empezaran desde el inicio.')) return
                               fetch(BU + '/bot/sessions', { method: 'DELETE', headers: H })
                                 .then(r => r.json())
-                                .then(d => { if (d.ok) { setNbSessions([]); tip(`🗑️ ${d.cleared} sesiones eliminadas`) } })
-                                .catch(() => tip('⚠️ Error'))
-                            }}>🗑️ Limpiar sesiones</button>
+                                .then(d => { if (d.ok) { setNbSessions([]); tip(`${d.cleared} sesiones eliminadas`) } })
+                                .catch(() => tip('Error'))
+                            }}>Limpiar sesiones</button>
                           </div>
                         </div>
                       </div>
@@ -4156,28 +4069,21 @@ ${conversation}`
                       {/* ── Cómo funciona ── */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">📖 Cómo funciona el Bot Nativo</div>
+                          <div className="wbv5-card-title">Como funciona el Bot IA</div>
                         </div>
                         <div className="wbv5-card-bd" style={{ fontSize: '.7rem', lineHeight: 1.6, color: '#4b5563' }}>
                           <div style={{ padding: '.5rem', background: '#eff6ff', borderRadius: 6, border: '1px solid #bfdbfe', marginBottom: '.5rem' }}>
-                            <strong>Flujo automático:</strong><br/>
-                            1. Cliente escribe por primera vez → el bot detecta su nombre (de WhatsApp o del mensaje)<br/>
-                            2. Si no tiene nombre → le pregunta "¿Cómo te llamas?"<br/>
-                            3. Envía bienvenida personalizada + menú de opciones<br/>
-                            4. Cliente elige opción (1, 2, 3...) → bot responde según configuración<br/>
-                            5. Si escribe "agente/humano/asesor" → bot se detiene, avisa que un humano atenderá<br/>
-                            6. Escribe "menu" en cualquier momento → vuelve al menú
+                            <strong>Flujo automatico:</strong><br/>
+                            1. Cliente escribe por primera vez - la IA detecta su nombre y responde de forma natural<br/>
+                            2. La IA responde en varios mensajes cortos como una persona real<br/>
+                            3. Guia la conversacion hacia la venta de forma natural<br/>
+                            4. Si escribe "asesor/humano/agente" - el bot se detiene y avisa que un humano atendera
                           </div>
                           <div style={{ padding: '.5rem', background: '#ecfdf5', borderRadius: 6, border: '1px solid #a7f3d0', marginBottom: '.5rem' }}>
-                            <strong>Captura de leads:</strong> Cada nuevo contacto se guarda automáticamente con su teléfono, nombre detectado y primer mensaje. Sin configurar nada extra.
+                            <strong>Captura de leads:</strong> Cada nuevo contacto se guarda automaticamente con su telefono, nombre detectado y primer mensaje.
                           </div>
                           <div style={{ padding: '.5rem', background: '#fffbeb', borderRadius: 6, border: '1px solid #fde68a' }}>
-                            <strong>Respuestas por opción (JSON):</strong> Cada clave es el número de la opción. <code>reply</code> es lo que el bot responde. <code>next</code> define qué pasa después:
-                            <ul style={{ margin: '.3rem 0 0', paddingLeft: '1rem' }}>
-                              <li><code>"menu"</code> — vuelve a mostrar el menú</li>
-                              <li><code>"free"</code> — conversación libre (el bot no responde más, pero puede tomar la IA u operador)</li>
-                              <li><code>"escalated"</code> — pasa a un humano (bot deja de responder)</li>
-                            </ul>
+                            <strong>Respuestas humanizadas:</strong> La IA responde en multiples mensajes separados, como si fuera una persona escribiendo por WhatsApp. Usa negritas, emojis naturales y lenguaje casual.
                           </div>
                         </div>
                       </div>
