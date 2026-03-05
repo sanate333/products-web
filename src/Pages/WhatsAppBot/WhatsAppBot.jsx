@@ -1560,6 +1560,11 @@ ${conversation}`
       nativeBotAskName:       lsNbAskName,
       nativeBotAskNameMsg:    lsNbAskNameMsg,
       nativeBotFallback:      lsNbFallback,
+      // ── Estilo de mensajes IA ──
+      msgMode:   (() => { try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })(),
+      useEmojis: (() => { try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })(),
+      useStyles: (() => { try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })(),
+      botDelay:  (() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') || 3 } catch { return 3 } })(),
     }
     fetch(curBU.replace('/api/whatsapp', '') + '/api/whatsapp/settings', {
       method: 'POST',

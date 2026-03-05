@@ -148,6 +148,11 @@ function defaultWhatsAppDb() {
       nativeBotAskName:      true, // preguntar nombre si no lo tiene
       nativeBotAskNameMsg:   "Antes de continuar, ¿cómo te llamas? 😊",
       nativeBotFallback:     "No entendí tu mensaje 😅 Por favor elige una opción del menú o escribe *menu* para verlas de nuevo.",
+      // ── Estilo de mensajes IA ──
+      msgMode:       "partes",   // "partes" = multi-mensaje con ||||, "completo" = un solo mensaje
+      useEmojis:     true,
+      useStyles:     true,       // *negritas* y _cursiva_
+      botDelay:      3,          // segundos de espera antes de responder
     },
     // ── Bot Nativo: sesiones activas { [jid]: { step, name, data, createdAt, msgCount } }
     nativeBotSessions: {},
@@ -955,6 +960,7 @@ app.post("/api/whatsapp/settings", (req, res) => {
       "nativeBotEnabled", "nativeBotWelcome", "nativeBotMenu", "nativeBotMenuMap",
       "nativeBotSessionTTL", "nativeBotEscalateWords", "nativeBotReplyDelay",
       "nativeBotAskName", "nativeBotAskNameMsg", "nativeBotFallback",
+      "msgMode", "useEmojis", "useStyles", "botDelay",
     ];
     const patch = {};
     for (const k of allowed) {
@@ -2148,83 +2154,100 @@ async function storeMsg(msg) {
       callN8n();
     }
 
-    // ── Bot Nativo: flujo conversacional ────────────────────────────────
-    // Solo responde si: no es grupo, está habilitado, y la IA está activa para este chat (o no hay aiContactMap = modo legacy)
+    // ── Bot IA: respuesta inteligente server-side ──────────────────────
+    // Funciona sin Chrome abierto — todo corre en el servidor
     const nbActiveForChat = !isGroup && settings.nativeBotEnabled && (Object.keys(aiContactMap).length === 0 || aiActiveForChat);
     if (!fromMe && isNew && !saved.dedup && nbActiveForChat) {
       const replyDelay = Math.max(300, Math.min(3000, settings.nativeBotReplyDelay || 800));
+      // Espera configurable antes de responder (como el frontend)
+      const botDelaySec = Math.min(15, Math.max(0, settings.botDelay || 3));
       (async () => {
         try {
+          // Esperar el delay configurado (simula que la persona lee el mensaje)
+          if (botDelaySec > 0) await new Promise(r => setTimeout(r, botDelaySec * 1000));
+
           const result = handleNativeBotMessage(jid, text, name, settings);
 
           let replies = [];
-          // Si handleNativeBotMessage devolvió un objeto con needsAI, intentar OpenAI
           if (result && result.needsAI) {
             const aiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
             if (aiKey) {
-              // Obtener historial de mensajes para contexto
-              const chatMsgs = (waMessages.get(jid) || []).slice(-8).map(m => ({
+              const chatMsgs = (waMessages.get(jid) || []).slice(-10).map(m => ({
                 role: m.dir === "s" ? "assistant" : "user",
                 content: m.txt || "[media]",
               }));
-              // Obtener nombre del cliente de la sesión
               const clientSession = nativeBotSessions.get(jid);
               const clientName = clientSession?.name || name || "";
               const msgCount = clientSession?.msgCount || 1;
 
-              // Prompt humanizado — si el usuario configuró uno custom, usarlo; sino el default mejorado
-              const sysPrompt = settings.systemPrompt
-                ? settings.systemPrompt + `\n\n--- INSTRUCCIONES DE FORMATO ---
-IMPORTANTE: Responde en VARIOS mensajes separados usando |||| como separador.
-Cada mensaje debe ser corto (1-3 líneas máximo). Escribe como una persona real por WhatsApp.
-Ejemplo de formato: "Hola! Como estas? 😊||||Te cuento que tenemos justo lo que necesitas||||Quieres que te mande los detalles?"
-${result.context || ""}
-${clientName ? "El cliente se llama: " + clientName : ""}
-Mensaje número ${msgCount} de esta conversación.`
-                : `Eres Carolina, asesora de ventas de *Sanate Store*, una tienda colombiana de productos naturales.
+              // ── Construir prompt completo (mismo que el frontend) ──
+              const useEmojis = settings.useEmojis !== false;
+              const useStyles = settings.useStyles !== false;
+              const msgMode = settings.msgMode || "partes";
 
---- CÓMO ESCRIBES ---
-- Escribes como una persona REAL por WhatsApp, no como un bot
-- Mandas VARIOS mensajes cortos separados, NO un solo bloque largo
-- Usa el separador |||| para separar cada mensaje (2-5 mensajes por respuesta)
-- Cada mensaje tiene máximo 1-3 líneas
-- Usas negritas con *asteriscos* para destacar cosas importantes
-- Lenguaje casual colombiano pero profesional
-- NUNCA uses listas numeradas como menú de opciones
-- NUNCA digas que eres un bot, IA, o asistente virtual
+              const stylesBlock = useStyles
+                ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• Ejemplo: *Combo Detox* — *$66.000* | _envío gratis_ hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
+                : `• Texto plano ÚNICAMENTE — sin asteriscos, guiones bajos ni tildes de formato\n• PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`;
 
---- REGLAS DE EMOJIS ---
-- NO pongas emoji al final de cada mensaje, solo en algunos estratégicamente
-- VARÍA los emojis, NUNCA repitas el mismo emoji en mensajes consecutivos
-- Máximo 1 emoji por mensaje, y solo en algunos mensajes (no en todos)
-- Usa emojis relevantes al tema: 🌿 para naturaleza, 🍄 para hongos, 💪 para salud, ✨ para destacar, etc.
-- Algunos mensajes van SIN emoji, eso es más natural
+              const emojisBlock = useEmojis
+                ? `• Emojis: máx 1 por mensaje, NO al final de cada mensaje, VARÍA siempre — algunos mensajes van SIN emoji`
+                : `• PROHIBIDO usar emojis — responde solo con texto plano`;
 
---- EJEMPLO DE CÓMO DEBES RESPONDER ---
-Si el cliente pregunta por un producto:
-"Ay sí! La melena de león es increíble para la concentración 🍄||||Tenemos el extracto puro en cápsulas, es de los más vendidos||||Te lo puedo dejar en *$45.000* con envío incluido a tu ciudad||||Te interesa? Te pido unos datos y te lo mando"
+              const multiMsgBlock = msgMode === "partes"
+                ? `ENVÍO POR PARTES (MUY IMPORTANTE):
+Divide tu respuesta en 2 a 5 mensajes cortos separados por el separador EXACTO: ||||
+Reglas para cada parte:
+• Parte 1 → gancho o contexto inicial — abre con intriga o dato interesante, NO reveles todo
+• Partes intermedias → desarrolla punto por punto, cada una termina dejando curiosidad
+• Última parte → pregunta de cierre de venta ("¿Cuál prefieres?" / "¿Te lo enviamos hoy?")
+Estructura inteligente:
+  - Si pregunta por productos: parte 1 = beneficio + hook | parte 2 = opción principal | parte 3 = alternativa | última = pregunta de decisión
+  - Si muestra objeción: parte 1 = empatía | parte 2 = reencuadre de valor | última = cierre con urgencia
+  - Si ya quiere comprar: máx 2 partes — confirma + cierra directo
+Ejemplo correcto:
+Tenemos varias opciones que te pueden funcionar${useEmojis ? ' 🌿' : ''}
+||||
+${useStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} — ideal para piel sensible${useEmojis ? ' ✨' : ''} — ${useStyles ? '*$66.000*' : '$66.000'}
+||||
+${useStyles ? '*Combo Cúrcuma*' : 'Combo Cúrcuma'} — manchas y cicatrices — ${useStyles ? '*$66.000*' : '$66.000'}
+||||
+¿Cuál va más con lo que necesitas?`
+                : `ENVÍO COMPLETO:
+Responde en UN SOLO MENSAJE bien estructurado (máx 6 líneas).
+NO uses el separador |||| — todo en un bloque.`;
 
---- CONOCIMIENTO ---
-- Tienda: Sanate Store — productos naturales colombianos
-- Web: https://sanate.store
-- Productos: cuidado facial, corporal, acné, manchas, zonas íntimas, hongos, suplementos naturales, melena de león, ashwagandha, etc.
-- Envíos a todo Colombia, pago contra-entrega disponible
-- Pagos: Nequi, Daviplata, transferencia, contra-entrega
+              const salesFunnelBlock = `EMBUDO DE VENTAS — SIGUE ESTE ORDEN:
+PASO 1 — BIENVENIDA: Recibe calurosamente.
+PASO 2 — DIAGNÓSTICO (OBLIGATORIO antes de dar precios): Pregunta "¿Lo buscas para acné, manchas, piel seca o zonas íntimas?" — adapta tu recomendación.
+PASO 3 — PRESENTACIÓN: Recomienda el combo exacto para su problema. Muestra precio${useStyles ? ' con *negrita*' : ''}.
+PASO 4 — MICRO-COMPROMISO (elección forzada): "¿Cuál te llevas, el${useStyles ? ' *Combo 1*' : ' Combo 1'} o el${useStyles ? ' *Combo 5*' : ' Combo 5'}?" — NUNCA pregunta abierta al cierre.
+PASO 5 — DATOS: Cuando elija: pide Nombre / Teléfono / Ciudad / Dirección / Barrio
 
---- FLUJO DE VENTA ---
-1. Si es primer mensaje: saluda con su nombre y pregunta en qué le ayudas
-2. Si pregunta por producto: explica beneficios + precio + pregunta si lo quiere
-3. Si quiere comprar: pide nombre completo, ciudad, dirección, barrio, teléfono
-4. Si no sabes algo: "Déjame consultar con el equipo y te confirmo rapidito"
-5. Siempre busca cerrar la venta de forma natural, sin presionar
+CATÁLOGO SÁNATE${useStyles ? ' (precios y combos en *negrita*)' : ''}:
+• ${useStyles ? '*Combo 1*' : 'Combo 1'} – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena&Arroz) → ${useStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${useStyles ? '*Combo 2*' : 'Combo 2'} – 3 Jabones a elección → ${useStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
+• ${useStyles ? '*Combo 3*' : 'Combo 3'} – 2 Jabones + Sebo de Res 10g → ${useStyles ? '*$63.000*' : '$63.000'} (antes $79.000)
+• ${useStyles ? '*Combo 4*' : 'Combo 4'} – Secreto Japonés: Sebo grande + 2 Jabones + Exfoliante → ${useStyles ? '*$99.000*' : '$99.000'} (antes $119.000)
+• ${useStyles ? '*Combo 5*' : 'Combo 5'} – ${useEmojis ? '⭐ ' : ''}MÁS VENDIDO: 4 Jabones + Sebo 10g + Exfoliante → ${useStyles ? '*$119.000*' : '$119.000'} (antes $159.000)
+• ${useStyles ? '*Combo 6*' : 'Combo 6'} – Doble Sebo: 2 Sebos + 2 Jabones → ${useStyles ? '*$136.900*' : '$136.900'} (antes $169.000)
+• Jabón individual: ${useStyles ? '*$22.000*' : '$22.000'}
+Pago: contra entrega ó Nequi/Bancolombia (${useStyles ? '*8% OFF*' : '8% OFF'} + envío más rápido)
+Envío: GRATIS a toda Colombia | 1-3 días hábiles
 
-${result.context || ""}
-${clientName ? "El cliente se llama: " + clientName : ""}
-Mensaje número ${msgCount} de esta conversación.`;
+REGLAS DE ORO:
+❌ NUNCA des precio sin diagnosticar primero
+❌ NUNCA hagas preguntas abiertas al cierre — usa elección forzada (A o B)
+✅ CELEBRA cuando el cliente elige antes de pedir datos
+✅ Ofrece primero Nequi/transferencia (8% OFF), luego contra entrega`;
+
+              const ctx = settings.systemPrompt || "";
+              const sysPrompt = ctx
+                ? `${ctx}\n\nINSTRUCCIONES DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Decir que eres IA o bot\n\n${result.context || ""}\n${clientName ? "El cliente se llama: " + clientName : ""}\nMensaje número ${msgCount} de esta conversación.\n\nMENSAJE ACTUAL DEL CLIENTE:\n"${text}"\nResponde SOLO a esto.`
+                : `Eres una asesora de ventas de Sánate Colombia — jabones artesanales naturales 100% colombianos. Eres una persona real — NUNCA te presentes como IA.\n\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y apertura\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Decir que eres IA | ❌ Precios antes del diagnóstico\n\n${result.context || ""}\n${clientName ? "El cliente se llama: " + clientName : ""}\nMensaje número ${msgCount}.\n\nMENSAJE ACTUAL DEL CLIENTE:\n"${text}"\nResponde SOLO a esto.`;
 
               const aiReply = await callOpenAIChat({
                 messages: [{ role: "system", content: sysPrompt }, ...chatMsgs, { role: "user", content: text }],
-                maxTokens: 250,
+                maxTokens: 480,
                 settings,
               });
               if (aiReply) {
@@ -2244,7 +2267,9 @@ Mensaje número ${msgCount} de esta conversación.`;
             // Simular "escribiendo..." antes de la primera respuesta
             try { await waSocket.presenceSubscribe(jid); } catch {}
             try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
-            await new Promise(r => setTimeout(r, Math.min(replyDelay, 1500)));
+            // Delay de escritura proporcional al largo del primer mensaje
+            const firstDelay = Math.max(400, Math.min(replies[0].length * 12, 1500));
+            await new Promise(r => setTimeout(r, firstDelay));
 
             for (let i = 0; i < replies.length; i++) {
               const reply = replies[i];
@@ -2263,20 +2288,22 @@ Mensaje número ${msgCount} de esta conversación.`;
                 status:    "sent",
                 direction: "outgoing",
                 chatName:  name,
-                rawPayload: { source: "native-bot-reply" },
+                rawPayload: { source: "bot-ai-reply" },
               });
               writeWhatsAppDb(readWhatsAppDb());
+              // Delay entre mensajes: simula escritura natural
               if (i < replies.length - 1) {
                 try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
-                await new Promise(r => setTimeout(r, replyDelay));
+                const typingMs = Math.max(400, Math.min(replies[i + 1].length * 10, 1200));
+                await new Promise(r => setTimeout(r, typingMs));
               }
             }
             // Quitar estado "escribiendo"
             try { await waSocket.sendPresenceUpdate("paused", jid); } catch {}
-            console.log("[NativeBot][reply][sent]", { chatId: jid, parts: replies.length });
+            console.log("[Bot][AI-reply][sent]", { chatId: jid, parts: replies.length });
           }
         } catch (botErr) {
-          console.error("[NativeBot][reply][error]", botErr?.message || botErr);
+          console.error("[Bot][AI-reply][error]", botErr?.message || botErr);
         }
       })();
     }
