@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'claude/recover-whatsapp-bot-settings-2D490'
   workflow_dispatch:
 
 jobs:
