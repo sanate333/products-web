@@ -2387,7 +2387,10 @@ async function initWhatsApp() {
     if (!fs.existsSync(waAuthDir)) fs.mkdirSync(waAuthDir, { recursive: true });
 
     const { state, saveCreds } = await useMultiFileAuthState(waAuthDir);
-    const { version }          = await fetchLatestBaileysVersion();
+    const { version }          = await Promise.race([
+      fetchLatestBaileysVersion(),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("fetchLatestBaileysVersion timeout")), 15000)),
+    ]);
 
     waStatus = "connecting";
     const sock = makeWASocket({

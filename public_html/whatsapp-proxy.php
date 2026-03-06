@@ -17,7 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 define('FLY_BACKEND', 'https://sanate-wa-bot.fly.dev');
 $urlFile   = __DIR__ . '/wa_backend_url.txt';
 $tunnelUrl = file_exists($urlFile) ? trim(file_get_contents($urlFile)) : '';
-if (!$tunnelUrl) $tunnelUrl = FLY_BACKEND;
+// Si la URL guardada es localhost/privada o está vacía → usar Fly.io siempre
+if (!$tunnelUrl || preg_match('#(localhost|127\.0\.0\.1|192\.168\.|10\.|::1)#i', $tunnelUrl)) {
+    $tunnelUrl = FLY_BACKEND;
+}
 
 // ── Construir URL destino ───────────────────────────────────────────────────
 $path   = $_GET['path'] ?? '';
@@ -60,6 +63,28 @@ $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 curl_close($ch);
+
+// Si falla (error cURL, sin código, o 5xx) y no usábamos Fly.io, reintentar directo
+if (($curlError || !$httpCode || $httpCode >= 500) && $tunnelUrl !== FLY_BACKEND) {
+    $target2 = rtrim(FLY_BACKEND, '/') . '/api/whatsapp/' . $path;
+    if ($qs) $target2 .= '?' . $qs;
+    $ch2 = curl_init($target2);
+    curl_setopt_array($ch2, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT        => 30,
+        CURLOPT_CUSTOMREQUEST  => $_SERVER['REQUEST_METHOD'],
+        CURLOPT_HTTPHEADER     => $forwardHeaders,
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+    if ($_SERVER['REQUEST_METHOD'] !== 'GET' && $_SERVER['REQUEST_METHOD'] !== 'HEAD') {
+        curl_setopt($ch2, CURLOPT_POSTFIELDS, $body);
+    }
+    $response  = curl_exec($ch2);
+    $httpCode  = curl_getinfo($ch2, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch2);
+    curl_close($ch2);
+}
 
 if ($curlError) {
     http_response_code(502);
