@@ -10,9 +10,23 @@ import crypto from "crypto";
 import https from "https";
 import http from "http";
 import { fileURLToPath } from "url";
+import { execSync } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Auto-build React app if no build output exists (for Render deployment)
+const pubHtmlIndex = path.join(__dirname, '..', 'public_html', 'index.html');
+const buildIndex = path.join(__dirname, '..', 'build', 'index.html');
+if (!fs.existsSync(pubHtmlIndex) && !fs.existsSync(buildIndex)) {
+  console.log('No build found, running npm run build...');
+  try {
+    execSync('npm run build', { cwd: path.join(__dirname, '..'), stdio: 'inherit', timeout: 300000 });
+    console.log('Build completed successfully');
+  } catch (e) {
+    console.error('Build failed:', e.message);
+  }
+}
 
 const app = express();
 // Chrome Private Network Access: ANTES de cors() para que no sea interceptado
