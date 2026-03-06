@@ -165,6 +165,7 @@ export default function ImagenesIA() {
     productDetails: '',
     language: 'es',
   });
+  const [selectedModel, setSelectedModel] = useState('pollinations');
   const [files, setFiles] = useState([]);
   const [actionError, setActionError] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -188,12 +189,62 @@ export default function ImagenesIA() {
     checkedAt: '',
   });
   const [connectionErrorDetail, setConnectionErrorDetail] = useState('');
+
+  // Imágenes demo de alto impacto para mostrar en la galería
+  const demoImages = useMemo(() => [
+    {
+      id: 'demo_1',
+      isDemo: true,
+      template: 'Hero',
+      files: [{ url: 'https://image.pollinations.ai/prompt/ultra%20realistic%20professional%20ecommerce%20product%20photo%2C%20premium%20supplement%20bottle%2C%20studio%20lighting%2C%20clean%20white%20background%2C%20high%20impact%20commercial%20photo%2C%20no%20text?width=512&height=512&seed=101&nologo=true' }],
+      analysis: { high_impact_score: 94, hero_style_score: 92 },
+    },
+    {
+      id: 'demo_2',
+      isDemo: true,
+      template: 'Oferta',
+      files: [{ url: 'https://image.pollinations.ai/prompt/ultra%20realistic%20professional%20ecommerce%20product%20photo%2C%20premium%20natural%20cream%20jar%2C%20luxury%20lighting%2C%20gradient%20background%2C%20high%20impact%20commercial%2C%20no%20text?width=512&height=512&seed=202&nologo=true' }],
+      analysis: { high_impact_score: 91, hero_style_score: 88 },
+    },
+    {
+      id: 'demo_3',
+      isDemo: true,
+      template: 'Beneficios',
+      files: [{ url: 'https://image.pollinations.ai/prompt/ultra%20realistic%20professional%20ecommerce%20product%20photo%2C%20premium%20essential%20oils%20set%2C%20dark%20moody%20background%2C%20dramatic%20lighting%2C%20high%20impact%20commercial%2C%20no%20text?width=512&height=512&seed=303&nologo=true' }],
+      analysis: { high_impact_score: 89, hero_style_score: 87 },
+    },
+    {
+      id: 'demo_4',
+      isDemo: true,
+      template: 'Hero',
+      files: [{ url: 'https://image.pollinations.ai/prompt/ultra%20realistic%20professional%20ecommerce%20product%20photo%2C%20premium%20collagen%20powder%2C%20minimalist%20white%20sage%20background%2C%20soft%20shadows%2C%20high%20impact%20commercial%2C%20no%20text?width=512&height=512&seed=404&nologo=true' }],
+      analysis: { high_impact_score: 93, hero_style_score: 90 },
+    },
+  ], []);
+
   const templateOptions = ['Hero', 'Oferta', 'Beneficios', 'Antes/Despues', 'Testimonio', 'Logistica'];
   const sizeOptions = [
     { value: '1024x1024', label: 'Instagram Cuadrado (1024x1024)' },
     { value: '1024x1792', label: 'Instagram Stories (1024x1792)' },
     { value: '1792x1024', label: 'Horizontal (1792x1024)' },
     { value: '512x512', label: 'Cuadrado Chico (512x512)' },
+  ];
+
+  const MODEL_OPTIONS = [
+    {
+      id: 'pollinations',
+      label: 'Pollinations IA',
+      badge: 'GRATIS',
+      description: 'Genera sin coste. Ideal para probar.',
+      icon: '🌸',
+    },
+    {
+      id: 'openai',
+      label: 'OpenAI',
+      badge: 'PREMIUM',
+      description: 'Alta calidad con tu API Key.',
+      icon: '🧠',
+    },
   ];
   const allTemplates = useMemo(() => [...uploadedTemplates, ...templates], [uploadedTemplates, templates]);
   const selectedTemplate = useMemo(
@@ -381,11 +432,83 @@ export default function ImagenesIA() {
     event.target.value = '';
   };
 
-  const handleGenerate = async () => {
+  const handleGenerateWithPollinations = async () => {
     setLoading(true);
     setActionError('');
     setImageUrl('');
-    setStatusMessage('Generando imagen... puede tardar hasta 60 segundos.');
+    setStatusMessage('Generando con Pollinations IA... (gratis, puede tardar 20-40s)');
+    try {
+      const productN = selectedProductName || 'producto natural';
+      const details = form.productDetails || '';
+      const template = form.templateType || 'Hero';
+      const angle = form.angle || '';
+      const extra = form.style || '';
+      const [w, h] = (form.size || '1024x1024').split('x').map(Number);
+
+      const promptParts = [
+        `ultra realistic professional ecommerce product photo, ${productN}`,
+        `template style: ${template}`,
+        details ? `product details: ${details}` : '',
+        angle ? `sales angle: ${angle}` : '',
+        'premium commercial lighting, studio quality, clean background',
+        'high impact conversion image, crisp details, photorealistic',
+        'STRICT: NO text, NO words, NO captions, NO banners, NO typography',
+        extra ? `extra: ${extra}` : '',
+      ].filter(Boolean).join(', ');
+
+      const encodedPrompt = encodeURIComponent(promptParts);
+      const seed = Math.floor(Math.random() * 99999);
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=flux`;
+
+      // Precargar la imagen para confirmar que se generó
+      await new Promise((resolve, reject) => {
+        const img = new window.Image();
+        img.onload = resolve;
+        img.onerror = reject;
+        img.src = pollinationsUrl;
+      });
+
+      setImageUrl(pollinationsUrl);
+
+      // Guardar en el store local del servidor como referencia
+      try {
+        await fetchJsonWithFallback('ai-images/save-external', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: form.userId || 'admin',
+            productId: form.productId || 'general',
+            productName: productN,
+            template,
+            url: pollinationsUrl,
+            model: 'pollinations-flux',
+            prompt_used: promptParts,
+          }),
+        });
+        await fetchImages();
+      } catch (_) {
+        // Si falla guardar, igual mostramos la imagen
+      }
+
+      setStatusMessage('✅ Imagen generada con Pollinations IA (gratis). ¡Alto impacto!');
+    } catch (error) {
+      setActionError('No se pudo generar con Pollinations. Verifica tu conexión o intenta de nuevo.');
+      setStatusMessage('');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerate = async () => {
+    if (selectedModel === 'pollinations') {
+      return handleGenerateWithPollinations();
+    }
+
+    // — OpenAI flow —
+    setLoading(true);
+    setActionError('');
+    setImageUrl('');
+    setStatusMessage('Generando imagen con OpenAI... puede tardar hasta 60 segundos.');
     if (!files.filter(Boolean).length) {
       setActionError('Debes subir al menos 1 foto real del producto para generar la imagen.');
       setStatusMessage('');
@@ -555,7 +678,7 @@ export default function ImagenesIA() {
     <div className="imagenesIA">
       <div className="imagenesWrapper darkUi">
         <header className="topBarIa">
-          <span>Generador de Landings</span>
+          <span>✨ Imágenes IA</span>
           <button type="button" className={`serverChip ${serverStatus}`} onClick={checkServer}>
             {serverStatus === 'ok' ? 'Servidor conectado' : serverStatusLabel}
           </button>
@@ -577,9 +700,9 @@ export default function ImagenesIA() {
           <p>
             API Key: <b>{
               (connectionPanel.health?.has_key
-              ?? connectionPanel.health?.hasKey
-              ?? connectionPanel.health?.api_key_loaded
-              ?? connectionPanel.health?.key_loaded) ? 'Detectada' : 'No detectada'
+                ?? connectionPanel.health?.hasKey
+                ?? connectionPanel.health?.api_key_loaded
+                ?? connectionPanel.health?.key_loaded) ? 'Detectada' : 'No detectada'
             }</b> | Mock: <b>{String(connectionPanel.health?.mock || 'false')}</b>
           </p>
           <p>
@@ -606,8 +729,29 @@ export default function ImagenesIA() {
 
         <section className="iaCard">
           <div className="iaCardTitle">
-            <h3>Generar Seccion de Landing</h3>
-            <p>Selecciona una plantilla de referencia y sube de 1 a 3 fotos de tu producto.</p>
+            <h3>Generar Imagen IA</h3>
+            <p>Elige tu modelo, sube fotos del producto y genera imagenes de alto impacto.</p>
+          </div>
+
+          {/* Selector de Modelos */}
+          <div className="modelSelectorRow">
+            {MODEL_OPTIONS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                className={`modelCard ${selectedModel === m.id ? 'modelCardActive' : ''}`}
+                onClick={() => setSelectedModel(m.id)}
+              >
+                <span className="modelIcon">{m.icon}</span>
+                <div className="modelInfo">
+                  <span className="modelLabel">{m.label}</span>
+                  <span className="modelDesc">{m.description}</span>
+                </div>
+                <span className={`modelBadge ${m.id === 'pollinations' ? 'badgeFree' : 'badgePremium'}`}>
+                  {m.badge}
+                </span>
+              </button>
+            ))}
           </div>
 
           <div className="fieldRow">
@@ -757,37 +901,54 @@ export default function ImagenesIA() {
               type="button"
               className="primary"
               onClick={handleGenerate}
-              disabled={loading || serverStatus !== 'ok'}
+              disabled={loading || (selectedModel === 'openai' && serverStatus !== 'ok')}
             >
-              {loading ? 'Generando...' : 'Generar Seccion'}
+              {loading ? 'Generando...' : selectedModel === 'pollinations' ? '🌸 Generar Gratis' : '🧠 Generar con OpenAI'}
             </button>
             <button type="button" className="secondary" onClick={fetchImages}>
               Actualizar
             </button>
           </div>
-          <small className="usageNote">{images.length} de {Math.max(images.length, 1)} imagenes cargadas para este producto.</small>
-          {serverMessage && <p className="serverMessage">{serverMessage}</p>}
+          {selectedModel === 'pollinations' && (
+            <div className="pollinationsNote">
+              <span>🌸</span>
+              <span>Pollinations.ai — generacion gratuita, sin API key requerida</span>
+            </div>
+          )}
+          <small className="usageNote">{images.length} imagenes generadas para este producto.</small>
+          {selectedModel === 'openai' && serverMessage && <p className="serverMessage">{serverMessage}</p>}
           {actionError && <p className="error">{actionError}</p>}
           {statusMessage && !actionError && <p className="status">{statusMessage}</p>}
         </section>
 
         <section className="gallerySection generatedEndSection">
-          <h2>Secciones Generadas</h2>
+          <div className="galleryHeader">
+            <h2>Imagenes Generadas</h2>
+            {images.length === 0 && <span className="gallerySubtitle">Ejemplos de alto impacto ↓</span>}
+          </div>
           {imageUrl && (
             <div className="latestResult">
               <img src={imageUrl} alt="Ultima imagen generada" />
-              <span>Ultima generada</span>
+              <span>✨ Ultima generada</span>
             </div>
           )}
           <div className="galleryGrid">
-            {images.map((img, index) => (
-              <article key={img.id}>
-                <button type="button" className="quickRemoveBtn" onClick={() => handleDelete(img.id)} aria-label="Eliminar imagen">
-                  x
-                </button>
-                <img src={img.files?.[0]?.url} alt={`Imagen ${index + 1}`} />
-                <p>{index === 0 ? 'Principal' : `Imagen ${index + 1}`}</p>
-                {img.analysis && (
+            {(images.length > 0 ? images : demoImages).map((img, index) => (
+              <article key={img.id} className={img.isDemo ? 'demoCard' : ''}>
+                {!img.isDemo && (
+                  <button type="button" className="quickRemoveBtn" onClick={() => handleDelete(img.id)} aria-label="Eliminar imagen">
+                    ✕
+                  </button>
+                )}
+                {img.isDemo && <span className="demoBadge">Ejemplo</span>}
+                <img src={img.files?.[0]?.url} alt={`Imagen ${index + 1}`} loading="lazy" />
+                <div className="galleryCardFooter">
+                  <p>{img.template || (index === 0 ? 'Principal' : `Imagen ${index + 1}`)}</p>
+                  {img.analysis?.high_impact_score && (
+                    <span className="impactScore">⚡ {img.analysis.high_impact_score}%</span>
+                  )}
+                </div>
+                {img.analysis && !img.isDemo && (
                   <div className="imageAnalysis">
                     <small>
                       Producto detectado: <b>{img.analysis.detected_product || 'n/a'}</b>
@@ -801,24 +962,35 @@ export default function ImagenesIA() {
                     {img.analysis.notes && <small>{img.analysis.notes}</small>}
                   </div>
                 )}
-                <div className="galleryActions">
-                  <button type="button" onClick={() => handleViewImage(img.files?.[0]?.url)}>
-                    Ver
-                  </button>
-                  <button type="button" onClick={() => handleDownloadImage(img.files?.[0]?.url, index)}>
-                    Descargar
-                  </button>
-                  <button type="button" className="danger" onClick={() => handleDelete(img.id)}>
-                    Eliminar
-                  </button>
-                </div>
+                {!img.isDemo && (
+                  <div className="galleryActions">
+                    <button type="button" onClick={() => handleViewImage(img.files?.[0]?.url)}>
+                      Ver
+                    </button>
+                    <button type="button" onClick={() => handleDownloadImage(img.files?.[0]?.url, index)}>
+                      Descargar
+                    </button>
+                    <button type="button" className="danger" onClick={() => handleDelete(img.id)}>
+                      Eliminar
+                    </button>
+                  </div>
+                )}
+                {img.isDemo && (
+                  <div className="galleryActions">
+                    <button type="button" onClick={() => handleViewImage(img.files?.[0]?.url)}>
+                      Ver
+                    </button>
+                    <button type="button" onClick={() => handleDownloadImage(img.files?.[0]?.url, index)}>
+                      Descargar
+                    </button>
+                  </div>
+                )}
               </article>
             ))}
-            {!images.length && <p className="empty">Aun no hay imagenes generadas para este producto.</p>}
           </div>
         </section>
 
-        
+
         {templateModalOpen && (
           <div className="templateModalOverlay" onClick={() => setTemplateModalOpen(false)}>
             <div className="templateModal" onClick={(event) => event.stopPropagation()}>
@@ -839,20 +1011,20 @@ export default function ImagenesIA() {
                 ))}
               </div>
               <div className="templateGrid compact">
-              {allTemplates.filter((item) => item.category === templateTab).map((tpl) => (
-                <button
-                  key={tpl.id}
-                  type="button"
-                  className={(pendingTemplateId === tpl.id || selectedTemplateId === tpl.id) ? 'templateSelected' : ''}
-                  onClick={() => {
-                    setPendingTemplateId(tpl.id);
-                    setSelectedTemplateId(tpl.id);
-                  }}
-                >
-                  <img src={resolveTemplateUrl(tpl.url)} alt={tpl.name} />
-                  <span>{tpl.name}</span>
-                </button>
-              ))}
+                {allTemplates.filter((item) => item.category === templateTab).map((tpl) => (
+                  <button
+                    key={tpl.id}
+                    type="button"
+                    className={(pendingTemplateId === tpl.id || selectedTemplateId === tpl.id) ? 'templateSelected' : ''}
+                    onClick={() => {
+                      setPendingTemplateId(tpl.id);
+                      setSelectedTemplateId(tpl.id);
+                    }}
+                  >
+                    <img src={resolveTemplateUrl(tpl.url)} alt={tpl.name} />
+                    <span>{tpl.name}</span>
+                  </button>
+                ))}
                 {!allTemplates.filter((item) => item.category === templateTab).length && (
                   <p className="empty">No hay plantillas cargadas.</p>
                 )}

@@ -27,6 +27,11 @@ app.use(cors({ origin: '*' }));
 app.use((req, res, next) => { res.setHeader('Access-Control-Allow-Private-Network', 'true'); next(); });
 app.use(express.json({ limit: "20mb" }));
 
+// Serve React build static files
+const buildPath = path.join(__dirname, '..', 'public_html');
+app.use('/static', express.static(path.join(buildPath, 'static'), { maxAge: '1y' }));
+app.use(express.static(buildPath, { index: false }));
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB por archivo
@@ -148,11 +153,6 @@ function defaultWhatsAppDb() {
       nativeBotAskName:      true, // preguntar nombre si no lo tiene
       nativeBotAskNameMsg:   "Antes de continuar, ¿cómo te llamas? 😊",
       nativeBotFallback:     "No entendí tu mensaje 😅 Por favor elige una opción del menú o escribe *menu* para verlas de nuevo.",
-      // ── Estilo de mensajes IA ──
-      msgMode:       "partes",   // "partes" = multi-mensaje con ||||, "completo" = un solo mensaje
-      useEmojis:     true,
-      useStyles:     true,       // *negritas* y _cursiva_
-      botDelay:      3,          // segundos de espera antes de responder
     },
     // ── Bot Nativo: sesiones activas { [jid]: { step, name, data, createdAt, msgCount } }
     nativeBotSessions: {},
@@ -192,16 +192,68 @@ function writeWhatsAppDb(db) {
   fs.writeFileSync(whatsappDbFile, JSON.stringify(db, null, 2), "utf-8");
 }
 
+// ── Limpieza de datos existentes al iniciar: corregir @lid nombres/phones ──
+(function cleanupExistingDb() {
+  try {
+    const db = readWhatsAppDb();
+    let changed = false;
+    for (const chat of db.chats) {
+      const cId = chat.chatId || "";
+      const rawNum = cId.split("@")[0];
+      const cIsLid = cId.endsWith("@lid");
+      const cIsGroup = cId.endsWith("@g.us");
+
+      // Limpiar nombre: si es @lid y el nombre es solo el número LID, poner "Contacto"
+      if (cIsLid && chat.name && /^\d+$/.test(chat.name)) {
+        chat.name = "Contacto";
+        changed = true;
+      }
+      // Limpiar phone: si es @lid y el phone es el número LID, limpiar
+      if (cIsLid && chat.phone && chat.phone === rawNum) {
+        chat.phone = "";
+        changed = true;
+      }
+      // Asegurar isGroup
+      if (cIsGroup && !chat.isGroup) {
+        chat.isGroup = true;
+        changed = true;
+      }
+    }
+    if (changed) {
+      writeWhatsAppDb(db);
+      console.log("[DB] Limpieza de datos @lid completada");
+    }
+  } catch (e) {
+    console.warn("[DB] Error en limpieza:", e?.message);
+  }
+})();
+
 function normalizePhoneLike(value) {
   return String(value || "").replace(/[^\d+]/g, "");
 }
 
+/** Detecta si un JID es formato @lid (Linked Identity) de WhatsApp */
+function isLidJid(jid) {
+  return String(jid || "").endsWith("@lid");
+}
+
+/** Detecta si un string es solo dígitos (número sin nombre real) */
+function isJustDigits(s) {
+  return /^\d+$/.test(String(s || "").trim());
+}
+
 function getChatDisplayName(chatId, fallback = "") {
   const cleaned = String(fallback || "").trim();
-  if (cleaned) return cleaned;
+  // Si el fallback es un nombre real (no solo dígitos, no contiene @), usarlo
+  if (cleaned && !isJustDigits(cleaned) && !cleaned.includes("@")) return cleaned;
+  // Para @lid JIDs, NO usar el número LID como nombre — es un ID interno sin sentido
   const id = String(chatId || "");
-  if (id.includes("@")) return id.split("@")[0];
-  return id || "Contacto";
+  if (isLidJid(id)) return cleaned || "Contacto";
+  // Para @g.us, mostrar "Grupo"
+  if (id.endsWith("@g.us")) return cleaned || "Grupo";
+  // Para @s.whatsapp.net, usar el número de teléfono
+  if (id.includes("@")) return cleaned || id.split("@")[0];
+  return cleaned || id || "Contacto";
 }
 
 function buildAvatarFallback(nameOrPhone = "") {
@@ -213,28 +265,54 @@ function ensureChat(db, incoming = {}) {
   const chatId = toSafeString(incoming.chatId || incoming.id || "", 140);
   if (!chatId) return null;
   const idx = db.chats.findIndex((c) => String(c.chatId) === String(chatId));
+  const isGroup = chatId.endsWith("@g.us");
+  const isLid = isLidJid(chatId);
+  const rawIdNum = chatId.split("@")[0];
+
+  // Resolver nombre: para @lid NO usar el número LID como nombre
+  const incomingName = toSafeString(incoming.name || "", 120).trim();
+  const incomingNameIsReal = incomingName && !isJustDigits(incomingName) && !incomingName.includes("@");
+  const resolvedName = incomingNameIsReal
+    ? incomingName
+    : getChatDisplayName(chatId, incomingNameIsReal ? incomingName : "");
+
+  // Para @lid, el phone solo debe ser un teléfono real, no el ID LID
+  const incomingPhone = incoming.phone || "";
+  const phoneForBase = isLid
+    ? (incomingPhone && !isLidJid(incomingPhone) && !incomingPhone.includes("@lid") ? normalizePhoneLike(incomingPhone) : "")
+    : normalizePhoneLike(incomingPhone || chatId);
+
   const base = {
     chatId,
-    name: getChatDisplayName(chatId, incoming.name || incoming.phone || ""),
-    phone: normalizePhoneLike(incoming.phone || chatId),
+    name: resolvedName,
+    phone: phoneForBase,
     photoUrl: toSafeString(incoming.photoUrl || "", 800) || "",
     updatedAt: nowIso(),
     unreadCount: 0,
     lastMessagePreview: "",
     lastMessageAt: null,
+    isGroup,
   };
   if (idx < 0) {
     db.chats.push(base);
     return db.chats[db.chats.length - 1];
   }
   const chat = db.chats[idx];
+  // No sobreescribir un nombre real con un número o "Contacto"
+  const existingNameIsReal = chat.name && !isJustDigits(chat.name) && !chat.name.includes("@") && chat.name !== "Contacto";
+  const bestName = incomingNameIsReal ? incomingName : (existingNameIsReal ? chat.name : resolvedName);
+
+  // Para phone, mantener el existente si era real y el nuevo es vacío o LID
+  const bestPhone = phoneForBase || chat.phone || "";
+
   const merged = {
     ...chat,
     ...base,
-    name: toSafeString(incoming.name || chat.name || base.name, 120) || base.name,
-    phone: normalizePhoneLike(incoming.phone || chat.phone || base.phone),
+    name: bestName,
+    phone: bestPhone,
     photoUrl: toSafeString(incoming.photoUrl || chat.photoUrl || "", 800),
     updatedAt: nowIso(),
+    isGroup,
   };
   db.chats[idx] = merged;
   return db.chats[idx];
@@ -706,6 +784,48 @@ app.get("/api/whatsapp/chats", (req, res) => {
   try {
     const db = readWhatsAppDb();
     let filtered = [...db.chats];
+
+    // ── Asegurar que cada chat tenga isGroup correctamente ──
+    filtered = filtered.map(c => ({
+      ...c,
+      isGroup: c.isGroup || (c.chatId || "").endsWith("@g.us"),
+    }));
+
+    // ── Limpiar nombres: para @lid no mostrar números LID como nombre ──
+    filtered = filtered.map(c => {
+      const cId = c.chatId || "";
+      const rawNum = cId.split("@")[0];
+      let name = c.name || "";
+      // Si el nombre es solo el número LID o vacío, y es @lid, poner "Contacto"
+      if (isLidJid(cId) && (!name || name === rawNum || isJustDigits(name))) {
+        // Intentar buscar en memoria por si hay un pushName más reciente
+        const memChat = waChats.get(cId);
+        const memName = memChat?.name || "";
+        name = (memName && !isJustDigits(memName) && memName !== "Contacto") ? memName : "Contacto";
+      }
+      // Para @s.whatsapp.net, si nombre es solo un número, usar el teléfono
+      if (cId.endsWith("@s.whatsapp.net") && isJustDigits(name)) {
+        const memChat = waChats.get(cId);
+        name = memChat?.name || name;
+      }
+      return { ...c, name };
+    });
+
+    // ── Filtro por tipo: "individual", "group", o "all" (default) ──
+    const typeFilter = (req.query?.type || "all").toLowerCase();
+    if (typeFilter === "individual") {
+      filtered = filtered.filter(c => !c.isGroup);
+    } else if (typeFilter === "group") {
+      filtered = filtered.filter(c => c.isGroup);
+    }
+
+    // ── Solo mostrar chats que tienen al menos un mensaje (activos) ──
+    // Excepto si se pide explícitamente todos con ?includeEmpty=true
+    const includeEmpty = req.query?.includeEmpty === "true";
+    if (!includeEmpty) {
+      filtered = filtered.filter(c => c.lastMessageAt || c.lastMessagePreview);
+    }
+
     // ── Búsqueda por nombre o teléfono ─────────────────────────────
     const q = (req.query?.q || req.query?.search || "").trim().toLowerCase();
     if (q) {
@@ -720,12 +840,13 @@ app.get("/api/whatsapp/chats", (req, res) => {
       return new Date(b?.lastMessageAt || b?.updatedAt || 0).getTime()
         - new Date(a?.lastMessageAt || a?.updatedAt || 0).getTime();
     });
-    // Default 200 chats (antes era 50)
-    const { items, nextCursor, limit } = paginateByCursor(sorted, req.query?.cursor, req.query?.limit || 200);
+    // Default 50 chats (solo activos, no todos)
+    const { items, nextCursor, limit } = paginateByCursor(sorted, req.query?.cursor, req.query?.limit || 50);
     return res.json({
       ok: true,
       chats: items.map((chat) => ({
         ...chat,
+        isGroup: chat.isGroup || (chat.chatId || "").endsWith("@g.us"),
         photoUrl: chat.photoUrl || buildAvatarFallback(chat.name || chat.phone || chat.chatId),
       })),
       nextCursor,
@@ -835,8 +956,14 @@ app.post("/api/whatsapp/chats/:chatId/send", upload.single("file"), async (req, 
     // ── Intentar envío real por Baileys ──────────────────────────────────
     let waError = null;
     if (waSocket && waStatus === "connected") {
+      // Anti-detección: verificar rate limit
+      if (!canSendMessage()) {
+        msg.status = "rate_limited";
+        return res.status(429).json({ ok: false, error: "Rate limit alcanzado. Espera antes de enviar más mensajes.", message: msg });
+      }
       try {
         const jid = chatId.includes("@") ? chatId : `${chatId}@s.whatsapp.net`;
+        recordMessageSent(); // Registrar envío
         if (type === "text" || !mediaUrl) {
           await waSocket.sendMessage(jid, { text: text || "" });
         } else if (mediaUrl && type === "image") {
@@ -960,7 +1087,6 @@ app.post("/api/whatsapp/settings", (req, res) => {
       "nativeBotEnabled", "nativeBotWelcome", "nativeBotMenu", "nativeBotMenuMap",
       "nativeBotSessionTTL", "nativeBotEscalateWords", "nativeBotReplyDelay",
       "nativeBotAskName", "nativeBotAskNameMsg", "nativeBotFallback",
-      "msgMode", "useEmojis", "useStyles", "botDelay",
     ];
     const patch = {};
     for (const k of allowed) {
@@ -1779,6 +1905,28 @@ let waIniting       = false;
 let downloadMediaFn = null; // set after Baileys dynamic import
 let waReconnectAttempt = 0; // for exponential backoff
 
+// ── Anti-detección: Rate limiter global de mensajes ─────────────────────────
+// Máximo 20 mensajes por minuto, 200 por hora (WhatsApp limita más bajo para nuevos)
+const _msgTimestamps = [];
+const MSG_PER_MINUTE = 20;
+const MSG_PER_HOUR   = 200;
+function canSendMessage() {
+  const now = Date.now();
+  // Limpiar timestamps viejos (>1 hora)
+  while (_msgTimestamps.length && _msgTimestamps[0] < now - 3600_000) _msgTimestamps.shift();
+  if (_msgTimestamps.length >= MSG_PER_HOUR) {
+    console.warn("[WA][rate-limit] ⚠ Límite por hora alcanzado. Protegiendo cuenta.");
+    return false;
+  }
+  const lastMinute = _msgTimestamps.filter(t => t > now - 60_000);
+  if (lastMinute.length >= MSG_PER_MINUTE) {
+    console.warn("[WA][rate-limit] ⚠ Límite por minuto alcanzado. Esperando...");
+    return false;
+  }
+  return true;
+}
+function recordMessageSent() { _msgTimestamps.push(Date.now()); }
+
 // ═══════════════════════════════════════════════════════════════════════════
 // ── BOT NATIVO: Motor de flujo conversacional (sin APIs externas) ───────
 // ═══════════════════════════════════════════════════════════════════════════
@@ -1879,9 +2027,9 @@ function parseMenuMap(menuMapStr) {
 }
 
 /**
- * Motor del bot — ahora TODO va a IA.
- * Solo mantiene: sesiones, leads, escalación a humano.
- * Ya NO hay menú de opciones ni fallback de texto fijo.
+ * Motor principal del bot nativo.
+ * Recibe un mensaje y devuelve las respuestas a enviar.
+ * NO hace fetch a ninguna API externa.
  */
 function handleNativeBotMessage(jid, messageText, pushName, settings) {
   const text = (messageText || "").trim();
@@ -1893,21 +2041,21 @@ function handleNativeBotMessage(jid, messageText, pushName, settings) {
 
   // Si sesión expirada → reset
   if (session && nativeBotSessionExpired(session, ttl)) {
-    console.log("[Bot][session-expired]", jid);
+    console.log("[NativeBot][session-expired]", jid);
     session = null;
     nativeBotSessions.delete(jid);
   }
 
   // ── Escalación a humano (funciona en cualquier estado) ──
   if (shouldEscalate(text, settings.nativeBotEscalateWords)) {
-    console.log("[Bot][escalate]", jid);
+    console.log("[NativeBot][escalate]", jid);
     if (session) session.step = "escalated";
     else {
       session = { step: "escalated", name: pushName || "", phone, createdAt: nowIso(), msgCount: 1 };
       nativeBotSessions.set(jid, session);
     }
     persistNativeBotSessions();
-    return ["Claro, ya te comunico con alguien del equipo. Dame un momento."];
+    return ["🙋 ¡Entendido! Te voy a comunicar con un asesor humano.", "Un momento por favor, alguien del equipo te atenderá pronto 🙏"];
   }
 
   // ── Si está escalado, el bot NO responde (lo atiende un humano) ──
@@ -1915,11 +2063,11 @@ function handleNativeBotMessage(jid, messageText, pushName, settings) {
     return []; // silencio — el humano responde
   }
 
-  // ── NUEVA CONVERSACIÓN → guardar lead y pasar a IA ──
+  // ── NUEVA CONVERSACIÓN → capturar lead y enviar a IA ──
   if (!session) {
     const detectedName = pushName || extractNameFromText(text) || "";
     session = {
-      step:      "free",
+      step:      "ai",
       name:      detectedName,
       phone,
       createdAt: nowIso(),
@@ -1929,11 +2077,19 @@ function handleNativeBotMessage(jid, messageText, pushName, settings) {
     nativeBotSessions.set(jid, session);
     saveLead({ phone, name: detectedName, interest: text });
     persistNativeBotSessions();
-    return { needsAI: true, context: `Primera conversación. Cliente: "${detectedName || "desconocido"}". Mensaje: "${text}"` };
+    return { needsAI: true, context: `Primera vez que escribe. Se llama "${detectedName || "desconocido"}". Salúdalo cálidamente por su nombre si lo tienes.` };
   }
 
-  // ── Conversación existente → siempre IA ──
+  // ── Conversación existente → todo va a IA ──
   session.msgCount = (session.msgCount || 0) + 1;
+  session.step = "ai";
+
+  // Actualizar lead si tenemos info nueva
+  if (pushName && !session.name) {
+    session.name = pushName;
+    saveLead({ phone, name: pushName, interest: text });
+  }
+
   persistNativeBotSessions();
   return { needsAI: true, context: `Cliente "${session.name || "desconocido"}", mensaje #${session.msgCount}.` };
 }
@@ -1969,14 +2125,33 @@ async function storeMsg(msg) {
 
   const text    = extractText(msg);
   const fromMe  = Boolean(msg.key?.fromMe);
-  const pushName = (!fromMe && msg.pushName) ? msg.pushName : "";
-  const name    = pushName || (waChats.get(jid)?.name || jid.split("@")[0]);
+  const isGroup = jid.endsWith("@g.us");
+  const isLid   = isLidJid(jid);
+  const rawIdNum = jid.split("@")[0];
+
+  // ── Resolución de nombre mejorada (soporta WhatsApp Business + @lid) ──
+  // Prioridad: pushName > verifiedName > cachedName (si es real) > "Contacto" (para @lid) o teléfono (para @s.whatsapp.net)
+  const pushName = (!fromMe && msg.pushName) ? msg.pushName.trim() : "";
+  const verifiedName = (msg.verifiedBizName || "").trim();
+  const cachedName = waChats.get(jid)?.name || "";
+  const cachedNameIsReal = cachedName && !isJustDigits(cachedName) && !cachedName.includes("@") && cachedName !== "Contacto";
+
+  // Para @lid JIDs, el rawIdNum NO es un teléfono — no usarlo como nombre
+  const fallbackName = isLid ? "Contacto" : (isGroup ? "Grupo" : rawIdNum);
+  const resolvedName = pushName || verifiedName || (cachedNameIsReal ? cachedName : "") || fallbackName;
+  const name = resolvedName;
 
   // Actualizar/crear chat en memoria
-  const chat = waChats.get(jid) || { id: jid, name, phone: jid.split("@")[0], unread: 0, lastMsg: "", lastMsgTime: 0 };
-  // Solo actualizar nombre si pushName es real (no sobreescribir con JID)
-  if (pushName) chat.name = pushName;
-  else if (!chat.name || chat.name === jid.split("@")[0]) chat.name = name;
+  const cachedPhone = waChats.get(jid)?.phone || "";
+  const phoneForChat = isLid ? cachedPhone : rawIdNum;
+  const chat = waChats.get(jid) || { id: jid, name: resolvedName, phone: phoneForChat, unread: 0, lastMsg: "", lastMsgTime: 0, isGroup };
+
+  // Solo actualizar nombre si tenemos uno real (no sobreescribir nombre bueno con "Contacto" o número)
+  const pushNameIsReal = pushName && !isJustDigits(pushName);
+  if (pushNameIsReal) chat.name = pushName;
+  else if (verifiedName) chat.name = verifiedName;
+  else if (!chat.name || isJustDigits(chat.name) || chat.name === "Contacto") chat.name = resolvedName;
+
   chat.lastMsg     = text;
   chat.lastMsgTime = ts;
   if (!fromMe) chat.unread = (chat.unread || 0) + 1;
@@ -2049,12 +2224,20 @@ async function storeMsg(msg) {
 
     // ── Reenvío a n8n si botEnabled + n8nEnabled (opera con Chrome cerrado) ─
     const settings = db.settings || {};
-    const isGroup = jid.endsWith("@g.us");
+    // isGroup ya definido arriba (línea resolución de nombres)
     // ── Verificar si la IA está activa para este chat (per-chat map) ──
+    // botEnabled = toggle global "IA ON" del frontend
+    // aiContactMap = per-chat map { [jid]: true/false }
     const aiContactMap = settings.aiContactMap || {};
-    const aiActiveForChat = settings.botEnabled && aiContactMap[jid] === true;
+    const hasPerChatMap = Object.keys(aiContactMap).length > 0;
+    // La IA está activa si: (1) toggle global ON, Y (2) chat activado explícitamente
+    // Si no hay mapa per-chat (legacy), NO activar para nadie (seguridad)
+    const aiActiveForChat = settings.botEnabled && hasPerChatMap && aiContactMap[jid] === true;
 
-    if (!fromMe && isNew && !saved.dedup && settings.n8nEnabled && settings.n8nWebhook && !isGroup && aiActiveForChat) {
+    // SEGURIDAD: NUNCA responder a grupos automáticamente
+    if (isGroup) {
+      // Solo almacenar, no responder
+    } else if (!fromMe && isNew && !saved.dedup && settings.n8nEnabled && settings.n8nWebhook && aiActiveForChat) {
       const publicBase = (settings.backendPublicUrl || "").replace(/\/$/, "");
       const mediaFull = (url) => {
         if (!url) return "";
@@ -2112,7 +2295,23 @@ async function storeMsg(msg) {
               // FIX: usar separador |||| que es el que usa el workflow n8n
               const parts = replyText.split(/\|\|\|\|/).map(p => p.trim()).filter(Boolean);
               const toSend = parts.length > 0 ? parts : [replyText.trim()];
+
+              // Anti-detección: verificar rate limit antes de responder
+              if (!canSendMessage()) {
+                console.warn("[WA][n8n-auto-reply] Rate limit alcanzado, no se envía respuesta");
+                return;
+              }
+
+              // Anti-detección: simular "escribiendo..." antes de responder
+              try { await waSocket.presenceSubscribe(jid); } catch {}
+              try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
+              // Delay proporcional al largo del texto (simula lectura + escritura humana)
+              const typingDelay = Math.min(800 + Math.floor(Math.random() * 2000) + toSend[0].length * 30, 8000);
+              await new Promise(r => setTimeout(r, typingDelay));
+
               for (const part of toSend) {
+                if (!canSendMessage()) break; // Rate limit check per-part
+                recordMessageSent();
                 await waSocket.sendMessage(jid, { text: part });
 
                 // ── FIX: Guardar cada parte del reply del bot en la DB ──────
@@ -2133,8 +2332,15 @@ async function storeMsg(msg) {
                 const freshDb = readWhatsAppDb();
                 writeWhatsAppDb(freshDb);
 
-                if (toSend.length > 1) await new Promise(res => setTimeout(res, 800));
+                // Anti-detección: delay humano entre partes
+                if (toSend.length > 1) {
+                  try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
+                  const partDelay = 1200 + Math.floor(Math.random() * 2500); // 1.2-3.7s
+                  await new Promise(res => setTimeout(res, partDelay));
+                }
               }
+              // Anti-detección: quitar estado "escribiendo"
+              try { await waSocket.sendPresenceUpdate("paused", jid); } catch {}
               console.log("[WA][n8n-auto-reply][sent]", { chatId: jid, parts: toSend.length });
             } catch (sendErr) {
               console.warn("[WA][n8n-auto-reply][error]", sendErr?.message || sendErr);
@@ -2154,126 +2360,85 @@ async function storeMsg(msg) {
       callN8n();
     }
 
-    // ── Bot IA: respuesta inteligente server-side ──────────────────────
-    // Funciona sin Chrome abierto — todo corre en el servidor
-    const nbActiveForChat = !isGroup && settings.nativeBotEnabled && (Object.keys(aiContactMap).length === 0 || aiActiveForChat);
+    // ── Bot Nativo: flujo conversacional ────────────────────────────────
+    // Solo responde si:
+    // 1. NO es grupo (nunca responder en grupos)
+    // 2. nativeBotEnabled está ON (toggle global en Ajustes)
+    // 3. La IA está activa per-chat (aiContactMap[jid] === true) Y botEnabled global ON
+    // NUNCA modo legacy (responder a todos) — requiere activación explícita per-chat
+    const nbActiveForChat = !isGroup && settings.nativeBotEnabled && aiActiveForChat;
     if (!fromMe && isNew && !saved.dedup && nbActiveForChat) {
       const replyDelay = Math.max(300, Math.min(3000, settings.nativeBotReplyDelay || 800));
-      // Espera configurable antes de responder (como el frontend)
-      const botDelaySec = Math.min(15, Math.max(0, settings.botDelay || 3));
       (async () => {
         try {
-          // Esperar el delay configurado (simula que la persona lee el mensaje)
-          if (botDelaySec > 0) await new Promise(r => setTimeout(r, botDelaySec * 1000));
-
           const result = handleNativeBotMessage(jid, text, name, settings);
 
           let replies = [];
+          // Si handleNativeBotMessage devolvió un objeto con needsAI, intentar OpenAI
           if (result && result.needsAI) {
             const aiKey = settings.openaiKey || process.env.OPENAI_API_KEY;
             if (aiKey) {
-              const chatMsgs = (waMessages.get(jid) || []).slice(-10).map(m => ({
+              // Obtener historial de mensajes para contexto
+              const chatMsgs = (waMessages.get(jid) || []).slice(-8).map(m => ({
                 role: m.dir === "s" ? "assistant" : "user",
                 content: m.txt || "[media]",
               }));
-              const clientSession = nativeBotSessions.get(jid);
-              const clientName = clientSession?.name || name || "";
-              const msgCount = clientSession?.msgCount || 1;
-
-              // ── Construir prompt completo (mismo que el frontend) ──
-              const useEmojis = settings.useEmojis !== false;
-              const useStyles = settings.useStyles !== false;
-              const msgMode = settings.msgMode || "partes";
-
-              const stylesBlock = useStyles
-                ? `• FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ — úsalos en precios, nombres de combos y beneficios clave\n• Ejemplo: *Combo Detox* — *$66.000* | _envío gratis_ hoy\n• NUNCA uses **doble asterisco** — solo *uno a cada lado*`
-                : `• Texto plano ÚNICAMENTE — sin asteriscos, guiones bajos ni tildes de formato\n• PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`;
-
-              const emojisBlock = useEmojis
-                ? `• Emojis: máx 1 por mensaje, NO al final de cada mensaje, VARÍA siempre — algunos mensajes van SIN emoji`
-                : `• PROHIBIDO usar emojis — responde solo con texto plano`;
-
-              const multiMsgBlock = msgMode === "partes"
-                ? `ENVÍO POR PARTES (MUY IMPORTANTE):
-Divide tu respuesta en 2 a 5 mensajes cortos separados por el separador EXACTO: ||||
-Reglas para cada parte:
-• Parte 1 → gancho o contexto inicial — abre con intriga o dato interesante, NO reveles todo
-• Partes intermedias → desarrolla punto por punto, cada una termina dejando curiosidad
-• Última parte → pregunta de cierre de venta ("¿Cuál prefieres?" / "¿Te lo enviamos hoy?")
-Estructura inteligente:
-  - Si pregunta por productos: parte 1 = beneficio + hook | parte 2 = opción principal | parte 3 = alternativa | última = pregunta de decisión
-  - Si muestra objeción: parte 1 = empatía | parte 2 = reencuadre de valor | última = cierre con urgencia
-  - Si ya quiere comprar: máx 2 partes — confirma + cierra directo
-Ejemplo correcto:
-Tenemos varias opciones que te pueden funcionar${useEmojis ? ' 🌿' : ''}
-||||
-${useStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} — ideal para piel sensible${useEmojis ? ' ✨' : ''} — ${useStyles ? '*$66.000*' : '$66.000'}
-||||
-${useStyles ? '*Combo Cúrcuma*' : 'Combo Cúrcuma'} — manchas y cicatrices — ${useStyles ? '*$66.000*' : '$66.000'}
-||||
-¿Cuál va más con lo que necesitas?`
-                : `ENVÍO COMPLETO:
-Responde en UN SOLO MENSAJE bien estructurado (máx 6 líneas).
-NO uses el separador |||| — todo en un bloque.`;
-
-              const salesFunnelBlock = `EMBUDO DE VENTAS — SIGUE ESTE ORDEN:
-PASO 1 — BIENVENIDA: Recibe calurosamente.
-PASO 2 — DIAGNÓSTICO (OBLIGATORIO antes de dar precios): Pregunta "¿Lo buscas para acné, manchas, piel seca o zonas íntimas?" — adapta tu recomendación.
-PASO 3 — PRESENTACIÓN: Recomienda el combo exacto para su problema. Muestra precio${useStyles ? ' con *negrita*' : ''}.
-PASO 4 — MICRO-COMPROMISO (elección forzada): "¿Cuál te llevas, el${useStyles ? ' *Combo 1*' : ' Combo 1'} o el${useStyles ? ' *Combo 5*' : ' Combo 5'}?" — NUNCA pregunta abierta al cierre.
-PASO 5 — DATOS: Cuando elija: pide Nombre / Teléfono / Ciudad / Dirección / Barrio
-
-CATÁLOGO SÁNATE${useStyles ? ' (precios y combos en *negrita*)' : ''}:
-• ${useStyles ? '*Combo 1*' : 'Combo 1'} – Tripack Mixto (3 Jabones: Caléndula+Cúrcuma+Avena&Arroz) → ${useStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
-• ${useStyles ? '*Combo 2*' : 'Combo 2'} – 3 Jabones a elección → ${useStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
-• ${useStyles ? '*Combo 3*' : 'Combo 3'} – 2 Jabones + Sebo de Res 10g → ${useStyles ? '*$63.000*' : '$63.000'} (antes $79.000)
-• ${useStyles ? '*Combo 4*' : 'Combo 4'} – Secreto Japonés: Sebo grande + 2 Jabones + Exfoliante → ${useStyles ? '*$99.000*' : '$99.000'} (antes $119.000)
-• ${useStyles ? '*Combo 5*' : 'Combo 5'} – ${useEmojis ? '⭐ ' : ''}MÁS VENDIDO: 4 Jabones + Sebo 10g + Exfoliante → ${useStyles ? '*$119.000*' : '$119.000'} (antes $159.000)
-• ${useStyles ? '*Combo 6*' : 'Combo 6'} – Doble Sebo: 2 Sebos + 2 Jabones → ${useStyles ? '*$136.900*' : '$136.900'} (antes $169.000)
-• Jabón individual: ${useStyles ? '*$22.000*' : '$22.000'}
-Pago: contra entrega ó Nequi/Bancolombia (${useStyles ? '*8% OFF*' : '8% OFF'} + envío más rápido)
-Envío: GRATIS a toda Colombia | 1-3 días hábiles
-
-REGLAS DE ORO:
-❌ NUNCA des precio sin diagnosticar primero
-❌ NUNCA hagas preguntas abiertas al cierre — usa elección forzada (A o B)
-✅ CELEBRA cuando el cliente elige antes de pedir datos
-✅ Ofrece primero Nequi/transferencia (8% OFF), luego contra entrega`;
-
-              const ctx = settings.systemPrompt || "";
-              const sysPrompt = ctx
-                ? `${ctx}\n\nINSTRUCCIONES DE WHATSAPP:\n• Mensajes CORTOS: máximo 3-4 líneas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y aperturas — nunca repitas el mismo\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ "¡Claro que sí!" / "¡Excelente pregunta!"\n❌ Más de 5 líneas en un solo segmento\n❌ Decir que eres IA o bot\n\n${result.context || ""}\n${clientName ? "El cliente se llama: " + clientName : ""}\nMensaje número ${msgCount} de esta conversación.\n\nMENSAJE ACTUAL DEL CLIENTE:\n"${text}"\nResponde SOLO a esto.`
-                : `Eres una asesora de ventas de Sánate Colombia — jabones artesanales naturales 100% colombianos. Eres una persona real — NUNCA te presentes como IA.\n\nINSTRUCCIONES:\n• Mensajes cortos: máx 3-4 líneas\n${stylesBlock}\n${emojisBlock}\n• Varía saludos y apertura\n• Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\n❌ Frases genéricas | ❌ Decir que eres IA | ❌ Precios antes del diagnóstico\n\n${result.context || ""}\n${clientName ? "El cliente se llama: " + clientName : ""}\nMensaje número ${msgCount}.\n\nMENSAJE ACTUAL DEL CLIENTE:\n"${text}"\nResponde SOLO a esto.`;
-
+              const defaultPrompt = `Eres la asesora de ventas de Sanate Store — productos naturales colombianos 🌿
+REGLAS ESTRICTAS:
+- Responde en español, tono cálido y humano como una amiga que asesora.
+- Usa emojis estratégicos (1-2 por mensaje, NO en cada línea). Ejemplos: 🌿 ✨ 💚 😊 🙌
+- NUNCA respondas todo en un solo mensaje largo. Separa tu respuesta en 2-3 mensajes cortos usando el separador ||||
+- Cada mensaje debe ser de máximo 2 líneas. Piensa como si escribieras por WhatsApp: frases cortas, naturales.
+- Si el cliente saluda, salúdalo cálidamente por su nombre (si lo tienes).
+- Si preguntan por productos, recomienda visitar https://sanate.store
+- Si piden hablar con alguien, di que conectarás con un asesor.
+${result.context || ""}`;
+              const sysPrompt = settings.systemPrompt
+                ? settings.systemPrompt + `\n\nIMPORTANTE: Separa tu respuesta en 2-3 mensajes cortos con el separador |||| entre cada uno. No respondas en un solo bloque.`
+                : defaultPrompt;
               const aiReply = await callOpenAIChat({
                 messages: [{ role: "system", content: sysPrompt }, ...chatMsgs, { role: "user", content: text }],
-                maxTokens: 480,
+                maxTokens: 300,
                 settings,
               });
               if (aiReply) {
+                // Soportar respuestas multi-parte con separador ||||
                 replies = aiReply.split(/\|\|\|\|/).map(p => p.trim()).filter(Boolean);
-                console.log("[Bot][AI-reply]", { chatId: jid, parts: replies.length });
+                console.log("[NativeBot][AI-enhanced]", { chatId: jid, parts: replies.length });
               }
             }
-            // Si no hay API key o falló, respuesta genérica amigable
+            // Si no hay API key o falló, usar fallback amigable
             if (!replies.length) {
-              replies = ["Hola! Dame un momento, ya te atiendo."];
+              replies = ["Hola! 😊 En este momento no puedo procesar tu mensaje", "Pero te conecto con un asesor que te ayudará pronto 🙌"];
             }
           } else if (Array.isArray(result)) {
             replies = result;
           }
 
           if (replies.length && waSocket && waStatus === "connected") {
-            // Simular "escribiendo..." antes de la primera respuesta
+            // Anti-detección: verificar rate limit
+            if (!canSendMessage()) {
+              console.warn("[WA][native-bot] Rate limit alcanzado, no se envía respuesta");
+              return;
+            }
+            // Anti-detección: simular lectura del mensaje + tiempo de pensar antes de escribir
+            const readDelay = 500 + Math.floor(Math.random() * 1500); // 0.5-2s leyendo
+            await new Promise(r => setTimeout(r, readDelay));
+
             try { await waSocket.presenceSubscribe(jid); } catch {}
             try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
-            // Delay de escritura proporcional al largo del primer mensaje
-            const firstDelay = Math.max(400, Math.min(replies[0].length * 12, 1500));
-            await new Promise(r => setTimeout(r, firstDelay));
+            // Delay proporcional al largo de la respuesta (simula escritura humana)
+            const firstReplyTyping = Math.min(
+              1000 + Math.floor(Math.random() * 1500) + (replies[0]?.length || 0) * 25,
+              6000 // máximo 6 segundos
+            );
+            await new Promise(r => setTimeout(r, firstReplyTyping));
 
             for (let i = 0; i < replies.length; i++) {
               const reply = replies[i];
               if (!reply.trim()) continue;
+              if (!canSendMessage()) break; // Rate limit per-part
+              recordMessageSent();
               await waSocket.sendMessage(jid, { text: reply });
               // Persistir respuesta del bot en DB
               const replyMsgId = randomId("bot_reply");
@@ -2288,22 +2453,26 @@ REGLAS DE ORO:
                 status:    "sent",
                 direction: "outgoing",
                 chatName:  name,
-                rawPayload: { source: "bot-ai-reply" },
+                rawPayload: { source: "native-bot-reply" },
               });
               writeWhatsAppDb(readWhatsAppDb());
-              // Delay entre mensajes: simula escritura natural
               if (i < replies.length - 1) {
+                // Anti-detección: pausa antes de "escribir" la siguiente parte
+                try { await waSocket.sendPresenceUpdate("paused", jid); } catch {}
+                const pauseBetween = 800 + Math.floor(Math.random() * 2000); // 0.8-2.8s pausa
+                await new Promise(r => setTimeout(r, pauseBetween));
                 try { await waSocket.sendPresenceUpdate("composing", jid); } catch {}
-                const typingMs = Math.max(400, Math.min(replies[i + 1].length * 10, 1200));
-                await new Promise(r => setTimeout(r, typingMs));
+                // Simular escritura de la siguiente parte
+                const nextTyping = Math.min(800 + (replies[i+1]?.length || 0) * 25 + Math.floor(Math.random() * 1500), 5000);
+                await new Promise(r => setTimeout(r, nextTyping));
               }
             }
             // Quitar estado "escribiendo"
             try { await waSocket.sendPresenceUpdate("paused", jid); } catch {}
-            console.log("[Bot][AI-reply][sent]", { chatId: jid, parts: replies.length });
+            console.log("[NativeBot][reply][sent]", { chatId: jid, parts: replies.length });
           }
         } catch (botErr) {
-          console.error("[Bot][AI-reply][error]", botErr?.message || botErr);
+          console.error("[NativeBot][reply][error]", botErr?.message || botErr);
         }
       })();
     }
@@ -2377,7 +2546,7 @@ async function initWhatsApp() {
   if (waIniting) return;
   waIniting = true;
   try {
-    const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, downloadMediaMessage } =
+    const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, downloadMediaMessage, Browsers } =
       await import("@whiskeysockets/baileys");
     downloadMediaFn = downloadMediaMessage;
     const { default: pino } = await import("pino");
@@ -2389,38 +2558,107 @@ async function initWhatsApp() {
     const { version }          = await fetchLatestBaileysVersion();
 
     waStatus = "connecting";
+    // ── Anti-detección: imitar WhatsApp Web real ──────────────────────────────
+    // Browsers tiene presets: "ubuntu", "windows", "macOS", "appropriate"
+    // Usar uno de los presets oficiales para parecer un navegador real.
+    const browserFingerprint = Browsers
+      ? Browsers.windows("Chrome")           // Genera ["Windows", "Chrome", "10.0.22631"]
+      : ["Windows", "Chrome", "10.0.22631"]; // Fallback: Windows 11 Chrome
+
     const sock = makeWASocket({
       version,
       auth: state,
       printQRInTerminal: false,
       logger: pino({ level: "silent" }),
-      browser: ["Sanate Bot", "Chrome", "1.0"],
+      browser: browserFingerprint,
       syncFullHistory: false,
+      // Anti-detección: delays y timeouts más humanos
+      connectTimeoutMs: 60_000,
+      defaultQueryTimeoutMs: undefined, // Sin timeout agresivo en queries
+      keepAliveIntervalMs: 25_000,      // Keepalive cada 25s (como WA Web real)
+      emitOwnEvents: true,
+      markOnlineOnConnect: true,         // Marcar como "en línea" al conectar (comportamiento normal)
     });
 
     sock.ev.on("creds.update", saveCreds);
+
+    // ── Contador de QRs generados en esta sesión (evitar escaneos infinitos) ──
+    let qrCount = 0;
+    const MAX_QR_PER_SESSION = 5; // Máximo 5 QRs antes de parar (evita ban por login spam)
+
     sock.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
+        qrCount++;
+        if (qrCount > MAX_QR_PER_SESSION) {
+          console.warn(`[WA] ⚠ Límite de QRs alcanzado (${MAX_QR_PER_SESSION}). Deteniendo para proteger la cuenta.`);
+          waStatus = "disconnected"; waQR = null; waIniting = false;
+          try { sock.end(undefined); } catch {}
+          return;
+        }
         try { waQR = await toDataURL(qr); } catch {}
         waStatus = "connecting";
-        console.log("[WA] QR generado");
+        console.log(`[WA] QR generado (${qrCount}/${MAX_QR_PER_SESSION})`);
       }
       if (connection === "close") {
         const code = lastDisconnect?.error?.output?.statusCode;
         const loggedOut = code === DisconnectReason.loggedOut;
         console.log("[WA] Conexion cerrada, loggedOut:", loggedOut, "code:", code);
         waStatus = "disconnected"; waQR = null; waPhone = ""; waSocket = null; waIniting = false;
-        if (!loggedOut) {
-          waReconnectAttempt++;
-          const delay = Math.min(5000 * Math.pow(1.5, waReconnectAttempt - 1), 60000);
-          console.log(`[WA] Reconectando en ${Math.round(delay/1000)}s (intento ${waReconnectAttempt})`);
-          setTimeout(initWhatsApp, delay);
+
+        // Anti-detección: NO reconectar si fue logout o ban (códigos 401, 403, 440)
+        const dangerCodes = [401, 403, 440, DisconnectReason.loggedOut];
+        if (dangerCodes.includes(code) || loggedOut) {
+          console.warn("[WA] ⚠ Sesión cerrada por WhatsApp. NO se reconectará automáticamente para proteger la cuenta.");
+          return;
         }
+
+        // Reconexión con delay HUMANO (aleatorio, no predecible)
+        waReconnectAttempt++;
+        if (waReconnectAttempt > 8) {
+          console.warn("[WA] ⚠ Demasiados reintentos. Deteniendo reconexión automática.");
+          return;
+        }
+        // Delay base + jitter aleatorio para parecer humano
+        const baseDelay = Math.min(10_000 * Math.pow(2, waReconnectAttempt - 1), 300_000); // 10s → 5min max
+        const jitter = Math.floor(Math.random() * 15_000); // 0-15s de variación aleatoria
+        const delay = baseDelay + jitter;
+        console.log(`[WA] Reconectando en ${Math.round(delay/1000)}s (intento ${waReconnectAttempt}/8)`);
+        setTimeout(initWhatsApp, delay);
       } else if (connection === "open") {
         waStatus = "connected"; waQR = null;
         waReconnectAttempt = 0; // reset backoff on successful connection
+        qrCount = 0;           // reset QR counter on successful connection
         waPhone  = sock.user?.id?.split(":")[0] || sock.user?.id || "";
-        console.log("[WA] Conectado:", waPhone);
+        console.log("[WA] ✓ Conectado:", waPhone);
+
+        // ── Fetch metadata para TODOS los grupos con nombre genérico ──
+        setTimeout(async () => {
+          try {
+            const db = readWhatsAppDb();
+            const groupChats = db.chats.filter(c =>
+              (c.chatId || "").endsWith("@g.us") &&
+              (!c.name || c.name === "Grupo" || c.name === "Esteban" || isJustDigits(c.name))
+            );
+            for (const gc of groupChats) {
+              try {
+                const meta = await sock.groupMetadata(gc.chatId);
+                const subject = (meta?.subject || "").trim();
+                if (subject) {
+                  gc.name = subject;
+                  // Actualizar en memoria
+                  const memChat = waChats.get(gc.chatId);
+                  if (memChat) { memChat.name = subject; waChats.set(gc.chatId, memChat); }
+                  console.log(`[WA] Grupo actualizado: ${gc.chatId} → "${subject}"`);
+                }
+              } catch {}
+              // Anti-detección: delay entre cada consulta de metadata
+              await new Promise(r => setTimeout(r, 1500 + Math.random() * 1500));
+            }
+            if (groupChats.length) writeWhatsAppDb(db);
+          } catch (e) {
+            console.warn("[WA] Error fetching group metadata:", e?.message);
+          }
+        }, 5000); // Esperar 5s después de conexión para empezar
       }
     });
 
@@ -2429,30 +2667,36 @@ async function initWhatsApp() {
       for (const m of msgs) storeMsg(m).catch(e => console.error("[WA][storeMsg]", e?.message));
     });
 
-    // ── Historial inicial al reconectar (procesado en batches para no bloquear event loop)
+    // ── Historial inicial al reconectar (procesado suavemente para no disparar rate limits)
     sock.ev.on("messaging-history.set", ({ chats: histChats, messages: histMsgs }) => {
       console.log("[WA] Historial recibido: chats:", histChats?.length, "msgs:", histMsgs?.length);
       if (Array.isArray(histMsgs) && histMsgs.length > 0) {
-        // Procesar en batches de 50 con setImmediate para no bloquear el event loop
+        // Anti-detección: batches más pequeños (20) con setTimeout (no setImmediate)
         let idx = 0;
         const batch = () => {
-          const end = Math.min(idx + 50, histMsgs.length);
+          const end = Math.min(idx + 20, histMsgs.length);
           for (; idx < end; idx++) storeMsg(histMsgs[idx]).catch(() => {});
-          if (idx < histMsgs.length) setImmediate(batch);
+          if (idx < histMsgs.length) setTimeout(batch, 100); // 100ms entre batches
           else console.log("[WA] Historial mensajes procesado:", histMsgs.length);
         };
-        setImmediate(batch);
+        setTimeout(batch, 500); // Esperar 500ms antes de empezar a procesar
       }
       if (Array.isArray(histChats)) {
         for (const c of histChats) {
+          const cIsLid = isLidJid(c.id);
+          const cIsGroup = c.id.endsWith("@g.us");
+          const rawNum = c.id.split("@")[0];
+          const cName = c.name || (cIsGroup ? "Grupo" : (cIsLid ? "Contacto" : rawNum));
+          const cPhone = cIsLid ? "" : rawNum;
           if (!waChats.has(c.id)) {
             waChats.set(c.id, {
               id:          c.id,
-              name:        c.name || c.id.split("@")[0],
-              phone:       c.id.split("@")[0],
+              name:        cName,
+              phone:       cPhone,
               unread:      c.unreadCount || 0,
               lastMsg:     "",
               lastMsgTime: 0,
+              isGroup:     cIsGroup,
             });
           }
         }
@@ -2462,62 +2706,109 @@ async function initWhatsApp() {
     // ── Upsert de chats (lista inicial) ───────────────────────────────────
     sock.ev.on("chats.upsert", (chats) => {
       for (const c of chats) {
+        const cIsLid = isLidJid(c.id);
+        const cIsGroup = c.id.endsWith("@g.us");
+        const rawNum = c.id.split("@")[0];
+        const cPhone = cIsLid ? "" : rawNum;
+        // Para @lid, NO usar el número como nombre
+        const chatName = c.name || (cIsGroup ? "Grupo" : (cIsLid ? "Contacto" : rawNum));
+        const chatNameIsReal = chatName && !isJustDigits(chatName) && chatName !== "Contacto";
+
         if (!waChats.has(c.id)) {
           waChats.set(c.id, {
             id:          c.id,
-            name:        c.name || c.id.split("@")[0],
-            phone:       c.id.split("@")[0],
+            name:        chatName,
+            phone:       cPhone,
             unread:      c.unreadCount || 0,
             lastMsg:     "",
             lastMsgTime: 0,
+            isGroup:     cIsGroup,
           });
+        } else {
+          const existing = waChats.get(c.id);
+          // Solo actualizar nombre si el nuevo es real y el existente no lo es
+          if (chatNameIsReal && (!existing.name || isJustDigits(existing.name) || existing.name === "Contacto")) {
+            existing.name = chatName;
+            waChats.set(c.id, existing);
+          }
+        }
+        // Persistir en DB
+        try {
+          const db = readWhatsAppDb();
+          ensureChat(db, { chatId: c.id, name: chatName, phone: cPhone });
+          writeWhatsAppDb(db);
+        } catch {}
+
+        // ── Fetch metadata de grupo para obtener el nombre real (subject) ──
+        if (cIsGroup && sock) {
+          sock.groupMetadata(c.id).then(meta => {
+            const subject = (meta?.subject || "").trim();
+            if (!subject) return;
+            // Actualizar en memoria
+            const memChat = waChats.get(c.id);
+            if (memChat) { memChat.name = subject; waChats.set(c.id, memChat); }
+            // Actualizar en DB
+            try {
+              const db2 = readWhatsAppDb();
+              const gIdx = db2.chats.findIndex(ch => ch.chatId === c.id);
+              if (gIdx >= 0) { db2.chats[gIdx].name = subject; writeWhatsAppDb(db2); }
+              else { ensureChat(db2, { chatId: c.id, name: subject, phone: "" }); writeWhatsAppDb(db2); }
+            } catch {}
+            console.log(`[WA] Grupo metadata: ${c.id} → "${subject}"`);
+          }).catch(() => {}); // Silenciar errores de metadata
         }
       }
     });
 
     // ── Capturar nombres de contactos desde Baileys ──────────────────────
-    sock.ev.on("contacts.update", (contacts) => {
-      for (const c of contacts) {
-        if (!c.id) continue;
-        const name = c.notify || c.verifiedName || c.name || "";
-        if (!name) continue;
-        // Actualizar en memoria
-        const existing = waChats.get(c.id);
-        if (existing) {
-          existing.name = name;
-          waChats.set(c.id, existing);
-        }
-        // Actualizar en DB persistente
-        try {
-          const db = readWhatsAppDb();
-          const chatIdx = db.chats.findIndex(ch => String(ch.chatId) === String(c.id));
-          if (chatIdx >= 0 && (!db.chats[chatIdx].name || db.chats[chatIdx].name === c.id.split("@")[0])) {
+    // Actualiza tanto en memoria como en DB persistente
+    const _updateContactName = (c) => {
+      if (!c.id) return;
+      const name = (c.notify || c.verifiedName || c.name || "").trim();
+      if (!name) return;
+      const cIsLid = isLidJid(c.id);
+      const rawNum = c.id.split("@")[0];
+      // No guardar un número puro como nombre (a menos que sea @s.whatsapp.net donde ES el teléfono)
+      if (isJustDigits(name) && (cIsLid || name === rawNum)) return;
+      const cPhone = cIsLid ? "" : rawNum;
+
+      // Actualizar en memoria
+      const existing = waChats.get(c.id);
+      if (existing) {
+        existing.name = name;
+        waChats.set(c.id, existing);
+      } else {
+        waChats.set(c.id, {
+          id: c.id, name, phone: cPhone,
+          unread: 0, lastMsg: "", lastMsgTime: 0,
+          isGroup: c.id.endsWith("@g.us"),
+        });
+      }
+      // Actualizar en DB persistente — siempre actualizar si tenemos un nombre real
+      try {
+        const db = readWhatsAppDb();
+        const chatIdx = db.chats.findIndex(ch => String(ch.chatId) === String(c.id));
+        if (chatIdx >= 0) {
+          const oldName = db.chats[chatIdx].name || "";
+          // Siempre actualizar si nombre viejo no es un nombre real
+          if (!oldName || isJustDigits(oldName) || oldName.includes("@") || oldName === "Contacto") {
             db.chats[chatIdx].name = name;
             writeWhatsAppDb(db);
           }
-        } catch {}
-      }
+        } else {
+          // Chat no existe en DB, crearlo
+          ensureChat(db, { chatId: c.id, name, phone: cPhone });
+          writeWhatsAppDb(db);
+        }
+      } catch {}
+    };
+
+    sock.ev.on("contacts.update", (contacts) => {
+      for (const c of contacts) _updateContactName(c);
     });
 
     sock.ev.on("contacts.upsert", (contacts) => {
-      for (const c of contacts) {
-        if (!c.id) continue;
-        const name = c.notify || c.verifiedName || c.name || "";
-        if (!name) continue;
-        const existing = waChats.get(c.id);
-        if (existing) {
-          existing.name = name;
-          waChats.set(c.id, existing);
-        }
-        try {
-          const db = readWhatsAppDb();
-          const chatIdx = db.chats.findIndex(ch => String(ch.chatId) === String(c.id));
-          if (chatIdx >= 0 && (!db.chats[chatIdx].name || db.chats[chatIdx].name === c.id.split("@")[0])) {
-            db.chats[chatIdx].name = name;
-            writeWhatsAppDb(db);
-          }
-        } catch {}
-      }
+      for (const c of contacts) _updateContactName(c);
     });
 
     waSocket = sock;
@@ -2525,8 +2816,15 @@ async function initWhatsApp() {
     console.error("[WA] Error init:", err?.message || err);
     waStatus = "disconnected"; waIniting = false;
     waReconnectAttempt++;
-    const delay = Math.min(5000 * Math.pow(1.5, waReconnectAttempt - 1), 60000);
-    console.log(`[WA] Reintentando init en ${Math.round(delay/1000)}s (intento ${waReconnectAttempt})`);
+    if (waReconnectAttempt > 8) {
+      console.warn("[WA] ⚠ Demasiados errores de init. Deteniendo reconexión automática para proteger la cuenta.");
+      return;
+    }
+    // Anti-detección: delay largo + jitter
+    const baseDelay = Math.min(15_000 * Math.pow(2, waReconnectAttempt - 1), 300_000);
+    const jitter = Math.floor(Math.random() * 20_000);
+    const delay = baseDelay + jitter;
+    console.log(`[WA] Reintentando init en ${Math.round(delay/1000)}s (intento ${waReconnectAttempt}/8)`);
     setTimeout(initWhatsApp, delay);
   }
 }
@@ -2534,24 +2832,36 @@ async function initWhatsApp() {
 // Arrancar WhatsApp al iniciar
 initWhatsApp();
 
-// ── WATCHDOG: auto-heal si la conexión se cae ──────────────────────────────
-// Cada 30s verifica que Baileys esté sano; si lleva >90s desconectado, reinicia
+// ── WATCHDOG: auto-heal SUAVE (anti-detección) ─────────────────────────────
+// Cada 2 minutos (+ jitter) verifica la conexión. NO fuerza reconexiones agresivas.
 let _lastConnectedAt = 0;
-setInterval(() => {
-  if (waStatus === "connected") { _lastConnectedAt = Date.now(); return; }
-  // Si está en "connecting" por más de 2 minutos, algo falló — reiniciar
-  if (waStatus === "connecting" && !waQR && (Date.now() - _lastConnectedAt > 120_000)) {
-    console.log("[WA][watchdog] connecting sin QR por >2min, reiniciando...");
-    waIniting = false;
-    initWhatsApp();
-    return;
-  }
-  // Si está disconnected y no se está iniciando, intentar reconectar
-  if (waStatus === "disconnected" && !waIniting) {
-    console.log("[WA][watchdog] disconnected, auto-reconectando...");
-    initWhatsApp();
-  }
-}, 30_000);
+const WATCHDOG_BASE_INTERVAL = 120_000; // 2 minutos base
+const watchdogCheck = () => {
+  const jitter = Math.floor(Math.random() * 30_000); // 0-30s variación
+  setTimeout(() => {
+    if (waStatus === "connected") {
+      _lastConnectedAt = Date.now();
+      watchdogCheck(); // Programar siguiente check
+      return;
+    }
+    // Si está en "connecting" por más de 5 minutos SIN QR, algo falló
+    if (waStatus === "connecting" && !waQR && (Date.now() - _lastConnectedAt > 300_000)) {
+      console.log("[WA][watchdog] connecting sin QR por >5min, reiniciando suavemente...");
+      waIniting = false;
+      waReconnectAttempt = 0; // Reset para dar oportunidad limpia
+      initWhatsApp();
+      watchdogCheck();
+      return;
+    }
+    // Si está disconnected y nadie lo está manejando, reconectar UNA vez
+    if (waStatus === "disconnected" && !waIniting && waReconnectAttempt < 8) {
+      console.log("[WA][watchdog] disconnected, reconectando suavemente...");
+      initWhatsApp();
+    }
+    watchdogCheck(); // Programar siguiente check
+  }, WATCHDOG_BASE_INTERVAL + jitter);
+};
+watchdogCheck();
 
 // ── Rutas API WhatsApp (estado, QR, desvinculación) ───────────────────────
 app.get("/api/whatsapp/status", (req, res) => {
@@ -2566,8 +2876,11 @@ app.post("/api/whatsapp/logout", async (req, res) => {
   try {
     if (waSocket) { try { await waSocket.logout(); } catch {} }
     waSocket = null; waStatus = "disconnected"; waQR = null; waPhone = ""; waIniting = false;
+    waReconnectAttempt = 0; // Reset para nueva sesión limpia
     if (fs.existsSync(waAuthDir)) fs.rmSync(waAuthDir, { recursive: true, force: true });
-    setTimeout(initWhatsApp, 1500);
+    // Anti-detección: esperar 3-5 segundos antes de reiniciar (no inmediato)
+    const logoutDelay = 3000 + Math.floor(Math.random() * 2000);
+    setTimeout(initWhatsApp, logoutDelay);
     res.json({ ok: true });
   } catch (e) {
     res.json({ ok: false, error: e?.message });
@@ -2660,6 +2973,16 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
 } else {
   app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT}`); });
 }
+
+// SPA fallback - serve index.html for all unmatched routes
+app.get('*', (req, res) => {
+  const indexPath = path.join(__dirname, '..', 'public_html', 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
 
 
 

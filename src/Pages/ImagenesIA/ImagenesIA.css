@@ -740,3 +740,162 @@
     bottom: 76px;
   }
 }
+
+/* ── Selector de Modelos ────────────────────────────── */
+.modelSelectorRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.modelCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px solid #2a3240;
+  border-radius: 12px;
+  background: #151b24;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  width: 100%;
+}
+
+.modelCard:hover {
+  border-color: #4a3a7a;
+  background: #1b2030;
+}
+
+.modelCardActive {
+  border-color: var(--primary) !important;
+  background: rgba(122, 60, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(122, 60, 255, 0.18);
+}
+
+.modelIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.modelInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.modelLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #e5eeff;
+  display: block;
+}
+
+.modelDesc {
+  font-size: 11px;
+  color: #8a9bb8;
+  display: block;
+}
+
+.modelBadge {
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 3px 8px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.badgeFree {
+  background: rgba(22, 193, 114, 0.18);
+  border: 1px solid rgba(22, 193, 114, 0.45);
+  color: #7de8b0;
+}
+
+.badgePremium {
+  background: rgba(122, 60, 255, 0.2);
+  border: 1px solid rgba(122, 60, 255, 0.45);
+  color: #c8aaff;
+}
+
+/* ── Nota Pollinations ──────────────────────────────── */
+.pollinationsNote {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(22, 193, 114, 0.09);
+  border: 1px solid rgba(22, 193, 114, 0.27);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #7de8b0;
+  margin-top: 8px;
+}
+
+/* ── Gallery Header ─────────────────────────────────── */
+.galleryHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.galleryHeader h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.gallerySubtitle {
+  font-size: 12px;
+  color: #8da0bc;
+  font-style: italic;
+}
+
+/* ── Demo Card Badge ────────────────────────────────── */
+.demoCard {
+  opacity: 0.88;
+  border-style: dashed !important;
+}
+
+.demoBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 9px;
+  font-weight: 800;
+  background: rgba(122, 60, 255, 0.28);
+  border: 1px solid rgba(122, 60, 255, 0.5);
+  color: #cbb8ff;
+  border-radius: 999px;
+  padding: 2px 7px;
+  letter-spacing: 0.04em;
+  z-index: 3;
+}
+
+/* ── Gallery Card Footer ────────────────────────────── */
+.galleryCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.galleryCardFooter p {
+  margin: 0;
+  color: #c3d0e7;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.impactScore {
+  font-size: 10px;
+  font-weight: 700;
+  color: #f9c84b;
+  background: rgba(249, 200, 75, 0.12);
+  border: 1px solid rgba(249, 200, 75, 0.3);
+  border-radius: 999px;
+  padding: 2px 7px;
+}
