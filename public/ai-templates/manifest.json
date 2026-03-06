@@ -1,3 +1,124 @@
 {
-  "templates": []
+  "templates": [
+    {
+      "id": "hero_1",
+      "name": "Hero Energetico",
+      "category": "Hero",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20hero%20banner%2C%20energy%20supplement%20bottle%2C%20electric%20blue%20lightning%20effects%2C%20dark%20background%2C%20bold%20typography%20ENERGIA%20SOSTENIDA%2C%20dramatic%20studio%20lighting%2C%20high%20contrast%2C%20commercial%20quality?width=800&height=800&seed=1001&nologo=true"
+    },
+    {
+      "id": "hero_2",
+      "name": "Hero Recuperacion",
+      "category": "Hero",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20hero%20banner%2C%20muscle%20recovery%20supplement%2C%20red%20and%20black%20dramatic%20background%2C%20athletic%20body%20silhouette%2C%20bold%20text%20RECUPERACION%20RAPIDA%2C%20commercial%20product%20photo?width=800&height=800&seed=1002&nologo=true"
+    },
+    {
+      "id": "hero_3",
+      "name": "Hero Rendimiento",
+      "category": "Hero",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20hero%20banner%2C%20pre-workout%20supplement%2C%20explosive%20orange%20energy%20effects%2C%20muscular%20athlete%2C%20dark%20gym%20background%2C%20text%20MAXIMO%20RENDIMIENTO%2C%20commercial%20quality?width=800&height=800&seed=1003&nologo=true"
+    },
+    {
+      "id": "hero_4",
+      "name": "Hero Potencia",
+      "category": "Hero",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20hero%20banner%2C%20testosterone%20booster%20supplement%2C%20golden%20glow%20effects%2C%20strong%20male%20athlete%2C%20premium%20dark%20background%2C%20text%20POTENCIA%20TU%20RENDIMIENTO%2C%20commercial%20quality?width=800&height=800&seed=1004&nologo=true"
+    },
+    {
+      "id": "hero_5",
+      "name": "Hero Fuerza",
+      "category": "Hero",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20hero%20banner%2C%20creatine%20supplement%20container%2C%20electric%20purple%20effects%2C%20weightlifter%20silhouette%2C%20modern%20dark%20background%2C%20text%20SUPERA%20TUS%20LIMITES%2C%20high%20end%20commercial?width=800&height=800&seed=1005&nologo=true"
+    },
+    {
+      "id": "hero_6",
+      "name": "Hero Muscular",
+      "category": "Hero",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20hero%20banner%2C%20whey%20protein%20supplement%2C%20blue%20neon%20effects%2C%20muscular%20bodybuilder%2C%20gym%20background%2C%20text%20RENDIMIENTO%20Y%20RECUPERACION%2C%20premium%20commercial?width=800&height=800&seed=1006&nologo=true"
+    },
+    {
+      "id": "oferta_1",
+      "name": "Oferta Exclusiva",
+      "category": "Oferta",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20promotional%20banner%2C%20supplement%20bottle%2C%20big%20red%20SALE%20badge%2C%20text%20OFERTA%20EXCLUSIVA%2040%25%20OFF%2C%20price%20tag%2049.99%2C%20urgency%20design%2C%20gold%20and%20red%20colors%2C%20commercial?width=800&height=800&seed=2001&nologo=true"
+    },
+    {
+      "id": "oferta_2",
+      "name": "Oferta Deportista",
+      "category": "Oferta",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20promotional%20banner%2C%20sports%20supplement%20pack%2C%20OFERTA%20ESPECIAL%20PARA%20DEPORTISTAS%2C%20discount%20badge%2C%20energetic%20design%2C%20neon%20green%20accents%2C%20dark%20background%2C%20commercial?width=800&height=800&seed=2002&nologo=true"
+    },
+    {
+      "id": "oferta_3",
+      "name": "Oferta Flash",
+      "category": "Oferta",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20flash%20sale%20banner%2C%20supplement%20products%2C%20countdown%20timer%20design%2C%20text%20OFERTA%20FLASH%2C%20red%20and%20yellow%20urgent%20colors%2C%20multiple%20products%2C%20commercial%20quality?width=800&height=800&seed=2003&nologo=true"
+    },
+    {
+      "id": "oferta_4",
+      "name": "Oferta Recuperacion",
+      "category": "Oferta",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20promotional%20banner%2C%20recovery%20supplement%2C%20RECUPERADOR%20SUPER%20banner%2C%20red%20price%20tag%2C%20athletic%20design%2C%20before%20after%20effect%2C%20commercial%20quality?width=800&height=800&seed=2004&nologo=true"
+    },
+    {
+      "id": "beneficios_1",
+      "name": "Beneficios Energia",
+      "category": "Beneficios",
+      "url": "https://image.pollinations.ai/prompt/professional%20infographic%20banner%2C%20supplement%20benefits%20layout%2C%20icons%20for%20energy%20strength%20recovery%2C%20clean%20modern%20design%2C%20green%20and%20white%2C%20text%20BENEFICIOS%20COMPROBADOS%2C%20commercial%20quality?width=800&height=800&seed=3001&nologo=true"
+    },
+    {
+      "id": "beneficios_2",
+      "name": "Beneficios Natural",
+      "category": "Beneficios",
+      "url": "https://image.pollinations.ai/prompt/professional%20infographic%20banner%2C%20natural%20supplement%20benefits%2C%20organic%20ingredients%20icons%2C%20leaf%20and%20nature%20elements%2C%20green%20color%20scheme%2C%20text%20100%25%20NATURAL%2C%20clean%20commercial%20design?width=800&height=800&seed=3002&nologo=true"
+    },
+    {
+      "id": "beneficios_3",
+      "name": "Beneficios Muscular",
+      "category": "Beneficios",
+      "url": "https://image.pollinations.ai/prompt/professional%20infographic%20banner%2C%20protein%20supplement%20benefits%2C%20muscle%20growth%20icons%2C%20before%20after%20body%2C%20scientific%20data%20overlay%2C%20blue%20and%20white%20scheme%2C%20text%20RESULTADOS%20REALES%2C%20commercial?width=800&height=800&seed=3003&nologo=true"
+    },
+    {
+      "id": "antes_despues_1",
+      "name": "Transformacion Fitness",
+      "category": "Antes/Despues",
+      "url": "https://image.pollinations.ai/prompt/professional%20before%20and%20after%20fitness%20transformation%20banner%2C%20split%20design%20left%20ANTES%20right%20DESPUES%2C%20male%20athlete%20body%20transformation%2C%20supplement%20product%20in%20center%2C%20dramatic%20lighting%2C%20commercial?width=800&height=800&seed=4001&nologo=true"
+    },
+    {
+      "id": "antes_despues_2",
+      "name": "Transformacion Energia",
+      "category": "Antes/Despues",
+      "url": "https://image.pollinations.ai/prompt/professional%20before%20and%20after%20banner%2C%20tired%20person%20vs%20energetic%20person%2C%20energy%20supplement%20in%20middle%2C%20split%20design%2C%20gray%20vs%20vibrant%20colors%2C%20text%20ANTES%20DESPUES%2C%20commercial%20quality?width=800&height=800&seed=4002&nologo=true"
+    },
+    {
+      "id": "antes_despues_3",
+      "name": "Resultados 30 Dias",
+      "category": "Antes/Despues",
+      "url": "https://image.pollinations.ai/prompt/professional%20before%20after%20results%20banner%2C%20body%20transformation%20in%2030%20days%2C%20timeline%20design%2C%20supplement%20product%20featured%2C%20progress%20photos%2C%20text%20RESULTADOS%20EN%2030%20DIAS%2C%20commercial?width=800&height=800&seed=4003&nologo=true"
+    },
+    {
+      "id": "testimonio_1",
+      "name": "Testimonio Cliente",
+      "category": "Testimonio",
+      "url": "https://image.pollinations.ai/prompt/professional%20customer%20testimonial%20banner%2C%20happy%20fit%20person%20holding%20supplement%2C%205%20star%20rating%2C%20quote%20marks%2C%20text%20CAMBIARON%20MI%20VIDA%2C%20warm%20colors%2C%20trust%20design%2C%20commercial%20quality?width=800&height=800&seed=5001&nologo=true"
+    },
+    {
+      "id": "testimonio_2",
+      "name": "Testimonio Atleta",
+      "category": "Testimonio",
+      "url": "https://image.pollinations.ai/prompt/professional%20athlete%20testimonial%20banner%2C%20muscular%20athlete%20endorsement%2C%20supplement%20product%2C%20quote%20text%20EL%20MEJOR%20SUPLEMENTO%2C%205%20stars%2C%20dark%20premium%20background%2C%20commercial%20quality?width=800&height=800&seed=5002&nologo=true"
+    },
+    {
+      "id": "logistica_1",
+      "name": "Envio Gratis",
+      "category": "Logistica",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20shipping%20banner%2C%20supplement%20package%20box%2C%20delivery%20truck%20icon%2C%20text%20ENVIO%20GRATIS%2C%20fast%20delivery%20design%2C%20blue%20and%20white%2C%20trust%20badges%2C%20commercial%20quality?width=800&height=800&seed=6001&nologo=true"
+    },
+    {
+      "id": "logistica_2",
+      "name": "Garantia Satisfaccion",
+      "category": "Logistica",
+      "url": "https://image.pollinations.ai/prompt/professional%20ecommerce%20guarantee%20banner%2C%20supplement%20product%2C%20shield%20badge%2C%20text%20GARANTIA%20DE%20SATISFACCION%2C%20money%20back%20design%2C%20green%20trust%20colors%2C%20premium%20commercial%20quality?width=800&height=800&seed=6002&nologo=true"
+    }
+  ]
 }
