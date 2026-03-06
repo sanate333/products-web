@@ -36,6 +36,7 @@
   },
   "scripts": {
     "start": "node server/index.mjs",
+    "render-build": "npm install && npm run build",
     "openai:test": "node index.js",
     "ia:smoke-test": "node scripts/ia-smoke-test.js",
     "build": "react-scripts build && node post-build.js",
