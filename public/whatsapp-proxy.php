@@ -13,20 +13,11 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, x-secret, Authorization');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
-// ── Leer URL del túnel ──────────────────────────────────────────────────────
-$urlFile = __DIR__ . '/wa_backend_url.txt';
+// ── Leer URL del backend (txt tiene prioridad; fallback = Fly.io) ────────────
+define('FLY_BACKEND', 'https://sanate-wa-bot.fly.dev');
+$urlFile   = __DIR__ . '/wa_backend_url.txt';
 $tunnelUrl = file_exists($urlFile) ? trim(file_get_contents($urlFile)) : '';
-
-if (!$tunnelUrl) {
-    http_response_code(503);
-    header('Content-Type: application/json');
-    echo json_encode([
-        'ok'    => false,
-        'error' => 'Backend no disponible. Asegúrate de que el servidor Node.js está corriendo y el túnel cloudflared está activo.',
-        'hint'  => 'Configura la URL del backend en Ajustes o asegúrate de que tunnel.mjs está corriendo.'
-    ]);
-    exit;
-}
+if (!$tunnelUrl) $tunnelUrl = FLY_BACKEND;
 
 // ── Construir URL destino ───────────────────────────────────────────────────
 $path   = $_GET['path'] ?? '';
