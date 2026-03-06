@@ -2557,7 +2557,7 @@ setInterval(() => {
 
 // ── Rutas API WhatsApp (estado, QR, desvinculación) ───────────────────────
 app.get("/api/whatsapp/status", (req, res) => {
-  res.json({ ok: true, status: waStatus, phone: waPhone });
+  res.json({ ok: true, status: waStatus, phone: waPhone, hasQR: !!(waQR || waQRRaw) });
 });
 
 app.get("/api/whatsapp/qr", (req, res) => {

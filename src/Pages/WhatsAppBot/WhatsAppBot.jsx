@@ -488,6 +488,7 @@ export default function WhatsAppBot() {
 
   const msgsRef          = useRef(null)
   const qrRef            = useRef(null)
+  const qrPollRef        = useRef(null)  // dedicated QR polling timer (independent of ping)
   const dragRef          = useRef({})
   const fileImgRef       = useRef(null)
   const fileAudRef       = useRef(null)
@@ -1034,14 +1035,40 @@ export default function WhatsAppBot() {
   }
 
   async function regenerateQR() {
+    // Cancelar polling anterior si lo hay
+    clearTimeout(qrPollRef.current)
     setQrDataUrl(null); setStatus('connecting')
-    // drawQRWaiting después de que React renderice el canvas (si no estaba visible)
     setTimeout(drawQRWaiting, 80)
     try { await fetch(BU + '/logout', { method: 'POST', headers: H }) } catch {}
     tip('🔄 Generando QR...')
-    setTimeout(loadQR, 2000)
-    setTimeout(loadQR, 4500)
-    setTimeout(loadQR, 7000)
+
+    // Polling dedicado — completamente independiente de ping() y del status.
+    // ping() puede llamar setStatus('disconnected') pero este timer sigue corriendo.
+    const stopAt = Date.now() + 90000
+    async function pollOnce() {
+      if (Date.now() > stopAt) { drawQRWaiting(); return }
+      try {
+        const d = await (await fetch(BU + '/qr', { headers: H })).json()
+        if (d.qr) { setQrDataUrl(d.qr); drawQR(d.qr); setStatus('connecting'); return }
+        if (d.qrRaw) {
+          try {
+            const QRCode = await import('qrcode')
+            const canvas = qrRef.current
+            if (canvas) {
+              await QRCode.default.toCanvas(canvas, d.qrRaw, { width: 200, margin: 1 })
+              setQrDataUrl(canvas.toDataURL()); setStatus('connecting'); return
+            }
+          } catch {}
+        }
+        if (d.status === 'connected') { setStatus('connected'); return }
+      } catch {}
+      qrPollRef.current = setTimeout(pollOnce, 2500)
+    }
+    qrPollRef.current = setTimeout(pollOnce, 2000)
+    // Belt-and-suspenders: nudge /connect por si el servidor necesita arrancar
+    setTimeout(async () => {
+      try { await fetch(BU + '/connect', { method: 'POST', headers: H }) } catch {}
+    }, 2500)
   }
 
   async function disconnectWA() {
