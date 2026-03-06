@@ -2660,7 +2660,7 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
     app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT}`); });
   }
 } else {
-  app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT}`); });
+  app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT} | QR-ready`); });
 }
 
 
