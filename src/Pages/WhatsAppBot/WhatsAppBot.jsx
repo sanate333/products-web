@@ -818,8 +818,20 @@ export default function WhatsAppBot() {
   async function loadQR() {
     try {
       const d = await (await fetch(BU + '/qr', { headers: H })).json()
-      if (d.qr) { setQrDataUrl(d.qr); drawQR(d.qr) }
-      else drawQRWaiting()
+      if (d.qr) {
+        setQrDataUrl(d.qr); drawQR(d.qr)
+      } else if (d.qrRaw) {
+        // Fallback: toDataURL falló en servidor, renderizar raw en canvas del browser
+        try {
+          const QRCode = await import('qrcode')
+          const canvas = qrRef.current
+          if (canvas) {
+            await QRCode.default.toCanvas(canvas, d.qrRaw, { width: 200, margin: 1 })
+            const url = canvas.toDataURL()
+            setQrDataUrl(url)
+          }
+        } catch { drawQRWaiting() }
+      } else { drawQRWaiting() }
     } catch { drawQRWaiting() }
   }
 

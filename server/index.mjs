@@ -1774,6 +1774,7 @@ const waAuthDir = path.join(generatedDir, "wa-auth");
 let waSocket        = null;
 let waStatus        = "disconnected"; // 'disconnected' | 'connecting' | 'connected'
 let waQR            = null;           // data-url PNG
+let waQRRaw         = null;           // raw QR string (fallback)
 let waPhone         = "";
 let waIniting       = false;
 let downloadMediaFn = null; // set after Baileys dynamic import
@@ -2401,15 +2402,16 @@ async function initWhatsApp() {
     sock.ev.on("creds.update", saveCreds);
     sock.ev.on("connection.update", async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
-        try { waQR = await toDataURL(qr); } catch {}
+        waQRRaw = qr;
+        try { waQR = await toDataURL(qr); } catch (e) { console.error("[WA] toDataURL error:", e?.message); waQR = null; }
         waStatus = "connecting";
-        console.log("[WA] QR generado");
+        console.log("[WA] QR generado, dataUrl:", waQR ? "ok" : "FALLO - usando raw");
       }
       if (connection === "close") {
         const code = lastDisconnect?.error?.output?.statusCode;
         const loggedOut = code === DisconnectReason.loggedOut;
         console.log("[WA] Conexion cerrada, loggedOut:", loggedOut, "code:", code);
-        waStatus = "disconnected"; waQR = null; waPhone = ""; waSocket = null; waIniting = false;
+        waStatus = "disconnected"; waQR = null; waQRRaw = null; waPhone = ""; waSocket = null; waIniting = false;
         if (!loggedOut) {
           waReconnectAttempt++;
           const delay = Math.min(5000 * Math.pow(1.5, waReconnectAttempt - 1), 60000);
@@ -2417,7 +2419,7 @@ async function initWhatsApp() {
           setTimeout(initWhatsApp, delay);
         }
       } else if (connection === "open") {
-        waStatus = "connected"; waQR = null;
+        waStatus = "connected"; waQR = null; waQRRaw = null;
         waReconnectAttempt = 0; // reset backoff on successful connection
         waPhone  = sock.user?.id?.split(":")[0] || sock.user?.id || "";
         console.log("[WA] Conectado:", waPhone);
@@ -2559,13 +2561,13 @@ app.get("/api/whatsapp/status", (req, res) => {
 });
 
 app.get("/api/whatsapp/qr", (req, res) => {
-  res.json({ ok: true, qr: waQR || null, status: waStatus });
+  res.json({ ok: true, qr: waQR || null, qrRaw: waQRRaw || null, status: waStatus });
 });
 
 app.post("/api/whatsapp/logout", async (req, res) => {
   try {
     if (waSocket) { try { await waSocket.logout(); } catch {} }
-    waSocket = null; waStatus = "disconnected"; waQR = null; waPhone = ""; waIniting = false;
+    waSocket = null; waStatus = "disconnected"; waQR = null; waQRRaw = null; waPhone = ""; waIniting = false;
     if (fs.existsSync(waAuthDir)) fs.rmSync(waAuthDir, { recursive: true, force: true });
     setTimeout(initWhatsApp, 1500);
     res.json({ ok: true });
