@@ -27,8 +27,10 @@ app.use(cors({ origin: '*' }));
 app.use((req, res, next) => { res.setHeader('Access-Control-Allow-Private-Network', 'true'); next(); });
 app.use(express.json({ limit: "20mb" }));
 
-// Serve React build static files
-const buildPath = path.join(__dirname, '..', 'public_html');
+// Serve React build static files (public_html/ for local/Hostinger, build/ for Render)
+const buildPath = fs.existsSync(path.join(__dirname, '..', 'public_html', 'index.html'))
+  ? path.join(__dirname, '..', 'public_html')
+  : path.join(__dirname, '..', 'build');
 app.use('/static', express.static(path.join(buildPath, 'static'), { maxAge: '1y' }));
 app.use(express.static(buildPath, { index: false }));
 
@@ -2952,6 +2954,18 @@ if (fs.existsSync(buildDir)) {
 
 // Intentar iniciar con HTTPS (cert auto-firmado local, instalado como trusted)
 // Esto permite que sanate.store (HTTPS) llame a localhost sin bloqueo de Chrome PNA
+// SPA fallback - serve index.html for all unmatched routes
+app.get('*', (req, res) => {
+  const pubHtml = path.join(__dirname, '..', 'public_html', 'index.html');
+  const buildHtml = path.join(__dirname, '..', 'build', 'index.html');
+  const indexPath = fs.existsSync(pubHtml) ? pubHtml : buildHtml;
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
 const certDir = path.join(__dirname, 'certs');
 const certPath = path.join(certDir, 'cert.pem');
 const keyPath  = path.join(certDir, 'key.pem');
@@ -2962,7 +2976,6 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
     https.createServer(sslOptions, app).listen(PORT, '0.0.0.0', () => {
       console.log(`SERVER ON HTTPS :${PORT}`);
     });
-    // También escuchar en HTTP en puerto 5056 como fallback
     http.createServer(app).listen(5056, '0.0.0.0', () => {
       console.log(`SERVER ON HTTP :5056 (fallback)`);
     });
@@ -2973,16 +2986,6 @@ if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
 } else {
   app.listen(PORT, '0.0.0.0', () => { console.log(`SERVER ON HTTP :${PORT}`); });
 }
-
-// SPA fallback - serve index.html for all unmatched routes
-app.get('*', (req, res) => {
-  const indexPath = path.join(__dirname, '..', 'public_html', 'index.html');
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res.status(404).json({ error: 'Not found' });
-  }
-});
 
 
 
