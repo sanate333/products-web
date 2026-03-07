@@ -51,6 +51,15 @@ export default function DiscountPopup() {
             return;
         }
 
+        // Initialize timestamp in localStorage so countdown starts immediately
+        if (!state) {
+            localStorage.setItem(POPUP_STORAGE_KEY, JSON.stringify({
+                timestamp: Date.now(),
+                dismissed: false,
+                applied: false,
+            }));
+        }
+
         const timer = setTimeout(() => {
             setVisible(true);
         }, 2500);
@@ -66,7 +75,7 @@ export default function DiscountPopup() {
             if (remaining) {
                 setCountdown(formatCountdown(remaining));
             } else {
-                setCountdown('24:00:00');
+                setCountdown('00:00:00');
             }
         };
 
