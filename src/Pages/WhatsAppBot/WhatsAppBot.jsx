@@ -65,7 +65,7 @@ function normChat(c) {
     name,
     phone,
     isGroup,
-    photoUrl: c.photoUrl || '',
+    photoUrl: c.photoUrl || c.avatar || '',
     preview:  c.lastMessagePreview || c.preview || '',
     time:     hhmm,
     _ts:      ts ? new Date(ts).getTime() : 0,  // timestamp numérico para sort
@@ -364,8 +364,8 @@ const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 
 
 export default function WhatsAppBot() {
   const [page,        setPage]        = useState(() => { try { return localStorage.getItem('wb_current_page') || 'chat' } catch { return 'chat' } })
-  const [lifecycle, setLifecycle] = useState({})
-  const updateStage = async (jid, stage) => { try { await fetch(BU+'/lifecycle',{method:'POST',headers:HJ,body:JSON.stringify({jid,stage})}); setLifecycle(p=>({...p,[jid]:{stage,updatedAt:Date.now()}})) } catch(e){} }
+  const [lifecycle, setLifecycle] = useState(()=>{try{const s=localStorage.getItem('wa_lifecycle');return s?JSON.parse(s):{}}catch(e){return {}}})
+  const updateStage = async (jid, stage) => { if(!jid||!stage) return; try { await fetch(BU+'/lifecycle',{method:'POST',headers:HJ,body:JSON.stringify({jid,stage})}); setLifecycle(p=>{ const n={...p,[jid]:{stage,updatedAt:Date.now()}}; try{localStorage.setItem('wa_lifecycle',JSON.stringify(n))}catch(_){} return n }); } catch(e){} }
   const [status,      setStatus]      = useState('disconnected')
   const [phone,       setPhone]       = useState('')
   const [qrDataUrl,   setQrDataUrl]   = useState(null)
@@ -1852,7 +1852,7 @@ ${conversation}`
       const tags = chatsTags[c.id] || []
       matchFilter = tags.includes('Soporte')
     }
-    return matchSearch && matchFilter
+    return matchSearch && matchFilter && (chatFilter === 'grupos' ? !!c.isGroup : !c.isGroup)
   })
 
   const NAV = [
@@ -2208,7 +2208,7 @@ ${conversation}`
                           {active.isGroup && <span style={{ fontSize: '.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginRight: 5 }}>Grupo</span>}
                           {active.name || active.phone || active.id}
                         </div>
-                        <div style={{padding:'4px 12px',background:'#f8f9fa',borderBottom:'1px solid #eee',display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                        <div style={{padding:'4px 12px',background:'transparent',borderBottom:'1px solid rgba(0,0,0,0.06)',display:'flex',gap:'6px',flexWrap:'wrap'}}>
                           {[{id:'nuevo',label:'Nuevo cliente',c:'#6c757d'},{id:'potencial',label:'Potencial 🔥',c:'#fd7e14'},{id:'cliente',label:'Cliente 😊',c:'#0d6efd'},{id:'perdido',label:'Perdido ❌',c:'#dc3545'}].map(s=>(
                             <button key={s.id} onClick={()=>updateStage(active?.id,s.id)} style={{padding:'2px 10px',borderRadius:'20px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:600,background:lifecycle[active?.id]?.stage===s.id?s.c:'#e9ecef',color:lifecycle[active?.id]?.stage===s.id?'#fff':'#495057'}}>{s.label}</button>
                           ))}
@@ -3615,11 +3615,11 @@ ${conversation}`
           )}
 
           {/* ══ CONFIG ══ */}
-          {(page==='instagram'||page==='facebook'||page==='tiktok')&&<div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem',padding:'2rem',background:'#fff'}}>
-  {page==='instagram'&&<><div style={{fontSize:'4rem'}}>📸</div><h2 style={{color:'#E1306C',margin:'0 0 .5rem 0'}}>Instagram Direct</h2><p style={{color:'#666',textAlign:'center',maxWidth:'300px',margin:'0 0 1rem 0'}}>Conecta tu cuenta de Instagram Business para gestionar mensajes directos.</p><button style={{background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#bc1888)',color:'#fff',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer'}}>🔗 Conectar Instagram</button></>}
-  {page==='facebook'&&<><div style={{fontSize:'4rem'}}>💬</div><h2 style={{color:'#1877F2',margin:'0 0 .5rem 0'}}>Facebook Messenger</h2><p style={{color:'#666',textAlign:'center',maxWidth:'300px',margin:'0 0 1rem 0'}}>Conecta tu página de Facebook para responder mensajes de Messenger.</p><button style={{background:'#1877F2',color:'#fff',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer'}}>🔗 Conectar Facebook</button></>}
-  {page==='tiktok'&&<><div style={{fontSize:'4rem'}}>🎵</div><h2 style={{margin:'0 0 .5rem 0'}}>TikTok Mensajes</h2><p style={{color:'#666',textAlign:'center',maxWidth:'300px',margin:'0 0 1rem 0'}}>Conecta tu cuenta TikTok Business para gestionar mensajes directos.</p><button style={{background:'#000',color:'#fff',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer'}}>🔗 Conectar TikTok</button></>}
-</div>}
+          {(page==='instagram'||page==='facebook'||page==='tiktok')&&(<div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24,padding:40}}>
+{page==='instagram'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(193,53,132,.3)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Instagram</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de Instagram</p><button style={{background:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar Instagram</button></div>}
+{page==='facebook'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#0099FF',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,153,255,.3)'}}><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Messenger</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes de Facebook Messenger</p><button style={{background:'#0099FF',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar Messenger</button></div>}
+{page==='tiktok'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#010101',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,0,0,.25)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.17 8.17 0 0 0 4.78 1.52V6.77a4.85 4.85 0 0 1-1.01-.08z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>TikTok</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de TikTok</p><button style={{background:'#010101',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar TikTok</button></div>}
+</div>)}
 {page === 'config' && (
             <div className="wbv5-content">
               <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.85rem' }}>⚙️ Ajustes</div>
