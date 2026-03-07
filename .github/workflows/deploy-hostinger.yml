@@ -50,6 +50,14 @@ jobs:
       - name: Sync public_html
         run: node post-build.js
 
+      - name: Force copy static build files
+        shell: pwsh
+        run: |
+          if (Test-Path "public_html\static") { Remove-Item -Recurse -Force "public_html\static" }
+          Copy-Item -Recurse -Force "build\static" "public_html\"
+          Write-Output "=== JS files in public_html/static/js ==="
+          Get-ChildItem "public_html\static\js" | ForEach-Object { Write-Output $_.Name }
+
       - name: Deploy via FTPS to Hostinger
         id: deploy_ftps
         continue-on-error: true
