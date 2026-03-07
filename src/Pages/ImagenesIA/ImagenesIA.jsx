@@ -11,6 +11,14 @@ const normalizeApiPrefix = (raw) => {
 };
 const PINNED_IA_API_PREFIX = normalizeApiPrefix(IA_API_BASE || DEFAULT_IA_API_BASE);
 
+// Resolve image URLs from the API server (e.g. /generated/xxx.png -> https://render.com/generated/xxx.png)
+const resolveImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+  const base = (PINNED_IA_API_PREFIX || '').replace(/\/api\/?$/, '');
+  return base ? `${base}${url.startsWith('/') ? '' : '/'}${url}` : url;
+};
+
 const buildApiUrl = (prefix, path) => {
   const cleanPrefix = prefix ? prefix.replace(/\/+$/, '') : '';
   const cleanPath = path.replace(/^\/+/, '');
@@ -313,7 +321,12 @@ export default function ImagenesIA() {
       const path = `ai-images?userId=${encodeURIComponent(userId)}&productId=${encodeURIComponent(productId)}`;
       const result = await fetchJsonWithFallback(path, { method: 'GET' });
       if (result.ok && result.data?.ok) {
-        const sorted = (result.data.images || []).sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+        const sorted = (result.data.images || [])
+          .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+          .map((img) => ({
+            ...img,
+            files: (img.files || []).map((f) => ({ ...f, url: resolveImageUrl(f.url) })),
+          }));
         setImages(sorted);
       }
     } catch (error) {
@@ -597,7 +610,7 @@ export default function ImagenesIA() {
 
       if (result.ok && result.data?.ok) {
         const data = result.data;
-        setImageUrl(data.image_url || '');
+        setImageUrl(resolveImageUrl(data.image_url || ''));
         await fetchImages();
         setStatusMessage('Imagenes generadas. Revisa la seccion de variantes.');
       } else if (result.ok && result.data) {

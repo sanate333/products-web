@@ -1603,6 +1603,32 @@ app.get("/api/ai-images", (req, res) => {
   }
 });
 
+// Save externally-generated image (e.g. Pollinations) to the store
+app.post("/api/ai-images/save-external", express.json(), (req, res) => {
+  try {
+    const { userId = "admin", productId = "general", productName, template, url: imageUrl, prompt } = req.body || {};
+    if (!imageUrl) return res.status(400).json({ ok: false, error: "url requerida" });
+    const store = loadAiImagesStore();
+    const id = `ext-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const record = {
+      id,
+      userId: safeText(userId, 60) || "admin",
+      productId: safeText(productId, 80) || "general",
+      productName: safeText(productName, 200) || "Producto",
+      template: safeText(template, 50) || "Hero",
+      url: imageUrl,
+      prompt_used: safeText(prompt, 2000) || "",
+      source: "external",
+      createdAt: new Date().toISOString(),
+    };
+    store.push(record);
+    saveAiImagesStore(store);
+    return res.json({ ok: true, image_id: id, image_url: imageUrl });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err?.message || String(err) });
+  }
+});
+
 app.post("/api/ai-images/delete", express.json(), (req, res) => {
   try {
     const userId = safeText(req.body?.userId || "admin", 60) || "admin";
