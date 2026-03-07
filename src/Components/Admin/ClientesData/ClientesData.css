@@ -47,6 +47,11 @@
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
+.clienteCard.clienteBlocked {
+    border: 2px solid #ef4444;
+    opacity: 0.7;
+}
+
 .clienteInfo h4 {
     margin: 0;
     font-size: 16px;
@@ -57,6 +62,12 @@
     color: #6b7280;
     font-size: 13px;
     margin-top: 2px;
+}
+
+.clienteIp {
+    font-size: 11px !important;
+    color: #9ca3af !important;
+    font-family: monospace;
 }
 
 .clienteMeta {
@@ -72,6 +83,91 @@
 .clienteMeta span {
     font-size: 12px;
     color: #6b7280;
+}
+
+.clienteActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    justify-content: flex-end;
+}
+
+.clienteActionBtn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.clienteActionBtn:hover {
+    background: #e5e7eb;
+}
+
+.clienteBlock {
+    color: #ef4444 !important;
+}
+
+.clienteUnblock {
+    background: #ef4444 !important;
+    color: #fff !important;
+}
+
+.blockedBadge {
+    font-size: 10px !important;
+    background: #ef4444;
+    color: #fff !important;
+    padding: 2px 6px;
+    border-radius: 6px;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.blockedIpsList {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 12px 14px;
+}
+
+.blockedIpsList h4 {
+    margin: 0 0 8px 0;
+    font-size: 13px;
+    color: #991b1b;
+}
+
+.blockedIpsChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.blockedIpChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-size: 12px;
+    color: #991b1b;
+}
+
+.blockedIpChip button {
+    background: none;
+    border: none;
+    color: #ef4444;
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
 }
 
 .clientesEmpty {

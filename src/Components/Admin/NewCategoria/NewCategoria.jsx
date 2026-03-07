@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './NewCategoria.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,6 +8,14 @@ export default function NewCategoria() {
     const [mensaje, setMensaje] = useState('');
     const [categoria, setCategoria] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
+    const [existentes, setExistentes] = useState([]);
+
+    useEffect(() => {
+        fetch(`${baseURL}/categoriasGet.php`, { method: 'GET' })
+            .then((r) => r.json())
+            .then((data) => setExistentes(data.categorias || []))
+            .catch(() => {});
+    }, []);
 
     const toggleModal = () => {
         setCategoria('');
@@ -17,8 +25,20 @@ export default function NewCategoria() {
 
 
     const crear = async () => {
+        const trimmed = categoria.trim();
+        if (!trimmed) {
+            toast.error('Escribe un nombre para la categoria.');
+            return;
+        }
+        const duplicate = existentes.some(
+            (cat) => cat.categoria?.trim().toLowerCase() === trimmed.toLowerCase()
+        );
+        if (duplicate) {
+            toast.error('Esa categoria ya existe. No se puede duplicar.');
+            return;
+        }
         const formData = new FormData();
-        formData.append('categoria', categoria);
+        formData.append('categoria', trimmed);
 
         setMensaje('Procesando...');
 

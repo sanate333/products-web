@@ -627,33 +627,6 @@ export default function Cart() {
                             )}
                         </div>
                         <div className='deColumnCart'>
-                            {ofertaSugerida && (
-                                <div className='cartOfferCard'>
-                                    <div className='cartOfferHeader'>
-                                        <span>Oferta de locura</span>
-                                    </div>
-                                    <div className='cartOfferBody'>
-                                        <img src={obtenerImagen(ofertaSugerida)} alt={ofertaSugerida.titulo} />
-                                        <div className='cartOfferInfo'>
-                                            <strong>{ofertaSugerida.titulo}</strong>
-                                            <span>{moneda} {formatCOP(ofertaSugerida.precioOferta)}</span>
-                                        </div>
-                                        <div className='cartOfferActions'>
-                                            <button type='button' className='cartOfferViewBtn' onClick={() => setOfferPreviewOpen(true)}>
-                                                <FontAwesomeIcon icon={faEye} /> Ver
-                                            </button>
-                                            <button
-                                                type='button'
-                                                className={`cartOfferBtn ${ofertaYaEnCarrito ? 'added' : ''}`}
-                                                onClick={() => agregarOfertaAlCarrito(ofertaSugerida)}
-                                                disabled={ofertaYaEnCarrito}
-                                            >
-                                                {ofertaYaEnCarrito ? 'Agregado :)' : 'Super oferta'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
                             <div className='cartTotals'>
                                 <span>Subtotal</span>
                                 <strong>{moneda} {formatCOP(totalPrice)}</strong>
@@ -916,33 +889,6 @@ export default function Cart() {
             {cartAddMsg && !modalIsOpen && (
                 <div className='cartAddedToast'>{cartAddMsg}</div>
             )}
-            <Modal
-                isOpen={offerPreviewOpen && Boolean(ofertaSugerida)}
-                onRequestClose={() => setOfferPreviewOpen(false)}
-                className="cartOfferPreviewModal"
-                overlayClassName="overlay-cart"
-            >
-                {ofertaSugerida && (
-                    <div className='cartOfferPreviewContent'>
-                        <button type='button' className='cartOfferPreviewClose' onClick={() => setOfferPreviewOpen(false)}>X</button>
-                        <img src={obtenerImagen(ofertaSugerida)} alt={ofertaSugerida.titulo} />
-                        <h4>{ofertaSugerida.titulo}</h4>
-                        <p>{ofertaSugerida.descripcion || 'Producto recomendado para completar tu compra.'}</p>
-                        <strong>{moneda} {formatCOP(ofertaSugerida.precioOferta)}</strong>
-                        <button
-                            type='button'
-                            className={`cartOfferBtn ${ofertaYaEnCarrito ? 'added' : ''}`}
-                            onClick={() => {
-                                agregarOfertaAlCarrito(ofertaSugerida);
-                                setOfferPreviewOpen(false);
-                            }}
-                            disabled={ofertaYaEnCarrito}
-                        >
-                            {ofertaYaEnCarrito ? 'Agregado :)' : 'Agregar super oferta al carrito'}
-                        </button>
-                    </div>
-                )}
-            </Modal>
         </div >
     );
 }

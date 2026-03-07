@@ -740,10 +740,48 @@ export default function PedidosData() {
         groupedPedidos.push({ type: 'item', item });
     });
 
+    const calcTotalByRange = (days) => {
+        const now = new Date();
+        const cutoff = new Date(now);
+        cutoff.setDate(now.getDate() - days);
+        return pedidos
+            .filter((item) => {
+                if (!item.createdAt) return false;
+                const date = new Date(item.createdAt);
+                return !Number.isNaN(date.getTime()) && date >= cutoff;
+            })
+            .reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+    };
+
+    const totalHoy = calcTotalByRange(1);
+    const totalSemana = calcTotalByRange(7);
+    const totalQuincena = calcTotalByRange(15);
+    const totalMes = calcTotalByRange(30);
+
     return (
         <div>
 
             <ToastContainer />
+
+            <div className='pedidosSummaryGrid'>
+                <div className='pedidosSummaryCard'>
+                    <span className='pedidosSummaryLabel'>Hoy</span>
+                    <strong className='pedidosSummaryValue'>{moneda} {totalHoy.toFixed(0)}</strong>
+                </div>
+                <div className='pedidosSummaryCard'>
+                    <span className='pedidosSummaryLabel'>Semana</span>
+                    <strong className='pedidosSummaryValue'>{moneda} {totalSemana.toFixed(0)}</strong>
+                </div>
+                <div className='pedidosSummaryCard'>
+                    <span className='pedidosSummaryLabel'>Quincena</span>
+                    <strong className='pedidosSummaryValue'>{moneda} {totalQuincena.toFixed(0)}</strong>
+                </div>
+                <div className='pedidosSummaryCard'>
+                    <span className='pedidosSummaryLabel'>Mes</span>
+                    <strong className='pedidosSummaryValue'>{moneda} {totalMes.toFixed(0)}</strong>
+                </div>
+            </div>
+
             <div className='deFlexContent'>
 
                 <div className='deFlex2'>

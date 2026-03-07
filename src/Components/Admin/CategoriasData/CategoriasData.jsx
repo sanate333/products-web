@@ -242,6 +242,22 @@ export default function CategoriasData() {
                                     <div className='categoryOrderActions'>
                                         <button
                                             type="button"
+                                            className='editar'
+                                            onClick={() => abrirModal(item)}
+                                            title="Editar"
+                                        >
+                                            <FontAwesomeIcon icon={faEdit} />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className='eliminar'
+                                            onClick={() => eliminarCategoria(item.idCategoria)}
+                                            title="Eliminar"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                        <button
+                                            type="button"
                                             onClick={() => {
                                                 const target = Math.max(0, index - 1);
                                                 if (target === index) return;
