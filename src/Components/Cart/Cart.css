@@ -866,4 +866,33 @@
   }
 }
 
+.promoDiscountBanner {
+    background: linear-gradient(135deg, #00b894, #00cec9);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    animation: promoSlideDown 0.4s ease;
+}
+
+@keyframes promoSlideDown {
+    from { transform: translateY(-100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.promoActiveBadge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+    letter-spacing: 0.5px;
+}
+
 

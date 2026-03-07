@@ -1,0 +1,178 @@
+.promoOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: promoFadeIn 0.3s ease;
+}
+
+@keyframes promoFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes promoSlideUp {
+    from { transform: translateY(40px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes promoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+.promoPopup {
+    position: relative;
+    background: linear-gradient(145deg, #1a1a2e, #16213e);
+    border-radius: 20px;
+    padding: 40px 30px 35px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    animation: promoSlideUp 0.4s ease;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(255, 107, 107, 0.15);
+    border: 2px solid rgba(255, 107, 107, 0.3);
+    overflow: hidden;
+}
+
+.promoClose {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+    z-index: 2;
+    transition: color 0.2s;
+}
+
+.promoClose:hover {
+    color: #fff;
+}
+
+.promoFireLeft,
+.promoFireRight {
+    position: absolute;
+    font-size: 40px;
+    top: 12px;
+    animation: promoPulse 1.5s ease-in-out infinite;
+}
+
+.promoFireLeft {
+    left: 14px;
+}
+
+.promoFireRight {
+    right: 14px;
+}
+
+.promoContent {
+    position: relative;
+    z-index: 1;
+}
+
+.promoBadge {
+    display: inline-block;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    padding: 5px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+}
+
+.promoTitle {
+    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 6px;
+    line-height: 1.2;
+}
+
+.promoPercent {
+    color: #ff6b6b;
+    font-size: 48px;
+    display: block;
+    margin: 4px 0;
+    text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+}
+
+.promoSubtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 15px;
+    margin: 0 0 14px;
+}
+
+.promoCountdown {
+    font-size: 36px;
+    font-weight: 700;
+    color: #ffd93d;
+    font-family: 'Courier New', Courier, monospace;
+    margin-bottom: 14px;
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(255, 217, 61, 0.4);
+}
+
+.promoCondition {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    margin: 0 0 18px;
+}
+
+.promoBtn {
+    display: block;
+    width: 100%;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 20px rgba(238, 90, 36, 0.4);
+}
+
+.promoBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(238, 90, 36, 0.5);
+}
+
+.promoBtn:active {
+    transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+    .promoPopup {
+        padding: 32px 20px 28px;
+        margin: 0 10px;
+    }
+
+    .promoTitle {
+        font-size: 22px;
+    }
+
+    .promoPercent {
+        font-size: 40px;
+    }
+
+    .promoCountdown {
+        font-size: 28px;
+    }
+
+    .promoBtn {
+        font-size: 15px;
+        padding: 14px 20px;
+    }
+}
