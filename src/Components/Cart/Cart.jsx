@@ -604,12 +604,16 @@ export default function Cart() {
                                                 <img src={obtenerImagen(item)} alt="imagen" />
                                             </Anchor>
                                             <div className='cardProductCartText'>
-                                                <h3>{item.cartTitle || item.titulo}</h3>
-                                                <span>
-                                                    {item?.item?.map((sabor, saborIndex) => (
-                                                        <span key={saborIndex}> {sabor}</span>
-                                                    ))}
-                                                </span>
+                                                <h3>{item.titulo}</h3>
+                                                {item.variantLabel ? (
+                                                    <span className='cartVariantLabel'>{item.variantLabel}</span>
+                                                ) : (
+                                                    <span>
+                                                        {item?.item?.map((sabor, saborIndex) => (
+                                                            <span key={saborIndex}> {sabor}</span>
+                                                        ))}
+                                                    </span>
+                                                )}
                                                 <strong>{moneda} {formatCOP(item?.precio)}</strong>
                                                 <span className='cartSubtotal'>Subtotal: {moneda} {formatCOP(item?.precio * item.cantidad)}</span>
                                             </div>

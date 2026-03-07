@@ -895,4 +895,12 @@
     letter-spacing: 0.5px;
 }
 
-
+.cartVariantLabel {
+    display: inline-block;
+    background: #f0f0f0;
+    color: #555;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 2px;
+}
