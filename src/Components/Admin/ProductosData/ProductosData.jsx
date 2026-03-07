@@ -56,6 +56,7 @@ export default function ProductosData() {
     const [aiImages, setAiImages] = useState([]);
     const [aiSlots, setAiSlots] = useState([]);
     const [landingConfig, setLandingConfig] = useState(null);
+    const [nuevoMargen, setNuevoMargen] = useState('');
     const AI_BASE = (process.env.REACT_APP_API_URL || '').replace(/\/+$/, '');
     const AI_PREFIX = AI_BASE ? `${AI_BASE}/api` : '/api';
 
@@ -208,6 +209,7 @@ export default function ProductosData() {
         setNuevoTitulo(item.titulo);
         setNuevaDescripcion(item.descripcion);
         setNuevoPrecio(item.precio);
+        setNuevoMargen(item.gananciaAprox || '');
         setModalVisible(true);
     };
 
@@ -410,6 +412,7 @@ export default function ProductosData() {
             stock: parsedStock,
             estadoProducto: estadoProducto || 'Activo',
             tieneVariantes: tieneVariantes ? 1 : 0,
+            gananciaAprox: nuevoMargen !== '' ? Number(nuevoMargen) : (producto.gananciaAprox || null),
         };
 
         fetch(`${baseURL}/productoTextPut.php?idProducto=${idProducto}`, {
@@ -823,6 +826,17 @@ export default function ProductosData() {
                                         type="number"
                                         value={nuevoPrecioAnterior !== '' ? nuevoPrecioAnterior : producto.precioAnterior}
                                         onChange={(e) => setNuevoPrecioAnterior(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Margen de ganancia ($)</legend>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="100"
+                                        placeholder="Ej: 15000"
+                                        value={nuevoMargen !== '' ? nuevoMargen : (producto.gananciaAprox ?? '')}
+                                        onChange={(e) => setNuevoMargen(e.target.value)}
                                     />
                                 </fieldset>
                                 <fieldset>

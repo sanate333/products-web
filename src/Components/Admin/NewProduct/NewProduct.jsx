@@ -30,6 +30,7 @@ export default function NewProduct() {
     const [stock, setStock] = useState('');
     const [estadoProducto, setEstadoProducto] = useState('Activo');
     const [tieneVariantes, setTieneVariantes] = useState(false);
+    const [gananciaAprox, setGananciaAprox] = useState('');
     const toggleModal = () => {
         setModalOpen(!modalOpen);
     };
@@ -225,6 +226,19 @@ export default function NewProduct() {
                                         required
                                         value={precioAnterior}
                                         onChange={(e) => setPrecioAnterior(e.target.value)}
+                                    />
+                                </fieldset>
+                                <fieldset>
+                                    <legend>Margen de ganancia ($)</legend>
+                                    <input
+                                        type="number"
+                                        id="gananciaAprox"
+                                        name="gananciaAprox"
+                                        min="0"
+                                        step="100"
+                                        placeholder="Ej: 15000"
+                                        value={gananciaAprox}
+                                        onChange={(e) => setGananciaAprox(e.target.value)}
                                     />
                                 </fieldset>
                                 <fieldset>
