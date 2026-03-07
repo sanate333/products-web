@@ -873,78 +873,39 @@ export default function ProductosData() {
                                 </fieldset>
                                 {tieneVariantes && (
                                 <div className='items'>
-                                    <fieldset>
-                                        <legend>Item 1</legend>
-                                        <input
-                                            type="text"
-                                            id="item1"
-                                            name="item1"
-                                            required
-                                            value={item1}
-                                            onChange={(e) => setItem1(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 2</legend>
-                                        <input
-                                            type="text"
-                                            id="item2"
-                                            name="item2"
-                                            required
-                                            value={item2}
-                                            onChange={(e) => setItem2(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 3</legend>
-                                        <input
-                                            type="text"
-                                            id="item3"
-                                            name="item3"
-                                            required
-                                            value={item3}
-                                            onChange={(e) => setItem3(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 4</legend>
-                                        <input
-                                            type="text"
-                                            id="item4"
-                                            name="item4"
-                                            required
-                                            value={item4}
-                                            onChange={(e) => setItem4(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 5</legend>
-                                        <input
-                                            type="text"
-                                            id="item5"
-                                            name="item5"
-                                            required
-                                            value={item5}
-                                            onChange={(e) => setItem5(e.target.value)}
-                                        />
-                                    </fieldset>
-
-                                    <fieldset>
-                                        <legend>Item 6</legend>
-                                        <input
-                                            type="text"
-                                            id="item6"
-                                            name="item6"
-                                            required
-                                            value={item6}
-                                            onChange={(e) => setItem6(e.target.value)}
-                                        />
-                                    </fieldset>
-
+                                    {[
+                                        { label: 'Item 1', val: item1, set: setItem1 },
+                                        { label: 'Item 2', val: item2, set: setItem2 },
+                                        { label: 'Item 3', val: item3, set: setItem3 },
+                                        { label: 'Item 4', val: item4, set: setItem4 },
+                                        { label: 'Item 5', val: item5, set: setItem5 },
+                                        { label: 'Item 6', val: item6, set: setItem6 },
+                                    ].map(({ label, val, set }, idx) => {
+                                        const parts = (val || '').split('|');
+                                        const vTitle = parts[0] || '';
+                                        const vPrice = parts[1] || '';
+                                        return (
+                                            <fieldset key={idx} className='variantFieldset'>
+                                                <legend>{label}</legend>
+                                                <div className='variantRow'>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Título variante"
+                                                        value={vTitle}
+                                                        onChange={(e) => set(vPrice ? `${e.target.value}|${vPrice}` : e.target.value)}
+                                                    />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Precio"
+                                                        min="0"
+                                                        step="100"
+                                                        value={vPrice}
+                                                        onChange={(e) => set(e.target.value ? `${vTitle}|${e.target.value}` : vTitle)}
+                                                    />
+                                                </div>
+                                            </fieldset>
+                                        );
+                                    })}
                                 </div>
                                 )}
                             </div>

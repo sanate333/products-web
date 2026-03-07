@@ -941,3 +941,18 @@ fieldset input{
     background-color: var(--color1);
     color: var(--blanco);
 }
+
+.variantFieldset {
+    margin-bottom: 6px;
+}
+.variantRow {
+    display: flex;
+    gap: 8px;
+}
+.variantRow input[type="text"] {
+    flex: 2;
+}
+.variantRow input[type="number"] {
+    flex: 1;
+    max-width: 120px;
+}

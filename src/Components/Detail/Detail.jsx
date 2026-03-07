@@ -40,6 +40,14 @@ export default function Detail() {
         ? items.filter((item) => item && String(item).trim() !== '0')
         : [];
 
+    const parseVariant = (raw) => {
+        if (!raw) return { title: '', price: null };
+        const parts = String(raw).split('|');
+        const title = parts[0]?.trim() || '';
+        const price = parts[1] ? Number(parts[1]) : null;
+        return { title, price: (price > 0 ? price : null) };
+    };
+
     useEffect(() => {
         cargarProductos();
         cargarFavoritos();
@@ -51,16 +59,6 @@ export default function Detail() {
     }, []);
     const handleSelectionChange = (index) => {
         setSelectedItemIndex(index);
-    };
-
-    const getVariantMultiplier = (item) => {
-        if (!item) return 1;
-        const match = String(item).match(/\d+/);
-        const value = match ? parseInt(match[0], 10) : 1;
-        if (Number.isNaN(value) || value <= 0) {
-            return 1;
-        }
-        return value;
     };
     const cargarCategoria = () => {
         fetch(`${baseURL}/categoriasGet.php`, {
@@ -133,22 +131,28 @@ export default function Detail() {
             toast.error('No hay stock', { autoClose: 400 });
             return;
         }
-        const variantMultiplier = hasVariants ? getVariantMultiplier(selectedItem) : 1;
-        const cantidadFinal = cantidad * variantMultiplier;
+        const variant = parseVariant(selectedItem);
+        const variantPrice = variant.price || Number(producto.precio);
+        const variantLabel = variant.title || '';
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const cartKey = `${producto.idProducto}_${variantLabel}`;
         const existingItemIndex = cart.findIndex(item =>
-            item.idProducto === producto.idProducto
+            item.idProducto === producto.idProducto && (item.variantLabel || '') === variantLabel
         );
         if (existingItemIndex !== -1) {
-            const existingItem = cart[existingItemIndex];
-            const updatedSabores = [...existingItem.item, selectedItem];
-            const updatedCantidad = existingItem.cantidad + cantidadFinal;
-            cart[existingItemIndex] = { ...existingItem, item: updatedSabores, cantidad: updatedCantidad };
+            cart[existingItemIndex].cantidad += cantidad;
         } else {
-            cart.push({ idProducto: producto.idProducto, item: [selectedItem], cantidad: cantidadFinal });
+            cart.push({
+                idProducto: producto.idProducto,
+                item: [variantLabel],
+                cantidad: cantidad,
+                precio: variantPrice,
+                variantLabel: variantLabel,
+                cartTitle: variantLabel ? `${producto.titulo} - ${variantLabel}` : producto.titulo,
+                gananciaAprox: producto.gananciaAprox ?? null,
+            });
         }
         localStorage.setItem('cart', JSON.stringify(cart));
-
     };
 
     const goBack = () => {
@@ -168,24 +172,29 @@ export default function Detail() {
                 toast.error('No hay stock', { autoClose: 400 });
                 return;
             }
-            const variantMultiplier = hasVariants ? getVariantMultiplier(selectedItem) : 1;
-            const cantidadFinal = cantidad * variantMultiplier;
+            const variant = parseVariant(selectedItem);
+            const variantPrice = variant.price || Number(producto.precio);
+            const variantLabel = variant.title || '';
             const cart = JSON.parse(localStorage.getItem('cart')) || [];
             const existingItemIndex = cart.findIndex(item =>
-                item.idProducto === producto.idProducto
+                item.idProducto === producto.idProducto && (item.variantLabel || '') === variantLabel
             );
             if (existingItemIndex !== -1) {
-                const existingItem = cart[existingItemIndex];
-                const updatedSabores = [...existingItem.item, selectedItem];
-                const updatedCantidad = existingItem.cantidad + cantidadFinal;
-                cart[existingItemIndex] = { ...existingItem, item: updatedSabores, cantidad: updatedCantidad };
+                cart[existingItemIndex].cantidad += cantidad;
             } else {
-                cart.push({ idProducto: producto.idProducto, item: [selectedItem], cantidad: cantidadFinal });
+                cart.push({
+                    idProducto: producto.idProducto,
+                    item: [variantLabel],
+                    cantidad: cantidad,
+                    precio: variantPrice,
+                    variantLabel: variantLabel,
+                    cartTitle: variantLabel ? `${producto.titulo} - ${variantLabel}` : producto.titulo,
+                    gananciaAprox: producto.gananciaAprox ?? null,
+                });
             }
             localStorage.setItem('cart', JSON.stringify(cart));
             cargarProductos();
             window.dispatchEvent(new Event('cartUpdated'));
-    
         }
     };
 
@@ -357,8 +366,13 @@ export default function Detail() {
 
                     <div className='deFLexPrice'>
                         <h5 className="price">
-                            {moneda} {producto?.precio}
-
+                            {moneda} {(() => {
+                                if (hasVariants && variantItems[selectedItemIndex]) {
+                                    const v = parseVariant(variantItems[selectedItemIndex]);
+                                    if (v.price) return v.price.toLocaleString('es-CO');
+                                }
+                                return producto?.precio;
+                            })()}
                         </h5>
 
                         {
@@ -382,9 +396,10 @@ export default function Detail() {
                     <p className='detailDescription'>{producto.descripcion}</p>
                     {hasVariants && variantItems.length > 0 && (
                         <div className='itemsDetail'>
-                            {variantItems.map((item, index) => (
-                                item && (
-                                    <label key={index}>
+                            {variantItems.map((item, index) => {
+                                const v = parseVariant(item);
+                                return item && (
+                                    <label key={index} className={selectedItemIndex === index ? 'variantSelected' : ''}>
                                         <input
                                             type="radio"
                                             name="talle"
@@ -392,10 +407,11 @@ export default function Detail() {
                                             checked={selectedItemIndex === index}
                                             onChange={() => handleSelectionChange(index)}
                                         />
-                                        {item}
+                                        <span className='variantTitle'>{v.title || item}</span>
+                                        {v.price && <span className='variantPrice'>{moneda} {v.price.toLocaleString('es-CO')}</span>}
                                     </label>
-                                )
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
