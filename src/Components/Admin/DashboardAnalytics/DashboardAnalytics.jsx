@@ -146,6 +146,90 @@ function toLinePath(points) {
         .join(' ');
 }
 
+function trackSession() {
+    const SESSION_KEY = 'sanate_sessions';
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        const raw = JSON.parse(localStorage.getItem(SESSION_KEY) || '{}');
+        if (!raw[today]) raw[today] = 0;
+        const lastVisit = localStorage.getItem('sanate_last_visit');
+        const now = Date.now();
+        const lastTs = Number(localStorage.getItem('sanate_last_visit_ts') || 0);
+        if (lastVisit !== today || (now - lastTs) > 30 * 60 * 1000) {
+            raw[today] += 1;
+            localStorage.setItem('sanate_last_visit', today);
+            localStorage.setItem('sanate_last_visit_ts', String(now));
+        }
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 31);
+        Object.keys(raw).forEach((key) => { if (new Date(key) < cutoff) delete raw[key]; });
+        localStorage.setItem(SESSION_KEY, JSON.stringify(raw));
+        return raw;
+    } catch { return {}; }
+}
+
+function getSessionsData() {
+    try { return JSON.parse(localStorage.getItem('sanate_sessions') || '{}'); } catch { return {}; }
+}
+
+function buildFallbackFromPedidos(pedidos, sessionsData, range) {
+    const now = new Date();
+    const daysMap = { today: 1, '7d': 7, '30d': 30 };
+    const days = daysMap[range] || 1;
+    const cutoff = new Date(now);
+    cutoff.setDate(now.getDate() - days);
+
+    const filtered = pedidos.filter((p) => {
+        if (!p.createdAt) return false;
+        const d = new Date(p.createdAt);
+        return !Number.isNaN(d.getTime()) && d >= cutoff;
+    });
+
+    const totalSesiones = Object.entries(sessionsData).reduce((sum, [key, val]) => {
+        if (new Date(key) >= cutoff) return sum + val;
+        return sum;
+    }, 0) || 1;
+
+    const totalVentas = filtered.reduce((sum, p) => sum + (parseFloat(p.total) || 0), 0);
+    const totalPedidos = filtered.length;
+    const conversion = totalSesiones > 0 ? (totalPedidos / totalSesiones) * 100 : 0;
+
+    const seriesMap = {};
+    for (let i = 0; i < Math.max(days, 1); i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const key = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
+        seriesMap[key] = { fecha: key, label, sesiones: sessionsData[key] || 0, pedidos: 0 };
+    }
+    filtered.forEach((p) => {
+        const key = new Date(p.createdAt).toISOString().slice(0, 10);
+        if (seriesMap[key]) seriesMap[key].pedidos += 1;
+    });
+
+    const productCount = {};
+    filtered.forEach((p) => {
+        try {
+            const prods = typeof p.productos === 'string' ? JSON.parse(p.productos || '[]') : (p.productos || []);
+            prods.forEach((prod) => {
+                const name = prod?.titulo || 'Producto';
+                if (!productCount[name]) productCount[name] = { nombre: name, cantidad: 0, ventas: 0 };
+                productCount[name].cantidad += (prod?.cantidad || 1);
+                productCount[name].ventas += (parseFloat(prod?.precio) || 0) * (prod?.cantidad || 1);
+            });
+        } catch {}
+    });
+    const topProducts = Object.values(productCount).sort((a, b) => b.cantidad - a.cantidad).slice(0, 6);
+
+    return {
+        ok: true,
+        metrics: { sesiones: totalSesiones, ventas: totalVentas, pedidos: totalPedidos, conversion, onlineNow: 1, trends: { sesiones: 0, ventas: 0, pedidos: 0, conversion: 0 } },
+        series: Object.values(seriesMap).sort((a, b) => a.fecha.localeCompare(b.fecha)),
+        topProducts,
+        topPages: [],
+    };
+}
+
 export default function DashboardAnalytics() {
     const [range, setRange] = useState('today');
     const [loading, setLoading] = useState(true);
@@ -153,14 +237,17 @@ export default function DashboardAnalytics() {
     const [payload, setPayload] = useState(null);
     const [activeIndex, setActiveIndex] = useState(-1);
 
+    useEffect(() => { trackSession(); }, []);
+
     const fetchAnalytics = useCallback(async (signal, { silent = false } = {}) => {
         if (!silent) {
             setLoading(true);
         }
         setError('');
 
+        const normalizedBase = String(baseURL || '').replace(/\/+$/, '');
+
         try {
-            const normalizedBase = String(baseURL || '').replace(/\/+$/, '');
             const url = new URL(`${normalizedBase}/dashboardAnalyticsGet.php`);
             url.searchParams.set('range', range);
 
@@ -174,16 +261,26 @@ export default function DashboardAnalytics() {
             const response = await fetch(url.toString(), { signal });
             const data = await response.json();
 
-            if (!response.ok || !data?.ok) {
-                throw new Error(data?.msg || 'No se pudo cargar analitica');
+            const hasReal = response.ok && data?.ok && (safeNumber(data?.metrics?.sesiones) > 0 || safeNumber(data?.metrics?.pedidos) > 0);
+            if (hasReal) {
+                setPayload(data);
+                const length = Array.isArray(data?.series) ? data.series.length : 0;
+                setActiveIndex(length > 0 ? length - 1 : -1);
+                return;
             }
-
-            setPayload(data);
-            const length = Array.isArray(data?.series) ? data.series.length : 0;
-            setActiveIndex(length > 0 ? length - 1 : -1);
+            throw new Error('fallback');
         } catch (fetchError) {
             if (fetchError.name === 'AbortError') return;
-            setError(fetchError.message || 'Error cargando analitica');
+            try {
+                const pedidosRes = await fetch(`${normalizedBase}/pedidoGet.php`, { signal });
+                const pedidosData = await pedidosRes.json();
+                const fallback = buildFallbackFromPedidos(pedidosData?.pedidos || [], getSessionsData(), range);
+                setPayload(fallback);
+                const length = fallback.series.length;
+                setActiveIndex(length > 0 ? length - 1 : -1);
+            } catch {
+                setError('No se pudo cargar analitica');
+            }
         } finally {
             if (!signal?.aborted && !silent) {
                 setLoading(false);

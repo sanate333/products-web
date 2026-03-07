@@ -84,7 +84,6 @@ export default function HeaderDash() {
                 </div>
             )}
             <div className='headerDashMain'>
-                <InputSearch />
                 <div className='deFlexHeader'>
                     <ButonScreen />
                     <Anchor to={'/'} className='link'>

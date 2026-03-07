@@ -753,10 +753,23 @@ export default function PedidosData() {
             .reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
     };
 
+    const calcGananciaNeta = () => {
+        return pedidos.reduce((sum, item) => {
+            const prods = parseProductos(item.productos);
+            const ganancia = prods.reduce((g, p) => {
+                if (p.gananciaTotal) return g + Number(p.gananciaTotal);
+                if (p.gananciaAprox) return g + Number(p.gananciaAprox) * Number(p.cantidad || 1);
+                return g;
+            }, 0);
+            return sum + ganancia;
+        }, 0);
+    };
+
     const totalHoy = calcTotalByRange(1);
     const totalSemana = calcTotalByRange(7);
     const totalQuincena = calcTotalByRange(15);
     const totalMes = calcTotalByRange(30);
+    const gananciaNeta = calcGananciaNeta();
 
     return (
         <div>
@@ -764,21 +777,25 @@ export default function PedidosData() {
             <ToastContainer />
 
             <div className='pedidosSummaryGrid'>
-                <div className='pedidosSummaryCard'>
+                <div className='pedidosSummaryCard summaryHoy'>
                     <span className='pedidosSummaryLabel'>Hoy</span>
                     <strong className='pedidosSummaryValue'>{moneda} {totalHoy.toFixed(0)}</strong>
                 </div>
-                <div className='pedidosSummaryCard'>
+                <div className='pedidosSummaryCard summarySemana'>
                     <span className='pedidosSummaryLabel'>Semana</span>
                     <strong className='pedidosSummaryValue'>{moneda} {totalSemana.toFixed(0)}</strong>
                 </div>
-                <div className='pedidosSummaryCard'>
+                <div className='pedidosSummaryCard summaryQuincena'>
                     <span className='pedidosSummaryLabel'>Quincena</span>
                     <strong className='pedidosSummaryValue'>{moneda} {totalQuincena.toFixed(0)}</strong>
                 </div>
-                <div className='pedidosSummaryCard'>
+                <div className='pedidosSummaryCard summaryMes'>
                     <span className='pedidosSummaryLabel'>Mes</span>
                     <strong className='pedidosSummaryValue'>{moneda} {totalMes.toFixed(0)}</strong>
+                </div>
+                <div className='pedidosSummaryCard summaryGanancia'>
+                    <span className='pedidosSummaryLabel'>Ganancia Neta</span>
+                    <strong className='pedidosSummaryValue'>{moneda} {gananciaNeta.toFixed(0)}</strong>
                 </div>
             </div>
 
