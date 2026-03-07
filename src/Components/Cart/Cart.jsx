@@ -77,6 +77,8 @@ export default function Cart() {
     const [shopifyDiscountApplied, setShopifyDiscountApplied] = useState(false);
     const [shopifyDiscountMsg, setShopifyDiscountMsg] = useState('');
     const [exitOfferOpen, setExitOfferOpen] = useState(false);
+    const [promoDiscountActive, setPromoDiscountActive] = useState(false);
+    const [promoDiscountMsg, setPromoDiscountMsg] = useState('');
 
     useEffect(() => {
         let totalPriceCalc = 0;
@@ -86,11 +88,32 @@ export default function Cart() {
         setTotalPrice(totalPriceCalc);
     }, [cartItems]);
 
+    useEffect(() => {
+        try {
+            const raw = localStorage.getItem('promoDiscount17');
+            if (raw) {
+                const promo = JSON.parse(raw);
+                const elapsed = Date.now() - (promo.timestamp || 0);
+                if (promo.active && elapsed < 24 * 60 * 60 * 1000) {
+                    setPromoDiscountActive(true);
+                }
+            }
+        } catch {}
+
+        const handlePromo = (e) => {
+            setPromoDiscountActive(true);
+            setPromoDiscountMsg('Descuento 17% aplicado con exito! Selecciona Transferencia al pagar.');
+            setTimeout(() => setPromoDiscountMsg(''), 5000);
+        };
+        window.addEventListener('promoDiscountApplied', handlePromo);
+        return () => window.removeEventListener('promoDiscountApplied', handlePromo);
+    }, []);
+
     const selectedDepartment = COLOMBIA_DEPARTMENTS.find((item) => item.name === departamento);
     const departmentCities = selectedDepartment?.cities || [];
     const usesManualCity = ciudad === 'Otro';
     const cityValue = usesManualCity ? ciudadManual.trim() : ciudad;
-    const transferDiscountRate = paymentMethod === 'transferencia' ? 0.08 : 0;
+    const transferDiscountRate = paymentMethod === 'transferencia' ? (promoDiscountActive ? 0.17 : 0.08) : 0;
     const transferDiscountAmount = totalPrice * transferDiscountRate;
     const popupDiscountRate = shopifyDiscountApplied ? 0.05 : 0;
     const popupDiscountAmount = totalPrice * popupDiscountRate;
@@ -256,6 +279,10 @@ export default function Cart() {
         setModalIsOpen(true);
         setIsFocused(true);
         setDetailsOpen(false);
+        if (promoDiscountActive && !promoDiscountMsg) {
+            setPromoDiscountMsg('Descuento 17% activo! Paga por Transferencia para aplicarlo.');
+            setTimeout(() => setPromoDiscountMsg(''), 4000);
+        }
     };
 
     const closeModal = () => {
@@ -489,7 +516,7 @@ export default function Cart() {
         messageParts.push('Productos:');
         messageParts.push(cartDetails.join('\n'));
         if (transferDiscountRate > 0) {
-            messageParts.push(`Descuento transferencia: -${moneda} ${formatCOP(transferDiscountAmount)}`);
+            messageParts.push(`Descuento transferencia${promoDiscountActive ? ' (PROMO 17%)' : ''}: -${moneda} ${formatCOP(transferDiscountAmount)}`);
         }
         if (popupDiscountRate > 0) {
             messageParts.push(`Descuento popup: -${moneda} ${formatCOP(popupDiscountAmount)}`);
@@ -549,14 +576,17 @@ export default function Cart() {
                         <FontAwesomeIcon icon={faArrowLeft} /> Regresar al catalogo
                     </button>
                 </div>
+                {promoDiscountMsg && (
+                    <div className='promoDiscountBanner'>{promoDiscountMsg}</div>
+                )}
                 <div className='infoTicker'>
                     <div className='infoTickerTrack'>
                         <span>Envios gratis a partir de $59.900</span>
                         <span>Contra entrega</span>
-                        <span>Transferencia -8% descuento</span>
+                        <span>Transferencia {promoDiscountActive ? '-17%' : '-8%'} descuento</span>
                         <span>Envios gratis a partir de $59.900</span>
                         <span>Contra entrega</span>
-                        <span>Transferencia -8% descuento</span>
+                        <span>Transferencia {promoDiscountActive ? '-17%' : '-8%'} descuento</span>
                     </div>
                 </div>
                 {cartItems?.length === 0 ? (
@@ -630,7 +660,7 @@ export default function Cart() {
                             </div>
                             {transferDiscountRate > 0 && (
                                 <div className='cartTotals'>
-                                    <span>Desc. transferencia</span>
+                                    <span>Desc. transferencia{promoDiscountActive ? ' 17%' : ''}</span>
                                     <strong>-{moneda} {formatCOP(transferDiscountAmount)}</strong>
                                 </div>
                             )}
@@ -788,7 +818,10 @@ export default function Cart() {
                                             checked={paymentMethod === 'transferencia'}
                                             onChange={() => setPaymentMethod('transferencia')}
                                         />
-                                        <label htmlFor="transferencia">Transferencia - 8% Descuento (Nequi, Cuenta de Ahorros)</label>
+                                        <label htmlFor="transferencia">
+                                            Transferencia - {promoDiscountActive ? '17%' : '8%'} Descuento (Nequi, Cuenta de Ahorros)
+                                            {promoDiscountActive && <span className='promoActiveBadge'>PROMO ACTIVA</span>}
+                                        </label>
                                     </div>
                                 </div>
 
@@ -810,7 +843,7 @@ export default function Cart() {
                                         </div>
                                     {transferDiscountRate > 0 && (
                                         <div className='summaryRow discountRow'>
-                                            <span>Descuento transferencia</span>
+                                            <span>Descuento transferencia{promoDiscountActive ? ' (PROMO 17%)' : ''}</span>
                                             <strong>-{moneda} {formatCOP(transferDiscountAmount)}</strong>
                                         </div>
                                     )}

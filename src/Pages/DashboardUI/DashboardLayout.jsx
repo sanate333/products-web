@@ -17,6 +17,7 @@ import {
     faUserGroup,
     faBoxOpen,
     faGraduationCap,
+    faGift,
 } from '@fortawesome/free-solid-svg-icons';
 import { buildDashboardPath, getTiendaSlug } from '../../utils/tienda';
 import './DashboardLayout.css';
@@ -31,6 +32,7 @@ const MAIN_MENU = [
     { label: 'Productos', segment: 'productos', icon: faBoxOpen },
     { label: 'Tiendas', segment: 'tiendas', icon: faShop },
     { label: 'Categorías', segment: 'categorias', icon: faTags },
+    { label: 'Ofertas Carrito', segment: 'ofertas-carrito', icon: faGift },
     { label: 'Sub-Banners', segment: 'sub-banners', icon: faLayerGroup },
     { label: 'Contacto', segment: 'contacto', icon: faList },
     { label: 'Usuarios', segment: 'usuarios', icon: faUsers },

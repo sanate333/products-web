@@ -6,6 +6,7 @@ import ProductosMain from '../../Components/Admin/ProductosMain/ProductosMain'
 import UsuariosMain from '../../Components/Admin/UsuariosMain/UsuariosMain'
 import CardsCantidad from '../../Components/Admin/CardsCantidad/CardsCantidad'
 import InfoUserMain from '../../Components/Admin/InfoUserMain/InfoUserMain'
+import DashboardAnalytics from '../../Components/Admin/DashboardAnalytics/DashboardAnalytics'
 import baseURL from '../../Components/url'
 import { registerFcmToken, onForegroundMessage } from '../../firebase'
 export default function Main() {
@@ -184,6 +185,7 @@ export default function Main() {
                     {permissionStatus && <span className='notifTestStatus'>{permissionStatus}</span>}
                     {pushState && <span className='notifTestStatus'>{pushState}</span>}
                 </div>
+                <DashboardAnalytics />
                 <div className='containerMain'>
                     <div className='deFLexMain'>
                         <CardsCantidad />
@@ -193,8 +195,6 @@ export default function Main() {
                         <ProductosMain />
                         <InfoUserMain />
                     </div>
-
-
                 </div>
             </section>
         </div>
