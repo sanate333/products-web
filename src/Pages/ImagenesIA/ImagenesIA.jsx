@@ -290,7 +290,7 @@ export default function ImagenesIA() {
       setLastPrompt(prompt);
       const seed = Math.floor(Math.random() * 999999);
       const encodedPrompt = encodeURIComponent(prompt);
-      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=flux&enhance=true`;
+      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=flux`;
       setStatusMessage('🎨 Generando imagen premium con Flux... (por favor espera)');
       await new Promise((resolve, reject) => {
         const img = new window.Image();
