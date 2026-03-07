@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'claude/add-discount-popup-eFkFo'
   workflow_dispatch:
 
 jobs:
