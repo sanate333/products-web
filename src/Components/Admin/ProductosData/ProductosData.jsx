@@ -8,7 +8,7 @@ import './ProductosData.css'
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import baseURL from '../../url';
+import baseURL, { resolveImg } from '../../url';
 import NewProduct from '../NewProduct/NewProduct';
 import moneda from '../../moneda';
 import { Link as Anchor } from "react-router-dom";
@@ -101,7 +101,7 @@ export default function ProductosData() {
         setEstadoProducto(producto.estadoProducto || 'Activo');
         setTieneVariantes(Boolean(producto.tieneVariantes));
         setImageOrder(
-            [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean)
+            [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean).map(resolveImg)
         );
         const savedSlots = JSON.parse(localStorage.getItem(`landingSlots_${producto.idProducto}`) || '[]');
         setAiSlots(Array.isArray(savedSlots) ? savedSlots : []);
@@ -667,7 +667,7 @@ export default function ProductosData() {
                             &times;
                         </span>
 
-                        <img src={imagenSeleccionada} alt="Imagen Seleccionada" />
+                        <img src={resolveImg(imagenSeleccionada)} alt="Imagen Seleccionada" />
                     </div>
                 </div>
             )}
@@ -712,7 +712,7 @@ export default function ProductosData() {
                                         : statusText === 'Desactivado'
                                             ? 'statusDisabled'
                                             : 'statusVariant';
-                                const mediaItems = [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean);
+                                const mediaItems = [producto.imagen1, producto.imagen2, producto.imagen3, producto.imagen4].filter(Boolean).map(resolveImg);
                                 const previewItems = mediaItems.slice(0, 4);
                                 return (
                                     <div className='productOverviewCard'>
@@ -1025,7 +1025,7 @@ export default function ProductosData() {
                                 ) : (
                                     <>
                                         {producto.imagen1 ? (
-                                            <img src={producto.imagen1} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen1)} />
+                                            <img src={resolveImg(producto.imagen1)} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen1)} />
 
                                         ) : (
                                             <span className='imgNone'>
@@ -1041,7 +1041,7 @@ export default function ProductosData() {
                                 ) : (
                                     <>
                                         {producto.imagen2 ? (
-                                            <img src={producto.imagen2} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen2)} />
+                                            <img src={resolveImg(producto.imagen2)} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen2)} />
 
                                         ) : (
                                             <span className='imgNone'>
@@ -1056,7 +1056,7 @@ export default function ProductosData() {
                                 ) : (
                                     <>
                                         {producto.imagen3 ? (
-                                            <img src={producto.imagen3} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen3)} />
+                                            <img src={resolveImg(producto.imagen3)} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen3)} />
 
                                         ) : (
                                             <span className='imgNone'>
@@ -1071,7 +1071,7 @@ export default function ProductosData() {
                                 ) : (
                                     <>
                                         {producto.imagen4 ? (
-                                            <img src={producto.imagen4} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen4)} />
+                                            <img src={resolveImg(producto.imagen4)} alt="imagen" onClick={() => abrirModalImagenSeleccionada(producto.imagen4)} />
 
                                         ) : (
                                             <span className='imgNone'>
@@ -1168,7 +1168,7 @@ export default function ProductosData() {
                                 key={`card-${item.idProducto}`}
                                 onClick={() => abrirModal(item)}
                             >
-                                <img src={item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4 || ''} alt={item.titulo} />
+                                <img src={resolveImg(item.imagen1 || item.imagen2 || item.imagen3 || item.imagen4) || ''} alt={item.titulo} />
                                 <div className='productRowInfo'>
                                     <h4>{item.titulo}</h4>
                                     <span>{hasStock ? `${item?.stock ?? '-'} disponibles` : 'Sin stock'}</span>
@@ -1257,7 +1257,7 @@ export default function ProductosData() {
 
                                 <td>
                                     {item.imagen1 ? (
-                                        <img src={item.imagen1} alt="imagen1" />
+                                        <img src={resolveImg(item.imagen1)} alt="imagen1" />
                                     ) : (
                                         <span className='imgNonetd'>
                                             Sin imagen
@@ -1266,7 +1266,7 @@ export default function ProductosData() {
                                 </td>
                                 <td>
                                     {item.imagen2 ? (
-                                        <img src={item.imagen2} alt="imagen2" />
+                                        <img src={resolveImg(item.imagen2)} alt="imagen2" />
                                     ) : (
                                         <span className='imgNonetd'>
                                             Sin imagen
@@ -1275,7 +1275,7 @@ export default function ProductosData() {
                                 </td>
                                 <td>
                                     {item.imagen3 ? (
-                                        <img src={item.imagen3} alt="imagen3" />
+                                        <img src={resolveImg(item.imagen3)} alt="imagen3" />
                                     ) : (
                                         <span className='imgNonetd'>
                                             Sin imagen
@@ -1284,7 +1284,7 @@ export default function ProductosData() {
                                 </td>
                                 <td>
                                     {item.imagen4 ? (
-                                        <img src={item.imagen4} alt="imagen4" />
+                                        <img src={resolveImg(item.imagen4)} alt="imagen4" />
                                     ) : (
                                         <span className='imgNonetd'>
                                             Sin imagen
