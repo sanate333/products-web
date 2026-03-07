@@ -364,6 +364,8 @@ const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 
 
 export default function WhatsAppBot() {
   const [page,        setPage]        = useState(() => { try { return localStorage.getItem('wb_current_page') || 'chat' } catch { return 'chat' } })
+  const [lifecycle, setLifecycle] = useState({})
+  const updateStage = async (jid, stage) => { try { await fetch(BU+'/lifecycle',{method:'POST',headers:HJ,body:JSON.stringify({jid,stage})}); setLifecycle(p=>({...p,[jid]:{stage,updatedAt:Date.now()}})) } catch(e){} }
   const [status,      setStatus]      = useState('disconnected')
   const [phone,       setPhone]       = useState('')
   const [qrDataUrl,   setQrDataUrl]   = useState(null)
@@ -1863,6 +1865,9 @@ ${conversation}`
     { id: 'entrenamiento',  label: '🧠 Entrenamiento IA',    section: 'Automatización',  badge: 0 },
     { id: 'conexion',       label: '📱 Conexión WhatsApp',   section: 'Configuración',   badge: 0 },
     { id: 'config',         label: '⚙️ Ajustes',             section: 'Configuración',   badge: 0 },
+    { id: 'instagram', label: '📸 Instagram',          section: 'Apps Chat', badge: 0 },
+    { id: 'facebook',  label: '💬 Facebook Messenger', section: 'Apps Chat', badge: 0 },
+    { id: 'tiktok',    label: '🎵 TikTok',             section: 'Apps Chat', badge: 0 },
   ]
 
   function goPage(id) {
@@ -1927,7 +1932,7 @@ ${conversation}`
             <div className="wbv5-sb-ava">S</div>
             <div className="wbv5-sb-uname">sanate.store</div>
           </div>
-          {['Principal', 'Automatización', 'Configuración'].map(section => (
+          {['Principal', 'Automatización', 'Apps Chat', 'Configuración'].map(section => (
             <React.Fragment key={section}>
               <div className="wbv5-nav-section">{section}</div>
               {NAV.filter(i => i.section === section).map(item => (
@@ -2202,6 +2207,11 @@ ${conversation}`
                         <div className="wbv5-cw-name">
                           {active.isGroup && <span style={{ fontSize: '.7rem', background: '#dbeafe', color: '#1d4ed8', borderRadius: 4, padding: '1px 5px', marginRight: 5 }}>Grupo</span>}
                           {active.name || active.phone || active.id}
+                        </div>
+                        <div style={{padding:'4px 12px',background:'#f8f9fa',borderBottom:'1px solid #eee',display:'flex',gap:'6px',flexWrap:'wrap'}}>
+                          {[{id:'nuevo',label:'Nuevo cliente',c:'#6c757d'},{id:'potencial',label:'Potencial 🔥',c:'#fd7e14'},{id:'cliente',label:'Cliente 😊',c:'#0d6efd'},{id:'perdido',label:'Perdido ❌',c:'#dc3545'}].map(s=>(
+                            <button key={s.id} onClick={()=>updateStage(active?.id,s.id)} style={{padding:'2px 10px',borderRadius:'20px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:600,background:lifecycle[active?.id]?.stage===s.id?s.c:'#e9ecef',color:lifecycle[active?.id]?.stage===s.id?'#fff':'#495057'}}>{s.label}</button>
+                          ))}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                           {aiTyping ? (
@@ -3605,7 +3615,12 @@ ${conversation}`
           )}
 
           {/* ══ CONFIG ══ */}
-          {page === 'config' && (
+          {(page==='instagram'||page==='facebook'||page==='tiktok')&&<div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:'1rem',padding:'2rem',background:'#fff'}}>
+  {page==='instagram'&&<><div style={{fontSize:'4rem'}}>📸</div><h2 style={{color:'#E1306C',margin:'0 0 .5rem 0'}}>Instagram Direct</h2><p style={{color:'#666',textAlign:'center',maxWidth:'300px',margin:'0 0 1rem 0'}}>Conecta tu cuenta de Instagram Business para gestionar mensajes directos.</p><button style={{background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#bc1888)',color:'#fff',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer'}}>🔗 Conectar Instagram</button></>}
+  {page==='facebook'&&<><div style={{fontSize:'4rem'}}>💬</div><h2 style={{color:'#1877F2',margin:'0 0 .5rem 0'}}>Facebook Messenger</h2><p style={{color:'#666',textAlign:'center',maxWidth:'300px',margin:'0 0 1rem 0'}}>Conecta tu página de Facebook para responder mensajes de Messenger.</p><button style={{background:'#1877F2',color:'#fff',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer'}}>🔗 Conectar Facebook</button></>}
+  {page==='tiktok'&&<><div style={{fontSize:'4rem'}}>🎵</div><h2 style={{margin:'0 0 .5rem 0'}}>TikTok Mensajes</h2><p style={{color:'#666',textAlign:'center',maxWidth:'300px',margin:'0 0 1rem 0'}}>Conecta tu cuenta TikTok Business para gestionar mensajes directos.</p><button style={{background:'#000',color:'#fff',border:'none',borderRadius:'8px',padding:'12px 28px',fontSize:'15px',fontWeight:600,cursor:'pointer'}}>🔗 Conectar TikTok</button></>}
+</div>}
+{page === 'config' && (
             <div className="wbv5-content">
               <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.85rem' }}>⚙️ Ajustes</div>
               <div className="wbv5-cfg-layout">
