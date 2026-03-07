@@ -2,1100 +2,437 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './ImagenesIA.css';
 import baseURL from '../../Components/url';
 
-const IA_API_BASE = (process.env.REACT_APP_IA_API_URL || '').trim();
 const DEFAULT_IA_API_BASE = 'https://products-web-j7ji.onrender.com';
-const normalizeApiPrefix = (raw) => {
-  const value = String(raw || '').trim().replace(/\/+$/, '');
-  if (!value) return '';
-  return /\/api$/i.test(value) ? value : `${value}/api`;
-};
-const PINNED_IA_API_PREFIX = normalizeApiPrefix(IA_API_BASE || DEFAULT_IA_API_BASE);
+const PINNED_API = `${DEFAULT_IA_API_BASE}/api`;
 
-// Resolve image URLs from the API server (e.g. /generated/xxx.png -> https://render.com/generated/xxx.png)
 const resolveImageUrl = (url) => {
   if (!url) return '';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
-  const base = (PINNED_IA_API_PREFIX || '').replace(/\/api\/?$/, '');
-  return base ? `${base}${url.startsWith('/') ? '' : '/'}${url}` : url;
+  return `${DEFAULT_IA_API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
 };
 
-const buildApiUrl = (prefix, path) => {
-  const cleanPrefix = prefix ? prefix.replace(/\/+$/, '') : '';
-  const cleanPath = path.replace(/^\/+/, '');
-  return cleanPrefix ? `${cleanPrefix}/${cleanPath}` : `/${cleanPath}`;
-};
+const buildApiUrl = (path) => `${PINNED_API}/${path.replace(/^\/+/, '')}`;
 
-const fetchJsonWithFallback = async (path, options = {}) => {
-  const {
-    attemptTimeoutMs = 0,
-    ...requestOptions
-  } = options || {};
-  const rawCandidates = [PINNED_IA_API_PREFIX];
-  const candidatePrefixes = rawCandidates
-    .map((item) => String(item || '').trim())
-    .filter(Boolean)
-    .filter((item, index, arr) => arr.indexOf(item) === index);
-  const attempts = [];
-
-  const request = async (prefix) => {
-    const url = buildApiUrl(prefix, path);
-    let timeoutHandle = null;
-    let composedSignal = requestOptions.signal;
-    let localController = null;
-    if (attemptTimeoutMs > 0) {
-      localController = new AbortController();
-      composedSignal = localController.signal;
-      timeoutHandle = setTimeout(() => localController.abort(), attemptTimeoutMs);
+const fetchJsonSafe = async (path, options = {}) => {
+  const url = buildApiUrl(path);
+  try {
+    const resp = await fetch(url, { ...options });
+    const ct = resp.headers.get('content-type') || '';
+    if (ct.includes('application/json')) return { ok: resp.ok, data: await resp.json(), url, status: resp.status };
+    const text = await resp.text();
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try { return { ok: resp.ok, data: JSON.parse(trimmed), url, status: resp.status }; } catch (_) {}
     }
-    try {
-      const response = await fetch(url, {
-        ...requestOptions,
-        signal: composedSignal,
-      });
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        return {
-          ok: true,
-          data: await response.json(),
-          url,
-          status: response.status,
-        };
-      }
-      const text = await response.text();
-      const trimmed = String(text || '').trim();
-      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-        try {
-          return {
-            ok: true,
-            data: JSON.parse(trimmed),
-            url,
-            status: response.status,
-          };
-        } catch (error) {
-          // sigue flujo de fallo
-        }
-      }
-      const textLower = trimmed.toLowerCase();
-      const looksHtml = textLower.includes('<!doctype') || textLower.includes('<html');
-      return {
-        ok: false,
-        text,
-        url,
-        status: response.status,
-        errorMessage: looksHtml ? 'html_response' : 'non_json_response',
-      };
-    } catch (error) {
-      const isAbort = error?.name === 'AbortError';
-      return {
-        ok: false,
-        url,
-        status: 0,
-        text: isAbort ? 'timeout' : (error?.message || 'network_error'),
-        errorMessage: isAbort ? 'timeout' : (error?.message || 'network_error'),
-      };
-    } finally {
-      if (timeoutHandle) clearTimeout(timeoutHandle);
-    }
-  };
-
-  let last = null;
-  for (const prefix of candidatePrefixes) {
-    // eslint-disable-next-line no-await-in-loop
-    const result = await request(prefix);
-    attempts.push({
-      prefix,
-      url: result.url,
-      status: result.status || 0,
-      ok: Boolean(result.ok),
-      error: result.errorMessage || '',
-    });
-    if (result.ok) {
-      return { ...result, attempts };
-    }
-    last = result;
-    const text = String(result.text || '').toLowerCase();
-    const looksHtml = text.includes('<!doctype') || text.includes('<html');
-    if (!looksHtml && result.status && result.status >= 400 && result.status < 500) {
-      break;
-    }
+    return { ok: false, text, url, status: resp.status };
+  } catch (err) {
+    return { ok: false, url, status: 0, text: err?.message || 'network_error' };
   }
-  return {
-    ...(last || { ok: false, text: 'No response', url: buildApiUrl('/api', path), status: 0 }),
-    attempts,
-  };
 };
-const TEMPLATE_MANIFEST = 'https://raw.githubusercontent.com/sanate333/products-web/main/public/ai-templates/manifest.json';
 
-// Built-in templates with Unsplash images (reliable CDN)
-const BUILTIN_TEMPLATES = [
-  { id: "hero_1", name: "Hero Energetico", category: "Hero", url: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&h=600&fit=crop" },
-  { id: "hero_2", name: "Hero Recuperacion", category: "Hero", url: "https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=600&h=600&fit=crop" },
-  { id: "hero_3", name: "Hero Rendimiento", category: "Hero", url: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=600&fit=crop" },
-  { id: "hero_4", name: "Hero Potencia", category: "Hero", url: "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&h=600&fit=crop" },
-  { id: "hero_5", name: "Hero Fuerza", category: "Hero", url: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&h=600&fit=crop" },
-  { id: "hero_6", name: "Hero Muscular", category: "Hero", url: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&h=600&fit=crop" },
-  { id: "oferta_1", name: "Oferta Exclusiva", category: "Oferta", url: "https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&h=600&fit=crop" },
-  { id: "oferta_2", name: "Oferta Deportista", category: "Oferta", url: "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?w=600&h=600&fit=crop" },
-  { id: "oferta_3", name: "Oferta Flash", category: "Oferta", url: "https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=600&h=600&fit=crop" },
-  { id: "oferta_4", name: "Oferta Recuperacion", category: "Oferta", url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&h=600&fit=crop" },
-  { id: "beneficios_1", name: "Beneficios Energia", category: "Beneficios", url: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop" },
-  { id: "beneficios_2", name: "Beneficios Natural", category: "Beneficios", url: "https://images.unsplash.com/photo-1505576399279-0d754b4a87de?w=600&h=600&fit=crop" },
-  { id: "beneficios_3", name: "Beneficios Muscular", category: "Beneficios", url: "https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=600&h=600&fit=crop" },
-  { id: "antes_despues_1", name: "Transformacion Fitness", category: "Antes/Despues", url: "https://images.unsplash.com/photo-1550345332-09e3ac987658?w=600&h=600&fit=crop" },
-  { id: "antes_despues_2", name: "Transformacion Energia", category: "Antes/Despues", url: "https://images.unsplash.com/photo-1518611012118-696072aa579a?w=600&h=600&fit=crop" },
-  { id: "antes_despues_3", name: "Resultados 30 Dias", category: "Antes/Despues", url: "https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&h=600&fit=crop" },
-  { id: "testimonio_1", name: "Testimonio Cliente", category: "Testimonio", url: "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=600&h=600&fit=crop" },
-  { id: "testimonio_2", name: "Testimonio Atleta", category: "Testimonio", url: "https://images.unsplash.com/photo-1567013127542-490d757e51fc?w=600&h=600&fit=crop" },
-  { id: "logistica_1", name: "Envio Gratis", category: "Logistica", url: "https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&h=600&fit=crop" },
-  { id: "logistica_2", name: "Garantia Satisfaccion", category: "Logistica", url: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&h=600&fit=crop" },
+// ─── PROMPT ENGINE estilo ecom-magic ───
+const BRAND_PALETTES = {
+  Hero: {
+    bg: 'dramatic dark gradient background with electric blue and deep navy, powerful energy',
+    light: 'cinematic rim lighting, powerful spotlight from above, dramatic shadows',
+    mood: 'high-energy explosive powerful motivational supplement advertising',
+    comp: 'centered product hero shot, dynamic diagonal composition, magazine quality',
+  },
+  Oferta: {
+    bg: 'bold vibrant gradient background, deep red to golden yellow, urgent and exciting',
+    light: 'bright commercial studio lighting, warm golden tones, premium feel',
+    mood: 'urgent exciting premium value irresistible deal advertising',
+    comp: 'product centered with dramatic scale, impact composition, conversion focused',
+  },
+  Beneficios: {
+    bg: 'clean gradient from deep green to emerald, nature inspired wellness',
+    light: 'soft diffused lighting, natural wellness feel, clean and fresh',
+    mood: 'fresh healthy natural trustworthy clean wellness supplement',
+    comp: 'product surrounded by natural elements, floating ingredients, health focused',
+  },
+  'Antes/Despues': {
+    bg: 'split dramatic composition, dark moody left vs bright energetic right',
+    light: 'high contrast dramatic lighting, transformation energy, before-after',
+    mood: 'transformative inspiring powerful results journey visualization',
+    comp: 'split screen composition, transformation journey, dynamic contrast',
+  },
+  Testimonio: {
+    bg: 'warm studio background, soft gradient cream to warm white, authentic',
+    light: 'warm portrait lighting, professional trustworthy, soft shadows',
+    mood: 'authentic warm human real results testimonial lifestyle',
+    comp: 'lifestyle product placement, natural human context, relatable',
+  },
+  Logistica: {
+    bg: 'clean white to light blue gradient, professional reliable corporate',
+    light: 'bright clean studio lighting, corporate professional, crisp',
+    mood: 'reliable fast trustworthy professional efficient delivery',
+    comp: 'product with logistics elements, clean organized layout, professional',
+  },
+};
+
+const buildHighImpactPrompt = ({ productName, productDetails, templateType, angle, benefit, style, brandColor }) => {
+  const palette = BRAND_PALETTES[templateType] || BRAND_PALETTES.Hero;
+  const parts = [
+    `Ultra-realistic commercial ecommerce product photography of ${productName || 'supplement product'} container/bottle.`,
+    `${palette.bg}.`,
+    `${palette.light}.`,
+    `${palette.mood} aesthetic.`,
+    `${palette.comp}.`,
+    productDetails ? `Product details: ${productDetails}.` : '',
+    angle ? `Marketing angle: ${angle}.` : '',
+    benefit ? `Target customer: ${benefit}.` : '',
+    brandColor ? `Brand accent color: ${brandColor}.` : '',
+    style ? `Additional style: ${style}.` : '',
+    'Photorealistic 8K quality professional commercial advertising photography.',
+    'Cinematic depth of field perfect product focus premium brand aesthetics.',
+    'High conversion ecommerce hero image magazine quality dramatic color grading.',
+    'CRITICAL: NO text NO words NO letters NO typography NO captions anywhere.',
+  ].filter(Boolean).join(' ');
+  return parts;
+};
+
+const ECOM_TEMPLATES = [
+  { id: 'em_h1', name: 'Hero Energético', category: 'Hero', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png' },
+  { id: 'em_h2', name: 'Hero Potencia', category: 'Hero', url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=600&fit=crop' },
+  { id: 'em_h3', name: 'Hero Fuerza', category: 'Hero', url: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&h=600&fit=crop' },
+  { id: 'em_o1', name: 'Oferta Impacto', category: 'Oferta', url: 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&h=600&fit=crop' },
+  { id: 'em_o2', name: 'Oferta Flash', category: 'Oferta', url: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=600&h=600&fit=crop' },
+  { id: 'em_b1', name: 'Beneficios Natural', category: 'Beneficios', url: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop' },
+  { id: 'em_b2', name: 'Beneficios Muscular', category: 'Beneficios', url: 'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=600&h=600&fit=crop' },
+  { id: 'em_a1', name: 'Transformación 30 días', category: 'Antes/Despues', url: 'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=600&h=600&fit=crop' },
+  { id: 'em_t1', name: 'Testimonio Real', category: 'Testimonio', url: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=600&h=600&fit=crop' },
+  { id: 'em_l1', name: 'Envío Express', category: 'Logistica', url: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&h=600&fit=crop' },
 ];
 
-const ensurePngFile = async (file) => {
-  if (!file) return file;
-  if (String(file.type || '').toLowerCase() === 'image/png') return file;
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
+const ensurePng = async (file) => {
+  if (!file || file.type === 'image/png') return file;
+  return new Promise((res, rej) => {
+    const img = new Image(); const u = URL.createObjectURL(file);
     img.onload = () => {
-      try {
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth || img.width;
-        canvas.height = img.naturalHeight || img.height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('No se pudo crear canvas 2D');
-        ctx.drawImage(img, 0, 0);
-        canvas.toBlob((blob) => {
-          URL.revokeObjectURL(objectUrl);
-          if (!blob) return reject(new Error('No se pudo convertir imagen a PNG'));
-          const cleanName = (file.name || 'image').replace(/\.[^.]+$/, '');
-          resolve(new File([blob], `${cleanName}.png`, { type: 'image/png' }));
-        }, 'image/png');
-      } catch (err) {
-        URL.revokeObjectURL(objectUrl);
-        reject(err);
-      }
+      const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+      const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+      c.toBlob(b => { URL.revokeObjectURL(u); res(new File([b], file.name.replace(/\.[^.]+$/, '') + '.png', { type: 'image/png' })); }, 'image/png');
     };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('No se pudo leer la imagen'));
-    };
-    img.src = objectUrl;
+    img.onerror = () => { URL.revokeObjectURL(u); rej(new Error('read fail')); };
+    img.src = u;
   });
 };
 
+const extractColor = (file) => new Promise(res => {
+  if (!file) return res(null);
+  const img = new Image(); const u = URL.createObjectURL(file);
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = 50; c.height = 50;
+    const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, 50, 50);
+    URL.revokeObjectURL(u);
+    const d = ctx.getImageData(0, 0, 50, 50).data;
+    let r=0,g=0,b=0,n=0;
+    for (let i=0;i<d.length;i+=16){r+=d[i];g+=d[i+1];b+=d[i+2];n++;}
+    res(`rgb(${Math.round(r/n)},${Math.round(g/n)},${Math.round(b/n)})`);
+  };
+  img.onerror = () => res(null);
+  img.src = u;
+});
+
+const MODEL_OPTIONS = [
+  { id: 'pollinations', label: 'Pollinations IA', badge: 'GRATIS', desc: 'Genera sin coste. Rápido y potente con Flux.', icon: '🌸' },
+  { id: 'openai', label: 'OpenAI DALL-E', badge: 'PREMIUM', desc: 'Máxima calidad con tu API Key.', icon: '🧠' },
+];
+const TPL_TYPES = ['Hero','Oferta','Beneficios','Antes/Despues','Testimonio','Logistica'];
+const SIZE_OPTS = [
+  { value: '1024x1024', label: 'Cuadrado Instagram (1024x1024)' },
+  { value: '1024x1792', label: 'Stories/Reels (1024x1792)' },
+  { value: '1792x1024', label: 'Facebook Horizontal (1792x1024)' },
+  { value: '512x512', label: 'Miniatura (512x512)' },
+];
+
 export default function ImagenesIA() {
-  const templateFileInputRef = useRef(null);
-  const [form, setForm] = useState({
-    userId: 'admin',
-    productId: '',
-    country: '',
-    templateType: 'Hero',
-    size: '1024x1024',
-    angle: '',
-    benefit: '',
-    style: '',
-    productDetails: '',
-    language: 'es',
-  });
-  const [selectedModel, setSelectedModel] = useState('pollinations');
+  const tplFileRef = useRef(null);
+  const [form, setForm] = useState({ userId:'admin', productId:'', templateType:'Hero', size:'1024x1024', angle:'', benefit:'', style:'', productDetails:'', language:'es' });
+  const [model, setModel] = useState('pollinations');
   const [files, setFiles] = useState([]);
-  const [actionError, setActionError] = useState('');
+  const [error, setError] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [serverMessage, setServerMessage] = useState('');
+  const [status, setStatus] = useState('');
   const [serverStatus, setServerStatus] = useState('unknown');
-  const [templateModalOpen, setTemplateModalOpen] = useState(false);
-  const [templateTab, setTemplateTab] = useState('Hero');
-  const [templates, setTemplates] = useState([]);
-  const [uploadedTemplates, setUploadedTemplates] = useState([]);
+  const [tplModal, setTplModal] = useState(false);
+  const [tplTab, setTplTab] = useState('Hero');
+  const [customTpls, setCustomTpls] = useState([]);
   const [products, setProducts] = useState([]);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [selectedTemplateId, setSelectedTemplateId] = useState('');
-  const [pendingTemplateId, setPendingTemplateId] = useState('');
-  const [connectionPanel, setConnectionPanel] = useState({
-    attempts: [],
-    activeUrl: '',
-    health: null,
-    checkedAt: '',
-  });
-  const [connectionErrorDetail, setConnectionErrorDetail] = useState('');
+  const [showAdv, setShowAdv] = useState(false);
+  const [selTpl, setSelTpl] = useState('');
+  const [pendingTpl, setPendingTpl] = useState('');
+  const [brandColor, setBrandColor] = useState(null);
+  const [genCount, setGenCount] = useState(0);
+  const [lastPrompt, setLastPrompt] = useState('');
 
-  // Imágenes demo de alto impacto para mostrar en la galería
-  const demoImages = useMemo(() => [
-    {
-      id: 'demo_1',
-      isDemo: true,
-      template: 'Hero',
-      files: [{ url: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=512&h=512&fit=crop' }],
-      analysis: { high_impact_score: 94, hero_style_score: 92 },
-    },
-    {
-      id: 'demo_2',
-      isDemo: true,
-      template: 'Oferta',
-      files: [{ url: 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=512&h=512&fit=crop' }],
-      analysis: { high_impact_score: 91, hero_style_score: 88 },
-    },
-    {
-      id: 'demo_3',
-      isDemo: true,
-      template: 'Beneficios',
-      files: [{ url: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=512&h=512&fit=crop' }],
-      analysis: { high_impact_score: 89, hero_style_score: 87 },
-    },
-    {
-      id: 'demo_4',
-      isDemo: true,
-      template: 'Antes/Despues',
-      files: [{ url: 'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=512&h=512&fit=crop' }],
-      analysis: { high_impact_score: 93, hero_style_score: 90 },
-    },
-  ], []);
-
-  const templateOptions = ['Hero', 'Oferta', 'Beneficios', 'Antes/Despues', 'Testimonio', 'Logistica'];
-  const sizeOptions = [
-    { value: '1024x1024', label: 'Instagram Cuadrado (1024x1024)' },
-    { value: '1024x1792', label: 'Instagram Stories (1024x1792)' },
-    { value: '1792x1024', label: 'Horizontal (1792x1024)' },
-    { value: '512x512', label: 'Cuadrado Chico (512x512)' },
-  ];
-
-  const MODEL_OPTIONS = [
-    {
-      id: 'pollinations',
-      label: 'Pollinations IA',
-      badge: 'GRATIS',
-      description: 'Genera sin coste. Ideal para probar.',
-      icon: '🌸',
-    },
-    {
-      id: 'openai',
-      label: 'OpenAI',
-      badge: 'PREMIUM',
-      description: 'Alta calidad con tu API Key.',
-      icon: '🧠',
-    },
-  ];
-  const allTemplates = useMemo(() => [...uploadedTemplates, ...templates], [uploadedTemplates, templates]);
-  const selectedTemplate = useMemo(
-    () => allTemplates.find((tpl) => tpl.id === selectedTemplateId) || null,
-    [allTemplates, selectedTemplateId],
-  );
-  const selectedProductName = useMemo(() => {
-    const selected = products.find((item) => String(item.idProducto) === String(form.productId));
-    return (selected?.titulo || '').trim() || 'Producto';
+  const allTpls = useMemo(() => [...customTpls, ...ECOM_TEMPLATES], [customTpls]);
+  const activeTpl = useMemo(() => allTpls.find(t => t.id === selTpl) || null, [allTpls, selTpl]);
+  const productName = useMemo(() => {
+    const p = products.find(p => String(p.idProducto) === String(form.productId));
+    return (p?.titulo || '').trim() || 'Suplemento Deportivo';
   }, [products, form.productId]);
 
-  const updateConnectionPanel = useCallback((result, nextHealth = null) => {
-    setConnectionPanel((prev) => ({
-      ...prev,
-      attempts: result?.attempts || prev.attempts || [],
-      activeUrl: result?.url || prev.activeUrl || '',
-      health: nextHealth !== null ? nextHealth : prev.health,
-      checkedAt: new Date().toLocaleTimeString('es-CO'),
-    }));
-  }, []);
+  const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
 
-  const resolveTemplateUrl = (url) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')) {
-      return url;
-    }
-    if (typeof window === 'undefined') {
-      return `/${url}`;
-    }
-    return `${window.location.origin}/${url.replace(/^\//, '')}`;
-  };
-
-  const handleChange = (key) => (event) => {
-    const value = event.target.value;
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const fetchImages = useCallback(async () => {
+  const fetchGallery = useCallback(async () => {
     try {
-      const userId = form.userId || 'admin';
-      const productId = form.productId || 'general';
-      const path = `ai-images?userId=${encodeURIComponent(userId)}&productId=${encodeURIComponent(productId)}`;
-      const result = await fetchJsonWithFallback(path, { method: 'GET' });
-      if (result.ok && result.data?.ok) {
-        const sorted = (result.data.images || [])
-          .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
-          .map((img) => ({
-            ...img,
-            files: (img.files || []).map((f) => ({ ...f, url: resolveImageUrl(f.url) })),
-          }));
-        setImages(sorted);
+      const r = await fetchJsonSafe(`ai-images?userId=${encodeURIComponent(form.userId||'admin')}&productId=${encodeURIComponent(form.productId||'general')}`);
+      if (r.ok && r.data?.ok) {
+        setImages((r.data.images||[]).sort((a,b)=>(a.orderIndex??0)-(b.orderIndex??0)).map(img=>({...img,files:(img.files||[]).map(f=>({...f,url:resolveImageUrl(f.url)}))})));
       }
-    } catch (error) {
-      console.error('fetch images', error);
-    }
+    } catch(e){console.error(e);}
   }, [form.userId, form.productId]);
+
+  const fetchProducts = useCallback(async () => {
+    try { const r = await fetch(`${baseURL}/productosGet.php`); const d = await r.json(); setProducts(d.productos||[]); }
+    catch(e){console.error(e);}
+  }, []);
 
   const checkServer = useCallback(async () => {
     setServerStatus('checking');
-    setServerMessage('Verificando conexion...');
-    setConnectionErrorDetail('');
     try {
-      const result = await fetchJsonWithFallback('health', { method: 'GET', attemptTimeoutMs: 15000 });
-      updateConnectionPanel(result, result.ok ? (result.data || null) : null);
-      if (result.ok && result.data?.ok) {
-        const hasKey = Boolean(
-          result.data?.has_key
-          ?? result.data?.hasKey
-          ?? result.data?.api_key_loaded
-          ?? result.data?.key_loaded,
-        );
-        const imageModel = result.data?.model || 'n/a';
-        const visionModel = result.data?.vision_model || 'n/a';
-        if (!hasKey && String(result.data?.mock || '').toLowerCase() !== 'true') {
-          setServerStatus('error');
-          setServerMessage(`Servidor responde pero falta OPENAI_API_KEY en ${result.url}.`);
-          setConnectionErrorDetail('Falta la variable OPENAI_API_KEY o no se esta leyendo en el servidor.');
-          return false;
-        }
-        setServerStatus('ok');
-        setServerMessage(`Conectado (${result.url}) | img:${imageModel} | vision:${visionModel}`);
-        return true;
-      }
-      if (!result.ok) {
-        const status = result.status ? ` (${result.status})` : '';
-        setServerMessage(`Health no disponible${status}. Se intentara generar igualmente.`);
-        const attemptError = result.errorMessage || result.text || 'sin detalle';
-        const humanError = attemptError === 'html_response'
-          ? 'La URL responde HTML (frontend), no JSON del backend IA.'
-          : attemptError;
-        setConnectionErrorDetail(`Health fallo en ${result.url || 'desconocido'}${status}. Detalle: ${humanError}`);
-      }
-    } catch (error) {
-      setServerMessage('No se pudo validar health. Se intentara generar igualmente.');
-      setConnectionErrorDetail(error?.message || 'Error de red al validar health.');
-    }
-    setServerStatus('error');
-    return false;
-  }, [updateConnectionPanel]);
-
-  const fetchProducts = useCallback(async () => {
-    try {
-      const response = await fetch(`${baseURL}/productosGet.php`, { method: 'GET' });
-      const data = await response.json();
-      setProducts(data.productos || []);
-    } catch (error) {
-      console.error('fetch products', error);
-    }
+      const r = await fetchJsonSafe('health');
+      if (r.ok && r.data?.ok) { setServerStatus('ok'); return true; }
+      setServerStatus('error'); return false;
+    } catch(e) { setServerStatus('error'); return false; }
   }, []);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchGallery(); }, [fetchGallery]);
+  useEffect(() => { fetchProducts(); }, [fetchProducts]);
+  useEffect(() => { checkServer(); }, [checkServer]);
   useEffect(() => {
-    fetchImages();
-  }, [fetchImages]);
+    const f = files.find(Boolean);
+    if (f) extractColor(f).then(setBrandColor); else setBrandColor(null);
+  }, [files]);
 
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
-  useEffect(() => {
-    const fetchTemplates = async () => {
+  const generatePollinations = async () => {
+    setLoading(true); setError(''); setImageUrl('');
+    setStatus('🌸 Construyendo prompt de alto impacto...');
+    try {
+      const [w,h] = (form.size||'1024x1024').split('x').map(Number);
+      const prompt = buildHighImpactPrompt({ productName, productDetails:form.productDetails, templateType:form.templateType||'Hero', angle:form.angle, benefit:form.benefit, style:form.style, brandColor });
+      setLastPrompt(prompt);
+      setStatus('🎨 Generando con Flux AI... (20-45s, por favor espera)');
+      const seed = Math.floor(Math.random()*999999);
+      const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w||1024}&height=${h||1024}&seed=${seed}&nologo=true&model=flux&enhance=true`;
+      await new Promise((res,rej)=>{ const i=new window.Image(); i.onload=res; i.onerror=rej; i.src=url; });
+      setImageUrl(url);
+      setGenCount(c=>c+1);
       try {
-        const response = await fetch(TEMPLATE_MANIFEST, { cache: 'no-store' });
-        const data = await response.json();
-        const remote = Array.isArray(data.templates) ? data.templates : [];
-        // Merge: remote templates + built-in (avoid duplicates by id)
-        const remoteIds = new Set(remote.map((t) => t.id));
-        const merged = [...remote, ...BUILTIN_TEMPLATES.filter((t) => !remoteIds.has(t.id))];
-        setTemplates(merged);
-      } catch (error) {
-        // Fallback to built-in templates
-        setTemplates(BUILTIN_TEMPLATES);
-      }
-    };
-    fetchTemplates();
-  }, []);
+        await fetchJsonSafe('ai-images/save-external',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ userId:form.userId||'admin', productId:form.productId||'general', productName, template:form.templateType||'Hero', url, model:'pollinations-flux', prompt_used:prompt }) });
+        await fetchGallery();
+      } catch(_){}
+      setStatus('✅ ¡Imagen de alto impacto generada!');
+    } catch(e) { setError('Error al generar. Revisa conexión e intenta de nuevo.'); setStatus(''); }
+    finally { setLoading(false); }
+  };
 
-  useEffect(() => {
-    checkServer();
-  }, [checkServer]);
-
-  useEffect(() => () => {
-    uploadedTemplates.forEach((tpl) => {
-      if (tpl?.isCustom && String(tpl.url || '').startsWith('blob:')) {
-        URL.revokeObjectURL(tpl.url);
-      }
-    });
-  }, [uploadedTemplates]);
-
-  const handlePickTemplate = (template) => {
-    const templatePrompt = [
-      `Replica el estilo visual de la plantilla seleccionada (${template?.name || template?.id || 'Hero'}).`,
-      'Manten composicion premium de e-commerce, alto contraste y enfoque al producto.',
-      'No incluyas texto en la imagen final.',
-    ].join(' ');
-    setForm((prev) => ({ ...prev, templateType: template.category || prev.templateType }));
-    setForm((prev) => ({ ...prev, style: templatePrompt }));
-    const finalId = template.id || '';
-    setSelectedTemplateId(finalId);
-    setPendingTemplateId('');
+  const generateOpenAI = async () => {
+    if (!files.filter(Boolean).length) { setError('Sube al menos 1 foto del producto para OpenAI.'); return; }
+    setLoading(true); setError(''); setImageUrl('');
+    setStatus('🧠 Generando con OpenAI...');
+    const ok = await checkServer();
+    if (!ok) { setError('Backend sin conexión. Usa Pollinations (gratis) por ahora.'); setLoading(false); return; }
+    const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(),60000);
     try {
-      localStorage.setItem('ia_last_template_config', JSON.stringify({
-        templateId: template.id || '',
-        templateName: template.name || '',
-        templateCategory: template.category || '',
-        templateUrl: template.url || '',
-        savedAt: Date.now(),
-      }));
-    } catch (error) {
-      // ignore storage failure
-    }
-    setTemplateModalOpen(false);
-    setStatusMessage(`Plantilla ${template?.name || ''} seleccionada y configurada.`);
+      const fd = new FormData();
+      fd.append('image', await ensurePng(files.find(Boolean)));
+      fd.append('productName', productName); fd.append('userId', form.userId||'admin');
+      fd.append('productId', form.productId||'general'); fd.append('template', form.templateType||'Hero');
+      fd.append('size', form.size||'1024x1024'); fd.append('language', form.language||'es');
+      fd.append('productDetails', form.productDetails||''); fd.append('angle', form.angle||'');
+      fd.append('avatar', form.benefit||''); fd.append('extraInstructions', form.style||'');
+      const r = await fetchJsonSafe('images/generate',{ method:'POST', signal:ctrl.signal, body:fd });
+      if (r.ok && r.data?.ok) { setImageUrl(resolveImageUrl(r.data.image_url||'')); await fetchGallery(); setGenCount(c=>c+1); setStatus('✅ Imagen generada con OpenAI.'); }
+      else setError(r.data?.error || r.text || 'Error desconocido');
+    } catch(e) { setError(e?.name==='AbortError'?'Tiempo agotado (60s).':e.message); }
+    finally { clearTimeout(t); setLoading(false); }
   };
 
-  const handleUploadTemplateFromPc = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const customId = `custom-${Date.now()}`;
-    const category = templateTab || 'Hero';
-    const url = URL.createObjectURL(file);
-    const custom = {
-      id: customId,
-      name: file.name || 'Plantilla personalizada',
-      category,
-      url,
-      isCustom: true,
-    };
-    setUploadedTemplates((prev) => [custom, ...prev]);
-    setPendingTemplateId(customId);
-    setSelectedTemplateId(customId);
-    setForm((prev) => ({ ...prev, templateType: category }));
-    setTemplateModalOpen(true);
-    setStatusMessage('Plantilla subida desde PC. Ahora pulsa "Seleccionar plantilla".');
-    event.target.value = '';
+  const handleGenerate = () => model==='pollinations' ? generatePollinations() : generateOpenAI();
+
+  const pickTpl = (tpl) => { setSelTpl(tpl.id); setPendingTpl(''); setForm(p=>({...p,templateType:tpl.category||p.templateType})); setTplModal(false); setStatus(`✅ Plantilla "${tpl.name}" seleccionada.`); };
+
+  const uploadTpl = (e) => {
+    const f = e.target.files?.[0]; if(!f) return;
+    const id = `custom-${Date.now()}`; const url = URL.createObjectURL(f);
+    setCustomTpls(p=>[{id,name:f.name||'Personalizada',category:tplTab,url,isCustom:true},...p]);
+    setSelTpl(id); setForm(p=>({...p,templateType:tplTab})); setTplModal(false);
+    setStatus('✅ Plantilla cargada y seleccionada.'); e.target.value='';
   };
 
-  const handleGenerateWithPollinations = async () => {
-    setLoading(true);
-    setActionError('');
-    setImageUrl('');
-    setStatusMessage('Generando con Pollinations IA... (gratis, puede tardar 20-40s)');
-    try {
-      const productN = selectedProductName || 'producto natural';
-      const details = form.productDetails || '';
-      const template = form.templateType || 'Hero';
-      const angle = form.angle || '';
-      const extra = form.style || '';
-      const [w, h] = (form.size || '1024x1024').split('x').map(Number);
-
-      const promptParts = [
-        `ultra realistic professional ecommerce product photo, ${productN}`,
-        `template style: ${template}`,
-        details ? `product details: ${details}` : '',
-        angle ? `sales angle: ${angle}` : '',
-        'premium commercial lighting, studio quality, clean background',
-        'high impact conversion image, crisp details, photorealistic',
-        'STRICT: NO text, NO words, NO captions, NO banners, NO typography',
-        extra ? `extra: ${extra}` : '',
-      ].filter(Boolean).join(', ');
-
-      const encodedPrompt = encodeURIComponent(promptParts);
-      const seed = Math.floor(Math.random() * 99999);
-      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=flux`;
-
-      // Precargar la imagen para confirmar que se generó
-      await new Promise((resolve, reject) => {
-        const img = new window.Image();
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = pollinationsUrl;
-      });
-
-      setImageUrl(pollinationsUrl);
-
-      // Guardar en el store local del servidor como referencia
-      try {
-        await fetchJsonWithFallback('ai-images/save-external', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: form.userId || 'admin',
-            productId: form.productId || 'general',
-            productName: productN,
-            template,
-            url: pollinationsUrl,
-            model: 'pollinations-flux',
-            prompt_used: promptParts,
-          }),
-        });
-        await fetchImages();
-      } catch (_) {
-        // Si falla guardar, igual mostramos la imagen
-      }
-
-      setStatusMessage('✅ Imagen generada con Pollinations IA (gratis). ¡Alto impacto!');
-    } catch (error) {
-      setActionError('No se pudo generar con Pollinations. Verifica tu conexión o intenta de nuevo.');
-      setStatusMessage('');
-    } finally {
-      setLoading(false);
-    }
+  const deleteImg = async (id) => {
+    try { await fetchJsonSafe('ai-images/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({userId:form.userId||'admin',imageId:id})}); setImages(p=>p.filter(i=>i.id!==id)); }
+    catch(e){console.error(e);}
   };
 
-  const handleGenerate = async () => {
-    if (selectedModel === 'pollinations') {
-      return handleGenerateWithPollinations();
-    }
+  const DEMO = useMemo(()=>[
+    {id:'d1',isDemo:true,template:'Hero',files:[{url:'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png'}],analysis:{high_impact_score:97}},
+    {id:'d2',isDemo:true,template:'Oferta',files:[{url:'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=512&h=512&fit=crop'}],analysis:{high_impact_score:93}},
+    {id:'d3',isDemo:true,template:'Beneficios',files:[{url:'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=512&h=512&fit=crop'}],analysis:{high_impact_score:91}},
+    {id:'d4',isDemo:true,template:'Transformación',files:[{url:'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=512&h=512&fit=crop'}],analysis:{high_impact_score:95}},
+  ],[]);
 
-    // — OpenAI flow —
-    setLoading(true);
-    setActionError('');
-    setImageUrl('');
-    setStatusMessage('Generando imagen con OpenAI... puede tardar hasta 60 segundos.');
-    if (!files.filter(Boolean).length) {
-      setActionError('Debes subir al menos 1 foto real del producto para generar la imagen.');
-      setStatusMessage('');
-      setLoading(false);
-      return;
-    }
-    if (!selectedTemplateId) {
-      setActionError('Selecciona una plantilla antes de generar.');
-      setStatusMessage('');
-      setLoading(false);
-      return;
-    }
-    const connected = await checkServer();
-    if (!connected) {
-      setActionError('Servidor IA sin conexion. Verifica y vuelve a intentar.');
-      setConnectionErrorDetail((prev) => prev || 'Sin conexion valida para generar. Revisa panel de endpoints y variables OPENAI.');
-      setStatusMessage('');
-      setLoading(false);
-      return;
-    }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
-    try {
-      const payload = {
-        productId: form.productId || 'producto',
-        productName: selectedProductName,
-        template: form.templateType || 'hero',
-        size: form.size || '1024x1024',
-        language: form.language || 'es',
-        prompt: form.productDetails
-          ? `Foto profesional del producto ${selectedProductName}. ${form.productDetails}`
-          : `Foto profesional del producto ${selectedProductName}, fondo blanco, iluminacion de estudio, alta calidad.`,
-      };
-
-      const formData = new FormData();
-      if (files.filter(Boolean)[0]) {
-        const imageForApi = await ensurePngFile(files.filter(Boolean)[0]);
-        formData.append('image', imageForApi);
-      }
-      formData.append('productName', payload.productName);
-      formData.append('userId', form.userId || 'admin');
-      formData.append('productId', form.productId || 'general');
-      formData.append('template', payload.template);
-      formData.append('size', payload.size);
-      formData.append('language', payload.language);
-      formData.append('productDetails', form.productDetails || '');
-      formData.append('angle', form.angle || '');
-      formData.append('avatar', form.benefit || '');
-      formData.append('extraInstructions', form.style || '');
-
-      const result = await fetchJsonWithFallback('images/generate', {
-        method: 'POST',
-        signal: controller.signal,
-        body: formData,
-      });
-      updateConnectionPanel(result);
-
-      if (result.ok && result.data?.ok) {
-        const data = result.data;
-        setImageUrl(resolveImageUrl(data.image_url || ''));
-        await fetchImages();
-        setStatusMessage('Imagenes generadas. Revisa la seccion de variantes.');
-      } else if (result.ok && result.data) {
-        const rawError = String(result.data.error || '').trim();
-        const friendlyError = /images\.edits is not a function/i.test(rawError)
-          ? 'Servidor IA desactualizado en Render (SDK antiguo). Haz redeploy del backend y recarga fuerte (Ctrl+F5).'
-          : (rawError || 'No se pudo generar.');
-        setActionError(friendlyError);
-        setConnectionErrorDetail(rawError || 'Error funcional devuelto por la API.');
-        setStatusMessage('');
-      } else {
-        const target = result.url || buildApiUrl('/api', 'images/generate');
-        const status = result.status ? ` (status ${result.status})` : '';
-        setActionError(`La API no respondio JSON en ${target}${status}`);
-        setConnectionErrorDetail(`Respuesta invalida/no JSON en ${target}${status}. Posible proxy, ruta incorrecta o servidor caido.`);
-        setStatusMessage('');
-      }
-    } catch (error) {
-      if (error?.name === 'AbortError') {
-        setActionError('Tiempo de espera agotado (60s).');
-        setConnectionErrorDetail('Timeout durante generacion. Revisa carga del servidor o tamaño de imagen.');
-      } else {
-        setActionError(error.message);
-        setConnectionErrorDetail(error.message || 'Error inesperado durante generacion.');
-      }
-      setStatusMessage('');
-    } finally {
-      clearTimeout(timeout);
-      setLoading(false);
-    }
-  };
-
-  const handleConfirmTemplate = async () => {
-    const chosen = allTemplates.find((item) => item.id === pendingTemplateId);
-    if (!chosen) {
-      setActionError('Selecciona una plantilla antes de confirmar.');
-      return;
-    }
-    handlePickTemplate(chosen);
-    if (files.filter(Boolean)[0]) {
-      setStatusMessage('Analizando plantilla y producto para generar version similar...');
-      try {
-        const imageForApi = await ensurePngFile(files.filter(Boolean)[0]);
-        const analyzeData = new FormData();
-        analyzeData.append('image', imageForApi);
-        analyzeData.append('clientId', form.userId || 'admin');
-        const analyzeResult = await fetchJsonWithFallback('product/analyze', {
-          method: 'POST',
-          body: analyzeData,
-        });
-        updateConnectionPanel(analyzeResult);
-        if (analyzeResult.ok && analyzeResult.data?.ok) {
-          const analysis = analyzeResult.data.analysis || {};
-          setForm((prev) => ({
-            ...prev,
-            templateType: chosen.category || analysis.suggestedTemplate || prev.templateType,
-            angle: analysis.suggestedAngle || prev.angle,
-            style: prev.style || analysis.recommendedInstructions || prev.style,
-          }));
-        } else if (!analyzeResult.ok) {
-          const status = analyzeResult.status ? ` (${analyzeResult.status})` : '';
-          setConnectionErrorDetail(`Fallo analisis en ${analyzeResult.url || 'endpoint'}${status}: ${analyzeResult.errorMessage || analyzeResult.text || 'sin detalle'}`);
-        }
-      } catch (error) {
-        // si falla analisis, continua con generacion
-      }
-      await handleGenerate();
-    }
-  };
-  const serverStatusLabel = serverStatus === 'ok'
-    ? 'Conectado'
-    : serverStatus === 'checking'
-      ? 'Verificando'
-      : serverStatus === 'error'
-        ? 'Sin conexion'
-        : 'Verificar';
-
-  const handleDelete = async (id) => {
-    try {
-      const result = await fetchJsonWithFallback('ai-images/delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: form.userId || 'admin', imageId: id }),
-      });
-      if (result.ok && result.data?.ok !== false) {
-        setImages((prev) => prev.filter((img) => img.id !== id));
-      }
-    } catch (error) {
-      console.error('delete', error);
-    }
-  };
-  const handleViewImage = (url) => {
-    if (!url) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  };
-  const handleDownloadImage = (url, index) => {
-    if (!url) return;
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `seccion-${index + 1}.png`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+  const displayImages = images.length > 0 ? images : DEMO;
 
   return (
-    <div className="imagenesIA">
-      <div className="imagenesWrapper darkUi">
-        <header className="topBarIa">
-          <span>✨ Imágenes IA</span>
-          <button type="button" className={`serverChip ${serverStatus}`} onClick={checkServer}>
-            {serverStatus === 'ok' ? 'Servidor conectado' : serverStatusLabel}
+    <div className="imagenesIA"><div className="imagenesWrapper darkUi">
+      <header className="topBarIa">
+        <span>✨ Imágenes IA — Alto Impacto</span>
+        <button type="button" className={`serverChip ${serverStatus}`} onClick={checkServer}>
+          {serverStatus==='ok'?'✅ Conectado':serverStatus==='checking'?'⏳ Verificando':'❌ Sin conexión'}
+        </button>
+      </header>
+
+      {serverStatus==='error'&&<div className="offlineFloating"><button type="button" className="serverChip error" onClick={checkServer}>Sin conexión — Reintentar</button></div>}
+
+      <section className="iaCard">
+        <div className="iaCardTitle">
+          <h3>🎨 Generador de Imágenes IA</h3>
+          <p>Imágenes persuasivas de alto impacto al estilo ecom-magic.</p>
+          {genCount>0&&<span className="generationBadge">🔥 {genCount} imágenes esta sesión</span>}
+        </div>
+
+        <div className="modelSelectorRow">
+          {MODEL_OPTIONS.map(m=>(
+            <button key={m.id} type="button" className={`modelCard ${model===m.id?'modelCardActive':''}`} onClick={()=>setModel(m.id)}>
+              <span className="modelIcon">{m.icon}</span>
+              <div className="modelInfo"><span className="modelLabel">{m.label}</span><span className="modelDesc">{m.desc}</span></div>
+              <span className={`modelBadge ${m.id==='pollinations'?'badgeFree':'badgePremium'}`}>{m.badge}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="fieldRow">
+          <label>Tipo de Imagen</label>
+          <div className="templateTypeRow">
+            {TPL_TYPES.map(t=>(
+              <button key={t} type="button" className={`typeChip ${form.templateType===t?'typeChipActive':''`} onClick={()=>setForm(p=>({...p,templateType:t}))}>{t}</button>
+            ))}
+          </div>
+        </div>
+
+        <div className="fieldRow">
+          <label>Plantilla de Referencia</label>
+          <div className="templateActions">
+            <button type="button" className="templateHeroBtn" onClick={()=>setTplModal(true)}>
+              <span>🖼 Galería de Plantillas</span><small>{activeTpl?activeTpl.name:'Sin seleccionar'}</small>
+            </button>
+            <button type="button" className="uploadPcBtn" onClick={()=>tplFileRef.current?.click()}>📁 Subir desde PC</button>
+            <input ref={tplFileRef} type="file" accept="image/*" className="hiddenFileInput" onChange={uploadTpl}/>
+          </div>
+          {activeTpl&&<div className="selectedTemplatePreview"><img src={activeTpl.url} alt={activeTpl.name}/><div><b>Activa:</b> <span>{activeTpl.name}</span></div></div>}
+        </div>
+
+        <div className="fieldRow">
+          <label>Fotos del Producto</label>
+          <small className="helpText">Sube 1-3 fotos — se extrae color de marca automáticamente</small>
+          {brandColor&&<div className="colorExtracted"><span style={{background:brandColor,display:'inline-block',width:16,height:16,borderRadius:3,verticalAlign:'middle',marginRight:6}}/><small>Color detectado: <b>{brandColor}</b></small></div>}
+          <div className="uploadGrid">
+            {['Foto 1','Foto 2','Foto 3'].map((lbl,idx)=>(
+              <label key={lbl} className="uploadSlot">
+                {files[idx]?(<><img src={URL.createObjectURL(files[idx])} alt={lbl}/><button type="button" className="slotRemove" onClick={e=>{e.preventDefault();e.stopPropagation();const n=[...files];n[idx]=null;setFiles(n);}}>✕</button></>):(<><span className="plusCircle">+</span><small>{lbl}</small></>)}
+                <input type="file" accept="image/*" onChange={e=>{const n=[...files];n[idx]=e.target.files[0];setFiles(n);}}/>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="fieldGridTwo">
+          <div className="fieldRow"><label>Tamaño</label><select value={form.size} onChange={set('size')}>{SIZE_OPTS.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}</select></div>
+          <div className="fieldRow"><label>Producto</label>
+            <select value={form.productId} onChange={e=>setForm(p=>({...p,productId:e.target.value}))}>
+              <option value="">Seleccionar producto</option>
+              {products.map(p=><option key={p.idProducto} value={String(p.idProducto)}>{p.titulo}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="creativeHeader">
+          <div><strong>⚙️ Controles Creativos</strong><small>Ángulo de venta, avatar, branding</small></div>
+          <button type="button" className={`creativeToggle ${showAdv?'active':''}`} onClick={()=>setShowAdv(p=>!p)}/>
+        </div>
+        {showAdv&&(
+          <div className="advancedStack">
+            <div className="fieldRow"><label>Detalles del Producto</label><textarea value={form.productDetails} onChange={set('productDetails')} placeholder="Ej: GlycoFuse sabor fresa, 25g carbohidratos, recipiente negro con azul eléctrico..."/></div>
+            <div className="fieldRow"><label>Ángulo de Venta</label><textarea value={form.angle} onChange={set('angle')} placeholder="Ej: Recuperación post-entrenamiento, para atletas de alto rendimiento..."/></div>
+            <div className="fieldRow"><label>Avatar Cliente Ideal</label><textarea value={form.benefit} onChange={set('benefit')} placeholder="Ej: Hombres 25-40 años, deportistas, quieren ganar músculo..."/></div>
+            <div className="fieldRow"><label>Instrucciones Extra</label><textarea value={form.style} onChange={set('style')} placeholder="Ej: Fondo oscuro dramático, explosión de energía, colores vibrantes..."/></div>
+          </div>
+        )}
+
+        <div className="actions">
+          <button type="button" className="primary" onClick={handleGenerate} disabled={loading||(model==='openai'&&serverStatus!=='ok')}>
+            {loading?'⏳ Generando...':model==='pollinations'?'🌸 Generar Imagen Gratis':'🧠 Generar con OpenAI'}
           </button>
-        </header>
-        <section className="connectionPanel">
-          <div className="connectionPanelHead">
-            <strong>Panel de Conexion IA</strong>
-            <button type="button" className="serverChip" onClick={checkServer}>Revisar ahora</button>
-          </div>
-          <p>
-            Servidor IA fijo: <b>{DEFAULT_IA_API_BASE}</b>
-          </p>
-          <p>
-            Endpoint activo: <b>{connectionPanel.activeUrl || 'No detectado'}</b>
-          </p>
-          <p>
-            Ultima revision: <b>{connectionPanel.checkedAt || '--:--:--'}</b>
-          </p>
-          <p>
-            API Key: <b>{
-              (connectionPanel.health?.has_key
-                ?? connectionPanel.health?.hasKey
-                ?? connectionPanel.health?.api_key_loaded
-                ?? connectionPanel.health?.key_loaded) ? 'Detectada' : 'No detectada'
-            }</b> | Mock: <b>{String(connectionPanel.health?.mock || 'false')}</b>
-          </p>
-          <p>
-            Img model: <b>{connectionPanel.health?.model || 'n/a'}</b> | Edit model: <b>{connectionPanel.health?.edit_model || 'n/a'}</b> | Vision: <b>{connectionPanel.health?.vision_model || 'n/a'}</b>
-          </p>
-          <div className="connectionAttempts">
-            {(connectionPanel.attempts || []).map((attempt) => (
-              <div key={`${attempt.url}-${attempt.status}`} className={`attemptRow ${attempt.ok ? 'ok' : 'fail'}`}>
-                <span>{attempt.url}</span>
-                <span>{attempt.ok ? 'OK' : `FAIL ${attempt.status || ''} ${attempt.error || ''}`}</span>
-              </div>
-            ))}
-            {!connectionPanel.attempts?.length && <div className="attemptRow fail"><span>Sin intentos aun</span><span>--</span></div>}
-          </div>
-          {connectionErrorDetail && <p className="connectionErrorDetail">{connectionErrorDetail}</p>}
-        </section>
-        {serverStatus === 'error' && (
-          <div className="offlineFloating">
-            <button type="button" className="serverChip error" onClick={checkServer}>
-              Sin conexion - Reintentar
-            </button>
+          {imageUrl&&<button type="button" className="secondary" onClick={handleGenerate} disabled={loading}>🔄 Regenerar</button>}
+          <button type="button" className="secondary" onClick={fetchGallery}>🔃 Actualizar</button>
+        </div>
+
+        {model==='pollinations'&&<div className="pollinationsNote"><span>🌸</span><span>Pollinations Flux — Gratis, sin API key. Prompts premium de alto impacto.</span></div>}
+        {error&&<p className="error">❌ {error}</p>}
+        {status&&!error&&<p className="status">{status}</p>}
+        {lastPrompt&&<details className="promptDebug"><summary>🔍 Ver prompt generado</summary><p>{lastPrompt}</p></details>}
+      </section>
+
+      <section className="gallerySection generatedEndSection">
+        <div className="galleryHeader">
+          <h2>🖼 Imágenes Generadas</h2>
+          <span className="gallerySubtitle">{images.length===0?'Referencias de estilo ↓':`${images.length} imágenes guardadas`}</span>
+        </div>
+        {imageUrl&&(
+          <div className="latestResult">
+            <img src={imageUrl} alt="Última generada"/>
+            <div className="latestActions">
+              <span>✨ Última generada</span>
+              <button type="button" onClick={()=>window.open(imageUrl,'_blank')}>🔍 Ver grande</button>
+              <button type="button" onClick={()=>{const a=document.createElement('a');a.href=imageUrl;a.download='imagen-ia.png';a.click();}}>⬇ Descargar</button>
+            </div>
           </div>
         )}
-
-        <section className="iaCard">
-          <div className="iaCardTitle">
-            <h3>Generar Imagen IA</h3>
-            <p>Elige tu modelo, sube fotos del producto y genera imagenes de alto impacto.</p>
-          </div>
-
-          {/* Selector de Modelos */}
-          <div className="modelSelectorRow">
-            {MODEL_OPTIONS.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                className={`modelCard ${selectedModel === m.id ? 'modelCardActive' : ''}`}
-                onClick={() => setSelectedModel(m.id)}
-              >
-                <span className="modelIcon">{m.icon}</span>
-                <div className="modelInfo">
-                  <span className="modelLabel">{m.label}</span>
-                  <span className="modelDesc">{m.description}</span>
-                </div>
-                <span className={`modelBadge ${m.id === 'pollinations' ? 'badgeFree' : 'badgePremium'}`}>
-                  {m.badge}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          <div className="fieldRow">
-            <label>Plantilla</label>
-            <button type="button" className="uploadPcBtn" onClick={() => templateFileInputRef.current?.click()}>
-              Subir desde PC
-            </button>
-            <input
-              ref={templateFileInputRef}
-              type="file"
-              accept="image/*"
-              className="hiddenFileInput"
-              onChange={handleUploadTemplateFromPc}
-            />
-            <button type="button" className="templateHeroBtn" onClick={() => setTemplateModalOpen(true)}>
-              <span>Seleccionar Plantilla</span>
-              <small>de la Galeria</small>
-            </button>
-            {selectedTemplate && (
-              <div className="selectedTemplatePreview">
-                <img src={resolveTemplateUrl(selectedTemplate.url)} alt={selectedTemplate.name} />
-                <div>
-                  <b>Plantilla activa:</b>
-                  <span>{selectedTemplate.name}</span>
-                </div>
+        <div className="galleryGrid">
+          {displayImages.map((img,idx)=>(
+            <article key={img.id} className={img.isDemo?'demoCard':''}>
+              {!img.isDemo&&<button type="button" className="quickRemoveBtn" onClick={()=>deleteImg(img.id)}>✕</button>}
+              {img.isDemo&&<span className="demoBadge">Referencia</span>}
+              <img src={img.files?.[0]?.url} alt={`Imagen ${idx+1}`} loading="lazy"/>
+              <div className="galleryCardFooter">
+                <p>{img.template||`Imagen ${idx+1}`}</p>
+                {img.analysis?.high_impact_score&&<span className="impactScore">⚡ {img.analysis.high_impact_score}%</span>}
               </div>
-            )}
-          </div>
+              <div className="galleryActions">
+                <button type="button" onClick={()=>window.open(img.files?.[0]?.url,'_blank')}>Ver</button>
+                <button type="button" onClick={()=>{const a=document.createElement('a');a.href=img.files?.[0]?.url;a.download=`img-${idx+1}.png`;a.click();}}>Descargar</button>
+                {!img.isDemo&&<button type="button" className="danger" onClick={()=>deleteImg(img.id)}>Eliminar</button>}
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
 
-          <div className="fieldRow">
-            <label>Fotos del Producto</label>
-            <small className="helpText">(agrega de 1 a 3 fotos)</small>
-            <div className="uploadGrid">
-              {['Imagen 1', 'Imagen 2', 'Imagen 3'].map((label, idx) => (
-                <label key={label} className="uploadSlot">
-                  {files[idx] ? (
-                    <>
-                      <img src={URL.createObjectURL(files[idx])} alt={label} />
-                      <button
-                        type="button"
-                        className="slotRemove"
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          const next = [...files];
-                          next[idx] = null;
-                          setFiles(next);
-                        }}
-                      >
-                        x
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="plusCircle">+</span>
-                      <small>{label}</small>
-                    </>
-                  )}
-                  <input type="file" accept="image/*" onChange={(event) => {
-                    const selected = Array.from(event.target.files ?? []);
-                    const next = [...files];
-                    next[idx] = selected[0];
-                    setFiles(next);
-                  }} />
-                </label>
+      {tplModal&&(
+        <div className="templateModalOverlay" onClick={()=>setTplModal(false)}>
+          <div className="templateModal" onClick={e=>e.stopPropagation()}>
+            <div className="templateModalHeader"><h3>🖼 Galería de Plantillas</h3><button type="button" onClick={()=>setTplModal(false)}>✕</button></div>
+            <div className="templateTabs">{TPL_TYPES.map(t=><button key={t} type="button" className={tplTab===t?'active':''} onClick={()=>setTplTab(t)}>{t}</button>)}</div>
+            <div className="templateGrid compact">
+              {allTpls.filter(t=>t.category===tplTab).map(tpl=>(
+                <button key={tpl.id} type="button" className={pendingTpl===tpl.id||selTpl===tpl.id?'templateSelected':''} onClick={()=>setPendingTpl(tpl.id)}>
+                  <img src={tpl.url} alt={tpl.name}/><span>{tpl.name}</span>
+                </button>
               ))}
+              {!allTpls.filter(t=>t.category===tplTab).length&&<p className="empty">Sin plantillas en esta categoría.</p>}
+            </div>
+            <div className="templateModalFooter">
+              <button type="button" className="secondary" onClick={()=>setTplModal(false)}>Cancelar</button>
+              <button type="button" className="primary" disabled={!pendingTpl} onClick={()=>{const t=allTpls.find(t=>t.id===pendingTpl);if(t)pickTpl(t);}}>✅ Seleccionar</button>
             </div>
           </div>
-
-          <div className="fieldGridTwo">
-            <div className="fieldRow">
-              <label>Tamano de Salida</label>
-              <select value={form.size} onChange={handleChange('size')}>
-                {sizeOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-            </div>
-            <div className="fieldRow">
-              <label>Idioma de Salida</label>
-              <select value={form.language} onChange={handleChange('language')}>
-                <option value="es">Espanol</option>
-                <option value="en">Ingles</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="creativeHeader">
-            <div>
-              <strong>Controles Creativos (Opcional)</strong>
-              <small>Personaliza tu seccion</small>
-            </div>
-            <button
-              type="button"
-              className={`creativeToggle ${showAdvanced ? 'active' : ''}`}
-              onClick={() => setShowAdvanced((prev) => !prev)}
-              aria-pressed={showAdvanced ? 'true' : 'false'}
-            />
-          </div>
-
-          {showAdvanced && (
-            <div className="advancedStack">
-              <div className="fieldRow">
-                <label>Detalles del Producto</label>
-                <textarea value={form.productDetails} onChange={handleChange('productDetails')} placeholder="Describe las caracteristicas, beneficios y detalles del producto..." />
-              </div>
-              <div className="fieldRow">
-                <label>Angulo de Venta</label>
-                <textarea value={form.angle} onChange={handleChange('angle')} placeholder="Ej: Mujeres en transicion de menopausia..." />
-              </div>
-              <div className="fieldRow">
-                <label>Avatar de Cliente Ideal</label>
-                <textarea value={form.benefit} onChange={handleChange('benefit')} placeholder="Ej: Mujeres 45-55 anos..." />
-              </div>
-              <div className="fieldRow">
-                <label>Instrucciones Adicionales</label>
-                <textarea value={form.style} onChange={handleChange('style')} placeholder="Cualquier instruccion especifica..." />
-              </div>
-            </div>
-          )}
-
-          <div className="advancedGrid">
-            <div className="fieldRow">
-              <label>Producto (opcional)</label>
-              <select
-                value={form.productId}
-                onChange={(event) => {
-                  const nextId = event.target.value;
-                  setForm((prev) => ({
-                    ...prev,
-                    productId: nextId,
-                  }));
-                }}
-              >
-                <option value="">Selecciona un producto</option>
-                {products.map((item) => (
-                  <option key={item.idProducto} value={String(item.idProducto)}>
-                    {item.titulo}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="actions">
-            <button
-              type="button"
-              className="primary"
-              onClick={handleGenerate}
-              disabled={loading || (selectedModel === 'openai' && serverStatus !== 'ok')}
-            >
-              {loading ? 'Generando...' : selectedModel === 'pollinations' ? '🌸 Generar Gratis' : '🧠 Generar con OpenAI'}
-            </button>
-            <button type="button" className="secondary" onClick={fetchImages}>
-              Actualizar
-            </button>
-          </div>
-          {selectedModel === 'pollinations' && (
-            <div className="pollinationsNote">
-              <span>🌸</span>
-              <span>Pollinations.ai — generacion gratuita, sin API key requerida</span>
-            </div>
-          )}
-          <small className="usageNote">{images.length} imagenes generadas para este producto.</small>
-          {selectedModel === 'openai' && serverMessage && <p className="serverMessage">{serverMessage}</p>}
-          {actionError && <p className="error">{actionError}</p>}
-          {statusMessage && !actionError && <p className="status">{statusMessage}</p>}
-        </section>
-
-        <section className="gallerySection generatedEndSection">
-          <div className="galleryHeader">
-            <h2>Imagenes Generadas</h2>
-            {images.length === 0 && <span className="gallerySubtitle">Ejemplos de alto impacto ↓</span>}
-          </div>
-          {imageUrl && (
-            <div className="latestResult">
-              <img src={imageUrl} alt="Ultima imagen generada" />
-              <span>✨ Ultima generada</span>
-            </div>
-          )}
-          <div className="galleryGrid">
-            {(images.length > 0 ? images : demoImages).map((img, index) => (
-              <article key={img.id} className={img.isDemo ? 'demoCard' : ''}>
-                {!img.isDemo && (
-                  <button type="button" className="quickRemoveBtn" onClick={() => handleDelete(img.id)} aria-label="Eliminar imagen">
-                    ✕
-                  </button>
-                )}
-                {img.isDemo && <span className="demoBadge">Ejemplo</span>}
-                <img src={img.files?.[0]?.url} alt={`Imagen ${index + 1}`} loading="lazy" />
-                <div className="galleryCardFooter">
-                  <p>{img.template || (index === 0 ? 'Principal' : `Imagen ${index + 1}`)}</p>
-                  {img.analysis?.high_impact_score && (
-                    <span className="impactScore">⚡ {img.analysis.high_impact_score}%</span>
-                  )}
-                </div>
-                {img.analysis && !img.isDemo && (
-                  <div className="imageAnalysis">
-                    <small>
-                      Producto detectado: <b>{img.analysis.detected_product || 'n/a'}</b>
-                    </small>
-                    <small>
-                      Match producto: <b>{img.analysis.product_match_score ?? 'n/a'}%</b> | Match plantilla: <b>{img.analysis.template_match_score ?? 'n/a'}%</b>
-                    </small>
-                    <small>
-                      Hero impacto: <b>{img.analysis.hero_style_score ?? 'n/a'}%</b> | Alto impacto: <b>{img.analysis.high_impact_score ?? 'n/a'}%</b>
-                    </small>
-                    {img.analysis.notes && <small>{img.analysis.notes}</small>}
-                  </div>
-                )}
-                {!img.isDemo && (
-                  <div className="galleryActions">
-                    <button type="button" onClick={() => handleViewImage(img.files?.[0]?.url)}>
-                      Ver
-                    </button>
-                    <button type="button" onClick={() => handleDownloadImage(img.files?.[0]?.url, index)}>
-                      Descargar
-                    </button>
-                    <button type="button" className="danger" onClick={() => handleDelete(img.id)}>
-                      Eliminar
-                    </button>
-                  </div>
-                )}
-                {img.isDemo && (
-                  <div className="galleryActions">
-                    <button type="button" onClick={() => handleViewImage(img.files?.[0]?.url)}>
-                      Ver
-                    </button>
-                    <button type="button" onClick={() => handleDownloadImage(img.files?.[0]?.url, index)}>
-                      Descargar
-                    </button>
-                  </div>
-                )}
-              </article>
-            ))}
-          </div>
-        </section>
-
-
-        {templateModalOpen && (
-          <div className="templateModalOverlay" onClick={() => setTemplateModalOpen(false)}>
-            <div className="templateModal" onClick={(event) => event.stopPropagation()}>
-              <div className="templateModalHeader">
-                <h3>Galeria de Disenos</h3>
-                <button type="button" onClick={() => setTemplateModalOpen(false)}>x</button>
-              </div>
-              <div className="templateTabs">
-                {templateOptions.map((opt) => (
-                  <button
-                    key={opt}
-                    type="button"
-                    className={templateTab === opt ? 'active' : ''}
-                    onClick={() => setTemplateTab(opt)}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-              <div className="templateGrid compact">
-                {allTemplates.filter((item) => item.category === templateTab).map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    className={(pendingTemplateId === tpl.id || selectedTemplateId === tpl.id) ? 'templateSelected' : ''}
-                    onClick={() => {
-                      setPendingTemplateId(tpl.id);
-                      setSelectedTemplateId(tpl.id);
-                    }}
-                  >
-                    <img src={resolveTemplateUrl(tpl.url)} alt={tpl.name} />
-                    <span>{tpl.name}</span>
-                  </button>
-                ))}
-                {!allTemplates.filter((item) => item.category === templateTab).length && (
-                  <p className="empty">No hay plantillas cargadas.</p>
-                )}
-              </div>
-              <div className="templateModalFooter">
-                <button type="button" className="secondary" onClick={() => setTemplateModalOpen(false)}>
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className="primary"
-                  onClick={handleConfirmTemplate}
-                  disabled={!pendingTemplateId}
-                >
-                  Seleccionar plantilla
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </div></div>
   );
 }
-
-
-
-
-
-
-
-
