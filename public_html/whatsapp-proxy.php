@@ -1,12 +1,12 @@
 <?php
 /**
- * WhatsApp Proxy - forwards /api/whatsapp/* to Render backend
+ * WhatsApp Proxy - forwards /* to Render backend
  * SSE-aware: streams text/event-stream responses chunk-by-chunk
  */
 
 $BACKEND = 'https://sanate-wa-bot.onrender.com';
 $path    = isset($_GET['path']) ? ltrim($_GET['path'], '/') : '';
-$url     = $BACKEND . '/api/whatsapp/' . $path;
+$url     = $BACKEND . '/' . $path;
 
 $qs = $_GET;
 unset($qs['path']);
