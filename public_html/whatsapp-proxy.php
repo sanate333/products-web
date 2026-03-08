@@ -1,30 +1,26 @@
 <?php
 /**
- * WhatsApp Proxy – forwards /api/whatsapp/* to Fly.io backend
+ * WhatsApp Proxy - forwards /api/whatsapp/* to Render backend
  * SSE-aware: streams text/event-stream responses chunk-by-chunk
  */
 
-$BACKEND = 'https://sanate-wa-bot.fly.dev';
+$BACKEND = 'https://sanate-wa-bot.onrender.com';
 $path    = isset($_GET['path']) ? ltrim($_GET['path'], '/') : '';
 $url     = $BACKEND . '/api/whatsapp/' . $path;
 
-// Build query string (excluding our own 'path' param)
 $qs = $_GET;
 unset($qs['path']);
 if ($qs) $url .= '?' . http_build_query($qs);
 
-// Is this an SSE request?
 $acceptHeader = isset($_SERVER['HTTP_ACCEPT']) ? $_SERVER['HTTP_ACCEPT'] : '';
 $isSSE = ($path === 'events') || (strpos($acceptHeader, 'text/event-stream') !== false);
 
-// --- cURL setup ---
 $ch = curl_init($url);
 curl_setopt($ch, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($ch, CURLOPT_TIMEOUT, $isSSE ? 0 : 30);
 curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
 
-// Forward method + body
 $method = $_SERVER['REQUEST_METHOD'];
 if ($method === 'POST') {
     curl_setopt($ch, CURLOPT_POST, true);
@@ -36,7 +32,6 @@ if ($method === 'POST') {
     if ($rawBody) curl_setopt($ch, CURLOPT_POSTFIELDS, $rawBody);
 }
 
-// Forward relevant request headers
 $fwdHeaders = [];
 $allHeaders = function_exists('getallheaders') ? getallheaders() : [];
 foreach ($allHeaders as $name => $value) {
@@ -52,7 +47,6 @@ if ($isSSE) {
 }
 curl_setopt($ch, CURLOPT_HTTPHEADER, $fwdHeaders);
 
-// --- Capture response headers ---
 $responseHeaders = [];
 curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($ch, $header) use (&$responseHeaders) {
     $len = strlen($header);
@@ -63,9 +57,6 @@ curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($ch, $header) use (&$responseH
     return $len;
 });
 
-// ============================================================
-// SSE path – stream each chunk straight to the browser
-// ============================================================
 if ($isSSE) {
     @ini_set('output_buffering', 'off');
     @ini_set('zlib.output_compression', false);
@@ -90,9 +81,6 @@ if ($isSSE) {
     exit;
 }
 
-// ============================================================
-// Regular (non-SSE) request
-// ============================================================
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 $body       = curl_exec($ch);
 $httpStatus = curl_getinfo($ch, CURLINFO_HTTP_CODE);
