@@ -1,4 +1,4 @@
-`import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import './ImagenesIA.css';
 import baseURL from '../../Components/url';
 
