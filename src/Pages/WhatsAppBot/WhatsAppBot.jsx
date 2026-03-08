@@ -3478,8 +3478,6 @@ ${conversation}`
                   <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTraining(trainingPrompt); tip('✅ Entrenamiento guardado') }}>💾 Guardar</button>
                 </div>
               </div>
-      {page === 'difusiones' && <DifusionesMasivas BU={BU} sec={DEFAULT_SECRET}/>}
-      {page === 'dispositivos' && <DispositivosPage BU={BU} sec={DEFAULT_SECRET}/>}
 
               {/* Tabs */}
               <div style={{ display: 'flex', gap: '.3rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
@@ -3667,6 +3665,8 @@ ${conversation}`
               )}
             </div>
           )}
+          {page === 'difusiones' && <DifusionesMasivas BU={BU} sec={DEFAULT_SECRET}/>}
+          {page === 'dispositivos' && <DispositivosPage BU={BU} sec={DEFAULT_SECRET}/>}
 
           {/* ══ CONEXIÓN ══ */}
           {page === 'conexion' && (
