@@ -498,6 +498,87 @@ function DispositivosPage({ BU, sec }) {
   );
 }
 
+function BtnMsgEditor({ BU, sec }) {
+  const S = sec || 'sanate_secret_2025';
+  const [body, setBody] = React.useState('');
+  const [buttons, setButtons] = React.useState(['', '', '']);
+  const [phone, setPhone] = React.useState('');
+  const [sending, setSending] = React.useState(false);
+  const [result, setResult] = React.useState(null);
+  const [open, setOpen] = React.useState(false);
+  const [contacts, setContacts] = React.useState([]);
+  React.useEffect(() => {
+    if (!open) return;
+    fetch(BU + '/chats', { headers: { 'x-secret': S } })
+      .then(r => r.json())
+      .then(d => setContacts((d.chats || d || []).slice(0, 60)))
+      .catch(() => {});
+  }, [open]);
+  const send = async () => {
+    const btns = buttons.map(b => b.trim()).filter(Boolean);
+    if (!phone.trim() || !body.trim() || !btns.length) { alert('Completa destinatario, mensaje y al menos 1 botón'); return; }
+    setSending(true); setResult(null);
+    try {
+      const jid = phone.trim().replace(/\D/g, '') + '@s.whatsapp.net';
+      const r = await fetch(BU + '/send-buttons', {
+        method: 'POST',
+        headers: { 'x-secret': S, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: jid, body: body.trim(), buttons: btns.map((b, i) => ({ id: 'b' + i, text: b })) })
+      });
+      const d = await r.json();
+      setResult(d.ok ? '✅ Enviado' : '❌ ' + (d.error || 'Error'));
+      if (d.ok) { setBody(''); setPhone(''); setButtons(['', '', '']); }
+    } catch (e) { setResult('❌ ' + e.message); }
+    setSending(false);
+  };
+  return (
+    <div style={{ marginTop: 20, border: '1px solid #1e4d2b', borderRadius: 8, overflow: 'hidden' }}>
+      <div onClick={() => setOpen(o => !o)}
+        style={{ background: '#0d2b1a', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
+        <span style={{ color: '#c8e6c9', fontWeight: 600, fontSize: 14 }}>📲 Mensajes con Botones Interactivos</span>
+        <span style={{ color: '#888', fontSize: 12 }}>{open ? '▲ cerrar' : '▼ crear nuevo'}</span>
+      </div>
+      {open && (
+        <div style={{ padding: '14px 16px', background: '#0a1f12' }}>
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 4 }}>Destinatario</label>
+            <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="573001234567"
+              style={{ width: '100%', background: '#111', border: '1px solid #1e4d2b', borderRadius: 4, color: '#eee', padding: '6px 8px', fontSize: 13, boxSizing: 'border-box' }} />
+            {contacts.length > 0 && (
+              <select value={phone} onChange={e => setPhone(e.target.value)}
+                style={{ width: '100%', marginTop: 4, background: '#111', border: '1px solid #1e4d2b', borderRadius: 4, color: '#aaa', padding: '5px 8px', fontSize: 12 }}>
+                <option value=''>— o seleccionar contacto —</option>
+                {contacts.map(c => <option key={c.id} value={(c.id || '').replace('@s.whatsapp.net', '')}>{c.name || c.id}</option>)}
+              </select>
+            )}
+          </div>
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 4 }}>Mensaje</label>
+            <textarea value={body} onChange={e => setBody(e.target.value)} rows={3} placeholder="Cuerpo del mensaje..."
+              style={{ width: '100%', background: '#111', border: '1px solid #1e4d2b', borderRadius: 4, color: '#eee', padding: '6px 8px', fontSize: 13, boxSizing: 'border-box', resize: 'vertical' }} />
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 4 }}>Botones (máx 3)</label>
+            {[0, 1, 2].map(i => (
+              <input key={i} value={buttons[i]}
+                onChange={e => setButtons(bs => { const n = [...bs]; n[i] = e.target.value; return n; })}
+                placeholder={i === 0 ? 'Botón 1 (requerido)' : 'Botón ' + (i + 1) + ' (opcional)'}
+                style={{ width: '100%', background: '#111', border: '1px solid ' + (i === 0 ? '#1e4d2b' : '#162e1c'), borderRadius: 4, color: '#eee', padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', marginBottom: 4 }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={send} disabled={sending}
+              style={{ background: sending ? '#1a3a2a' : '#25d366', color: '#fff', border: 'none', borderRadius: 5, padding: '7px 18px', fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontSize: 14 }}>
+              {sending ? '⏳ Enviando...' : '📤 Enviar con Botones'}
+            </button>
+            {result && <span style={{ fontSize: 13, color: result.startsWith('✅') ? '#4caf50' : '#f44336' }}>{result}</span>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function WhatsAppBot() {
   const [page,        setPage]        = useState(() => { try { return localStorage.getItem('wb_current_page') || 'chat' } catch { return 'chat' } })
   const [lifecycle, setLifecycle] = useState(()=>{try{const s=localStorage.getItem('wa_lifecycle');return s?JSON.parse(s):{}}catch(e){return {}}})
@@ -936,7 +1017,7 @@ export default function WhatsAppBot() {
         return true
       })
       // IMPORTANTE: evaluar correctamente; sin paréntesis la precedencia es incorrecta
-      const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
+      const s = (d.ok === false) ? 'disconnected' : (d.status === 'qr' ? 'connecting' : (d.status || 'disconnected'))
       setStatus(s)
       setPhone(d.phone || '')
       if (s === 'connected') {
@@ -2990,6 +3071,7 @@ ${conversation}`
                 💡 <strong>Cómo usarlas:</strong> En el chat, usa el botón 📋 del input. En ⚡ Disparadores, selecciona una plantilla al configurar un trigger de palabra clave.
               </div>
             </div>
+      <BtnMsgEditor BU={BU} sec={DEFAULT_SECRET}/>
           )}
 
           {/* ══ CLIENTES ══ */}
