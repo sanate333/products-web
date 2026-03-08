@@ -3070,8 +3070,8 @@ ${conversation}`
               <div style={{ fontSize: '.68rem', color: '#9ca3af', marginTop: '.75rem', lineHeight: 1.5 }}>
                 💡 <strong>Cómo usarlas:</strong> En el chat, usa el botón 📋 del input. En ⚡ Disparadores, selecciona una plantilla al configurar un trigger de palabra clave.
               </div>
+            <BtnMsgEditor BU={BU} sec={DEFAULT_SECRET}/>
             </div>
-      <BtnMsgEditor BU={BU} sec={DEFAULT_SECRET}/>
           )}
 
           {/* ══ CLIENTES ══ */}
