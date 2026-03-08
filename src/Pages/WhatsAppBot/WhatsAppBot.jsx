@@ -1865,9 +1865,9 @@ ${conversation}`
     { id: 'entrenamiento',  label: '🧠 Entrenamiento IA',    section: 'Automatización',  badge: 0 },
     { id: 'conexion',       label: '📱 Conexión WhatsApp',   section: 'Configuración',   badge: 0 },
     { id: 'config',         label: '⚙️ Ajustes',             section: 'Configuración',   badge: 0 },
-    { id: 'instagram', label: '📸 Instagram',          section: 'Apps Chat', badge: 0 },
-    { id: 'facebook',  label: '💬 Facebook Messenger', section: 'Apps Chat', badge: 0 },
-    { id: 'tiktok',    label: '🎵 TikTok',             section: 'Apps Chat', badge: 0 },
+    { id: 'instagram', label: 'Instagram', section: 'Apps Chat', badge: 0, brandColor: '#E1306C' },
+    { id: 'facebook',  label: 'Messenger', section: 'Apps Chat', badge: 0, brandColor: '#0084FF' },
+    { id: 'tiktok',    label: 'TikTok',    section: 'Apps Chat', badge: 0, brandColor: '#EE1D52' },
   ]
 
   function goPage(id) {
@@ -1941,7 +1941,18 @@ ${conversation}`
                   className={`wbv5-nav-item ${page === item.id ? 'active' : ''}`}
                   onClick={() => goPage(item.id)}
                 >
-                  <span style={{ flex: 1 }}>{item.label}</span>
+                  <span style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                {item.id === 'instagram' ? <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{flexShrink:0}}><defs><linearGradient id="ig-g" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stopColor="#f09433"/><stop offset="50%" stopColor="#dc2743"/><stop offset="100%" stopColor="#bc1888"/></linearGradient></defs><rect x="2" y="2" width="20" height="20" rx="5" ry="5" fill="url(#ig-g)"/><circle cx="12" cy="12" r="4" stroke="white" strokeWidth="2" fill="none"/><circle cx="17.5" cy="6.5" r="1.5" fill="white"/></svg>
+                  <span style={{color:'#E1306C'}}>{item.label}</span>
+                </> : item.id === 'facebook' ? <>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#0084FF" style={{flexShrink:0}}><path d="M12 2C6.477 2 2 6.145 2 11.259c0 2.928 1.448 5.545 3.71 7.26v3.48l3.384-1.855c.905.25 1.864.386 2.856.386 5.523 0 10-4.145 10-9.271C22 6.145 17.523 2 12 2zm1.037 12.49l-2.547-2.718-4.971 2.718 5.467-5.804 2.609 2.718 4.908-2.718-5.466 5.804z"/></svg>
+                  <span style={{color:'#0084FF'}}>{item.label}</span>
+                </> : item.id === 'tiktok' ? <>
+                  <svg width="15" height="15" viewBox="0 0 448 512" style={{flexShrink:0}}><path fill="#69C9D0" d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z"/><path fill="#EE1D52" d="M446,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,183,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,379,102.39a121.43,121.43,0,0,0,67,20.14Z"/></svg>
+                  <span style={{color:'#EE1D52'}}>{item.label}</span>
+                </> : item.label}
+              </span>
                   {item.badge > 0 && <span className="wbv5-nav-badge">{item.badge}</span>}
                 </div>
               ))}
