@@ -373,94 +373,89 @@ function DifusionesMasivas({ BU, sec }) {
   }, [BU, sec]);
   React.useEffect(()=>{ load(); const t=setInterval(load,6000); return ()=>clearInterval(t); },[load]);
   const create = async () => {
-    if(!form.numbers.trim()||!form.message.trim()) return alert('Números y mensaje son requeridos');
-    const numbers = form.numbers.split(/[\n,;]+/).map(n=>n.trim()).filter(Boolean);
-    if(!numbers.length) return alert('Ingresa al menos un número');
+    const nums = form.numbers.split(/[\n,]+/).map(n=>n.trim()).filter(Boolean);
+    if (!nums.length || !form.message.trim()) return;
     setSending(true);
     try {
-      const r = await fetch(BU+'/broadcast',{method:'POST',headers:{'x-secret':sec,'Content-Type':'application/json'},body:JSON.stringify({...form,numbers})});
-      const d = await r.json();
-      if(d.ok){ setTab('list'); load(); setForm({name:'',numbers:'',message:'',mediaUrl:'',delayType:'short',deviceId:'default',startHour:10,startMin:0,endHour:18,endMin:0}); }
-      else alert('Error: '+d.error);
-    } catch(e){ alert('Error de conexión'); }
-    setSending(false);
+      await fetch(BU+'/broadcast',{method:'POST',headers:{'x-secret':sec,'Content-Type':'application/json'},body:JSON.stringify({...form,numbers:nums})});
+      setTab('list'); load();
+    } catch(e){} finally { setSending(false); }
   };
-  const toggleJob = async (id,status) => {
-    await fetch(BU+'/broadcast/'+id,{method:'PATCH',headers:{'x-secret':sec,'Content-Type':'application/json'},body:JSON.stringify({status:status==='running'?'paused':'running'})}).catch(()=>{});
+  const toggleJob = async (id, status) => {
+    await fetch(BU+'/broadcast/'+id,{method:'PATCH',headers:{'x-secret':sec,'Content-Type':'application/json'},body:JSON.stringify({status})}).catch(()=>{});
     load();
   };
   const delJob = async (id) => {
-    if(!window.confirm('¿Eliminar esta difusión?')) return;
+    if (!confirm('\u00bfEliminar difusi\u00f3n?')) return;
     await fetch(BU+'/broadcast/'+id,{method:'DELETE',headers:{'x-secret':sec}}).catch(()=>{});
     load();
   };
-  const IS = { inp:{background:'#2a2a2a',border:'1px solid #444',borderRadius:'8px',padding:'10px',color:'#fff',width:'100%',boxSizing:'border-box',fontSize:'14px'}, lbl:{color:'#aaa',fontSize:'13px',marginBottom:'5px',display:'block'}, btn:{border:'none',borderRadius:'8px',padding:'8px 16px',cursor:'pointer',fontWeight:'600',fontSize:'14px',color:'#fff'} };
-  const SC = { running:'#22c55e', paused:'#f59e0b', done:'#6b7280', stopped:'#ef4444' };
-  const SL = { running:'▶ Enviando', paused:'⏸ Pausado', done:'✓ Completado', stopped:'✗ Detenido' };
   return (
-    <div style={{padding:'20px',maxWidth:'860px',margin:'0 auto'}}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'20px',flexWrap:'wrap',gap:'10px'}}>
-        <h2 style={{color:'#fff',margin:0,fontSize:'20px'}}>📢 Difusiones Masivas</h2>
-        <div style={{display:'flex',gap:'8px'}}>
-          <button style={{...IS.btn,background:tab==='list'?'#25d366':'#2a2a2a',border:'1px solid '+(tab==='list'?'#25d366':'#444')}} onClick={()=>setTab('list')}>📋 Difusiones ({jobs.length})</button>
-          <button style={{...IS.btn,background:tab==='new'?'#25d366':'#2a2a2a',border:'1px solid '+(tab==='new'?'#25d366':'#444')}} onClick={()=>setTab('new')}>➕ Nueva</button>
-        </div>
+    <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#111'}}>
+      <div style={{display:'flex',gap:'8px',padding:'12px 16px',borderBottom:'1px solid #2a2a2a',background:'#0d0d0d'}}>
+        <button onClick={()=>setTab('list')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='list'?'#25d366':'transparent',color:tab==='list'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>\ud83d\udccb Difusiones</button>
+        <button onClick={()=>setTab('new')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='new'?'#25d366':'transparent',color:tab==='new'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>\u2795 Nueva</button>
       </div>
-      {tab==='new' && (
-        <div style={{background:'#1a1a1a',borderRadius:'12px',padding:'20px',display:'grid',gap:'14px',border:'1px solid #333'}}>
-          <div><label style={IS.lbl}>Nombre de campaña</label><input style={IS.inp} placeholder="Ej: Promo Marzo 2025" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/></div>
-          <div><label style={IS.lbl}>📱 Números (uno por línea, o separados por coma)</label><textarea style={{...IS.inp,height:'100px',resize:'vertical',fontFamily:'monospace'}} placeholder={"521551234567\n521558765432"} value={form.numbers} onChange={e=>setForm(f=>({...f,numbers:e.target.value}))}/></div>
-          <div><label style={IS.lbl}>💬 Mensaje</label><textarea style={{...IS.inp,height:'80px',resize:'vertical'}} placeholder="Hola, te contactamos de SANATE..." value={form.message} onChange={e=>setForm(f=>({...f,message:e.target.value}))}/></div>
-          <div><label style={IS.lbl}>🖼 URL de Media (opcional)</label><input style={IS.inp} placeholder="https://ejemplo.com/imagen.jpg" value={form.mediaUrl} onChange={e=>setForm(f=>({...f,mediaUrl:e.target.value}))}/></div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-            <div><label style={IS.lbl}>📱 Dispositivo</label><select style={IS.inp} value={form.deviceId} onChange={e=>setForm(f=>({...f,deviceId:e.target.value}))}><option value="default">default</option></select></div>
-            <div><label style={IS.lbl}>⚡ Velocidad de envío</label><select style={IS.inp} value={form.delayType} onChange={e=>setForm(f=>({...f,delayType:e.target.value}))}><option value="short">Rápido (5-15s)</option><option value="medium">Normal (15-45s)</option><option value="long">Lento (45-120s)</option></select></div>
-          </div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'12px'}}>
-            <div><label style={IS.lbl}>🕐 Hora inicio</label><input style={IS.inp} type="number" min="0" max="23" value={form.startHour} onChange={e=>setForm(f=>({...f,startHour:+e.target.value}))}/></div>
-            <div><label style={IS.lbl}>🕔 Hora fin</label><input style={IS.inp} type="number" min="0" max="23" value={form.endHour} onChange={e=>setForm(f=>({...f,endHour:+e.target.value}))}/></div>
-          </div>
-          <div style={{display:'flex',gap:'10px'}}>
-            <button onClick={create} disabled={sending} style={{...IS.btn,background:sending?'#555':'#25d366',fontSize:'15px',padding:'12px',flex:1}}>{sending?'⏳ Creando...':'🚀 Iniciar Difusión'}</button>
-            <button onClick={()=>setTab('list')} style={{...IS.btn,background:'#333',padding:'12px'}}>✕ Cancelar</button>
-          </div>
-        </div>
-      )}
       {tab==='list' && (
-        <div style={{display:'grid',gap:'12px'}}>
-          {jobs.length===0 && (
-            <div style={{textAlign:'center',padding:'48px 20px',color:'#666',background:'#1a1a1a',borderRadius:'12px',border:'1px solid #333'}}>
-              <div style={{fontSize:'48px',marginBottom:'12px'}}>📢</div>
-              <div style={{fontSize:'16px',color:'#888',marginBottom:'16px'}}>No hay difusiones todavía</div>
-              <button onClick={()=>setTab('new')} style={{...IS.btn,background:'#25d366',padding:'10px 24px'}}>➕ Crear primera difusión</button>
-            </div>
-          )}
+        <div style={{flex:1,overflowY:'auto',padding:'12px',display:'flex',flexDirection:'column',gap:'10px'}}>
+          {jobs.length===0 && <div style={{textAlign:'center',color:'#666',marginTop:'40px',fontSize:'14px'}}>Sin difusiones activas</div>}
           {jobs.map(j=>(
-            <div key={j.id} style={{background:'#1a1a1a',borderRadius:'12px',padding:'16px',border:'1px solid #333'}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'12px'}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{color:'#fff',fontWeight:'bold',fontSize:'15px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{j.name||'Sin nombre'}</div>
-                  <div style={{color:'#888',fontSize:'12px',marginTop:'4px'}}>{j.totalNumbers||0} números · {j.delayType} · {j.deviceId} · {j.startHour}:00–{j.endHour}:00</div>
-                  <div style={{marginTop:'8px',display:'flex',gap:'12px',alignItems:'center',flexWrap:'wrap'}}>
-                    <span style={{color:SC[j.status]||'#888',fontWeight:'bold',fontSize:'13px'}}>{SL[j.status]||j.status}</span>
-                    <span style={{color:'#25d366',fontSize:'13px'}}>✉ {j.sentCount||0} enviados</span>
-                    {(j.errors||0)>0 && <span style={{color:'#ef4444',fontSize:'13px'}}>⚠ {j.errors} errores</span>}
-                    {(j.position||0)>0 && <span style={{color:'#aaa',fontSize:'12px'}}>pos {j.position}/{j.totalNumbers||0}</span>}
-                  </div>
-                  <div style={{marginTop:'8px',background:'#333',borderRadius:'4px',height:'6px',overflow:'hidden'}}>
-                    <div style={{height:'100%',background:j.status==='done'?'#6b7280':'#25d366',width:((j.totalNumbers&&j.totalNumbers>0)?(Math.min((j.sentCount||0)/j.totalNumbers*100,100)):0)+'%',transition:'width 0.5s'}}/>
-                  </div>
-                </div>
-                <div style={{display:'flex',gap:'8px',flexShrink:0}}>
-                  {(j.status==='running'||j.status==='paused') && (
-                    <button onClick={()=>toggleJob(j.id,j.status)} style={{...IS.btn,padding:'8px 14px',background:j.status==='running'?'#f59e0b':'#25d366'}} title={j.status==='running'?'Pausar':'Reanudar'}>{j.status==='running'?'⏸':'▶'}</button>
-                  )}
-                  <button onClick={()=>delJob(j.id)} style={{...IS.btn,padding:'8px 14px',background:'#ef4444'}} title="Eliminar">🗑</button>
-                </div>
+            <div key={j.id} style={{background:'#1a1a1a',borderRadius:'10px',padding:'12px',border:'1px solid #2a2a2a'}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
+                <span style={{fontWeight:'600',color:'#eee',fontSize:'13px'}}>{j.name||j.id}</span>
+                <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'12px',background:j.status==='running'?'#22c55e22':'#f59e0b22',color:j.status==='running'?'#22c55e':'#f59e0b'}}>{j.status==='running'?'\u25b6 Activo':'\u23f8 Pausado'}</span>
+              </div>
+              <div style={{fontSize:'12px',color:'#999',marginBottom:'8px'}}>{j.sentCount||0} enviados \u00b7 {j.totalNumbers||0} total \u00b7 {j.errors||0} errores</div>
+              <div style={{height:'4px',background:'#333',borderRadius:'2px',marginBottom:'10px',overflow:'hidden'}}>
+                <div style={{height:'100%',background:'#25d366',width:j.totalNumbers?((j.sentCount||0)/j.totalNumbers*100)+'%':'0%',borderRadius:'2px',transition:'width 0.3s'}}></div>
+              </div>
+              <div style={{display:'flex',gap:'8px'}}>
+                <button onClick={()=>toggleJob(j.id,j.status==='running'?'paused':'running')} style={{flex:1,padding:'6px',borderRadius:'6px',border:'1px solid #333',background:'transparent',color:'#25d366',cursor:'pointer',fontSize:'12px'}}>{j.status==='running'?'\u23f8 Pausar':'\u25b6 Reanudar'}</button>
+                <button onClick={()=>delJob(j.id)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#ef4444',cursor:'pointer',fontSize:'12px'}}>\ud83d\uddd1</button>
               </div>
             </div>
           ))}
-          {jobs.length>0 && <button onClick={load} style={{...IS.btn,background:'#2a2a2a',border:'1px solid #444',width:'100%',padding:'10px'}}>🔄 Actualizar</button>}
+        </div>
+      )}
+      {tab==='new' && (
+        <div style={{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'12px'}}>
+          <div>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Nombre campa\u00f1a</label>
+            <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Ej: Promo Marzo" style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px',boxSizing:'border-box'}} />
+          </div>
+          <div>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>N\u00fameros (uno por l\u00ednea o separados por coma)</label>
+            <textarea value={form.numbers} onChange={e=>setForm(f=>({...f,numbers:e.target.value}))} rows={5} placeholder="5215512345678" style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'12px',resize:'vertical',boxSizing:'border-box'}} />
+          </div>
+          <div>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Mensaje</label>
+            <textarea value={form.message} onChange={e=>setForm(f=>({...f,message:e.target.value}))} rows={4} placeholder="Escribe tu mensaje..." style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px',resize:'vertical',boxSizing:'border-box'}} />
+          </div>
+          <div>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>URL de imagen/video (opcional)</label>
+            <input value={form.mediaUrl} onChange={e=>setForm(f=>({...f,mediaUrl:e.target.value}))} placeholder="https://..." style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px',boxSizing:'border-box'}} />
+          </div>
+          <div style={{display:'flex',gap:'10px'}}>
+            <div style={{flex:1}}>
+              <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Intervalo</label>
+              <select value={form.delayType} onChange={e=>setForm(f=>({...f,delayType:e.target.value}))} style={{width:'100%',padding:'8px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px'}}>
+                <option value="short">Corto (5-15s)</option>
+                <option value="medium">Medio (30-60s)</option>
+                <option value="long">Largo (2-5min)</option>
+              </select>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Horario inicio</label>
+              <input type="time" value={String(form.startHour).padStart(2,'0')+':'+String(form.startMin).padStart(2,'0')} onChange={e=>{const[h,m]=e.target.value.split(':');setForm(f=>({...f,startHour:+h,startMin:+m}));}} style={{width:'100%',padding:'8px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px'}} />
+            </div>
+            <div style={{flex:1}}>
+              <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Horario fin</label>
+              <input type="time" value={String(form.endHour).padStart(2,'0')+':'+String(form.endMin).padStart(2,'0')} onChange={e=>{const[h,m]=e.target.value.split(':');setForm(f=>({...f,endHour:+h,endMin:+m}));}} style={{width:'100%',padding:'8px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px'}} />
+            </div>
+          </div>
+          <button onClick={create} disabled={sending} style={{padding:'12px',borderRadius:'8px',border:'none',background:sending?'#333':'#25d366',color:'#fff',cursor:sending?'not-allowed':'pointer',fontWeight:'700',fontSize:'14px',marginTop:'4px'}}>
+            {sending ? '\u23f3 Enviando...' : '\ud83d\ude80 Iniciar Difusi\u00f3n'}
+          </button>
         </div>
       )}
     </div>
@@ -2091,6 +2086,7 @@ ${conversation}`
     return matchSearch && matchFilter && (chatFilter === 'grupos' ? !!c.isGroup : !c.isGroup)
   })
 
+  const leadFilteredChats = leadFilter === 'all' ? filteredChats : filteredChats.filter(c => (lifecycle[c.jid]?.stage||'nuevo')===leadFilter);
   const NAV = [
     { id: 'overview',       label: '📊 Resumen',            section: 'Principal',       badge: 0 },
     { id: 'chat',           label: '💬 Chats',               section: 'Principal',       badge: unread },
@@ -2403,19 +2399,24 @@ ${conversation}`
                     </button>
                   ))}
                 </div>
-                <div className="wbv5-il-convs">
+                <div style={{display:'flex',gap:'6px',padding:'8px 12px',borderBottom:'1px solid #2a2a2a',background:'#111',flexWrap:'wrap'}}>
+            {[['all','Todos',null],['nuevo','\ud83c\udd95 Nuevo','#3b82f6'],['potencial','\ud83d\udd25 Potencial','#f59e0b'],['cliente','\ud83d\ude0a Cliente','#22c55e'],['perdido','\u274c Perdido','#ef4444']].map(([key,label,clr])=>(
+              <button key={key} onClick={()=>setLeadFilter(key)} style={{border:'1px solid '+(leadFilter===key?(clr||'#25d366'):'#444'),borderRadius:'20px',padding:'3px 10px',background:leadFilter===key?(clr||'#25d366'):'transparent',color:leadFilter===key?'#fff':'#aaa',cursor:'pointer',fontSize:'11px',fontWeight:leadFilter===key?'600':'400'}}>{label}</button>
+            ))}
+          </div>
+          <div className="wbv5-il-convs">
                   {status !== 'connected' ? (
                     <div className="wbv5-empty-state">
                       <div style={{ fontSize: '1.5rem', marginBottom: '.4rem' }}>📱</div>
                       <div>Conecta WhatsApp para ver chats</div>
                       <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.5rem' }} onClick={() => goPage('conexion')}>Conectar</button>
                     </div>
-                  ) : filteredChats.length === 0 ? (
+                  ) : leadFilteredChats.length === 0 ? (
                     <div className="wbv5-empty-state">
                       <div style={{ fontSize: '1.5rem' }}>💬</div>
                       <div>Sin convesaciones</div>
                     </div>
-                  ) : filteredChats.map((c, i) => (
+                  ) : leadFilteredChats.map((c, i) => (
                     <div key={c.id} className={`wbv5-conv-itm ${active?.id === c.id ? 'active' : ''}`} onClick={() => openChat(c)}>
                       <div className="wbv5-ci-ava" style={{ background: c.isGroup ? '#ede9fe' : COLORS_AV[i % 5], color: c.isGroup ? '#5b21b6' : COLORS_TXT[i % 5], position: 'relative', overflow: 'hidden' }}>
                         {c.isGroup ? '👥' : (c.name || c.phone || '?').substring(0, 2).toUpperCase()}
@@ -3097,13 +3098,7 @@ ${conversation}`
           {page === 'clientes' && (
             <div className="wbv5-content">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
-
-              {/* Lead filter panel */}
-              <div style={{display:'flex',gap:'6px',padding:'10px 14px',borderBottom:'1px solid #2a2a2a',flexWrap:'wrap',background:'#111'}}>
-                {[['all','Todos',null],['nuevo','🆕 Nuevo','#3b82f6'],['potencial','🔥 Potencial','#f59e0b'],['cliente','😊 Cliente','#22c55e'],['perdido','❌ Perdido','#ef4444']].map(([key,label,clr])=>(
-                  <button key={key} onClick={()=>setLeadFilter(key)} style={{border:'1px solid '+(leadFilter===key?(clr||'#25d366'):'#444'),borderRadius:'20px',padding:'4px 12px',background:leadFilter===key?(clr||'#25d366'):'transparent',color:leadFilter===key?'#fff':'#aaa',cursor:'pointer',fontSize:'12px',fontWeight:leadFilter===key?'600':'400',transition:'all 0.2s'}}>{label}</button>
-                ))}
-              </div>                <div>
+                <div>
                   <div style={{ fontSize: '.85rem', fontWeight: 800 }}>👥 Clientes</div>
                   <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Clientes que han escrito al WhatsApp — guardados automáticamente</div>
                 </div>
@@ -3874,9 +3869,9 @@ ${conversation}`
 
           {/* ══ CONFIG ══ */}
           {(page==='instagram'||page==='facebook'||page==='tiktok')&&(<div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24,padding:40}}>
-{page==='instagram'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(193,53,132,.3)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Instagram</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de Instagram</p></div>}
-{page==='facebook'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#0099FF',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,153,255,.3)'}}><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Messenger</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes de Facebook Messenger</p></div>}
-{page==='tiktok'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#010101',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,0,0,.25)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.17 8.17 0 0 0 4.78 1.52V6.77a4.85 4.85 0 0 1-1.01-.08z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>TikTok</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de TikTok</p></div>}
+{page==='instagram'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(193,53,132,.3)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Instagram</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de Instagram</p><button style={{background:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar Instagram</button></div>}
+{page==='facebook'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#0099FF',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,153,255,.3)'}}><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Messenger</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes de Facebook Messenger</p><button style={{background:'#0099FF',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar Messenger</button></div>}
+{page==='tiktok'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#010101',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,0,0,.25)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.17 8.17 0 0 0 4.78 1.52V6.77a4.85 4.85 0 0 1-1.01-.08z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>TikTok</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de TikTok</p><button style={{background:'#010101',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar TikTok</button></div>}
 </div>)}
 {page === 'config' && (
             <div className="wbv5-content">
@@ -3974,16 +3969,19 @@ ${conversation}`
                         <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
                           <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={saveBackendUrl}>💾 Guardar y reconectar</button>
                           <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp','')); setSecretInput(DEFAULT_SECRET) }}>↩️ Restaurar defaults</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
                           <button
                   onClick={async () => {
-                    try {
-                      await fetch(BU+'/sync',{method:'POST',headers:{'x-secret':sec}}).catch(()=>{});
-                      await ping();
-                    } catch(e) {}
+                    try { await fetch(BU+'/sync',{method:'POST',headers:{'x-secret':sec}}); } catch(e){}
+                    ping();
                   }}
-                  style={{background:'#25d366',color:'#fff',border:'none',borderRadius:'8px',padding:'8px 14px',cursor:'pointer',fontWeight:'600',fontSize:'13px',display:'flex',alignItems:'center',gap:'6px'}}
+                  className="wbv5-btn wbv5-btn-sm"
                   title="Sincronizar chats y contactos"
-                >🔄 Sincronizar</button>                  {/* ── WhatsApp Status ── */}
+                >🔄 Sincronizar</button>
+                        </div>
+                      </div>
+                    </div>
+                    {/* ── WhatsApp Status ── */}
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
                         <div className="wbv5-card-title">📱 WhatsApp</div>
