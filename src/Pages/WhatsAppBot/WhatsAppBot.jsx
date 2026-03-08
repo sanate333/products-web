@@ -2400,8 +2400,8 @@ ${conversation}`
                   ))}
                 </div>
                 <div style={{display:'flex',gap:'6px',padding:'8px 12px',borderBottom:'1px solid #2a2a2a',background:'#111',flexWrap:'wrap'}}>
-            {[['all','Todos',null],['nuevo','\ud83c\udd95 Nuevo','#3b82f6'],['potencial','\ud83d\udd25 Potencial','#f59e0b'],['cliente','\ud83d\ude0a Cliente','#22c55e'],['perdido','\u274c Perdido','#ef4444']].map(([key,label,clr])=>(
-              <button key={key} onClick={()=>setLeadFilter(key)} style={{border:'1px solid '+(leadFilter===key?(clr||'#25d366'):'#444'),borderRadius:'20px',padding:'3px 10px',background:leadFilter===key?(clr||'#25d366'):'transparent',color:leadFilter===key?'#fff':'#aaa',cursor:'pointer',fontSize:'11px',fontWeight:leadFilter===key?'600':'400'}}>{label}</button>
+            {[['nuevo','\ud83c\udd95 Nuevo','#3b82f6'],['potencial','\ud83d\udd25 Potencial','#f59e0b'],['cliente','\ud83d\ude0a Cliente','#22c55e'],['perdido','\u274c Perdido','#ef4444']].map(([key,label,clr])=>(
+              <button key={key} onClick={()=>setLeadFilter(p=>p===key?'all':key)} style={{border:'1px solid '+(leadFilter===key?(clr||'#25d366'):'#444'),borderRadius:'20px',padding:'3px 10px',background:leadFilter===key?(clr||'#25d366'):'transparent',color:leadFilter===key?'#fff':'#aaa',cursor:'pointer',fontSize:'11px',fontWeight:leadFilter===key?'600':'400'}}>{label}</button>
             ))}
           </div>
           <div className="wbv5-il-convs">
