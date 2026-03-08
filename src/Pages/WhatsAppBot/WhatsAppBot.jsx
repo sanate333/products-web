@@ -386,7 +386,7 @@ function DifusionesMasivas({ BU, sec }) {
     load();
   };
   const delJob = async (id) => {
-    if (!confirm('\u00bfEliminar difusi\u00f3n?')) return;
+    if (!window.confirm('\u00bfEliminar difusi\u00f3n?')) return;
     await fetch(BU+'/broadcast/'+id,{method:'DELETE',headers:{'x-secret':sec}}).catch(()=>{});
     load();
   };
@@ -3972,7 +3972,7 @@ ${conversation}`
                           <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>📱 Ir a Conexión →</button>
                           <button
                   onClick={async () => {
-                    try { await fetch(BU+'/sync',{method:'POST',headers:{'x-secret':sec}}); } catch(e){}
+                    try { await fetch(BU+'/sync',{method:'POST',headers:H}); } catch(e){}
                     ping();
                   }}
                   className="wbv5-btn wbv5-btn-sm"
