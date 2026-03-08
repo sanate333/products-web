@@ -532,7 +532,7 @@ function BtnMsgEditor({ BU, sec }) {
     setSending(false);
   };
   return (
-    <div style={{ marginTop: 20, border: '1px solid #1e4d2b', borderRadius: 8, overflow: 'hidden' }}>
+    <div style={{ marginTop: 20, border: '1px solid #1e4d2b', borderRadius: 8, overflow: open ? 'visible' : 'hidden' }}>
       <div onClick={() => setOpen(o => !o)}
         style={{ background: '#0d2b1a', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
         <span style={{ color: '#c8e6c9', fontWeight: 600, fontSize: 14 }}>📲 Mensajes con Botones Interactivos</span>
