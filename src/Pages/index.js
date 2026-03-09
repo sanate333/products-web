@@ -2,7 +2,7 @@ import IndexLayout from '../Layouts/IndexLayout';
 import MainLayout from '../Layouts/MainLayout';
 import PagesLayaut from '../Layouts/PagesLayaut';
 import StoreDashboardLayout, { StoreDashboardRedirect } from '../Layouts/StoreDashboardLayout';
-import DashboardLayout from '../Pages/DashboardUI/DashboardLayout';h
+import DashboardLayout from '../Pages/DashboardUI/DashboardLayout';
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import Productos from '../Pages/Productos/Productos';
