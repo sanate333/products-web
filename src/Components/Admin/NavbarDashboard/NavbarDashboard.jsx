@@ -25,7 +25,6 @@ import {
   faSlidersH,
   faUserShield,
   faEnvelope,
-  faShoppingCart,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
@@ -55,7 +54,6 @@ const SECTIONS = [
     items: [
       { to: '/dashboard/imagenes-ia',   icon: faMagic,       text: 'Imágenes IA' },
       { to: '/dashboard/landing-pages', icon: faGlobe,       text: 'Landing Pages' },
-      { to: '/dashboard/ofertas-carrito', icon: faShoppingCart, text: 'Ofertas Carrito' },
       { to: '/dashboard/whatsapp-bot',  icon: faComments,    text: 'WhatsApp Bot' },
     ],
   },
