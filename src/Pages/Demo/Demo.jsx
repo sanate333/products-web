@@ -1,4 +1,4 @@
-import React from 'react'
+himport React from 'react'
 import { Link } from 'react-router-dom'
 import Banners from '../../Components/Banners/Banners'
 import Products from '../../Components/Products/Products'
@@ -7,11 +7,9 @@ import Footer from '../../Components/Footer/Footer'
 import BtnWhatsapp from '../../Components/BtnWhatsapp/BtnWhatsapp'
 import Cart from '../../Components/Cart/Cart'
 import BottomBar from '../../Components/BottomBar/BottomBar'
-import DiscountPopup from '../../Components/DiscountPopup/DiscountPopup'
 export default function Demo() {
     return (
         <section className='demo'>
-            <DiscountPopup />
             <Banners />
             <div className='catalogoBtnWrap'>
                 <Link to='/catalogo' className='catalogoBtn'>Catálogo</Link>
@@ -24,3 +22,4 @@ export default function Demo() {
         </section>
     )
 }
+
