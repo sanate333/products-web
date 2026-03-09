@@ -99,16 +99,25 @@ const buildHighImpactPrompt = ({ productName, productDetails, templateType, angl
 };
 
 const ECOM_MAGIC_TEMPLATES = [
-  { id: 'em_hero_1', name: 'Hero Energético', category: 'Hero', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png' },
-  { id: 'em_hero_2', name: 'Hero Potencia Azul', category: 'Hero', url: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&h=600&fit=crop' },
-  { id: 'em_hero_3', name: 'Hero Fuerza', category: 'Hero', url: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&h=600&fit=crop' },
-  { id: 'em_oferta_1', name: 'Oferta Impacto', category: 'Oferta', url: 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?w=600&h=600&fit=crop' },
-  { id: 'em_oferta_2', name: 'Oferta Flash', category: 'Oferta', url: 'https://images.unsplash.com/photo-1579722821273-0f6c7d44362f?w=600&h=600&fit=crop' },
-  { id: 'em_bene_1', name: 'Beneficios Natural', category: 'Beneficios', url: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&h=600&fit=crop' },
-  { id: 'em_bene_2', name: 'Beneficios Muscular', category: 'Beneficios', url: 'https://images.unsplash.com/photo-1532384748853-8f54a8f476e2?w=600&h=600&fit=crop' },
-  { id: 'em_ad_1', name: 'Transformación 30 días', category: 'Antes/Despues', url: 'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=600&h=600&fit=crop' },
-  { id: 'em_test_1', name: 'Testimonio Real', category: 'Testimonio', url: 'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=600&h=600&fit=crop' },
-  { id: 'em_log_1', name: 'Envío Express', category: 'Logistica', url: 'https://images.unsplash.com/photo-1566576912321-d58ddd7a6088?w=600&h=600&fit=crop' },
+  { name: 'Hero Energético', category: 'Hero', thumb: 'https://ecom-magic.ai/public-banners/landing_78910_1772217004324.png', impactScore: 95 },
+  { name: 'Hero Potencia Azul', category: 'Hero', thumb: 'https://ecom-magic.ai/public-banners/landing_70457_1771805762568.png', impactScore: 93 },
+  { name: 'Hero Fuerza', category: 'Hero', thumb: 'https://ecom-magic.ai/public-banners/landing_63155_1771376700325.png', impactScore: 91 },
+  { name: 'Hero Rendimiento', category: 'Hero', thumb: 'https://ecom-magic.ai/public-banners/landing_32348_1769365698492.png', impactScore: 90 },
+  { name: 'Oferta Impacto', category: 'Oferta', thumb: 'https://ecom-magic.ai/public-banners/landing_4027_1766360743874.png', impactScore: 94 },
+  { name: 'Oferta Flash', category: 'Oferta', thumb: 'https://ecom-magic.ai/public-banners/landing_3918_1766348761326.png', impactScore: 92 },
+  { name: 'Oferta Exclusiva', category: 'Oferta', thumb: 'https://ecom-magic.ai/public-banners/landing_3804_1766311229907.png', impactScore: 89 },
+  { name: 'Oferta Limitada', category: 'Oferta', thumb: 'https://ecom-magic.ai/public-banners/landing_78892_1772216487698.png', impactScore: 91 },
+  { name: 'Beneficios Natural', category: 'Beneficios', thumb: 'https://ecom-magic.ai/public-banners/landing_70414_1771804525225.png', impactScore: 90 },
+  { name: 'Beneficios Muscular', category: 'Beneficios', thumb: 'https://ecom-magic.ai/public-banners/landing_61014_1771275347084.png', impactScore: 88 },
+  { name: 'Beneficios Premium', category: 'Beneficios', thumb: 'https://ecom-magic.ai/public-banners/landing_29572_1769149243871.png', impactScore: 87 },
+  { name: 'Transformación 30 días', category: 'Antes/Despues', thumb: 'https://ecom-magic.ai/public-banners/landing_4026_1766360606976.png', impactScore: 96 },
+  { name: 'Antes/Después Pro', category: 'Antes/Despues', thumb: 'https://ecom-magic.ai/public-banners/landing_3916_1766348661768.png', impactScore: 93 },
+  { name: 'Cambio Real', category: 'Antes/Despues', thumb: 'https://ecom-magic.ai/public-banners/landing_3803_1766310453876.png', impactScore: 91 },
+  { name: 'Testimonio Real', category: 'Testimonio', thumb: 'https://ecom-magic.ai/public-banners/landing_3789_1766304596726.png', impactScore: 92 },
+  { name: 'Testimonio Estrella', category: 'Testimonio', thumb: 'https://ecom-magic.ai/public-banners/landing_68439_1771645472746.png', impactScore: 90 },
+  { name: 'Testimonio Verificado', category: 'Testimonio', thumb: 'https://ecom-magic.ai/public-banners/landing_3796_1766307371835.png', impactScore: 88 },
+  { name: 'Envío Express', category: 'Logistica', thumb: 'https://ecom-magic.ai/public-banners/landing_78889_1772216351316.png', impactScore: 85 },
+  { name: 'Entrega Segura', category: 'Logistica', thumb: 'https://ecom-magic.ai/public-banners/landing_29572_1769149243871.png', impactScore: 83 },
 ];
 
 const ensurePngFile = async (file) => {
