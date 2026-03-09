@@ -699,7 +699,7 @@ export default function ImagenesIA() {
                   <button key={tpl.id} type="button"
                     className={pendingTemplateId === tpl.id || selectedTemplateId === tpl.id ? 'templateSelected' : ''}
                     onClick={() => setPendingTemplateId(tpl.id)}>
-                    <img src={tpl.url} alt={tpl.name} />
+                    <img src={tpl.thumb} alt={tpl.name} />
                     <span>{tpl.name}</span>
                   </button>
                 ))}
