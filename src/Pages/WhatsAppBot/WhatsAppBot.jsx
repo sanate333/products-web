@@ -458,7 +458,43 @@ function DifusionesMasivas({ BU, sec }) {
           </button>
         </div>
       )}
-    </div>
+{/* Guia Anti-Baneo - basada en mejores practicas 2025 */}
+      <div style={{marginTop:'24px',padding:'16px',background:'#1a1a1a',borderRadius:'12px',border:'1px solid #2a2a2a'}}>
+        <div style={{display:'flex',alignItems:'center',gap:'8px',marginBottom:'12px'}}>
+          <span style={{fontSize:'18px'}}>&#x1F6E1;</span>
+          <span style={{color:'#fff',fontSize:'14px',fontWeight:'600'}}>L&#xED;mites Diarios Anti-Baneo</span>
+          <span style={{marginLeft:'auto',fontSize:'11px',color:'#888',background:'#222',padding:'2px 8px',borderRadius:'20px'}}>Gu&#xED;a 2025</span>
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:'8px',marginBottom:'16px'}}>
+          {[
+            {label:'Nuevo',days:'D&#xED;a 1-3',max:20,color:'#ff4444',icon:'&#x1F534;'},
+            {label:'Calentando',days:'D&#xED;a 4-7',max:50,color:'#ff8c00',icon:'&#x1F7E0;'},
+            {label:'Creciendo',days:'D&#xED;a 8-14',max:100,color:'#ffd700',icon:'&#x1F7E1;'},
+            {label:'Estable',days:'D&#xED;a 15-30',max:200,color:'#44bb44',icon:'&#x1F7E2;'},
+            {label:'Caliente',days:'30+ d&#xED;as',max:500,color:'#00cc88',icon:'&#x2705;'},
+          ].map(function(item){return (
+            <div key={item.label} style={{background:'#111',borderRadius:'8px',padding:'10px',textAlign:'center',border:'1px solid '+item.color+'55'}}>
+              <div style={{fontSize:'18px',marginBottom:'4px'}} dangerouslySetInnerHTML={{__html:item.icon}}/>
+              <div style={{color:item.color,fontSize:'11px',fontWeight:'700'}}>{item.label}</div>
+              <div style={{color:'#888',fontSize:'10px'}} dangerouslySetInnerHTML={{__html:item.days}}/>
+              <div style={{color:'#fff',fontSize:'20px',fontWeight:'800',margin:'4px 0'}}>{item.max}</div>
+              <div style={{color:'#666',fontSize:'10px'}}>contactos/dia</div>
+            </div>
+          );})}
+        </div>
+        <div style={{borderTop:'1px solid #2a2a2a',paddingTop:'12px'}}>
+          <div style={{fontSize:'11px',color:'#f59e0b',fontWeight:'600',marginBottom:'8px'}}>&#x26A0; Reglas Clave Anti-Baneo:</div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'6px'}}>
+            {['Solo enviar a contactos con opt-in confirmado','Personalizar mensajes con nombre del cliente','Variar horarios, contenido y estructura','Evitar palabras: tarjeta, retiro, ultima oportunidad','Numero nuevo = empezar con pocos envios por dia','No reutilizar perfil o mensajes de numero baneado'].map(function(tip,i){return(
+              <div key={i} style={{fontSize:'11px',color:'#bbb',padding:'5px 8px',background:'#111',borderRadius:'6px',display:'flex',gap:'6px',alignItems:'flex-start'}}>
+                <span style={{color:i<3?'#22c55e':'#f59e0b',flexShrink:0}} dangerouslySetInnerHTML={{__html:i<3?'&#x2705;':'&#x26A0;'}}/>
+                <span dangerouslySetInnerHTML={{__html:tip}}/>
+              </div>
+            );})}
+          </div>
+        </div>
+      </div>
+          </div>
   );
 }
 
