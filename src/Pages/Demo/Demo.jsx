@@ -1,4 +1,4 @@
-himport React from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import Banners from '../../Components/Banners/Banners'
 import Products from '../../Components/Products/Products'
@@ -22,4 +22,3 @@ export default function Demo() {
         </section>
     )
 }
-
