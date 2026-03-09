@@ -275,7 +275,7 @@ export default function ImagenesIA() {
     setLoading(true);
     setActionError('');
     setImageUrl('');
-    setStatusMessage('🌸 Generando imagen de alto impacto... (20-45s)');
+    setStatusMessage('🌸 Generando imagen de alto impacto...');
     try {
       const [w, h] = (form.size || '1024x1024').split('x').map(Number);
       const prompt = buildHighImpactPrompt({
@@ -290,15 +290,29 @@ export default function ImagenesIA() {
       setLastPrompt(prompt);
       const seed = Math.floor(Math.random() * 999999);
       const encodedPrompt = encodeURIComponent(prompt);
-      const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=flux`;
-      setStatusMessage('🎨 Generando imagen premium con Flux... (por favor espera)');
-      await new Promise((resolve, reject) => {
-        const img = new window.Image();
-        img.onload = resolve;
-        img.onerror = reject;
-        img.src = pollinationsUrl;
-      });
-      setImageUrl(pollinationsUrl);
+      const tryLoadImage = (model, timeoutMs = 90000) => {
+        const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=${model}`;
+        return new Promise((resolve, reject) => {
+          const timer = setTimeout(() => { img.src = ''; reject(new Error('timeout')); }, timeoutMs);
+          const img = new window.Image();
+          img.onload = () => { clearTimeout(timer); resolve(url); };
+          img.onerror = () => { clearTimeout(timer); reject(new Error('load_error')); };
+          img.src = url;
+        });
+      };
+
+      let finalUrl;
+      let usedModel = 'flux';
+      try {
+        setStatusMessage('🎨 Generando con Flux... (hasta 90s)');
+        finalUrl = await tryLoadImage('flux', 90000);
+      } catch (fluxErr) {
+        setStatusMessage('⚡ Flux no respondió, reintentando con Turbo...');
+        usedModel = 'turbo';
+        finalUrl = await tryLoadImage('turbo', 90000);
+      }
+
+      setImageUrl(finalUrl);
       setGenerationCount((c) => c + 1);
       try {
         await fetchJsonSafe('ai-images/save-external', {
@@ -309,14 +323,14 @@ export default function ImagenesIA() {
             productId: form.productId || 'general',
             productName: selectedProductName,
             template: form.templateType || 'Hero',
-            url: pollinationsUrl,
-            model: 'pollinations-flux',
+            url: finalUrl,
+            model: `pollinations-${usedModel}`,
             prompt_used: prompt,
           }),
         });
         await fetchImages();
       } catch (_) {}
-      setStatusMessage(`✅ ¡Imagen de alto impacto generada! (${generationCount + 1} generadas)`);
+      setStatusMessage(`✅ ¡Imagen generada con ${usedModel === 'flux' ? 'Flux' : 'Turbo'}! (${generationCount + 1} generadas)`);
     } catch (err) {
       setActionError('Error al generar. Verifica conexión e intenta de nuevo.');
       setStatusMessage('');
