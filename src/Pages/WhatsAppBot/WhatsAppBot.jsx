@@ -386,15 +386,15 @@ function DifusionesMasivas({ BU, sec }) {
     load();
   };
   const delJob = async (id) => {
-    if (!window.confirm('\u00bfEliminar difusi\u00f3n?')) return;
+    if (!window.confirm('¿Eliminar difusión?')) return;
     await fetch(BU+'/broadcast/'+id,{method:'DELETE',headers:{'x-secret':sec}}).catch(()=>{});
     load();
   };
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#111'}}>
       <div style={{display:'flex',gap:'8px',padding:'12px 16px',borderBottom:'1px solid #2a2a2a',background:'#0d0d0d'}}>
-        <button onClick={()=>setTab('list')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='list'?'#25d366':'transparent',color:tab==='list'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>\ud83d\udccb Difusiones</button>
-        <button onClick={()=>setTab('new')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='new'?'#25d366':'transparent',color:tab==='new'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>\u2795 Nueva</button>
+        <button onClick={()=>setTab('list')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='list'?'#25d366':'transparent',color:tab==='list'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>📋 Difusiones</button>
+        <button onClick={()=>setTab('new')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='new'?'#25d366':'transparent',color:tab==='new'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>➕ Nueva</button>
       </div>
       {tab==='list' && (
         <div style={{flex:1,overflowY:'auto',padding:'12px',display:'flex',flexDirection:'column',gap:'10px'}}>
@@ -403,15 +403,15 @@ function DifusionesMasivas({ BU, sec }) {
             <div key={j.id} style={{background:'#1a1a1a',borderRadius:'10px',padding:'12px',border:'1px solid #2a2a2a'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
                 <span style={{fontWeight:'600',color:'#eee',fontSize:'13px'}}>{j.name||j.id}</span>
-                <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'12px',background:j.status==='running'?'#22c55e22':'#f59e0b22',color:j.status==='running'?'#22c55e':'#f59e0b'}}>{j.status==='running'?'\u25b6 Activo':'\u23f8 Pausado'}</span>
+                <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'12px',background:j.status==='running'?'#22c55e22':'#f59e0b22',color:j.status==='running'?'#22c55e':'#f59e0b'}}>{j.status==='running'?'▶ Activo':'⏸ Pausado'}</span>
               </div>
-              <div style={{fontSize:'12px',color:'#999',marginBottom:'8px'}}>{j.sentCount||0} enviados \u00b7 {j.totalNumbers||0} total \u00b7 {j.errors||0} errores</div>
+              <div style={{fontSize:'12px',color:'#999',marginBottom:'8px'}}>{j.sentCount||0} enviados · {j.totalNumbers||0} total · {j.errors||0} errores</div>
               <div style={{height:'4px',background:'#333',borderRadius:'2px',marginBottom:'10px',overflow:'hidden'}}>
                 <div style={{height:'100%',background:'#25d366',width:j.totalNumbers?((j.sentCount||0)/j.totalNumbers*100)+'%':'0%',borderRadius:'2px',transition:'width 0.3s'}}></div>
               </div>
               <div style={{display:'flex',gap:'8px'}}>
-                <button onClick={()=>toggleJob(j.id,j.status==='running'?'paused':'running')} style={{flex:1,padding:'6px',borderRadius:'6px',border:'1px solid #333',background:'transparent',color:'#25d366',cursor:'pointer',fontSize:'12px'}}>{j.status==='running'?'\u23f8 Pausar':'\u25b6 Reanudar'}</button>
-                <button onClick={()=>delJob(j.id)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#ef4444',cursor:'pointer',fontSize:'12px'}}>\ud83d\uddd1</button>
+                <button onClick={()=>toggleJob(j.id,j.status==='running'?'paused':'running')} style={{flex:1,padding:'6px',borderRadius:'6px',border:'1px solid #333',background:'transparent',color:'#25d366',cursor:'pointer',fontSize:'12px'}}>{j.status==='running'?'⏸ Pausar':'▶ Reanudar'}</button>
+                <button onClick={()=>delJob(j.id)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#ef4444',cursor:'pointer',fontSize:'12px'}}>🗑</button>
               </div>
             </div>
           ))}
@@ -420,11 +420,11 @@ function DifusionesMasivas({ BU, sec }) {
       {tab==='new' && (
         <div style={{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'12px'}}>
           <div>
-            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Nombre campa\u00f1a</label>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Nombre campaña</label>
             <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Ej: Promo Marzo" style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px',boxSizing:'border-box'}} />
           </div>
           <div>
-            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>N\u00fameros (uno por l\u00ednea o separados por coma)</label>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Números (uno por línea o separados por coma)</label>
             <textarea value={form.numbers} onChange={e=>setForm(f=>({...f,numbers:e.target.value}))} rows={5} placeholder="5215512345678" style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'12px',resize:'vertical',boxSizing:'border-box'}} />
           </div>
           <div>
@@ -454,7 +454,7 @@ function DifusionesMasivas({ BU, sec }) {
             </div>
           </div>
           <button onClick={create} disabled={sending} style={{padding:'12px',borderRadius:'8px',border:'none',background:sending?'#333':'#25d366',color:'#fff',cursor:sending?'not-allowed':'pointer',fontWeight:'700',fontSize:'14px',marginTop:'4px'}}>
-            {sending ? '\u23f3 Enviando...' : '\ud83d\ude80 Iniciar Difusi\u00f3n'}
+            {sending ? '⏳ Enviando...' : '🚀 Iniciar Difusión'}
           </button>
         </div>
       )}
@@ -2433,7 +2433,7 @@ ${conversation}`
                   ))}
                 </div>
                 <div style={{display:'flex',gap:'6px',padding:'8px 12px',borderBottom:'1px solid #2a2a2a',background:'#111',flexWrap:'wrap'}}>
-            {[['nuevo','\ud83c\udd95 Nuevo','#3b82f6'],['potencial','\ud83d\udd25 Potencial','#f59e0b'],['cliente','\ud83d\ude0a Cliente','#22c55e'],['perdido','\u274c Perdido','#ef4444']].map(([key,label,clr])=>(
+            {[['nuevo','🆕 Nuevo','#3b82f6'],['potencial','🔥 Potencial','#f59e0b'],['cliente','😊 Cliente','#22c55e'],['perdido','❌ Perdido','#ef4444']].map(([key,label,clr])=>(
               <button key={key} onClick={()=>setLeadFilter(p=>p===key?'all':key)} style={{border:'1px solid '+(leadFilter===key?(clr||'#25d366'):'#444'),borderRadius:'20px',padding:'3px 10px',background:leadFilter===key?(clr||'#25d366'):'transparent',color:leadFilter===key?'#fff':'#aaa',cursor:'pointer',fontSize:'11px',fontWeight:leadFilter===key?'600':'400'}}>{label}</button>
             ))}
           </div>
