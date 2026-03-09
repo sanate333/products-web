@@ -2,6 +2,7 @@ import IndexLayout from '../Layouts/IndexLayout';
 import MainLayout from '../Layouts/MainLayout';
 import PagesLayaut from '../Layouts/PagesLayaut';
 import StoreDashboardLayout, { StoreDashboardRedirect } from '../Layouts/StoreDashboardLayout';
+import DashboardLayout from '../Pages/DashboardUI/DashboardLayout';h
 import { Navigate, createBrowserRouter } from 'react-router-dom';
 
 import Productos from '../Pages/Productos/Productos';
@@ -146,7 +147,12 @@ export const router = createBrowserRouter([
     {
         path: '/dashboard',
         element: <MainLayout />,
-        children: dashboardChildren,
+        children: [
+            {
+                element: <DashboardLayout />,
+                children: dashboardChildren,
+            },
+        ],
     },
     {
         path: '/dashboard/s/:storeSlug',
@@ -155,7 +161,12 @@ export const router = createBrowserRouter([
             {
                 path: '',
                 element: <MainLayout />,
-                children: storeDashboardChildren,
+                children: [
+                    {
+                        element: <DashboardLayout />,
+                        children: storeDashboardChildren,
+                    },
+                ],
             },
         ],
     },
