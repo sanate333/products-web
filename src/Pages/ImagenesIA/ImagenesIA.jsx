@@ -212,7 +212,7 @@ export default function ImagenesIA() {
   const [generationCount, setGenerationCount] = useState(0);
   const [lastPrompt, setLastPrompt] = useState('');
 
-  const allTemplates = useMemo(() => [...uploadedTemplates, ...ECOM_MAGIC_TEMPLATES], [uploadedTemplates]);
+  const allTemplates = useMemo(() => [...uploadedTemplates, ...ECOM_MAGIC_TEMPLATES].map((t,i) => ({...t, id: t.id || 'tpl_'+i})), [uploadedTemplates]);
   const selectedTemplate = useMemo(() => allTemplates.find((t) => t.id === selectedTemplateId) || null, [allTemplates, selectedTemplateId]);
   const selectedProductName = useMemo(() => {
     const sel = products.find((p) => String(p.idProducto) === String(form.productId));
@@ -501,7 +501,7 @@ export default function ImagenesIA() {
             </div>
             {selectedTemplate && (
               <div className="selectedTemplatePreview">
-                <img src={selectedTemplate.url} alt={selectedTemplate.name} />
+                <img src={selectedTemplate.thumb} alt={selectedTemplate.name} />
                 <div><b>Activa:</b> <span>{selectedTemplate.name}</span></div>
               </div>
             )}
