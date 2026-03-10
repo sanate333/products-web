@@ -80,3 +80,57 @@
     font-size: 14px;
     padding: 20px 0;
 }
+
+
+/* === Clientes Block/Copy Buttons === */
+.clienteActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.btnCopiar, .btnBloquear {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btnCopiar {
+    background: #e8f4fd;
+    color: #1a73e8;
+}
+.btnCopiar:hover {
+    background: #d0e8fa;
+}
+.btnCopiar.copiado {
+    background: #d4edda;
+    color: #155724;
+}
+
+.btnBloquear {
+    background: #fff3cd;
+    color: #856404;
+}
+.btnBloquear:hover {
+    background: #ffeeba;
+}
+.btnBloquear.bloqueado {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.clienteBloqueado {
+    opacity: 0.6;
+    border-left: 4px solid #dc3545 !important;
+}
+
+.clienteBloqueado .nombre {
+    text-decoration: line-through;
+    color: #999;
+}
