@@ -628,6 +628,69 @@ function BtnMsgEditor({ BU, sec }) {
   );
 }
 
+
+// Social Connector
+function SocialConnector({ platform }) {
+  var ls=typeof localStorage!=="undefined"?localStorage:{getItem:function(){return null;}};
+  var BE=( ls.getItem("wa_backend_url")||"https://sanate-baileys.onrender.com/api/whatsapp").replace("/api/whatsapp","");
+  var SB=BE+"/api/social", SK=ls.getItem("wa_secret")||"sanate_secret_2025";
+  var sid=ls.getItem("wb_store_id")||ls.getItem("wa_store_id")||"default";
+  var H={"x-secret":SK};
+  var _s=React.useState(null),status=_s[0],setStatus=_s[1];
+  var _c=React.useState([]),chats=_c[0],setChats=_c[1];
+  var _a=React.useState(null),activeChat=_a[0],setActiveChat=_a[1];
+  var _m=React.useState([]),messages=_m[0],setMessages=_m[1];
+  var _i=React.useState(""),input=_i[0],setInput=_i[1];
+  var _se=React.useState(false),sending=_se[0],setSending=_se[1];
+  var _co=React.useState(false),connecting=_co[0],setConnecting=_co[1];
+  React.useEffect(function(){
+    var alive=true;
+    function chk(){fetch(SB+"/status?storeId="+sid,{headers:H}).then(function(r){return r.json();}).then(function(d){if(alive)setStatus(d[platform]===true?"connected":"disconnected");}).catch(function(){if(alive)setStatus("disconnected");});}
+    chk();var t=setInterval(chk,10000);return function(){alive=false;clearInterval(t);};
+  },[platform,sid]);
+  React.useEffect(function(){
+    if(status!=="connected"){setChats([]);return;}
+    var alive=true;
+    function load(){fetch(SB+"/chats?storeId="+sid+"&platform="+platform,{headers:H}).then(function(r){return r.json();}).then(function(d){if(alive)setChats(d.chats||[]);}).catch(function(){});}
+    load();var t=setInterval(load,8000);return function(){alive=false;clearInterval(t);};
+  },[status,platform,sid]);
+  React.useEffect(function(){
+    if(!activeChat){setMessages([]);return;}
+    var alive=true;
+    function load(){fetch(SB+"/messages?storeId="+sid+"&platform="+platform+"&chatId="+encodeURIComponent(activeChat.id),{headers:H}).then(function(r){return r.json();}).then(function(d){if(alive)setMessages(d.messages||[]);}).catch(function(){});}
+    load();var t=setInterval(load,5000);return function(){alive=false;clearInterval(t);};
+  },[activeChat,platform,sid]);
+  React.useEffect(function(){
+    function onM(e){if(!e.data)return;if(e.data.type==="social_connected"&&e.data.platform===platform){setStatus("connected");setConnecting(false);}if(e.data.type==="social_error"&&e.data.platform===platform){alert("Error: "+(e.data.error||"?"));setConnecting(false);}}
+    window.addEventListener("message",onM);return function(){window.removeEventListener("message",onM);};
+  },[platform]);
+  function connect(){setConnecting(true);window.open(SB+"/"+platform+"/auth?storeId="+sid,"_social_auth","width=600,height=700,scrollbars=yes");}
+  function disconnect(){if(!window.confirm("\u00BFDesconectar?"))return;fetch(SB+"/disconnect?storeId="+sid+"&platform="+platform,{method:"DELETE",headers:H}).then(function(){setStatus("disconnected");setChats([]);setActiveChat(null);});}
+  function send(){if(!input.trim()||!activeChat||sending)return;setSending(true);fetch(SB+"/"+platform+"/send",{method:"POST",headers:Object.assign({},H,{"Content-Type":"application/json"}),body:JSON.stringify({storeId:sid,recipientId:activeChat.id,message:input.trim()})}).then(function(r){if(r.ok){setInput("");return fetch(SB+"/messages?storeId="+sid+"&platform="+platform+"&chatId="+encodeURIComponent(activeChat.id),{headers:H}).then(function(mr){return mr.json();}).then(function(md){setMessages(md.messages||[]);});}}).finally(function(){setSending(false);});}
+  var isIG=platform==="instagram";
+  var cfg=isIG?{name:"Instagram Direct",icon:"\uD83D\uDCF8",color:"#E1306C",bg:"linear-gradient(45deg,#f09433,#e6683c,#dc2743,#bc1888)",lbl:"Instagram"}:{name:"Facebook Messenger",icon:"\uD83D\uDCAC",color:"#1877F2",bg:"#1877F2",lbl:"Facebook"};
+  var E=React.createElement;
+  if(status===null)return E("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1rem",padding:"3rem",color:"#888"}},E("p",null,"\u231B Verificando..."));
+  if(status==="disconnected")return E("div",{style:{display:"flex",flexDirection:"column",alignItems:"center",gap:"1rem",padding:"3rem"}},
+    E("div",{style:{fontSize:"4rem"}},cfg.icon),E("h2",{style:{color:cfg.color,margin:"0 0 .5rem 0"}},cfg.name),
+    E("p",{style:{color:"#666",textAlign:"center",maxWidth:"300px",margin:"0 0 1rem 0"}},isIG?"Conecta tu cuenta de Instagram Business para gestionar mensajes directos.":"Conecta tu p\u00E1gina de Facebook para responder mensajes de Messenger."),
+    E("button",{onClick:connect,disabled:connecting,style:{background:cfg.bg,color:"#fff",border:"none",borderRadius:"8px",padding:"12px 28px",fontSize:"15px",fontWeight:600,cursor:"pointer",opacity:connecting?0.7:1}},connecting?"\u23F3 Conectando...":"\uD83D\uDD17 Conectar "+cfg.lbl),
+    isIG&&E("p",{style:{color:"#aaa",fontSize:"12px",textAlign:"center",maxWidth:"280px",margin:".5rem 0 0 0"}},"Requiere Instagram Business vinculado a una P\u00E1gina de Facebook"));
+  return E("div",{style:{display:"flex",height:"100%",overflow:"hidden"}},
+    E("div",{style:{width:"260px",borderRight:"1px solid #eee",overflowY:"auto",flexShrink:0}},
+      E("div",{style:{padding:"12px 16px",borderBottom:"1px solid #eee",display:"flex",alignItems:"center",justifyContent:"space-between"}},
+        E("span",{style:{fontWeight:600,color:cfg.color}},cfg.icon+" "+(isIG?"Instagram":"Messenger")),
+        E("button",{onClick:disconnect,style:{background:"none",border:"none",color:"#aaa",cursor:"pointer",fontSize:"12px"}},"Desconectar")),
+      chats.length===0?E("div",{style:{padding:"2rem",textAlign:"center",color:"#aaa",fontSize:"13px"}},"Sin conversaciones"):chats.map(function(ch){return E("div",{key:ch.id,onClick:function(){setActiveChat(ch);},style:{padding:"12px 16px",cursor:"pointer",borderBottom:"1px solid #f5f5f5",background:activeChat&&activeChat.id===ch.id?"#f0f7ff":"white",display:"flex",flexDirection:"column",gap:"3px"}},E("div",{style:{fontWeight:600,fontSize:"14px",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},ch.name||ch.id),ch.lastMessage&&E("div",{style:{fontSize:"12px",color:"#888"}},ch.lastMessage));})),
+    E("div",{style:{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}},
+      !activeChat?E("div",{style:{flex:1,display:"flex",alignItems:"center",justifyContent:"center",color:"#aaa"}},"Selecciona una conversaci\u00F3n"):E(React.Fragment,null,
+        E("div",{style:{padding:"12px 16px",borderBottom:"1px solid #eee",fontWeight:600}},activeChat.name||activeChat.id),
+        E("div",{style:{flex:1,overflowY:"auto",padding:"12px",display:"flex",flexDirection:"column",gap:"8px"}},messages.map(function(msg,i){return E("div",{key:i,style:{display:"flex",justifyContent:msg.fromMe?"flex-end":"flex-start"}},E("div",{style:{background:msg.fromMe?cfg.bg:"#f0f0f0",color:msg.fromMe?"#fff":"#333",padding:"8px 12px",borderRadius:"12px",maxWidth:"70%",fontSize:"14px"}},msg.text||msg.message||"(media)"));})),
+        E("div",{style:{padding:"12px",borderTop:"1px solid #eee",display:"flex",gap:"8px"}},
+          E("input",{value:input,onChange:function(e){setInput(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&!e.shiftKey)send();},placeholder:"Escribe un mensaje...",style:{flex:1,padding:"8px 12px",border:"1px solid #ddd",borderRadius:"20px",fontSize:"14px",outline:"none"}}),
+          E("button",{onClick:send,disabled:sending||!input.trim(),style:{background:cfg.color,color:"#fff",border:"none",borderRadius:"50%",width:"36px",height:"36px",cursor:"pointer",opacity:sending||!input.trim()?0.5:1}},"\u27A4")))));
+}
+// End SocialConnector
 export default function WhatsAppBot() {
   const [page,        setPage]        = useState(() => { try { return localStorage.getItem('wb_current_page') || 'chat' } catch { return 'chat' } })
   const [lifecycle, setLifecycle] = useState(()=>{try{const s=localStorage.getItem('wa_lifecycle');return s?JSON.parse(s):{}}catch(e){return {}}})
@@ -3938,8 +4001,8 @@ ${conversation}`
 
           {/* ══ CONFIG ══ */}
           {(page==='instagram'||page==='facebook'||page==='tiktok')&&(<div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24,padding:40}}>
-{page==='instagram'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(193,53,132,.3)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1.5" fill="white" stroke="none"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Instagram</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de Instagram</p><button style={{background:'linear-gradient(135deg,#f09433,#dc2743,#bc1888)',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar Instagram</button></div>}
-{page==='facebook'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#0099FF',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,153,255,.3)'}}><svg width="38" height="38" viewBox="0 0 24 24" fill="white"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>Messenger</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes de Facebook Messenger</p><button style={{background:'#0099FF',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar Messenger</button></div>}
+{page==='instagram'&&<SocialConnector platform="instagram" />}
+{page==='facebook'&&<SocialConnector platform="messenger" />}
 {page==='tiktok'&&<div style={{textAlign:'center'}}><div style={{width:72,height:72,borderRadius:18,background:'#010101',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',boxShadow:'0 6px 20px rgba(0,0,0,.25)'}}><svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.34 6.34 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.17 8.17 0 0 0 4.78 1.52V6.77a4.85 4.85 0 0 1-1.01-.08z"/></svg></div><p style={{fontSize:20,fontWeight:700,margin:'0 0 6px',color:'#262626'}}>TikTok</p><p style={{fontSize:13,color:'#8e8e8e',margin:'0 0 20px'}}>Mensajes directos de TikTok</p><button style={{background:'#010101',color:'#fff',border:'none',borderRadius:8,padding:'10px 24px',fontSize:14,fontWeight:600,cursor:'pointer'}}>Conectar TikTok</button></div>}
 </div>)}
 {page === 'config' && (
