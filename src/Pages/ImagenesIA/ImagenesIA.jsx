@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
 import styles from './ImagenesIA.module.css';
 import { useAuth } from '../../context/AuthContext';
 
@@ -21,7 +21,6 @@ const GALLERY_CATEGORIES = [
 ];
 
 const ECOM_TEMPLATES = [
-  // ─── Hero (12) ───
   { id: 'hero-1', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-436addbe-69dd-46a9-96ee-445eda7dc8a4.png` },
   { id: 'hero-2', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-e9d7b624-a836-4a90-88b3-e05c9b4d33f3.png` },
   { id: 'hero-3', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-48797508-35e6-454b-a61c-39ee0c19c346.png` },
@@ -34,8 +33,6 @@ const ECOM_TEMPLATES = [
   { id: 'hero-10', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-f04cbec9-93dd-47fe-94c7-280143955834.jpg` },
   { id: 'hero-11', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-ecc308a8-d1f3-4026-aa89-9bbc390d7deb.png` },
   { id: 'hero-12', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-aa668361-6c52-4515-9930-8b6c3271d843.png` },
-
-  // ─── Oferta (12) ───
   { id: 'offer-1', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-adb906bf-828a-477d-b9fa-d49feaa0b238.png` },
   { id: 'offer-2', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-0fa69b94-0b36-4389-8484-4838937ec1a5.png` },
   { id: 'offer-3', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-b5d2290d-07e3-4964-8be4-d2d01f6a3640.png` },
@@ -48,8 +45,6 @@ const ECOM_TEMPLATES = [
   { id: 'offer-10', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-357173a2-b3fa-41fd-80bc-b4b6a9b839ee.jpg` },
   { id: 'offer-11', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-82b5f66e-ab77-48d0-a675-1afeb57091d6.png` },
   { id: 'offer-12', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-89670574-ad08-47ba-9d91-6ef3c67ad064.png` },
-
-  // ─── Antes/Después (12) ───
   { id: 'ba-1', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-77bcd88c-a699-4ab8-92c7-f5c1a5beaa2f.png` },
   { id: 'ba-2', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-728ee75a-f3f5-4520-8cbf-6e3de6ba459c.png` },
   { id: 'ba-3', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-1833bc9e-d5f1-4312-8eb4-71fe47b8f5ac.png` },
@@ -62,8 +57,6 @@ const ECOM_TEMPLATES = [
   { id: 'ba-10', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-473e9260-f9d8-4aaf-a2e7-745e007f29cc.png` },
   { id: 'ba-11', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-2a53138e-aa4c-451d-8fe8-dcaf3c924962.jpg` },
   { id: 'ba-12', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-e2d7004f-3141-4c51-877e-b5bf3cb7b642.png` },
-
-  // ─── Beneficios (12) ───
   { id: 'ben-1', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-60a2e3d9-b57c-4b6c-bfe4-778c3750bbbc.png` },
   { id: 'ben-2', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-d24c923d-076e-4056-aa47-c04ce399c19c.png` },
   { id: 'ben-3', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-1287ed8c-a13c-4522-96f6-4ffcc433f75c.png` },
@@ -76,8 +69,6 @@ const ECOM_TEMPLATES = [
   { id: 'ben-10', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-f53acd8d-16eb-4f4f-887d-5a3fa148c91c.png` },
   { id: 'ben-11', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-36ce1ea4-002a-4697-9d93-43e1014f058c.png` },
   { id: 'ben-12', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-80ff9ec9-a9d8-4750-864c-574019504e5c.png` },
-
-  // ─── Tabla Comparativa (12) ───
   { id: 'tc-1', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-69257458-4780-4ca8-90b5-46229fcebd55.png` },
   { id: 'tc-2', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-5620fdbb-1a0d-4fcd-9384-5b60aa446f79.png` },
   { id: 'tc-3', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-cf26629e-a5b0-4a44-b86c-1bc951656f9c.png` },
@@ -90,8 +81,6 @@ const ECOM_TEMPLATES = [
   { id: 'tc-10', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-4e4a6cbf-64fd-4e4e-ae6c-f2caf871ca68.jpg` },
   { id: 'tc-11', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-8c5e247a-00e7-449c-ac39-d89beb0199b6.png` },
   { id: 'tc-12', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-11b5f4ef-3a19-42ad-a6e4-f6b366728be0.png` },
-
-  // ─── Prueba de Autoridad (12) ───
   { id: 'ap-1', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-79de460c-2d87-4837-a108-246b98af1e84.png` },
   { id: 'ap-2', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-75a1aeed-9f06-4246-b475-84cdf5c05b00.jpg` },
   { id: 'ap-3', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-8affea10-87c0-4826-a142-40c1e1a64a2b.png` },
@@ -104,8 +93,6 @@ const ECOM_TEMPLATES = [
   { id: 'ap-10', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-d170681f-6a07-49d9-9a7d-63d6ae5c064d.png` },
   { id: 'ap-11', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-0fba88c2-a050-4b9a-b3bc-d1f76578a373.png` },
   { id: 'ap-12', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-cd759084-7f67-4c65-8fe9-51586a3272d6.png` },
-
-  // ─── Testimonios (12) ───
   { id: 'test-1', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-13f09e6f-5b2f-45ca-aa08-76a377eaf9a5.png` },
   { id: 'test-2', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-585ec1bd-ad73-40f1-b97d-34eefaba940e.png` },
   { id: 'test-3', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-4f3ec49f-72ff-440f-9370-a30905296850.png` },
@@ -118,8 +105,6 @@ const ECOM_TEMPLATES = [
   { id: 'test-10', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-b8773327-a8c3-4eb0-858c-e84186ed02ef.png` },
   { id: 'test-11', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-205fcea2-9cdc-45a2-9eb6-0f7269cc50b7.png` },
   { id: 'test-12', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-5d0bf44c-0eb0-4353-9c65-107401714663.png` },
-
-  // ─── Modo de Uso (9) ───
   { id: 'hu-1', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-e9c3a09b-add2-4ae5-bab0-6ccde5803745.png` },
   { id: 'hu-2', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-fbf59ae0-6066-4698-8b4e-2efc4ae9bffe.png` },
   { id: 'hu-3', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-bfc4a03d-8130-4ce3-afde-612dc23d29ad.png` },
@@ -129,13 +114,9 @@ const ECOM_TEMPLATES = [
   { id: 'hu-7', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-c7c6291e-aef3-4d49-bc8a-8d5b665189bc.png` },
   { id: 'hu-8', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-2b4df0cf-1321-4193-991f-4195e3b5b3b1.png` },
   { id: 'hu-9', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-65c72156-d215-4cae-92c0-60b4109d2ba1.png` },
-
-  // ─── Logística (3) ───
   { id: 'log-1', category: 'Logística', thumb: `${TEMPLATE_BASE}logistics-218ccffa-6735-445a-b562-876f84aa6bdb.jpg` },
   { id: 'log-2', category: 'Logística', thumb: `${TEMPLATE_BASE}logistics-3c187d9d-d389-48b8-9081-780ff95a160b.png` },
   { id: 'log-3', category: 'Logística', thumb: `${TEMPLATE_BASE}logistics-87718725-862f-4fd1-a5fd-95f0f3f22037.png` },
-
-  // ─── Preguntas Frecuentes (8) ───
   { id: 'faq-1', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-d2f1073d-559c-4de8-8957-330fe539b802.png` },
   { id: 'faq-2', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-bb40335a-8016-4bad-9447-b7445f53322a.png` },
   { id: 'faq-3', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-5593478b-7cb9-466a-aaff-1f7875b17beb.png` },
@@ -147,115 +128,51 @@ const ECOM_TEMPLATES = [
 ];
 
 // ============================================================================
-// GALLERY MODAL COMPONENT — Matches ecom-magic.ai "Galería de Diseños"
+// GALLERY MODAL COMPONENT
 // ============================================================================
 function GalleryModal({ isOpen, onClose, onSelect, selectedId, templates, categories }) {
   const [activeCategory, setActiveCategory] = useState(categories[0] || 'Hero');
   const scrollRef = useRef(null);
-
   const filteredTemplates = useMemo(
     () => templates.filter((t) => t.category === activeCategory),
     [activeCategory, templates]
   );
-
   const scroll = (dir) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft += dir === 'left' ? -200 : 200;
-    }
+    if (scrollRef.current) scrollRef.current.scrollLeft += dir === 'left' ? -200 : 200;
   };
-
   if (!isOpen) return null;
-
   return (
-    <div
-      style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 50,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          backgroundColor: '#1a1a2e', borderRadius: '12px',
-          maxWidth: '80vw', maxHeight: '85vh', width: '100%',
-          display: 'flex', flexDirection: 'column', color: '#fff',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.9)',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div style={{ padding: '24px', borderBottom: '1px solid #2d2d44', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '20px', fontWeight: 600 }}>
-          <span style={{ fontSize: '24px' }}>⊞</span> Galería de Diseños
+    <div style={{ position:'fixed',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.7)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center' }} onClick={onClose}>
+      <div style={{ backgroundColor:'#1a1a2e',borderRadius:'12px',maxWidth:'80vw',maxHeight:'85vh',width:'100%',display:'flex',flexDirection:'column',color:'#fff',boxShadow:'0 20px 60px rgba(0,0,0,0.9)' }} onClick={(e)=>e.stopPropagation()}>
+        <div style={{ padding:'24px',borderBottom:'1px solid #2d2d44',display:'flex',alignItems:'center',gap:'12px',fontSize:'20px',fontWeight:600 }}>
+          <span style={{ fontSize:'24px' }}>&#8862;</span> Galeria de Disenos
         </div>
-
-        {/* Category Tabs */}
-        <div style={{ padding: '16px 24px', borderBottom: '1px solid #2d2d44', display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button onClick={() => scroll('left')} style={{ background: 'transparent', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '18px', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&lt;</button>
-          <div ref={scrollRef} style={{ display: 'flex', gap: '12px', flex: 1, overflowX: 'auto', scrollBehavior: 'smooth' }}>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                style={{
-                  padding: '8px 16px', borderRadius: '6px', whiteSpace: 'nowrap',
-                  cursor: 'pointer', fontSize: '14px', border: 'none', transition: 'all 0.2s',
-                  backgroundColor: activeCategory === cat ? '#7c3aed' : 'transparent',
-                  color: activeCategory === cat ? '#fff' : '#aaa',
-                  fontWeight: activeCategory === cat ? 500 : 400,
-                }}
-              >
-                {cat}
-              </button>
+        <div style={{ padding:'16px 24px',borderBottom:'1px solid #2d2d44',display:'flex',alignItems:'center',gap:'12px' }}>
+          <button onClick={()=>scroll('left')} style={{ background:'transparent',border:'none',color:'#7c3aed',cursor:'pointer',fontSize:'18px',padding:'8px' }}>&lt;</button>
+          <div ref={scrollRef} style={{ display:'flex',gap:'12px',flex:1,overflowX:'auto',scrollBehavior:'smooth' }}>
+            {categories.map((cat)=>(
+              <button key={cat} onClick={()=>setActiveCategory(cat)} style={{ padding:'8px 16px',borderRadius:'6px',whiteSpace:'nowrap',cursor:'pointer',fontSize:'14px',border:'none',fontWeight:activeCategory===cat?500:400,transition:'all 0.2s',backgroundColor:activeCategory===cat?'#7c3aed':'transparent',color:activeCategory===cat?'#fff':'#aaa' }}>{cat}</button>
             ))}
           </div>
-          <button onClick={() => scroll('right')} style={{ background: 'transparent', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '18px', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>&gt;</button>
+          <button onClick={()=>scroll('right')} style={{ background:'transparent',border:'none',color:'#7c3aed',cursor:'pointer',fontSize:'18px',padding:'8px' }}>&gt;</button>
         </div>
-
-        {/* Image Grid */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-            {filteredTemplates.map((tpl) => (
-              <div
-                key={tpl.id}
-                onClick={() => onSelect(tpl)}
-                style={{
-                  borderRadius: '8px', overflow: 'hidden', cursor: 'pointer',
-                  border: selectedId === tpl.id ? '2px solid #7c3aed' : '2px solid transparent',
-                  boxShadow: selectedId === tpl.id ? '0 0 0 3px rgba(124,58,237,0.5)' : 'none',
-                  transition: 'all 0.2s', aspectRatio: '16/9', backgroundColor: '#2d2d44',
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#7c3aed'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={(e) => { if (selectedId !== tpl.id) { e.currentTarget.style.borderColor = 'transparent'; } e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                <img src={tpl.thumb} alt={tpl.id} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => { e.target.style.display = 'none'; }} />
+        <div style={{ flex:1,overflow:'auto',padding:'24px' }}>
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))',gap:'12px' }}>
+            {filteredTemplates.map((tpl)=>(
+              <div key={tpl.id} onClick={()=>onSelect(tpl)} style={{ borderRadius:'8px',overflow:'hidden',cursor:'pointer',border:selectedId===tpl.id?'2px solid #7c3aed':'2px solid transparent',boxShadow:selectedId===tpl.id?'0 0 0 3px rgba(124,58,237,0.5)':'none',transition:'all 0.2s',aspectRatio:'16/9',backgroundColor:'#2d2d44' }}
+                onMouseEnter={(e)=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.transform='translateY(-2px)'}}
+                onMouseLeave={(e)=>{if(selectedId!==tpl.id)e.currentTarget.style.borderColor='transparent';e.currentTarget.style.transform='translateY(0)'}}>
+                <img src={tpl.thumb} alt={tpl.id} style={{ width:'100%',height:'100%',objectFit:'cover' }} onError={(e)=>{e.target.style.display='none'}} />
               </div>
             ))}
           </div>
-          {filteredTemplates.length === 0 && (
-            <div style={{ textAlign: 'center', color: '#666', padding: '40px' }}>No hay plantillas disponibles en esta categoría aún.</div>
-          )}
+          {filteredTemplates.length===0&&(<div style={{ textAlign:'center',color:'#666',padding:'40px' }}>No hay plantillas disponibles en esta categoria aun.</div>)}
         </div>
-
-        {/* Footer */}
-        <div style={{ padding: '24px', borderTop: '1px solid #2d2d44', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <div style={{ fontSize: '14px', color: '#999', flex: 1 }}>Haz clic en un template para seleccionarlo</div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', fontWeight: 500, backgroundColor: 'transparent', color: '#999', border: '1px solid #666' }}>
-              Cancelar
-            </button>
-            <button
-              disabled={!selectedId}
-              onClick={() => {
-                if (selectedId) {
-                  const t = templates.find((x) => x.id === selectedId);
-                  if (t) { onSelect(t); onClose(); }
-                }
-              }}
-              style={{ padding: '10px 20px', borderRadius: '6px', border: 'none', cursor: selectedId ? 'pointer' : 'default', fontSize: '14px', fontWeight: 500, backgroundColor: '#7c3aed', color: '#fff', opacity: selectedId ? 1 : 0.5 }}
-            >
-              ✓ Seleccionar Plantilla
-            </button>
+        <div style={{ padding:'24px',borderTop:'1px solid #2d2d44',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px' }}>
+          <div style={{ fontSize:'14px',color:'#999',flex:1 }}>Haz clic en un template para seleccionarlo</div>
+          <div style={{ display:'flex',gap:'12px' }}>
+            <button onClick={onClose} style={{ padding:'10px 20px',borderRadius:'6px',cursor:'pointer',fontSize:'14px',fontWeight:500,backgroundColor:'transparent',color:'#999',border:'1px solid #666' }}>Cancelar</button>
+            <button disabled={!selectedId} onClick={()=>{if(selectedId){const t=templates.find(x=>x.id===selectedId);if(t){onSelect(t);onClose()}}}} style={{ padding:'10px 20px',borderRadius:'6px',border:'none',cursor:selectedId?'pointer':'default',fontSize:'14px',fontWeight:500,backgroundColor:'#7c3aed',color:'#fff',opacity:selectedId?1:0.5 }}>Seleccionar Plantilla</button>
           </div>
         </div>
       </div>
@@ -264,7 +181,7 @@ function GalleryModal({ isOpen, onClose, onSelect, selectedId, templates, catego
 }
 
 // ============================================================================
-// MAIN COMPONENT
+// MAIN COMPONENT — Matches ecom-magic.ai UI
 // ============================================================================
 export default function ImagenesIA() {
   const { products = [] } = useAuth() || {};
@@ -275,233 +192,268 @@ export default function ImagenesIA() {
   const [pendingTemplateId, setPendingTemplateId] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [productPhotos, setProductPhotos] = useState([null, null, null]);
-  const [size, setSize] = useState('1024x1024');
-  const [selectedProduct, setSelectedProduct] = useState('');
-  const [creativeOpen, setCreativeOpen] = useState(false);
-  const [angle, setAngle] = useState('frontal');
-  const [avatar, setAvatar] = useState('off');
-  const [extra, setExtra] = useState('');
+  const [productName, setProductName] = useState('');
+  const [bgColor, setBgColor] = useState('');
+  const [size, setSize] = useState('1080x1080');
+  const [language, setLanguage] = useState('Espanol');
+  const [personalization, setPersonalization] = useState(true);
+  const [details, setDetails] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedImages, setGeneratedImages] = useState([]);
   const [error, setError] = useState(null);
   const fileInputRefs = useRef([null, null, null]);
 
-  // Handle photo upload
   const handlePhotoUpload = useCallback((index, file) => {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      setProductPhotos((prev) => {
-        const n = [...prev];
-        n[index] = e.target.result;
-        return n;
-      });
+      setProductPhotos((prev) => { const n = [...prev]; n[index] = e.target.result; return n; });
       setError(null);
     };
     reader.readAsDataURL(file);
   }, []);
 
-  // Build prompt
   const buildPrompt = useCallback(() => {
     const cat = selectedTemplate?.category || 'marketing banner';
-    const prod = selectedProduct || 'producto';
-    const sz = size === '1024x1024' ? 'cuadrado' : 'rectangular';
-    let p = `Create a ${sz} ${cat.toLowerCase()} design for "${prod}". `;
+    const prod = productName || 'producto';
+    const dims = size === '1080x1080' ? 'square' : size === '1080x1350' ? 'vertical' : size === '1200x628' ? 'horizontal' : 'square';
+    let p = `Create a professional ${dims} ${cat.toLowerCase()} design for "${prod}" in ${language}. `;
+    if (bgColor) p += `Use ${bgColor} as the predominant background color. `;
     if (productPhotos.some(Boolean)) p += 'Incorporate the product photos provided. ';
-    p += `Style: ${angle === 'frontal' ? 'front view' : 'diagonal view'}. `;
-    if (avatar !== 'off') p += `Include ${avatar === 'male' ? 'a male' : 'a female'} person. `;
-    if (extra) p += `Additional elements: ${extra}. `;
-    p += 'Professional, high-impact design for e-commerce.';
+    if (details) p += `Product details: ${details}. `;
+    p += 'High-impact e-commerce design, professional quality.';
     return p;
-  }, [selectedTemplate, selectedProduct, size, angle, avatar, extra, productPhotos]);
+  }, [selectedTemplate, productName, size, language, bgColor, details, productPhotos]);
 
-  // Generate image
   const handleGenerate = useCallback(async () => {
-    if (!selectedTemplate) { setError('Por favor selecciona una plantilla primero'); return; }
-    if (!selectedProduct) { setError('Por favor selecciona un producto'); return; }
     setGenerating(true);
     setError(null);
     try {
       const prompt = buildPrompt();
-      const [w, h] = size.split('x').map(Number);
+      const dims = { '1080x1080': [1024, 1024], '1080x1350': [768, 1024], '1200x628': [1024, 768], '1080x1920': [768, 1024] };
+      const [w, h] = dims[size] || [1024, 1024];
       const seed = Math.floor(Math.random() * 1000000);
       let imageUrl;
       if (selectedEngine === 'pollinations') {
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=flux&nologo=true&seed=${seed}`;
         try {
-          const res = await Promise.race([fetch(url), new Promise((_, rej) => setTimeout(() => rej(new Error('timeo5t')), 90000))]);
-          if (!res.ok) throw new Error('fail');
+          await Promise.race([fetch(url), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 90000))]);
           imageUrl = url;
-        } catch {
-          imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=turbo&nologo=true&seed=${seed}`;
-        }
+        } catch { imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=turbo&nologo=true&seed=${seed}`; }
       } else {
-        if (!openaiKey) { setError('Por favor ingresa tu clave de OpenAI'); setGenerating(false); return; }
-        setError('OpenAI generation requires backend implementation');
-        setGenerating(false);
-        return;
+        if (!openaiKey) { setError('Ingresa tu clave de OpenAI en el campo de arriba'); setGenerating(false); return; }
+        setError('OpenAI requiere implementacion backend'); setGenerating(false); return;
       }
-      const scores = { Hero: 95, Oferta: 88, 'Antes/Después': 92, Beneficios: 85, 'Tabla Comparativa': 78, 'Prueba de Autoridad': 80, Testimonios: 82, 'Modo de Uso': 75, 'Logística': 70, 'Preguntas Frecuentes': 72 };
-      setGeneratedImages((prev) => [{ id: Date.now(), url: imageUrl, prompt, timestamp: new Date(), impact: scores[selectedTemplate.category] || 80 }, ...prev]);
-    } catch (err) {
-      setError(`Error al generar imagen: ${err.message}`);
-    } finally {
-      setGenerating(false);
-    }
-  }, [selectedEngine, openaiKey, selectedTemplate, selectedProduct, size, angle, avatar, extra, buildPrompt]);
+      const scores = { Hero:95, Oferta:88, 'Antes/Despues':92, Beneficios:85, 'Tabla Comparativa':78, 'Prueba de Autoridad':80, Testimonios:82, 'Modo de Uso':75, Logistica:70, 'Preguntas Frecuentes':72 };
+      setGeneratedImages((prev) => [{ id: Date.now(), url: imageUrl, prompt, timestamp: new Date(), impact: scores[selectedTemplate?.category] || 80 }, ...prev]);
+    } catch (err) { setError(`Error al generar: ${err.message}`); } finally { setGenerating(false); }
+  }, [selectedEngine, openaiKey, selectedTemplate, productName, size, language, bgColor, details, buildPrompt]);
 
-  const handleSelectTemplate = useCallback((tpl) => {
-    setPendingTemplateId(tpl.id);
-    setSelectedTemplate(tpl);
-  }, []);
+  const handleSelectTemplate = useCallback((tpl) => { setPendingTemplateId(tpl.id); setSelectedTemplate(tpl); }, []);
 
   const handleDownload = useCallback((url) => {
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `imagen-ia-${Date.now()}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    const a = document.createElement('a'); a.href = url; a.download = `imagen-ia-${Date.now()}.png`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }, []);
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>✨ Imágenes IA — Alto Impacto</h1>
+      {/* Header */}
+      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px' }}>
+        <div>
+          <h1 className={styles.title} style={{ textAlign:'left',marginBottom:'4px' }}>{productName || 'Generador de Imagenes IA'}</h1>
+          <div style={{ color:'#999',fontSize:'14px' }}>Genera secciones profesionales para landing pages</div>
+        </div>
+      </div>
 
-      {/* Model Selector */}
+      {/* Model Selector — 2 engines */}
       <div className={styles.card}>
-        <div style={{ marginBottom: '16px', fontWeight: 500 }}>Selecciona tu modelo IA:</div>
+        <div style={{ marginBottom:'16px',fontWeight:500 }}>Selecciona tu modelo IA:</div>
         <div className={styles.modelSelector}>
-          <button className={`${styles.modelOption} ${selectedEngine === 'pollinations' ? styles.modelSelected : ''}`} onClick={() => setSelectedEngine('pollinations')}>
-            <div style={{ fontWeight: 500 }}>🌸 Pollinations IA</div>
-            <div style={{ fontSize: '12px', opacity: 0.7 }}>Genera sin coste. Rápido y potente.</div>
-            <div style={{ fontSize: '11px', color: '#22c55e', fontWeight: 600, marginTop: '4px' }}>GRATIS</div>
-            {selectedEngine === 'pollinations' && <span className={styles.badge}>✓</span>}
+          <button className={`${styles.modelOption} ${selectedEngine==='pollinations'?styles.modelSelected:''}`} onClick={()=>setSelectedEngine('pollinations')}>
+            <div style={{ fontWeight:500 }}>Pollinations IA</div>
+            <div style={{ fontSize:'12px',opacity:0.7 }}>Genera sin coste. Rapido y potente.</div>
+            <div style={{ fontSize:'11px',color:'#22c55e',fontWeight:600,marginTop:'4px' }}>GRATIS</div>
+            {selectedEngine==='pollinations'&&<span className={styles.badge}>&#10003;</span>}
           </button>
-          <button className={`${styles.modelOption} ${selectedEngine === 'openai' ? styles.modelSelected : ''}`} onClick={() => setSelectedEngine('openai')}>
-            <div style={{ fontWeight: 500 }}>🧠 OpenAI</div>
-            <div style={{ fontSize: '12px', opacity: 0.7 }}>Máxima calidad con API Key.</div>
-            <div style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 600, marginTop: '4px' }}>PREMIUM</div>
-            {selectedEngine === 'openai' && <span className={styles.badge}>✓</span>}
+          <button className={`${styles.modelOption} ${selectedEngine==='openai'?styles.modelSelected:''}`} onClick={()=>setSelectedEngine('openai')}>
+            <div style={{ fontWeight:500 }}>OpenAI</div>
+            <div style={{ fontSize:'12px',opacity:0.7 }}>Maxima calidad con API Key.</div>
+            <div style={{ fontSize:'11px',color:'#f59e0b',fontWeight:600,marginTop:'4px' }}>PREMIUM</div>
+            {selectedEngine==='openai'&&<span className={styles.badge}>&#10003;</span>}
           </button>
         </div>
-        {selectedEngine === 'openai' && (
-          <div style={{ marginTop: '16px' }}>
-            <input type="password" placeholder="Ingresa tu API key de OpenAI" value={openaiKey} onChange={(e) => setOpenaiKey(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '14px', boxSizing: 'border-box' }} />
+        {selectedEngine==='openai'&&(
+          <div style={{ marginTop:'16px' }}>
+            <input type="password" placeholder="Ingresa tu API key de OpenAI" value={openaiKey} onChange={(e)=>setOpenaiKey(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'6px',border:'1px solid #2d2d44',fontSize:'14px',boxSizing:'border-box',backgroundColor:'#1a1a2e',color:'#e0e0e0' }} />
           </div>
         )}
       </div>
 
-      {/* Gallery Selection */}
+      {/* Generar Seccion de Landing */}
       <div className={styles.card}>
-        <button className={styles.galleryBtn} onClick={() => setGalleryOpen(true)}>📋 Seleccionar Plantilla de la Galería</button>
-        {selectedTemplate && (
-          <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center' }}>
-            <img src={selectedTemplate.thumb} alt="Selected" style={{ width: '120px', height: '90px', borderRadius: '6px', objectFit: 'cover', marginRight: '12px' }} />
-            <div>
-              <div style={{ fontWeight: 500 }}>Plantilla seleccionada</div>
-              <div style={{ fontSize: '14px', color: '#666', marginTop: '4px' }}>{selectedTemplate.category}</div>
-            </div>
+        <div style={{ display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px' }}>
+          <span style={{ fontSize:'24px' }}>&#10024;</span>
+          <div>
+            <div style={{ fontWeight:600,fontSize:'16px' }}>Generar Seccion de Landing</div>
+            <div style={{ fontSize:'13px',color:'#999' }}>Selecciona una plantilla de referencia y sube de 1 a 3 fotos de tu producto.</div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Photo Upload */}
-      <div className={styles.card}>
-        <div style={{ marginBottom: '16px', fontWeight: 500 }}>Fotos del Producto (máx. 3)</div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
-          {[0, 1, 2].map((i) => (
-            <div key={i} className={styles.photoSlot} onClick={() => fileInputRefs.current[i]?.click()}>
-              {productPhotos[i] ? <img src={productPhotos[i]} alt={`Foto ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '6px' }} /> : <div style={{ opacity: 0.5 }}>📸 Foto {i + 1}</div>}
-              <input ref={(r) => (fileInputRefs.current[i] = r)} type="file" accept="image/*" hidden onChange={(e) => handlePhotoUpload(i, e.target.files?.[0])} />
+      {/* Template + Photos Row */}
+      <div style={{ display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:'16px',marginBottom:'20px' }}>
+        {/* Plantilla */}
+        <div className={styles.card} style={{ marginBottom:0 }}>
+          <div style={{ fontWeight:500,marginBottom:'12px' }}>Plantilla</div>
+          {selectedTemplate ? (
+            <div onClick={()=>setGalleryOpen(true)} style={{ cursor:'pointer',borderRadius:'8px',overflow:'hidden',border:'2px solid #7c3aed',position:'relative' }}>
+              <img src={selectedTemplate.thumb} alt="Selected" style={{ width:'100%',height:'200px',objectFit:'cover' }} />
+              <div style={{ position:'absolute',bottom:'8px',left:'8px',backgroundColor:'rgba(0,0,0,0.7)',color:'#fff',padding:'4px 10px',borderRadius:'4px',fontSize:'12px' }}>{selectedTemplate.category}</div>
             </div>
-          ))}
+          ) : (
+            <div onClick={()=>setGalleryOpen(true)} style={{ border:'2px dashed #7c3aed',borderRadius:'12px',padding:'40px 20px',textAlign:'center',cursor:'pointer',backgroundColor:'rgba(124,58,237,0.05)' }}>
+              <div style={{ fontSize:'32px',marginBottom:'8px',opacity:0.6 }}>&#128444;</div>
+              <div style={{ fontWeight:500,color:'#ccc' }}>Seleccionar Plantilla</div>
+              <div style={{ fontSize:'13px',color:'#888',marginTop:'4px' }}>de la Galeria EcomMagic</div>
+            </div>
+          )}
         </div>
-      </div>
 
-      {/* Size & Product */}
-      <div className={styles.row}>
-        <div className={styles.card} style={{ flex: 1 }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Tamaño</label>
-          <select value={size} onChange={(e) => setSize(e.target.value)} className={styles.select}>
-            <option value="1024x1024">1024×1024 (Cuadrado)</option>
-            <option value="1024x768">1024×768 (Horizontal)</option>
-            <option value="768x1024">768×1024 (Vertical)</option>
-          </select>
-        </div>
-        <div className={styles.card} style={{ flex: 1 }}>
-          <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Producto</label>
-          <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} className={styles.select}>
-            <option value="">Selecciona un producto</option>
-            {(products || []).map((p) => (
-              <option key={p.id || p.name} value={p.name}>{p.name}</option>
+        {/* Fotos del Producto */}
+        <div className={styles.card} style={{ marginBottom:0 }}>
+          <div style={{ fontWeight:500,marginBottom:'4px' }}>Fotos del Producto</div>
+          <div style={{ fontSize:'12px',color:'#888',marginBottom:'12px' }}>(agrega de 1 a 3 fotos de tu producto)</div>
+          <div style={{ display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:'10px' }}>
+            {[0,1,2].map((i)=>(
+              <div key={i} className={styles.photoSlot} onClick={()=>fileInputRefs.current[i]?.click()}>
+                {productPhotos[i] ? (
+                  <div style={{ position:'relative',width:'100%',height:'100%' }}>
+                    <img src={productPhotos[i]} alt={`Foto ${i+1}`} style={{ width:'100%',height:'100%',objectFit:'cover',borderRadius:'6px' }} />
+                    <button onClick={(e)=>{e.stopPropagation();setProductPhotos(prev=>{const n=[...prev];n[i]=null;return n})}} style={{ position:'absolute',top:'4px',right:'4px',background:'rgba(0,0,0,0.6)',color:'#fff',border:'none',borderRadius:'50%',width:'20px',height:'20px',cursor:'pointer',fontSize:'12px',display:'flex',alignItems:'center',justifyContent:'center' }}>&#10005;</button>
+                  </div>
+                ) : (
+                  <div style={{ textAlign:'center' }}>
+                    <div style={{ fontSize:'20px',marginBottom:'4px' }}>+</div>
+                    <div style={{ fontSize:'11px' }}>Imagen {i+1}</div>
+                  </div>
+                )}
+                <input ref={(r)=>(fileInputRefs.current[i]=r)} type="file" accept="image/*" hidden onChange={(e)=>handlePhotoUpload(i,e.target.files?.[0])} />
+              </div>
             ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Color + Tamano + Idioma Row */}
+      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'16px',marginBottom:'20px' }}>
+        <div className={styles.card} style={{ marginBottom:0 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px' }}>
+            <span style={{ fontSize:'14px' }}>&#127912;</span>
+            <label style={{ fontWeight:500,fontSize:'14px' }}>Color de Fondo Predominante</label>
+            <span style={{ fontSize:'12px',color:'#888' }}>(Opcional)</span>
+          </div>
+          <input type="text" placeholder="Ej: Rojo, Azul oscuro..." value={bgColor} onChange={(e)=>setBgColor(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #2d2d44',backgroundColor:'#1a1a2e',color:'#e0e0e0',fontSize:'14px',boxSizing:'border-box' }} />
+        </div>
+        <div className={styles.card} style={{ marginBottom:0 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px' }}>
+            <span style={{ fontSize:'14px' }}>&#8596;</span>
+            <label style={{ fontWeight:500,fontSize:'14px' }}>Tamano de Salida</label>
+          </div>
+          <select value={size} onChange={(e)=>setSize(e.target.value)} className={styles.select}>
+            <option value="1080x1080">Instagram Cuadrado (1080x1080)</option>
+            <option value="1080x1350">Instagram Vertical (1080x1350)</option>
+            <option value="1200x628">Facebook Horizontal (1200x628)</option>
+            <option value="1080x1920">Story / TikTok (1080x1920)</option>
+          </select>
+        </div>
+        <div className={styles.card} style={{ marginBottom:0 }}>
+          <div style={{ display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px' }}>
+            <span style={{ fontSize:'14px' }}>&#127760;</span>
+            <label style={{ fontWeight:500,fontSize:'14px' }}>Idioma de Salida</label>
+          </div>
+          <select value={language} onChange={(e)=>setLanguage(e.target.value)} className={styles.select}>
+            <option value="Espanol">Espanol</option>
+            <option value="English">English</option>
+            <option value="Portugues">Portugues</option>
+            <option value="Frances">Frances</option>
           </select>
         </div>
       </div>
 
-      {/* Creative Controls */}
+      {/* Personalizacion del Anuncio */}
       <div className={styles.card}>
-        <button onClick={() => setCreativeOpen(!creativeOpen)} style={{ width: '100%', padding: '12px', backgroundColor: '#f5f5f5', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 500, textAlign: 'left' }}>
-          {creativeOpen ? '▼' : '▶'} Controles Creativos
-        </button>
-        {creativeOpen && (
-          <div style={{ marginTop: '16px', display: 'grid', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Ángulo</label>
-              <select value={angle} onChange={(e) => setAngle(e.target.value)} className={styles.select}>
-                <option value="frontal">Frontal</option>
-                <option value="diagonal">Diagonal</option>
-              </select>
+        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
+          <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
+            <span style={{ fontSize:'16px' }}>&#10024;</span>
+            <span style={{ fontWeight:500 }}>Personalizacion del Anuncio</span>
+          </div>
+          <div onClick={()=>setPersonalization(!personalization)} style={{ width:'44px',height:'24px',borderRadius:'12px',backgroundColor:personalization?'#7c3aed':'#444',cursor:'pointer',position:'relative',transition:'background-color 0.2s' }}>
+            <div style={{ width:'20px',height:'20px',borderRadius:'50%',backgroundColor:'#fff',position:'absolute',top:'2px',left:personalization?'22px':'2px',transition:'left 0.2s' }} />
+          </div>
+        </div>
+
+        {personalization && (
+          <div style={{ marginTop:'20px' }}>
+            {/* Nombre del Producto */}
+            <div style={{ marginBottom:'16px' }}>
+              <label style={{ fontWeight:500,display:'block',marginBottom:'8px',fontSize:'14px' }}>Nombre del Producto</label>
+              <input type="text" placeholder="Ej: Sebo de Res, Jabon Artesanal..." value={productName} onChange={(e)=>setProductName(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #2d2d44',backgroundColor:'#1a1a2e',color:'#e0e0e0',fontSize:'14px',boxSizing:'border-box' }} />
             </div>
+
+            {/* Desarrollar Angulo de Ventas */}
+            <button style={{ width:'100%',padding:'14px',backgroundColor:'#16213e',border:'1px solid #2d2d44',borderRadius:'8px',color:'#ccc',fontSize:'14px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'16px',transition:'all 0.2s' }}
+              onMouseEnter={(e)=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.color='#fff'}}
+              onMouseLeave={(e)=>{e.currentTarget.style.borderColor='#2d2d44';e.currentTarget.style.color='#ccc'}}
+              onClick={()=>{if(productName){setDetails(`Producto: ${productName}. Beneficios principales del producto para el cliente. Calidad premium, resultados visibles.`)}}}
+            >
+              <span>&#10024;</span> Desarrollar Angulo de Ventas General con IA
+            </button>
+
+            {/* Detalles del Producto */}
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Avatar</label>
-              <select value={avatar} onChange={(e) => setAvatar(e.target.value)} className={styles.select}>
-                <option value="off">No incluir</option>
-                <option value="male">Hombre</option>
-                <option value="female">Mujer</option>
-              </select>
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>Elementos Adicionales</label>
-              <input type="text" placeholder="ej: globos, confeti, luz neon" value={extra} onChange={(e) => setExtra(e.target.value)} style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #ddd', fontSize: '14px', boxSizing: 'border-box' }} />
+              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'8px' }}>
+                <label style={{ fontWeight:500,fontSize:'14px',display:'flex',alignItems:'center',gap:'6px' }}>
+                  <span>&#128196;</span> Detalles del Producto
+                </label>
+                <span style={{ fontSize:'12px',color:'#888' }}>Max. 650 caracteres</span>
+              </div>
+              <textarea value={details} onChange={(e)=>{if(e.target.value.length<=650)setDetails(e.target.value)}} placeholder="Describe tu producto, beneficios, ingredientes, combos disponibles..." style={{ width:'100%',minHeight:'100px',padding:'12px',borderRadius:'8px',border:'1px solid #2d2d44',backgroundColor:'#1a1a2e',color:'#e0e0e0',fontSize:'14px',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit' }} />
+              <div style={{ textAlign:'right',fontSize:'12px',color:'#666',marginTop:'4px' }}>{details.length}/650</div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Generate & Gallery Buttons */}
+      {/* Generate Button */}
       <div className={styles.btnRow}>
         <button className={styles.generateBtn} onClick={handleGenerate} disabled={generating}>
-          {generating ? 'Generando...' : '⚡ Generar Imagen Gratis'}
+          {generating ? 'Generando...' : 'Generar Imagen'}
         </button>
-        <button className={styles.updateBtn} onClick={() => setGalleryOpen(true)}>🔄 Actualizar Galería</button>
       </div>
 
-      {selectedEngine === 'pollinations' && (
-        <div className={styles.statusText}>Usando Pollinations Flux • Generación hasta 90 segundos</div>
+      {selectedEngine==='pollinations'&&(
+        <div className={styles.statusText}>Usando Pollinations Flux - Generacion hasta 90 segundos</div>
       )}
 
-      {error && (
-        <div style={{ backgroundColor: '#fee', color: '#c00', padding: '12px', borderRadius: '6px', fontSize: '14px', marginBottom: '16px' }}>{error}</div>
-      )}
+      {error&&(<div style={{ backgroundColor:'rgba(255,0,0,0.1)',color:'#f87171',padding:'12px',borderRadius:'6px',fontSize:'14px',marginBottom:'16px',border:'1px solid rgba(255,0,0,0.2)' }}>{error}</div>)}
 
       {/* Generated Images */}
-      {generatedImages.length > 0 && (
+      {generatedImages.length>0&&(
         <div className={styles.generatedSection}>
-          <h2 style={{ marginBottom: '16px' }}>Imágenes Generadas</h2>
+          <h2 style={{ marginBottom:'16px' }}>Imagenes Generadas</h2>
           <div className={styles.generatedGrid}>
-            {generatedImages.map((img) => (
+            {generatedImages.map((img)=>(
               <div key={img.id} className={styles.generatedCard}>
-                <div style={{ position: 'relative', width: '100%', paddingBottom: '100%', overflow: 'hidden', borderRadius: '8px' }}>
-                  <img src={img.url} alt="Generated" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position:'relative',width:'100%',paddingBottom:'100%',overflow:'hidden',borderRadius:'8px' }}>
+                  <img src={img.url} alt="Generated" style={{ position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover' }} />
                 </div>
-                <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div style={{ marginTop:'12px',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
                   <div className={styles.impactBadge}>Impacto: {img.impact}%</div>
                 </div>
-                <div style={{ marginTop: '8px', display: 'flex', gap: '8px' }}>
-                  <button style={{ flex: 1, padding: '8px', backgroundColor: '#f0f0f0', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }} onClick={() => window.open(img.url)}>👁 Ver</button>
-                  <button style={{ flex: 1, padding: '8px', backgroundColor: '#7c3aed', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }} onClick={() => handleDownload(img.url)}>⬇ Descargar</button>
+                <div style={{ marginTop:'8px',display:'flex',gap:'8px' }}>
+                  <button style={{ flex:1,padding:'8px',backgroundColor:'#16213e',border:'1px solid #2d2d44',color:'#ccc',borderRadius:'4px',cursor:'pointer',fontSize:'12px' }} onClick={()=>window.open(img.url)}>Ver</button>
+                  <button style={{ flex:1,padding:'8px',backgroundColor:'#7c3aed',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px' }} onClick={()=>handleDownload(img.url)}>Descargar</button>
                 </div>
               </div>
             ))}
@@ -509,10 +461,9 @@ export default function ImagenesIA() {
         </div>
       )}
 
-      {/* Gallery Modal */}
       <GalleryModal
         isOpen={galleryOpen}
-        onClose={() => { setGalleryOpen(false); setPendingTemplateId(null); }}
+        onClose={()=>{setGalleryOpen(false);setPendingTemplateId(null)}}
         onSelect={handleSelectTemplate}
         selectedId={pendingTemplateId}
         templates={ECOM_TEMPLATES}
