@@ -39,6 +39,10 @@ RewriteRule ^api/whatsapp/(.*)$ whatsapp-proxy.php?path=$1 [L,QSA]
 RewriteRule ^api/co/register/?$ api/co/register/index.php [L,QSA]
 RewriteRule ^api/co/leads/?$ api/co/leads/index.php [L,QSA]
 RewriteRule ^co/?$ /index.html [L]
+# Home estática V5
+RewriteRule ^$ /home.html [L]
+# Portal proveedores
+RewriteRule ^proveedores/?$ /proveedores.html [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]
