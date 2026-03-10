@@ -740,6 +740,39 @@ export default function PedidosData() {
         groupedPedidos.push({ type: 'item', item });
     });
 
+
+  const calcularResumen = () => {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const weekStart = new Date(todayStart);
+    weekStart.setDate(todayStart.getDate() - mondayOffset);
+    const quincenalStart = new Date(todayStart);
+    quincenalStart.setDate(todayStart.getDate() - 15);
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    let totalSemanal = 0, totalQuincenal = 0, totalMensual = 0;
+    let gananciaSemanal = 0, gananciaQuincenal = 0, gananciaMensual = 0;
+    let pedidosSemana = 0, pedidosQuincena = 0, pedidosMes = 0;
+
+    pedidos.forEach(item => {
+      const fecha = new Date(item.createdAt);
+      const total = parseFloat(item.total) || 0;
+      const prods = parseProductos(item.productos);
+      const ganancia = prods.reduce((sum, p) => {
+        return sum + ((parseFloat(p.gananciaAprox) || 0) * (parseInt(p.cantidad) || 1));
+      }, 0);
+
+      if (fecha >= weekStart) { totalSemanal += total; gananciaSemanal += ganancia; pedidosSemana++; }
+      if (fecha >= quincenalStart) { totalQuincenal += total; gananciaQuincenal += ganancia; pedidosQuincena++; }
+      if (fecha >= monthStart) { totalMensual += total; gananciaMensual += ganancia; pedidosMes++; }
+    });
+
+    return { totalSemanal, totalQuincenal, totalMensual, gananciaSemanal, gananciaQuincenal, gananciaMensual, pedidosSemana, pedidosQuincena, pedidosMes };
+  };
+
+  const resumen = calcularResumen();
     return (
         <div>
 
@@ -781,6 +814,36 @@ export default function PedidosData() {
 
             </div>
 
+
+        <div className='pedidosSummary'>
+          <div className='summaryCard semanal'>
+            <div className='summaryIcon'>7d</div>
+            <div className='summaryInfo'>
+              <span className='summaryLabel'>Semanal</span>
+              <span className='summaryTotal'>{moneda} {resumen.totalSemanal.toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+              <span className='summaryGanancia'>Ganancia: {moneda} {resumen.gananciaSemanal.toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+              <span className='summaryCount'>{resumen.pedidosSemana} pedido(s)</span>
+            </div>
+          </div>
+          <div className='summaryCard quincenal'>
+            <div className='summaryIcon'>15d</div>
+            <div className='summaryInfo'>
+              <span className='summaryLabel'>Quincenal</span>
+              <span className='summaryTotal'>{moneda} {resumen.totalQuincenal.toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+              <span className='summaryGanancia'>Ganancia: {moneda} {resumen.gananciaQuincenal.toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+              <span className='summaryCount'>{resumen.pedidosQuincena} pedido(s)</span>
+            </div>
+          </div>
+          <div className='summaryCard mensual'>
+            <div className='summaryIcon'>30d</div>
+            <div className='summaryInfo'>
+              <span className='summaryLabel'>Mensual</span>
+              <span className='summaryTotal'>{moneda} {resumen.totalMensual.toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+              <span className='summaryGanancia'>Ganancia: {moneda} {resumen.gananciaMensual.toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+              <span className='summaryCount'>{resumen.pedidosMes} pedido(s)</span>
+            </div>
+          </div>
+        </div>
             <div className='pedidoList'>
                 {groupedPedidos.map((entry) => {
                     if (entry.type === 'header') {
@@ -944,19 +1007,3 @@ export default function PedidosData() {
         </div>
     );
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
