@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Portal Proveedores — SÁNATE | Catálogo Mayorista Colombia</title>
+<meta name="description" content="Catálogo mayorista exclusivo SÁNATE. Precios especiales para distribuidores, tiendas naturales y revendedores de Colombia."/>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --sky:#3DC9E8;--sky-bright:#00D4FF;--skyd:#1AACCC;
+  --navy:#07192E;--navy2:#0C2240;--navy3:#132D50;
+  --gold:#C9A030;--gold2:#D4AF44;
+  --white:#F9FCFE;--black:#050D18;
+  --green:#22c55e;--red:#ef4444;
+  --serif:'Cormorant Garamond',serif;
+  --sans:'DM Sans',sans-serif;
+  --r:10px;--t:all .2s ease;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--navy);color:#fff;min-height:100vh;overflow-x:hidden}
+
+/* ─── TOPBAR ─── */
+.topbar{background:rgba(0,0,0,.3);border-bottom:1px solid rgba(61,201,232,.1);padding:10px 0}
+.topbar-in{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
+.topbar-logo{font-family:var(--serif);font-size:20px;font-weight:600;letter-spacing:6px;color:#fff;text-decoration:none}
+.topbar-logo em{font-style:normal;color:var(--sky-bright)}
+.topbar-back{display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(210,235,248,.5);text-decoration:none;transition:.2s}
+.topbar-back:hover{color:var(--sky-bright)}
+
+/* ─── HERO ─── */
+.hero{padding:60px 20px 50px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(0,212,255,.08) 0%,transparent 65%);pointer-events:none}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(201,160,48,.12);border:1px solid rgba(201,160,48,.3);border-radius:100px;padding:5px 14px;margin-bottom:18px;color:var(--gold2);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+.hero-badge span{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.hero-title{font-family:var(--serif);font-size:clamp(2rem,5vw,3.6rem);font-weight:300;line-height:1.1;margin-bottom:14px}
+.hero-title em{font-style:italic;color:var(--sky-bright)}
+.hero-title strong{font-weight:600;background:linear-gradient(110deg,var(--gold2),#f0dc8a 55%,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:14px;color:rgba(210,235,248,.55);max-width:520px;margin:0 auto 28px;line-height:1.75}
+.hero-pills{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:36px}
+.pill{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:100px;padding:5px 14px;font-size:11px;color:rgba(210,235,248,.7)}
+.pill.green{border-color:rgba(34,197,94,.3);color:#86efac;background:rgba(34,197,94,.06)}
+
+/* ─── LAYOUT PRINCIPAL ─── */
+.main{max-width:1100px;margin:0 auto;padding:0 20px 60px;display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
+@media(max-width:860px){.main{grid-template-columns:1fr}}
+
+/* ─── PANEL AUTH ─── */
+.auth-panel{background:rgba(255,255,255,.04);border:1.5px solid rgba(61,201,232,.18);border-radius:18px;padding:24px;position:sticky;top:20px}
+.auth-title{font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--sky-bright);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.auth-tabs{display:flex;background:rgba(0,0,0,.2);border-radius:10px;padding:3px;margin-bottom:18px;gap:3px}
+.atab{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;font-size:11.5px;font-weight:600;color:rgba(210,235,248,.45);cursor:pointer;transition:.2s;font-family:var(--sans)}
+.atab.active{background:rgba(255,255,255,.08);color:#fff}
+.aform{display:flex;flex-direction:column;gap:12px}
+.af-label{font-size:10px;font-weight:700;color:rgba(210,235,248,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;display:block}
+.af-input{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12.5px;font-family:var(--sans);outline:none;transition:.2s}
+.af-input:focus{border-color:var(--sky-bright);background:rgba(0,212,255,.05)}
+.af-input::placeholder{color:rgba(210,235,248,.3)}
+.af-select{width:100%;padding:10px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;color:#fff;font-size:12.5px;font-family:var(--sans);outline:none;transition:.2s;cursor:pointer}
+.af-select option{background:var(--navy);color:#fff}
+.af-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.af-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--sky-bright),var(--skyd));color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:.25s;font-family:var(--sans);display:flex;align-items:center;justify-content:center;gap:8px}
+.af-btn:hover{opacity:.88;transform:translateY(-1px)}
+.af-btn.reg{background:linear-gradient(135deg,var(--gold),#c49a20)}
+.af-divider{height:1px;background:rgba(255,255,255,.07);margin:4px 0}
+.af-note{font-size:10.5px;color:rgba(210,235,248,.35);text-align:center;line-height:1.6}
+.af-note a{color:var(--sky-bright);font-weight:600}
+.wa-btn-full{width:100%;padding:11px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;transition:.2s}
+.wa-btn-full:hover{opacity:.88}
+
+/* Estado logged in en panel */
+.user-card{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);border-radius:12px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--green),#16a34a);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+.user-name{font-size:13.5px;font-weight:700;color:#fff}
+.user-tier{font-size:10px;color:var(--green);font-weight:600}
+.user-discount{font-size:10px;color:rgba(210,235,248,.5);margin-top:2px}
+.logout-btn{width:100%;padding:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);border-radius:8px;color:#fca5a5;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--sans);transition:.2s}
+.logout-btn:hover{background:rgba(239,68,68,.2)}
+
+/* ─── CATÁLOGO ─── */
+.catalog-wrap{display:flex;flex-direction:column;gap:16px}
+.cat-section-title{font-size:10.5px;font-weight:800;letter-spacing:1.5px;color:var(--sky-bright);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;padding-bottom:8px;border-bottom:1px solid rgba(61,201,232,.1)}
+.cat-section-title svg{flex-shrink:0}
+
+/* Grid de tarjetas */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.cat-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;overflow:hidden;transition:.22s;position:relative}
+.cat-card:hover{border-color:rgba(61,201,232,.25);transform:translateY(-2px);box-shadow:0 10px 32px rgba(0,0,0,.3)}
+.cat-card.featured{border-color:rgba(201,160,48,.3);background:rgba(201,160,48,.04)}
+.cat-card.featured::before{content:'⭐ ESTRELLA';position:absolute;top:10px;right:10px;background:linear-gradient(135deg,var(--gold),#c49a20);color:#fff;font-size:8px;font-weight:800;padding:3px 8px;border-radius:100px;letter-spacing:.5px}
+.cat-card.locked{opacity:.55;pointer-events:none}
+.card-img{width:100%;height:130px;object-fit:cover;border-bottom:1px solid rgba(255,255,255,.06)}
+.card-img-placeholder{width:100%;height:130px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;border-bottom:1px solid rgba(255,255,255,.06)}
+.card-body{padding:12px}
+.card-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px;line-height:1.3}
+.card-ref{font-size:9px;color:rgba(210,235,248,.3);letter-spacing:.5px;margin-bottom:8px}
+.card-prices{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
+.card-retail{font-size:10.5px;color:rgba(210,235,248,.35);text-decoration:line-through}
+.card-wholesale{font-size:15px;font-weight:800;color:var(--sky-bright)}
+.card-min{font-size:9.5px;color:rgba(210,235,248,.35);margin-bottom:10px}
+.card-margin{display:inline-block;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);border-radius:100px;padding:2px 8px;font-size:9px;color:#86efac;font-weight:700;margin-bottom:10px}
+.card-btn{width:100%;padding:9px;background:linear-gradient(135deg,var(--sky-bright),var(--skyd));color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer;transition:.2s;font-family:var(--sans)}
+.card-btn:hover{opacity:.88}
+.card-btn.added{background:linear-gradient(135deg,#22c55e,#16a34a)}
+.lock-overlay{position:absolute;inset:0;background:rgba(7,25,46,.7);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;border-radius:14px}
+.lock-overlay svg{color:rgba(210,235,248,.3)}
+.lock-overlay span{font-size:11px;color:rgba(210,235,248,.4);font-weight:500}
+
+/* ─── COTIZACIÓN FLOTANTE ─── */
+.quote-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--navy2);border:1.5px solid rgba(61,201,232,.3);border-radius:100px;padding:10px 20px;display:none;align-items:center;gap:14px;box-shadow:0 8px 32px rgba(0,0,0,.4);z-index:99;white-space:nowrap}
+.quote-bar.visible{display:flex}
+.qb-count{font-size:12px;color:rgba(210,235,248,.7);font-weight:500}
+.qb-count strong{color:#fff;font-weight:700}
+.qb-total{font-size:14px;font-weight:700;color:var(--sky-bright)}
+.qb-send{padding:8px 18px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:100px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--sans);transition:.2s}
+.qb-send:hover{opacity:.88}
+.qb-clear{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.07);border:none;color:rgba(210,235,248,.5);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:.2s}
+.qb-clear:hover{background:rgba(239,68,68,.15);color:#fca5a5}
+
+/* ─── BENEFICIOS ─── */
+.benefits-strip{background:rgba(61,201,232,.04);border:1px solid rgba(61,201,232,.12);border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.benefits-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:500px){.benefits-grid{grid-template-columns:1fr}}
+.bv{display:flex;align-items:flex-start;gap:10px}
+.bv-icon{width:32px;height:32px;border-radius:8px;background:rgba(61,201,232,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.bv-text strong{display:block;font-size:12px;font-weight:700;color:#fff;margin-bottom:2px}
+.bv-text span{font-size:10.5px;color:rgba(210,235,248,.45);line-height:1.4}
+
+/* ─── FOOTER ─── */
+.foot{text-align:center;padding:28px 20px;border-top:1px solid rgba(255,255,255,.06);font-size:11.5px;color:rgba(210,235,248,.3)}
+.foot a{color:var(--sky-bright);text-decoration:none;font-weight:600}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:500px){
+  .cat-grid{grid-template-columns:1fr 1fr}
+  .card-img,.card-img-placeholder{height:100px}
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-in">
+    <a href="/" class="topbar-logo">SÁN<em>ATE</em></a>
+    <a href="/" class="topbar-back">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      Volver a la tienda
+    </a>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><span></span> Solo distribuidores autorizados</div>
+  <h1 class="hero-title">Portal de <em>Proveedores</em><br/><strong>SÁNATE</strong></h1>
+  <p class="hero-sub">Catálogo mayorista exclusivo · Precios especiales · Armenia, Quindío 🇨🇴<br/>Accede con tu cuenta o regístrate como distribuidor para ver precios.</p>
+  <div class="hero-pills">
+    <span class="pill green">✓ Hasta 45% de margen</span>
+    <span class="pill green">✓ Pedido mínimo $200.000</span>
+    <span class="pill green">✓ Envío gratis desde $500.000</span>
+    <span class="pill">4+ años de trayectoria</span>
+    <span class="pill">Productos artesanales 100% naturales</span>
+  </div>
+</div>
+
+<!-- MAIN GRID -->
+<div class="main">
+
+  <!-- CATÁLOGO -->
+  <div class="catalog-wrap">
+
+    <!-- BENEFICIOS -->
+    <div class="benefits-strip">
+      <div class="benefits-grid">
+        <div class="bv">
+          <div class="bv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DC9E8" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div class="bv-text"><strong>Precios mayoristas</strong><span>De 30% a 45% menos del precio público</span></div>
+        </div>
+        <div class="bv">
+          <div class="bv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DC9E8" stroke-width="2" stroke-linecap="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+          <div class="bv-text"><strong>Envío a todo Colombia</strong><span>Gratis desde $500.000 en pedidos</span></div>
+        </div>
+        <div class="bv">
+          <div class="bv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DC9E8" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div>
+          <div class="bv-text"><strong>Pedido mínimo bajo</strong><span>Desde $200.000 para ser distribuidor</span></div>
+        </div>
+        <div class="bv">
+          <div class="bv-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3DC9E8" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13 19.79 19.79 0 0 1 1.61 4.37 2 2 0 0 1 3.58 2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.09 6.09l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 17.19z"/></svg></div>
+          <div class="bv-text"><strong>Soporte directo</strong><span>WhatsApp comercial, respuesta en el día</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JABONES -->
+    <div>
+      <div class="cat-section-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+        Jabones Artesanales 100g
+      </div>
+      <div class="cat-grid">
+
+        <div class="cat-card" id="card-jab-cur">
+          <img class="card-img" src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=400&h=260&fit=crop&q=80" alt="Jabón Cúrcuma" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Jabón Cúrcuma 100g</div>
+            <div class="card-ref">REF: JAB-CUR-100</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $29.000</span>
+              <span class="card-wholesale prov-price" data-price="16000">Mayorista <strong>$16.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 12 uds · Manchas, acné, zonas oscuras</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('jab-cur','Jabón Cúrcuma 100g',16000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-card" id="card-jab-ave">
+          <img class="card-img" src="https://images.unsplash.com/photo-1612817288484-6f916006741a?w=400&h=260&fit=crop&q=80" alt="Jabón Avena" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Jabón Avena & Arroz 100g</div>
+            <div class="card-ref">REF: JAB-AVE-100</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $29.000</span>
+              <span class="card-wholesale prov-price" data-price="16000">Mayorista <strong>$16.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 12 uds · Piel sensible, granitos</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('jab-ave','Jabón Avena & Arroz 100g',16000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-card" id="card-jab-cal">
+          <div class="card-img-placeholder">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgba(61,201,232,.3)" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/></svg>
+          </div>
+          <div class="card-body">
+            <div class="card-name">Jabón Caléndula & Aloe 100g</div>
+            <div class="card-ref">REF: JAB-CAL-100</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $29.000</span>
+              <span class="card-wholesale prov-price" data-price="16000">Mayorista <strong>$16.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 12 uds · Calma, regenera</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('jab-cal','Jabón Caléndula & Aloe 100g',16000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SEBO DE RES -->
+    <div>
+      <div class="cat-section-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Sebo de Res — Producto Estrella
+      </div>
+      <div class="cat-grid">
+        <div class="cat-card featured" id="card-seb-grd">
+          <img class="card-img" src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=400&h=260&fit=crop&q=80" alt="Sebo de Res" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Sebo de Res — Frasco Grande</div>
+            <div class="card-ref">REF: SEB-GRD-001</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $76.000</span>
+              <span class="card-wholesale prov-price" data-price="42000">Mayorista <strong>$42.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 6 uds · Frasco vidrio tapa lujo</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('seb-grd','Sebo de Res Frasco Grande',42000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPLEMENTOS -->
+    <div>
+      <div class="cat-section-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><circle cx="12" cy="12" r="3"/><path d="M2 8h16"/></svg>
+        Suplementos Naturales
+      </div>
+      <div class="cat-grid">
+
+        <div class="cat-card featured" id="card-mel-60">
+          <img class="card-img" src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=260&fit=crop&q=80" alt="Melena de León" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Melena de León 250mg x60</div>
+            <div class="card-ref">REF: MEL-250-060</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $89.900</span>
+              <span class="card-wholesale prov-price" data-price="49000">Mayorista <strong>$49.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 6 uds · Memoria, concentración</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('mel-60','Melena de León x60',49000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-card" id="card-mel-120">
+          <img class="card-img" src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=260&fit=crop&q=80" alt="Melena de León x120" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Melena de León 250mg x120</div>
+            <div class="card-ref">REF: MEL-250-120</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $129.900</span>
+              <span class="card-wholesale prov-price" data-price="71000">Mayorista <strong>$71.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 4 uds · Dosis completa 2 meses</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('mel-120','Melena de León x120',71000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-card" id="card-pol-50">
+          <img class="card-img" src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=260&fit=crop&q=80" alt="Polen Premium" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Polen Premium 500mg x50</div>
+            <div class="card-ref">REF: POL-500-050</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $69.900</span>
+              <span class="card-wholesale prov-price" data-price="38000">Mayorista <strong>$38.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 6 uds · Multifloral del Huila</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('pol-50','Polen Premium x50',38000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-card" id="card-pol-90">
+          <img class="card-img" src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=260&fit=crop&q=80" alt="Polen x90" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Polen Premium 500mg x90</div>
+            <div class="card-ref">REF: POL-500-090</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $106.000</span>
+              <span class="card-wholesale prov-price" data-price="58000">Mayorista <strong>$58.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 4 uds · Mejor precio por unidad</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('pol-90','Polen Premium x90',58000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CABELLO -->
+    <div>
+      <div class="cat-section-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Línea Capilar
+      </div>
+      <div class="cat-grid">
+
+        <div class="cat-card" id="card-sha">
+          <img class="card-img" src="https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=400&h=260&fit=crop&q=80" alt="Shampoo Natural" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Shampoo Natural 450ml</div>
+            <div class="card-ref">REF: SHA-NAT-450</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $40.000</span>
+              <span class="card-wholesale prov-price" data-price="22000">Mayorista <strong>$22.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 12 uds · Sin sulfatos</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('sha','Shampoo Natural 450ml',22000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="cat-card" id="card-nec">
+          <img class="card-img" src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=260&fit=crop&q=80" alt="Néctar Capilar" loading="lazy"/>
+          <div class="card-body">
+            <div class="card-name">Néctar Capilar 200ml</div>
+            <div class="card-ref">REF: NEC-CAP-200</div>
+            <div class="card-prices">
+              <span class="card-retail">P. público $35.000</span>
+              <span class="card-wholesale prov-price" data-price="19000">Mayorista <strong>$19.000</strong></span>
+            </div>
+            <div class="card-min prov-only">Mín. 12 uds · Brillo y nutrición</div>
+            <span class="card-margin prov-only">45% margen</span>
+            <button class="card-btn prov-only" onclick="addCart('nec','Néctar Capilar 200ml',19000,this)">+ Añadir cotización</button>
+            <div class="lock-overlay public-only" onclick="showLoginHint()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>Inicia sesión para ver precio</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /catalog-wrap -->
+
+  <!-- PANEL AUTH -->
+  <div class="auth-panel">
+
+    <!-- LOGGED OUT -->
+    <div id="authOut">
+      <div class="auth-title">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        Acceso al catálogo
+      </div>
+      <div class="auth-tabs">
+        <button class="atab active" id="atab-in" onclick="switchAuthTab('in')">Iniciar sesión</button>
+        <button class="atab" id="atab-reg" onclick="switchAuthTab('reg')">Registrarse</button>
+      </div>
+
+      <!-- LOGIN -->
+      <div id="apanel-in" class="aform">
+        <div>
+          <label class="af-label">Correo electrónico</label>
+          <input class="af-input" type="email" id="pEmail" placeholder="proveedor@empresa.com" autocomplete="email"/>
+        </div>
+        <div>
+          <label class="af-label">Contraseña</label>
+          <input class="af-input" type="password" id="pPass" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button class="af-btn" onclick="doLogin()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Ingresar al catálogo
+        </button>
+        <div class="af-divider"></div>
+        <a class="wa-btn-full" href="https://wa.me/573227461878?text=Hola SÁNATE, quiero acceso al portal de proveedores" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Solicitar acceso por WhatsApp
+        </a>
+        <p class="af-note" style="margin-top:8px">¿No tienes cuenta? <a href="#" onclick="switchAuthTab('reg');return false">Regístrate gratis →</a></p>
+      </div>
+
+      <!-- REGISTRO -->
+      <div id="apanel-reg" class="aform" style="display:none">
+        <div class="af-grid2">
+          <div>
+            <label class="af-label">Nombre *</label>
+            <input class="af-input" type="text" id="rName" placeholder="Tu nombre" autocomplete="given-name"/>
+          </div>
+          <div>
+            <label class="af-label">Negocio *</label>
+            <input class="af-input" type="text" id="rBiz" placeholder="Nombre del negocio"/>
+          </div>
+        </div>
+        <div>
+          <label class="af-label">Correo *</label>
+          <input class="af-input" type="email" id="rEmail" placeholder="tu@empresa.com" autocomplete="email"/>
+        </div>
+        <div>
+          <label class="af-label">WhatsApp *</label>
+          <input class="af-input" type="tel" id="rPhone" placeholder="3XX XXX XXXX" autocomplete="tel" inputmode="tel"/>
+        </div>
+        <div>
+          <label class="af-label">Tipo de negocio</label>
+          <select class="af-select" id="rType">
+            <option value="">Selecciona...</option>
+            <option value="tienda">Tienda natural / droguería</option>
+            <option value="spa">Spa / Salón de belleza</option>
+            <option value="distribuidor">Distribuidor mayorista</option>
+            <option value="revendedor">Revendedor independiente</option>
+            <option value="gym">Gimnasio / Bienestar</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div>
+          <label class="af-label">Ciudad *</label>
+          <input class="af-input" type="text" id="rCity" placeholder="Medellín, Antioquia" autocomplete="address-level2"/>
+        </div>
+        <button class="af-btn reg" onclick="doRegister()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+          Solicitar acceso mayorista
+        </button>
+        <p class="af-note">Revisión en 24h hábiles · Confirmación por WhatsApp</p>
+      </div>
+    </div>
+
+    <!-- LOGGED IN -->
+    <div id="authIn" style="display:none">
+      <div class="user-card">
+        <div class="user-avatar" id="authAvatar">S</div>
+        <div>
+          <div class="user-name" id="authName">Proveedor</div>
+          <div class="user-tier" id="authTier">Distribuidor</div>
+          <div class="user-discount" id="authDiscount">Descuento: 45%</div>
+        </div>
+      </div>
+      <div style="background:rgba(61,201,232,.06);border:1px solid rgba(61,201,232,.15);border-radius:10px;padding:12px;margin-bottom:12px">
+        <p style="font-size:11px;color:rgba(210,235,248,.6);line-height:1.7;margin:0">
+          <strong style="color:var(--sky-bright)">Acceso activo.</strong><br/>
+          Precios mayoristas visibles. Añade productos a la cotización y envíala por WhatsApp.
+        </p>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:5px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Cerrar sesión
+      </button>
+    </div>
+
+  </div><!-- /auth-panel -->
+</div><!-- /main -->
+
+<!-- COTIZACIÓN FLOTANTE -->
+<div class="quote-bar" id="quoteBar">
+  <span class="qb-count"><strong id="qbCount">0</strong> productos</span>
+  <span class="qb-total" id="qbTotal">$0</span>
+  <button class="qb-send" onclick="sendQuote()">📲 Enviar cotización</button>
+  <button class="qb-clear" onclick="clearCart()" title="Limpiar">✕</button>
+</div>
+
+<!-- FOOTER -->
+<div class="foot">
+  <p>© 2025 SÁNATE · Armenia, Quindío 🇨🇴 · Cosmética natural artesanal</p>
+  <p style="margin-top:6px"><a href="/">← Volver a la tienda</a> · <a href="https://wa.me/573227461878" target="_blank">WhatsApp comercial</a> · <a href="https://instagram.com/sanate.col" target="_blank">@sanate.col</a></p>
+</div>
+
+<script>
+// ── DEMO users ──
+const USERS = [
+  {email:'proveedor@sanate.com',pass:'sanate2024',name:'Distribuidora XYZ',tier:'Distribuidor Oro',discount:45},
+  {email:'tienda@test.com',pass:'test123',name:'Tienda Natural Andina',tier:'Distribuidor Plata',discount:30},
+  {email:'admin@sanate.com',pass:'admin2024',name:'Admin SÁNATE',tier:'Administrador',discount:100},
+];
+let user = JSON.parse(sessionStorage.getItem('sanate_prov')||'null');
+let cart = [];
+
+// ── Init ──
+window.onload = ()=>{
+  if(user) applyLogin();
+  else applyLogout();
+};
+
+// ── Auth Tabs ──
+function switchAuthTab(t){
+  document.querySelectorAll('.atab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('[id^="apanel-"]').forEach(x=>x.style.display='none');
+  document.getElementById('atab-'+t).classList.add('active');
+  document.getElementById('apanel-'+t).style.display='flex';
+}
+
+function doLogin(){
+  const e=document.getElementById('pEmail').value.trim().toLowerCase();
+  const p=document.getElementById('pPass').value;
+  const found=USERS.find(u=>u.email===e&&u.pass===p);
+  if(!found){
+    alert('❌ Credenciales incorrectas.\n\nPrueba: proveedor@sanate.com / sanate2024');
+    return;
+  }
+  user=found;
+  sessionStorage.setItem('sanate_prov',JSON.stringify(user));
+  applyLogin();
+  // Notificar a la ventana padre (index.html) si está abierto en modal
+  try{window.opener&&window.opener.postMessage({type:'sanate_login',user},location.origin)}catch(e){}
+}
+
+function doRegister(){
+  const name=document.getElementById('rName').value.trim();
+  const biz=document.getElementById('rBiz').value.trim();
+  const email=document.getElementById('rEmail').value.trim();
+  const phone=document.getElementById('rPhone').value.trim();
+  const city=document.getElementById('rCity').value.trim();
+  if(!name||!email||!phone){alert('Por favor completa los campos requeridos (*)');return;}
+  const msg=`Hola SÁNATE 🌿%0ASolicito acceso al Portal de Proveedores:%0A%0A👤 Nombre: ${encodeURIComponent(name)}%0A🏢 Negocio: ${encodeURIComponent(biz||'—')}%0A📧 Correo: ${encodeURIComponent(email)}%0A📱 WhatsApp: ${encodeURIComponent(phone)}%0A📍 Ciudad: ${encodeURIComponent(city||'—')}`;
+  window.open('https://wa.me/573227461878?text='+msg,'_blank');
+}
+
+function doLogout(){
+  user=null;
+  cart=[];
+  sessionStorage.removeItem('sanate_prov');
+  applyLogout();
+  renderQuoteBar();
+}
+
+function applyLogin(){
+  document.getElementById('authOut').style.display='none';
+  document.getElementById('authIn').style.display='';
+  document.getElementById('authName').textContent=user.name;
+  document.getElementById('authTier').textContent=user.tier;
+  document.getElementById('authDiscount').textContent='Descuento: '+user.discount+'%';
+  document.getElementById('authAvatar').textContent=user.name[0].toUpperCase();
+  // Mostrar precios y botones de todas las tarjetas
+  document.querySelectorAll('.prov-only').forEach(el=>el.style.display='');
+  document.querySelectorAll('.public-only').forEach(el=>el.style.display='none');
+}
+
+function applyLogout(){
+  document.getElementById('authOut').style.display='';
+  document.getElementById('authIn').style.display='none';
+  document.querySelectorAll('.prov-only').forEach(el=>el.style.display='none');
+  document.querySelectorAll('.public-only').forEach(el=>el.style.display='flex');
+}
+
+function showLoginHint(){
+  const panel=document.getElementById('authOut');
+  panel.scrollIntoView({behavior:'smooth',block:'center'});
+  panel.style.transition='box-shadow .3s';
+  panel.style.boxShadow='0 0 0 2px var(--sky-bright)';
+  setTimeout(()=>panel.style.boxShadow='',1600);
+}
+
+// ── Cart ──
+function addCart(id,name,price,btn){
+  const ex=cart.find(i=>i.id===id);
+  if(ex){ex.qty+=1;}else{cart.push({id,name,price,qty:1});}
+  if(btn){
+    btn.textContent='✓ Añadido';btn.classList.add('added');
+    setTimeout(()=>{btn.textContent='+ Añadir cotización';btn.classList.remove('added');},1800);
+  }
+  renderQuoteBar();
+}
+
+function clearCart(){cart=[];renderQuoteBar();}
+
+const fmt=n=>'$'+n.toLocaleString('es-CO');
+
+function renderQuoteBar(){
+  const bar=document.getElementById('quoteBar');
+  if(!cart.length){bar.classList.remove('visible');return;}
+  bar.classList.add('visible');
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('qbCount').textContent=cart.reduce((s,i)=>s+i.qty,0);
+  document.getElementById('qbTotal').textContent=fmt(total);
+}
+
+function sendQuote(){
+  if(!cart.length)return;
+  const lines=cart.map(i=>`• ${i.name} x${i.qty} = ${fmt(i.price*i.qty)}`).join('%0A');
+  const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+  const uname=user?user.name:'Proveedor';
+  const msg=`Hola SÁNATE 🌿%0ASolicitud de cotización mayorista de *${encodeURIComponent(uname)}*:%0A%0A${lines}%0A%0A💰 *Total: ${fmt(total)}*%0A%0APor favor confirmar disponibilidad y condiciones de envío.`;
+  window.open('https://wa.me/573227461878?text='+msg,'_blank');
+}
+</script>
+</body>
+</html>
