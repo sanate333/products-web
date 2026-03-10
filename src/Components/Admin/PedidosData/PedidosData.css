@@ -277,3 +277,379 @@
 .pedidoTotalRow strong{
     color: var(--text-color);
 }
+
+/* === Pedidos Summary Cards === */
+.pedidosSummary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 0 16px 0;
+}
+
+.summaryCard {
+    background: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid #eee;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.summaryCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.summaryIcon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.semanal .summaryIcon {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.quincenal .summaryIcon {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.mensual .summaryIcon {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.summaryInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.summaryLabel {
+    font-size: 12px;
+    color: #888;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summaryTotal {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.summaryGanancia {
+    font-size: 12px;
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.summaryCount {
+    font-size: 11px;
+    color: #aaa;
+}
+
+@media (max-width: 768px) {
+    .pedidosSummary {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    .summaryCard {
+        padding: 12px;
+    }
+    .summaryTotal {
+        font-size: 16px;
+    }
+}.cardsProductData{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.cardProductData{
+    min-width: 18rem;
+    width: 47%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border-radius: 10px;
+    background-color: var(--blanco);
+}
+.cardProductData img{
+    width: 5rem;
+    height: 5rem;
+    border-radius: 10px;
+    object-fit: cover;
+    background-image: var(--gris);
+}
+.cardProductDataText{
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+   
+}
+.cardProductDataText h3{
+    color: var(--text-color2);
+    font-weight: 500;
+}
+.cardProductDataText h5{
+    color: var(--text-color2);
+    font-weight: 500;
+    font-size: 11px;
+}
+.cardProductDataText span{
+    color: var(--text-color2);
+    font-weight: 500;
+    font-size: 13px;
+}
+.cardProductDataText strong{
+    font-weight: 500;
+    color: var(--color1);
+    font-size: 15px;
+}
+.cardProductDataText strong span{
+    padding-left: 2rem;
+    color: var(--color1);
+    font-size: 15px;
+}
+
+.pendiente {
+    background-color: yellow!important;
+  }
+  
+  .cancelado {
+    background-color: red!important;;
+  }
+  
+  .entregado {
+    background-color: blue!important;
+  }
+  
+.pagado {
+    background-color: green!important;
+  }
+
+.pedidoList{
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 10px 0;
+}
+
+.modal{
+    z-index: 1400;
+}
+
+.pedidoGroup{
+    font-size: 13px;
+    color: var(--text-color2);
+    margin-top: 8px;
+    margin-bottom: -4px;
+}
+
+.pedidoCard{
+    background-color: var(--blanco);
+    border-radius: 16px;
+    padding: 16px;
+    border: none;
+    text-align: left;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.pedidoCardHeader{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.pedidoId{
+    font-size: 18px;
+}
+
+.pedidoTotal{
+    color: var(--text-color2);
+    font-size: 15px;
+}
+
+.pedidoCardMeta{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--text-color2);
+}
+
+.pedidoNombre{
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.pedidoDetalle{
+    font-size: 13px;
+}
+
+.pedidoProductos{
+    font-size: 13px;
+    color: var(--text-color2);
+}
+
+.pedidoBadges{
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.pedidoBadge{
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badgePendiente{
+    background-color: #fff3cd;
+    color: #8a6d1f;
+}
+
+.badgeEnviado{
+    background-color: #d6f5e1;
+    color: #0f7a37;
+}
+
+.badgeEntregado{
+    background-color: #d9edf7;
+    color: #0b5c8a;
+}
+
+.badgeRechazado{
+    background-color: #f8d7da;
+    color: #b00020;
+}
+
+.badgePagado{
+    background-color: #d1f2eb;
+    color: #117a65;
+}
+
+.trackingSection{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.trackingSection h4{
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.trackingSection input{
+    background-color: var(--gris2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: none;
+    color: var(--text-color2);
+}
+
+.pedidoModalActions{
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    margin-bottom: 200px;
+    flex-wrap: wrap;
+}
+
+.sectiontext{
+    padding-bottom: 240px;
+}
+
+.pedidoModalContent{
+    padding-bottom: calc(280px + env(safe-area-inset-bottom));
+}
+
+.pedidoDatosActions{
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+}
+
+.pedidoDatosGrid{
+    display: grid;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+    gap: 10px;
+}
+
+.pedidoDatosGrid fieldset{
+    margin: 0;
+}
+
+.btnCopy{
+    background-color: var(--color1);
+    color: var(--blanco);
+}
+
+.btnSendTracking{
+    background-color: var(--green-vivid);
+    color: var(--blanco);
+    flex: 1;
+}
+
+.btnClose{
+    background-color: #1f1f1f;
+    color: var(--blanco);
+    flex: 1;
+}
+  
+
+
+
+
+
+
+@media (max-width: 900px) {
+    .cardProductData{
+        width: 100%;
+    }
+    .pedidoDatosGrid{
+        grid-template-columns: repeat(2, minmax(140px, 1fr));
+    }
+}
+.pedidoTotalRow{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--gris2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 16px;
+    color: var(--text-color2);
+    font-size: 15px;
+}
+
+.pedidoTotalRow strong{
+    color: var(--text-color);
+}
