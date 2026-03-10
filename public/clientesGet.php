@@ -25,7 +25,7 @@ try {
     $conexion = new PDO($dsn, $usuario, $contrasena);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $conexion->exec("CREATE TABLE IF NOT EXISTS `clientes` (
+    $conexion->exec("CREATE TABLE IF NOT EXISTS \`clientes\` (
         idCliente INT(11) AUTO_INCREMENT PRIMARY KEY,
         nombre VARCHAR(100) NULL,
         whatsapp VARCHAR(30) NOT NULL UNIQUE,
@@ -35,11 +35,15 @@ try {
         totalPedidos INT(11) NOT NULL DEFAULT 0,
         totalGastado DECIMAL(10,2) NOT NULL DEFAULT 0,
         ultimoPedido TIMESTAMP NULL,
+        bloqueado TINYINT(1) NOT NULL DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )");
 
-    $stmt = $conexion->prepare("SELECT idCliente, nombre, whatsapp, direccion, ciudad, departamento, totalPedidos, totalGastado, ultimoPedido, createdAt, updatedAt FROM clientes ORDER BY ultimoPedido DESC, idCliente DESC");
+    // Add bloqueado column if table already exists without it
+    $conexion->exec("ALTER TABLE clientes ADD COLUMN IF NOT EXISTS bloqueado TINYINT(1) NOT NULL DEFAULT 0");
+
+    $stmt = $conexion->prepare("SELECT idCliente, nombre, whatsapp, direccion, ciudad, departamento, totalPedidos, totalGastado, ultimoPedido, bloqueado, createdAt, updatedAt FROM clientes ORDER BY ultimoPedido DESC, idCliente DESC");
     $stmt->execute();
     $clientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
