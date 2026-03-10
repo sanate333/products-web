@@ -20,6 +20,7 @@ export default function ProductosData() {
     const [nuevaDescripcion, setNuevaDescripcion] = useState('');
     const [nuevoPrecio, setNuevoPrecio] = useState('');
     const [nuevoPrecioAnterior, setNuevoPrecioAnterior] = useState(0);
+    const [nuevaGananciaAprox, setNuevaGananciaAprox] = useState('');
     const [nuevaCategoria, setNuevaCategoria] = useState('');
     const [producto, setProducto] = useState({});
     const [modalImagenVisible, setModalImagenVisible] = useState(false);
@@ -208,6 +209,7 @@ export default function ProductosData() {
         setNuevoTitulo(item.titulo);
         setNuevaDescripcion(item.descripcion);
         setNuevoPrecio(item.precio);
+        setNuevaGananciaAprox(item.gananciaAprox || '');
         setModalVisible(true);
     };
 
@@ -407,6 +409,7 @@ export default function ProductosData() {
             item5: item5 !== undefined ? item5 : producto.item5,
             item6: item6 !== undefined ? item6 : producto.item6,
             precioAnterior: nuevoPrecioAnterior !== 0 ? nuevoPrecioAnterior : producto.precioAnterior,
+            gananciaAprox: nuevaGananciaAprox !== '' ? nuevaGananciaAprox : producto.gananciaAprox,
             stock: parsedStock,
             estadoProducto: estadoProducto || 'Activo',
             tieneVariantes: tieneVariantes ? 1 : 0,
@@ -825,6 +828,14 @@ export default function ProductosData() {
                                         onChange={(e) => setNuevoPrecioAnterior(e.target.value)}
                                     />
                                 </fieldset>
+                                    <fieldset>
+                                        <legend>Ganancia Aprox</legend>
+                                        <input
+                                            type="number"
+                                            value={nuevaGananciaAprox !== "" ? nuevaGananciaAprox : (producto.gananciaAprox ?? "")}
+                                            onChange={(e) => setNuevaGananciaAprox(e.target.value)}
+                                        />
+                                    </fieldset>
                                 <fieldset>
                                     <legend>Stock disponible</legend>
                                     <input
@@ -1158,6 +1169,10 @@ export default function ProductosData() {
                                 <div className='productRowInfo'>
                                     <h4>{item.titulo}</h4>
                                     <span>{hasStock ? `${item?.stock ?? '-'} disponibles` : 'Sin stock'}</span>
+                                    <span className='productRowPrecio'>{moneda} {parseFloat(item.precio).toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+                                    {item.gananciaAprox > 0 && (
+                                        <span className='productRowGanancia'>Ganancia: {moneda} {parseFloat(item.gananciaAprox).toLocaleString('es-CO', {minimumFractionDigits: 0})}</span>
+                                    )}
                                 </div>
                                 <span className={`statusBadge ${statusClass}`}>
                                     {statusText}
