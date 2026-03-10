@@ -67,6 +67,7 @@ try {
          $stock = array_key_exists('stock', $data) ? $data['stock'] : null;
          $estadoProducto = isset($data['estadoProducto']) ? $data['estadoProducto'] : 'Activo';
          $tieneVariantes = isset($data['tieneVariantes']) ? (int)$data['tieneVariantes'] : 0;
+    $gananciaAprox = isset($data['gananciaAprox']) ? $data['gananciaAprox'] : null;
  
         if (empty($nuevaCategoria)) {
             $sqlSelect = "SELECT idCategoria FROM productos WHERE idProducto = :idProducto";
@@ -79,7 +80,7 @@ try {
 
         $sqlUpdate = "UPDATE productos SET descripcion = :descripcion, titulo = :titulo, idCategoria = :idCategoria, precio = :precio, masVendido = :masVendido, 
        item1 = :item1, item2 = :item2, item3 = :item3, item4 = :item4, item5 = :item5, item6 = :item6, item7 = :item7, item8 = :item8, 
-       item9 = :item9, item10 = :item10, precioAnterior = :precioAnterior, stock = :stock, estadoProducto = :estadoProducto, tieneVariantes = :tieneVariantes
+       item9 = :item9, item10 = :item10, precioAnterior = :precioAnterior, stock = :stock, estadoProducto = :estadoProducto, tieneVariantes = :tieneVariantes, gananciaAprox = :gananciaAprox
         WHERE idProducto = :idProducto";
         $sentenciaUpdate = $conexion->prepare($sqlUpdate);
         $sentenciaUpdate->bindParam(':descripcion', $nuevaDescripcion);
@@ -101,6 +102,7 @@ try {
         $sentenciaUpdate->bindParam(':stock', $stock);
         $sentenciaUpdate->bindParam(':estadoProducto', $estadoProducto);
         $sentenciaUpdate->bindParam(':tieneVariantes', $tieneVariantes);
+    $sentenciaUpdate->bindParam(':gananciaAprox', $gananciaAprox);
         $sentenciaUpdate->bindParam(':idProducto', $idProducto, PDO::PARAM_INT);
 
         if ($sentenciaUpdate->execute()) {
