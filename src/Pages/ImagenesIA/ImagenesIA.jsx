@@ -103,6 +103,8 @@ const ECOM_MAGIC_TEMPLATES = [
   { id: 2, name: 'Oferta Flash', type: 'Oferta', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 93 },
   { id: 3, name: 'Beneficios', type: 'Beneficios', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 91 },
   { id: 4, name: 'Antes/Despues', type: 'Antes/Despues', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 95 },
+  { id: 5, name: 'Testimonio', type: 'Testimonio', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 90 },
+  { id: 6, name: 'Logística', type: 'Logistica', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 88 },
 ];
 
 const ensurePngFile = async (file) => {
