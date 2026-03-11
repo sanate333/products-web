@@ -58,6 +58,13 @@ jobs:
           Write-Output "=== JS files in public_html/static/js ==="
           Get-ChildItem "public_html\static\js" | ForEach-Object { Write-Output $_.Name }
 
+      - name: Force copy index.html
+        shell: pwsh
+        run: |
+          Copy-Item -Force "build\index.html" "public_html\index.html"
+          Write-Output "=== index.html updated ==="
+          Get-Content "public_html\index.html"
+
       - name: Deploy via FTPS to Hostinger
         id: deploy_ftps
         continue-on-error: true
