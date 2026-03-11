@@ -669,7 +669,7 @@ function SocialConnector({ platform }) {
       var authUrl;
       if (platform === 'instagram') {
         var IG_APP_ID = '2337348940109240';
-        authUrl = 'https://api.instagram.com/oauth/authorize?client_id=' + IG_APP_ID
+        authUrl = 'https://www.instagram.com/oauth/authorize?client_id=' + IG_APP_ID
           + '&redirect_uri=' + encodeURIComponent(redirectUri)
           + '&scope=' + encodeURIComponent('instagram_business_basic,instagram_business_manage_messages')
           + '&response_type=code'
