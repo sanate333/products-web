@@ -659,17 +659,28 @@ function SocialConnector({ platform }) {
     return fetch(BASE + '/api/social/status?storeId=' + STORE_ID, { headers: H })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
-        if (data && data[platform]) { setStatus('connected'); setAccount(data[platform]); return true; }
+        var pd = data && data[platform]; if (pd && pd.connected !== false) { setStatus('connected'); setAccount(pd); return true; }
         return false;
       }).catch(function() { return false; });
   }
   useEffect(function() { checkStatus(); }, [platform]);
   function handleConnect() {
-    var authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
-      + '&redirect_uri=' + encodeURIComponent(redirectUri)
-      + '&scope=' + encodeURIComponent(cfg.scope)
-      + '&response_type=code'
-      + '&state=' + platform + '_' + STORE_ID;
+    var stateStr = encodeURIComponent(JSON.stringify({platform: platform, storeId: STORE_ID}));
+      var authUrl;
+      if (platform === 'instagram') {
+        var IG_APP_ID = '2337348940109240';
+        authUrl = 'https://api.instagram.com/oauth/authorize?client_id=' + IG_APP_ID
+          + '&redirect_uri=' + encodeURIComponent(redirectUri)
+          + '&scope=' + encodeURIComponent('instagram_business_basic,instagram_business_manage_messages')
+          + '&response_type=code'
+          + '&state=' + stateStr;
+      } else {
+        authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
+          + '&redirect_uri=' + encodeURIComponent(redirectUri)
+          + '&scope=' + encodeURIComponent(cfg.scope)
+          + '&response_type=code'
+          + '&state=' + stateStr;
+      }
     var popup = window.open(authUrl, platform + '_oauth', 'width=640,height=720,scrollbars=yes');
     if (!popup) { alert('Permite ventanas emergentes para sanate.store e intenta de nuevo.'); return; }
     setStatus('connecting');
