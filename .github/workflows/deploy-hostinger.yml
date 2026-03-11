@@ -8,84 +8,38 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: windows-latest
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm
+          node-version: '18'
+          cache: 'npm'
 
-      - name: Install deps
-        run: npm install --include=dev --no-audit --no-fund
-
-      - name: Ensure react-scripts
-        run: npm install react-scripts@5.0.1 --no-save --no-audit --no-fund
+      - name: Install dependencies
+        run: npm ci
 
       - name: Build React app
-        id: build_react
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $env:CI = "false"
-          npx react-scripts build 2>&1 | Tee-Object -FilePath build-log.txt
-          if ($LASTEXITCODE -ne 0) {
-            "BUILD_FAILED=1" | Out-File -FilePath $env:GITHUB_ENV -Append
-          }
+        run: npm run build
+        env:
+          CI: false
+          GENERATE_SOURCEMAP: false
 
-      - name: Report build failure
-        if: env.BUILD_FAILED == '1'
-        shell: pwsh
-        run: |
-          $tail = (Get-Content -Path build-log.txt -Tail 80) -join "`n"
-          $tail = $tail -replace "`r",""
-          $tail = $tail -replace "%","%25" -replace "`n","%0A" -replace "`r","%0D"
-          Write-Output "::error title=React build failed::$tail"
-          exit 1
-
-      - name: Sync public_html
-        run: node post-build.js
-
-      - name: Force copy static build files
-        shell: pwsh
-        run: |
-          if (Test-Path "public_html\static") { Remove-Item -Recurse -Force "public_html\static" }
-          Copy-Item -Recurse -Force "build\static" "public_html\"
-          Write-Output "=== JS files in public_html/static/js ==="
-          Get-ChildItem "public_html\static\js" | ForEach-Object { Write-Output $_.Name }
-
-      - name: Force copy index.html
-        shell: pwsh
-        run: |
-          Copy-Item -Force "build\index.html" "public_html\index.html"
-          Write-Output "=== index.html updated ==="
-          Get-Content "public_html\index.html"
-
-      - name: Deploy via FTPS to Hostinger
-        id: deploy_ftps
-        continue-on-error: true
+      - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
-          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_FTP_PORT }}
-          protocol: ftps
-          local-dir: ./public_html/
-          server-dir: ${{ secrets.HOSTINGER_FTP_PATH || '/public_html/' }}
-
-      - name: Retry deploy via FTP
-        if: steps.deploy_ftps.outcome == 'failure'
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
-          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_FTP_PORT }}
-          protocol: ftp
-          local-dir: ./public_html/
-          server-dir: ${{ secrets.HOSTINGER_FTP_PATH || '/public_html/' }}
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: 21
+          local-dir: ./build/
+          server-dir: /public_html/
+          dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**
+            **/whatsapp-proxy.php
