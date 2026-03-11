@@ -11,5 +11,7 @@ node_modules/
 public_html/worldmonitor/
 public_html/ai-images/
 public_html/ai-templates/
-# Claude worktree settings
-.claude/
+# Claude — ignore local state but keep shared settings and hooks
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
