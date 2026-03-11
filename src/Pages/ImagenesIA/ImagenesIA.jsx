@@ -1,474 +1,542 @@
-import React, { useState, useMemo, useCallback, useRef } from 'react';
-import styles from './ImagenesIA.module.css';
-import { useAuth } from '../../context/AuthContext';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import './ImagenesIA.css';
+import baseURL from '../../Components/url';
 
-// ============================================================================
-// TEMPLATE DATA - Real URLs from ecom-magic.ai gallery
-// ============================================================================
-const TEMPLATE_BASE = 'https://ecom-magic.ai/public-banners/landing-templates/';
+const DEFAULT_IA_API_BASE = 'https://products-web-j7ji.onrender.com';
+const PINNED_API = `${DEFAULT_IA_API_BASE}/api`;
 
-const GALLERY_CATEGORIES = [
-  'Hero',
-  'Oferta',
-  'Antes/Después',
-  'Beneficios',
-  'Tabla Comparativa',
-  'Prueba de Autoridad',
-  'Testimonios',
-  'Modo de Uso',
-  'Logística',
-  'Preguntas Frecuentes',
+const resolveImageUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+  return `${DEFAULT_IA_API_BASE}${url.startsWith('/') ? '' : '/'}${url}`;
+};
+
+const buildApiUrl = (path) => {
+  const cleanPath = path.replace(/^\/+/, '');
+  return `${PINNED_API}/${cleanPath}`;
+};
+
+const fetchJsonSafe = async (path, options = {}) => {
+  const url = buildApiUrl(path);
+  try {
+    const resp = await fetch(url, { ...options });
+    const ct = resp.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      return { ok: resp.ok, data: await resp.json(), url, status: resp.status };
+    }
+    const text = await resp.text();
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try { return { ok: resp.ok, data: JSON.parse(trimmed), url, status: resp.status }; } catch (_) {}
+    }
+    return { ok: false, text, url, status: resp.status };
+  } catch (err) {
+    return { ok: false, url, status: 0, text: err?.message || 'network_error' };
+  }
+};
+
+const BRAND_PALETTES = {
+  Hero: {
+    bg: 'dramatic dark gradient background with electric blue and deep navy',
+    light: 'cinematic rim lighting, powerful spotlight from above',
+    mood: 'high-energy, explosive, powerful, motivational aesthetic',
+    comp: 'centered product hero shot, dynamic diagonal composition',
+  },
+  Oferta: {
+    bg: 'bold red and gold gradient background, urgency and excitement',
+    light: 'bright dramatic lighting, golden hour glow',
+    mood: 'urgent, exclusive, limited-time, high-conversion energy',
+    comp: 'product centered with empty space for price overlay, bold composition',
+  },
+  Beneficios: {
+    bg: 'clean emerald green and white gradient, natural and fresh',
+    light: 'soft natural daylight, clean studio lighting',
+    mood: 'healthy, natural, trustworthy, wellness aesthetic',
+    comp: 'product with natural elements, flat lay or lifestyle context',
+  },
+  'Antes/Despues': {
+    bg: 'split composition, dark moody left side and bright right side',
+    light: 'dramatic contrast lighting, transformation narrative',
+    mood: 'powerful transformation, dramatic results, before/after split',
+    comp: 'split screen dramatic composition, transformation visual storytelling',
+  },
+  Testimonio: {
+    bg: 'warm beige and cream studio background, authentic lifestyle',
+    light: 'warm natural window light, soft shadows',
+    mood: 'authentic, trustworthy, real results, social proof aesthetic',
+    comp: 'lifestyle context, product with human element suggestion',
+  },
+  Logistica: {
+    bg: 'clean white and light blue professional background',
+    light: 'clean bright studio lighting, crisp and professional',
+    mood: 'reliable, fast, professional logistics and shipping aesthetic',
+    comp: 'product with packaging, shipping box, clean minimal layout',
+  },
+};
+
+const buildHighImpactPrompt = ({ productName, productDetails, templateType, angle, benefit, style, brandColor }) => {
+  const palette = BRAND_PALETTES[templateType] || BRAND_PALETTES.Hero;
+  const parts = [
+    `Ultra-realistic commercial ecommerce product photography of ${productName} supplement bottle/container.`,
+    palette.bg + '.',
+    palette.light + '.',
+    palette.mood + '.',
+    palette.comp + '.',
+  ];
+  if (productDetails) parts.push(`Product: ${productDetails}.`);
+  if (angle) parts.push(`Marketing angle: ${angle}.`);
+  if (benefit) parts.push(`Target customer: ${benefit}.`);
+  if (brandColor) parts.push(`Brand accent color: ${brandColor}.`);
+  if (style) parts.push(`Style direction: ${style}.`);
+  parts.push(
+    'Photorealistic 8K quality, professional commercial advertising photography.',
+    'Cinematic depth of field, perfect product focus, premium brand aesthetics.',
+    'High conversion ecommerce hero image, magazine quality.',
+    'Dramatic color grading matching brand identity.',
+    'CRITICAL: NO text, NO words, NO letters, NO typography, NO captions anywhere in image.'
+  );
+  return parts.join(' ');
+};
+
+const ECOM_MAGIC_TEMPLATES = [
+  { id: 1, name: 'Hero Impacto', type: 'Hero', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 97 },
+  { id: 2, name: 'Oferta Flash', type: 'Oferta', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 93 },
+  { id: 3, name: 'Beneficios', type: 'Beneficios', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 91 },
+  { id: 4, name: 'Antes/Despues', type: 'Antes/Despues', url: 'https://ecom-magic.ai/public-banners/landing-templates/hero-0476bf69-7ccd-4679-ae5c-6d1c6e0d0e67.png', score: 95 },
 ];
 
-const ECOM_TEMPLATES = [
-  { id: 'hero-1', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-436addbe-69dd-46a9-96ee-445eda7dc8a4.png` },
-  { id: 'hero-2', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-e9d7b624-a836-4a90-88b3-e05c9b4d33f3.png` },
-  { id: 'hero-3', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-48797508-35e6-454b-a61c-39ee0c19c346.png` },
-  { id: 'hero-4', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-d8a76ef6-e837-45be-bf9e-104d6a7f564b.png` },
-  { id: 'hero-5', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-4a6fbd05-457e-41f7-84e2-b2bffb256822.png` },
-  { id: 'hero-6', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-6662203b-6c2c-4a94-99d9-f64145967cee.png` },
-  { id: 'hero-7', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-7a8739c7-33a7-482b-9a5b-5add341c8871.png` },
-  { id: 'hero-8', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-7ccd415c-e507-40a0-b589-e5e0db0d0702.png` },
-  { id: 'hero-9', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-d49c5938-7a58-42bf-9324-fb2f0ef6cc39.png` },
-  { id: 'hero-10', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-f04cbec9-93dd-47fe-94c7-280143955834.jpg` },
-  { id: 'hero-11', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-ecc308a8-d1f3-4026-aa89-9bbc390d7deb.png` },
-  { id: 'hero-12', category: 'Hero', thumb: `${TEMPLATE_BASE}hero-aa668361-6c52-4515-9930-8b6c3271d843.png` },
-  { id: 'offer-1', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-adb906bf-828a-477d-b9fa-d49feaa0b238.png` },
-  { id: 'offer-2', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-0fa69b94-0b36-4389-8484-4838937ec1a5.png` },
-  { id: 'offer-3', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-b5d2290d-07e3-4964-8be4-d2d01f6a3640.png` },
-  { id: 'offer-4', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-12a21e29-ca7e-4165-a900-ba2382585c7a.png` },
-  { id: 'offer-5', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-d7bb13bb-1dbd-41a8-9990-ab6fa427a7a3.png` },
-  { id: 'offer-6', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-da86fc7c-4743-43ae-816b-b19c4dc69073.png` },
-  { id: 'offer-7', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-ea0e0deb-36fa-402e-81ab-2e1b28a74dbd.png` },
-  { id: 'offer-8', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-37d5f082-4f45-4594-bb96-ca4dc4fbc040.png` },
-  { id: 'offer-9', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-8b31f94c-4fd8-43c1-82ee-2e5bac24d2ee.png` },
-  { id: 'offer-10', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-357173a2-b3fa-41fd-80bc-b4b6a9b839ee.jpg` },
-  { id: 'offer-11', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-82b5f66e-ab77-48d0-a675-1afeb57091d6.png` },
-  { id: 'offer-12', category: 'Oferta', thumb: `${TEMPLATE_BASE}offer-89670574-ad08-47ba-9d91-6ef3c67ad064.png` },
-  { id: 'ba-1', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-77bcd88c-a699-4ab8-92c7-f5c1a5beaa2f.png` },
-  { id: 'ba-2', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-728ee75a-f3f5-4520-8cbf-6e3de6ba459c.png` },
-  { id: 'ba-3', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-1833bc9e-d5f1-4312-8eb4-71fe47b8f5ac.png` },
-  { id: 'ba-4', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-9db65107-14b5-48af-8f9a-d38d6ff5034f.png` },
-  { id: 'ba-5', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-81990293-0dcc-459e-a687-8d7dba9d66df.png` },
-  { id: 'ba-6', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-ec4bbf75-0dba-4296-9057-f04dfcbe2de0.png` },
-  { id: 'ba-7', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-f3407da9-938c-4cd2-b4a2-65dd587b6d48.png` },
-  { id: 'ba-8', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-a4bd2b49-8b0a-465d-a76a-2c5ed8118d03.png` },
-  { id: 'ba-9', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-8873e60f-9b75-4e05-afc9-ee9741735fed.png` },
-  { id: 'ba-10', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-473e9260-f9d8-4aaf-a2e7-745e007f29cc.png` },
-  { id: 'ba-11', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-2a53138e-aa4c-451d-8fe8-dcaf3c924962.jpg` },
-  { id: 'ba-12', category: 'Antes/Después', thumb: `${TEMPLATE_BASE}before_after-e2d7004f-3141-4c51-877e-b5bf3cb7b642.png` },
-  { id: 'ben-1', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-60a2e3d9-b57c-4b6c-bfe4-778c3750bbbc.png` },
-  { id: 'ben-2', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-d24c923d-076e-4056-aa47-c04ce399c19c.png` },
-  { id: 'ben-3', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-1287ed8c-a13c-4522-96f6-4ffcc433f75c.png` },
-  { id: 'ben-4', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-69c047f1-f41d-4854-aeee-7aabc8d51daa.png` },
-  { id: 'ben-5', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-e49f4057-bca1-4372-8e6e-4b23bf8e31fd.png` },
-  { id: 'ben-6', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-47278e11-2ffc-4b9d-8b10-c498c7b476e9.png` },
-  { id: 'ben-7', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-2d0e37e8-a3ee-40d2-929e-666fa2e48a1c.png` },
-  { id: 'ben-8', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-aa650356-e98b-4148-8c4c-79cc17b1783f.png` },
-  { id: 'ben-9', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-a0cfef59-f779-4721-b020-32a5e229efc9.png` },
-  { id: 'ben-10', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-f53acd8d-16eb-4f4f-887d-5a3fa148c91c.png` },
-  { id: 'ben-11', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-36ce1ea4-002a-4697-9d93-43e1014f058c.png` },
-  { id: 'ben-12', category: 'Beneficios', thumb: `${TEMPLATE_BASE}benefits-80ff9ec9-a9d8-4750-864c-574019504e5c.png` },
-  { id: 'tc-1', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-69257458-4780-4ca8-90b5-46229fcebd55.png` },
-  { id: 'tc-2', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-5620fdbb-1a0d-4fcd-9384-5b60aa446f79.png` },
-  { id: 'tc-3', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-cf26629e-a5b0-4a44-b86c-1bc951656f9c.png` },
-  { id: 'tc-4', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-7fcddc55-944e-4969-9186-5a06b6dcf3bb.png` },
-  { id: 'tc-5', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-bc511360-ee7c-4340-b38a-91bf7e8215e2.png` },
-  { id: 'tc-6', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-e68f25e2-e67c-465d-87f3-a07152356402.png` },
-  { id: 'tc-7', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-55dbbb7e-087f-4d0f-83bf-3bc1ee16dd09.jpg` },
-  { id: 'tc-8', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-e010a292-3056-4760-9fe0-bfb73a461d79.jpg` },
-  { id: 'tc-9', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-09af0fb4-8c17-4c7e-a3d1-77980d0f189a.jpg` },
-  { id: 'tc-10', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-4e4a6cbf-64fd-4e4e-ae6c-f2caf871ca68.jpg` },
-  { id: 'tc-11', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-8c5e247a-00e7-449c-ac39-d89beb0199b6.png` },
-  { id: 'tc-12', category: 'Tabla Comparativa', thumb: `${TEMPLATE_BASE}comparison_table-11b5f4ef-3a19-42ad-a6e4-f6b366728be0.png` },
-  { id: 'ap-1', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-79de460c-2d87-4837-a108-246b98af1e84.png` },
-  { id: 'ap-2', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-75a1aeed-9f06-4246-b475-84cdf5c05b00.jpg` },
-  { id: 'ap-3', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-8affea10-87c0-4826-a142-40c1e1a64a2b.png` },
-  { id: 'ap-4', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-605d06a8-693a-4fd4-80a1-330a72f2d341.png` },
-  { id: 'ap-5', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-869f6188-3e85-45ad-bc6b-27a574c13d29.png` },
-  { id: 'ap-6', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-e0d3f1ab-2ce6-415b-90d1-5278a541ed57.png` },
-  { id: 'ap-7', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-c7142965-34d3-479e-bffb-7d34e4f8ed57.png` },
-  { id: 'ap-8', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-3e827b31-95df-4a8a-a8d8-7ee41c235366.png` },
-  { id: 'ap-9', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-41903895-2bcf-4691-b087-5b67feab64af.jpg` },
-  { id: 'ap-10', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-d170681f-6a07-49d9-9a7d-63d6ae5c064d.png` },
-  { id: 'ap-11', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-0fba88c2-a050-4b9a-b3bc-d1f76578a373.png` },
-  { id: 'ap-12', category: 'Prueba de Autoridad', thumb: `${TEMPLATE_BASE}authority_proof-cd759084-7f67-4c65-8fe9-51586a3272d6.png` },
-  { id: 'test-1', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-13f09e6f-5b2f-45ca-aa08-76a377eaf9a5.png` },
-  { id: 'test-2', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-585ec1bd-ad73-40f1-b97d-34eefaba940e.png` },
-  { id: 'test-3', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-4f3ec49f-72ff-440f-9370-a30905296850.png` },
-  { id: 'test-4', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-6dca41c6-a4fa-40d7-a0a4-a9df4031d88d.jpg` },
-  { id: 'test-5', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-c9e388a8-6e16-40ee-b8f8-824cb1f36493.png` },
-  { id: 'test-6', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-2c21aea6-be89-445e-bf0e-b53935502d0f.png` },
-  { id: 'test-7', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-e837c433-0b2f-48f9-a40a-ac983232a32a.png` },
-  { id: 'test-8', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-7d9496f7-8203-4cd2-a706-8f736789a8dc.png` },
-  { id: 'test-9', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-b583ae9b-dfa4-452e-913e-66b00399af4b.png` },
-  { id: 'test-10', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-b8773327-a8c3-4eb0-858c-e84186ed02ef.png` },
-  { id: 'test-11', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-205fcea2-9cdc-45a2-9eb6-0f7269cc50b7.png` },
-  { id: 'test-12', category: 'Testimonios', thumb: `${TEMPLATE_BASE}testimonials-5d0bf44c-0eb0-4353-9c65-107401714663.png` },
-  { id: 'hu-1', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-e9c3a09b-add2-4ae5-bab0-6ccde5803745.png` },
-  { id: 'hu-2', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-fbf59ae0-6066-4698-8b4e-2efc4ae9bffe.png` },
-  { id: 'hu-3', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-bfc4a03d-8130-4ce3-afde-612dc23d29ad.png` },
-  { id: 'hu-4', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-be807363-b406-411f-832c-aa6e43e3c846.png` },
-  { id: 'hu-5', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-1c0a7d3f-3f93-4776-af50-7ce510d63eda.png` },
-  { id: 'hu-6', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-28ae28db-521b-465a-abe6-0e87e5002cd0.png` },
-  { id: 'hu-7', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-c7c6291e-aef3-4d49-bc8a-8d5b665189bc.png` },
-  { id: 'hu-8', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-2b4df0cf-1321-4193-991f-4195e3b5b3b1.png` },
-  { id: 'hu-9', category: 'Modo de Uso', thumb: `${TEMPLATE_BASE}how_to_use-65c72156-d215-4cae-92c0-60b4109d2ba1.png` },
-  { id: 'log-1', category: 'Logística', thumb: `${TEMPLATE_BASE}logistics-218ccffa-6735-445a-b562-876f84aa6bdb.jpg` },
-  { id: 'log-2', category: 'Logística', thumb: `${TEMPLATE_BASE}logistics-3c187d9d-d389-48b8-9081-780ff95a160b.png` },
-  { id: 'log-3', category: 'Logística', thumb: `${TEMPLATE_BASE}logistics-87718725-862f-4fd1-a5fd-95f0f3f22037.png` },
-  { id: 'faq-1', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-d2f1073d-559c-4de8-8957-330fe539b802.png` },
-  { id: 'faq-2', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-bb40335a-8016-4bad-9447-b7445f53322a.png` },
-  { id: 'faq-3', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-5593478b-7cb9-466a-aaff-1f7875b17beb.png` },
-  { id: 'faq-4', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-ddabf943-0464-4a71-b018-f614b4766af3.png` },
-  { id: 'faq-5', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-d2c5cae4-3421-4fdd-8b01-bd19d39fdba9.jpg` },
-  { id: 'faq-6', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-e9c06a57-a33d-4f8c-91a4-a3b4a9ee43fd.png` },
-  { id: 'faq-7', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-8d568242-c810-41d8-b389-9772a8bfbcb1.png` },
-  { id: 'faq-8', category: 'Preguntas Frecuentes', thumb: `${TEMPLATE_BASE}faq-4fe52bce-c381-423c-bd2f-7f120baec334.png` },
+const ensurePngFile = async (file) => {
+  if (file.type === 'image/png') return file;
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      canvas.toBlob((blob) => resolve(new File([blob], file.name.replace(/\.[^.]+$/, '.png'), { type: 'image/png' })), 'image/png');
+    };
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+const extractDominantColor = async (file) => {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = 50; canvas.height = 50;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, 50, 50);
+      const data = ctx.getImageData(0, 0, 50, 50).data;
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let i = 0; i < data.length; i += 16) {
+        r += data[i]; g += data[i + 1]; b += data[i + 2]; count++;
+      }
+      resolve(`rgb(${Math.round(r/count)},${Math.round(g/count)},${Math.round(b/count)})`);
+    };
+    img.onerror = () => resolve(null);
+    img.src = URL.createObjectURL(file);
+  });
+};
+
+const MODEL_OPTIONS = ['pollinations', 'openai'];
+const templateOptions = ['Hero', 'Oferta', 'Beneficios', 'Antes/Despues', 'Testimonio', 'Logistica'];
+const sizeOptions = [
+  { label: 'Instagram Cuadrado (1024x1024)', value: '1024x1024' },
+  { label: 'Instagram Stories (1024x1792)', value: '1024x1792' },
+  { label: 'Horizontal Facebook (1792x1024)', value: '1792x1024' },
+  { label: 'Miniatura (512x512)', value: '512x512' },
 ];
 
-// ============================================================================
-// GALLERY MODAL COMPONENT
-// ============================================================================
-function GalleryModal({ isOpen, onClose, onSelect, selectedId, templates, categories }) {
-  const [activeCategory, setActiveCategory] = useState(categories[0] || 'Hero');
-  const scrollRef = useRef(null);
-  const filteredTemplates = useMemo(
-    () => templates.filter((t) => t.category === activeCategory),
-    [activeCategory, templates]
-  );
-  const scroll = (dir) => {
-    if (scrollRef.current) scrollRef.current.scrollLeft += dir === 'left' ? -200 : 200;
-  };
-  if (!isOpen) return null;
-  return (
-    <div style={{ position:'fixed',top:0,left:0,right:0,bottom:0,backgroundColor:'rgba(0,0,0,0.7)',zIndex:50,display:'flex',alignItems:'center',justifyContent:'center' }} onClick={onClose}>
-      <div style={{ backgroundColor:'#1a1a2e',borderRadius:'12px',maxWidth:'80vw',maxHeight:'85vh',width:'100%',display:'flex',flexDirection:'column',color:'#fff',boxShadow:'0 20px 60px rgba(0,0,0,0.9)' }} onClick={(e)=>e.stopPropagation()}>
-        <div style={{ padding:'24px',borderBottom:'1px solid #2d2d44',display:'flex',alignItems:'center',gap:'12px',fontSize:'20px',fontWeight:600 }}>
-          <span style={{ fontSize:'24px' }}>&#8862;</span> Galeria de Disenos
-        </div>
-        <div style={{ padding:'16px 24px',borderBottom:'1px solid #2d2d44',display:'flex',alignItems:'center',gap:'12px' }}>
-          <button onClick={()=>scroll('left')} style={{ background:'transparent',border:'none',color:'#7c3aed',cursor:'pointer',fontSize:'18px',padding:'8px' }}>&lt;</button>
-          <div ref={scrollRef} style={{ display:'flex',gap:'12px',flex:1,overflowX:'auto',scrollBehavior:'smooth' }}>
-            {categories.map((cat)=>(
-              <button key={cat} onClick={()=>setActiveCategory(cat)} style={{ padding:'8px 16px',borderRadius:'6px',whiteSpace:'nowrap',cursor:'pointer',fontSize:'14px',border:'none',fontWeight:activeCategory===cat?500:400,transition:'all 0.2s',backgroundColor:activeCategory===cat?'#7c3aed':'transparent',color:activeCategory===cat?'#fff':'#aaa' }}>{cat}</button>
-            ))}
-          </div>
-          <button onClick={()=>scroll('right')} style={{ background:'transparent',border:'none',color:'#7c3aed',cursor:'pointer',fontSize:'18px',padding:'8px' }}>&gt;</button>
-        </div>
-        <div style={{ flex:1,overflow:'auto',padding:'24px' }}>
-          <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fill, minmax(180px, 1fr))',gap:'12px' }}>
-            {filteredTemplates.map((tpl)=>(
-              <div key={tpl.id} onClick={()=>onSelect(tpl)} style={{ borderRadius:'8px',overflow:'hidden',cursor:'pointer',border:selectedId===tpl.id?'2px solid #7c3aed':'2px solid transparent',boxShadow:selectedId===tpl.id?'0 0 0 3px rgba(124,58,237,0.5)':'none',transition:'all 0.2s',aspectRatio:'16/9',backgroundColor:'#2d2d44' }}
-                onMouseEnter={(e)=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.transform='translateY(-2px)'}}
-                onMouseLeave={(e)=>{if(selectedId!==tpl.id)e.currentTarget.style.borderColor='transparent';e.currentTarget.style.transform='translateY(0)'}}>
-                <img src={tpl.thumb} alt={tpl.id} style={{ width:'100%',height:'100%',objectFit:'cover' }} onError={(e)=>{e.target.style.display='none'}} />
-              </div>
-            ))}
-          </div>
-          {filteredTemplates.length===0&&(<div style={{ textAlign:'center',color:'#666',padding:'40px' }}>No hay plantillas disponibles en esta categoria aun.</div>)}
-        </div>
-        <div style={{ padding:'24px',borderTop:'1px solid #2d2d44',display:'flex',alignItems:'center',justifyContent:'space-between',gap:'12px' }}>
-          <div style={{ fontSize:'14px',color:'#999',flex:1 }}>Haz clic en un template para seleccionarlo</div>
-          <div style={{ display:'flex',gap:'12px' }}>
-            <button onClick={onClose} style={{ padding:'10px 20px',borderRadius:'6px',cursor:'pointer',fontSize:'14px',fontWeight:500,backgroundColor:'transparent',color:'#999',border:'1px solid #666' }}>Cancelar</button>
-            <button disabled={!selectedId} onClick={()=>{if(selectedId){const t=templates.find(x=>x.id===selectedId);if(t){onSelect(t);onClose()}}}} style={{ padding:'10px 20px',borderRadius:'6px',border:'none',cursor:selectedId?'pointer':'default',fontSize:'14px',fontWeight:500,backgroundColor:'#7c3aed',color:'#fff',opacity:selectedId?1:0.5 }}>Seleccionar Plantilla</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ============================================================================
-// MAIN COMPONENT — Matches ecom-magic.ai UI
-// ============================================================================
 export default function ImagenesIA() {
-  const { products = [] } = useAuth() || {};
-
-  const [selectedEngine, setSelectedEngine] = useState('pollinations');
-  const [openaiKey, setOpenaiKey] = useState('');
-  const [galleryOpen, setGalleryOpen] = useState(false);
-  const [pendingTemplateId, setPendingTemplateId] = useState(null);
+  const [model, setModel] = useState('pollinations');
+  const [templateType, setTemplateType] = useState('Hero');
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [productPhotos, setProductPhotos] = useState([null, null, null]);
-  const [productName, setProductName] = useState('');
-  const [bgColor, setBgColor] = useState('');
-  const [size, setSize] = useState('1080x1080');
-  const [language, setLanguage] = useState('Espanol');
-  const [personalization, setPersonalization] = useState(true);
-  const [details, setDetails] = useState('');
-  const [generating, setGenerating] = useState(false);
+  const [brandColor, setBrandColor] = useState('');
+  const [size, setSize] = useState('1024x1024');
+  const [selectedProduct, setSelectedProduct] = useState('');
+  const [products, setProducts] = useState([]);
+  const [showCreativeControls, setShowCreativeControls] = useState(false);
+  const [angle, setAngle] = useState('');
+  const [benefit, setBenefit] = useState('');
+  const [style, setStyle] = useState('');
+  const [openaiKey, setOpenaiKey] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [statusMsg, setStatusMsg] = useState('');
   const [generatedImages, setGeneratedImages] = useState([]);
-  const [error, setError] = useState(null);
-  const fileInputRefs = useRef([null, null, null]);
+  const [lastPrompt, setLastPrompt] = useState('');
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [genCount, setGenCount] = useState(0);
+  const [showGallery, setShowGallery] = useState(false);
+  const fileRefs = [useRef(), useRef(), useRef()];
 
-  const handlePhotoUpload = useCallback((index, file) => {
+  useEffect(() => {
+    fetchJsonSafe('ai-images/products').then(r => {
+      if (r.ok && Array.isArray(r.data)) setProducts(r.data);
+    });
+    fetchImages();
+  }, []);
+
+  const fetchImages = async () => {
+    const r = await fetchJsonSafe('ai-images');
+    if (r.ok && Array.isArray(r.data)) setGeneratedImages(r.data);
+  };
+
+  const handlePhotoUpload = async (index, file) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setProductPhotos((prev) => { const n = [...prev]; n[index] = e.target.result; return n; });
-      setError(null);
-    };
-    reader.readAsDataURL(file);
-  }, []);
+    const pngFile = await ensurePngFile(file);
+    const newPhotos = [...productPhotos];
+    newPhotos[index] = pngFile;
+    setProductPhotos(newPhotos);
+    console.log(`File uploaded to slot ${index + 1}`);
+    const color = await extractDominantColor(pngFile);
+    if (color) setBrandColor(color);
+  };
 
-  const buildPrompt = useCallback(() => {
-    const cat = selectedTemplate?.category || 'marketing banner';
-    const prod = productName || 'producto';
-    const dims = size === '1080x1080' ? 'square' : size === '1080x1350' ? 'vertical' : size === '1200x628' ? 'horizontal' : 'square';
-    let p = `Create a professional ${dims} ${cat.toLowerCase()} design for "${prod}" in ${language}. `;
-    if (bgColor) p += `Use ${bgColor} as the predominant background color. `;
-    if (productPhotos.some(Boolean)) p += 'Incorporate the product photos provided. ';
-    if (details) p += `Product details: ${details}. `;
-    p += 'High-impact e-commerce design, professional quality.';
-    return p;
-  }, [selectedTemplate, productName, size, language, bgColor, details, productPhotos]);
+  const selectedProductData = useMemo(() =>
+    products.find(p => String(p.id) === String(selectedProduct)),
+    [products, selectedProduct]
+  );
 
-  const handleGenerate = useCallback(async () => {
-    setGenerating(true);
-    setError(null);
+  const builtPrompt = useMemo(() => {
+    const name = selectedProductData?.title || selectedProductData?.name || 'Product';
+    const details = selectedProductData
+      ? [selectedProductData.description, selectedProductData.details].filter(Boolean).join('. ')
+      : '';
+    return buildHighImpactPrompt({ productName: name, productDetails: details, templateType, angle, benefit, style, brandColor });
+  }, [selectedProductData, templateType, angle, benefit, style, brandColor]);
+
+  // ─── GENERATE WITH POLLINATIONS ───────────────────────────────────────────
+  const handleGenerateWithPollinations = useCallback(async () => {
+    setLoading(true);
+    setStatusMsg('🧠 Generando imagen premium con Flux... (por favor espera)');
+    const prompt = builtPrompt;
+    setLastPrompt(prompt);
+
+    const [w, h] = size.split('x').map(Number);
+    const seed = Math.floor(Math.random() * 999999);
+    const encodedPrompt = encodeURIComponent(prompt);
+    // NOTE: &enhance=true removed — causes 503 errors on Pollinations
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${w || 1024}&height=${h || 1024}&seed=${seed}&nologo=true&model=flux`;
+
     try {
-      const prompt = buildPrompt();
-      const dims = { '1080x1080': [1024, 1024], '1080x1350': [768, 1024], '1200x628': [1024, 768], '1080x1920': [768, 1024] };
-      const [w, h] = dims[size] || [1024, 1024];
-      const seed = Math.floor(Math.random() * 1000000);
-      let imageUrl;
-      if (selectedEngine === 'pollinations') {
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=flux&nologo=true&seed=${seed}`;
+      // Load image with 90 second timeout — Flux can be slow
+      await new Promise((resolve, reject) => {
+        const img = new window.Image();
+        const timer = setTimeout(() => {
+          img.src = '';
+          reject(new Error('timeout'));
+        }, 90000);
+        img.onload = () => { clearTimeout(timer); resolve(pollinationsUrl); };
+        img.onerror = () => { clearTimeout(timer); reject(new Error('load_error')); };
+        img.src = pollinationsUrl;
+      });
+
+      setStatusMsg('✅ ¡Imagen generada! Guardando en galería...');
+      setGenCount(c => c + 1);
+
+      // Save to backend in background (non-blocking)
+      fetchJsonSafe('ai-images/save-external', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: pollinationsUrl,
+          prompt,
+          type: templateType,
+          productId: selectedProduct || null,
+          model: 'pollinations-flux',
+          size,
+        }),
+      }).then(() => fetchImages()).catch(() => {});
+
+      // Show image immediately
+      setGeneratedImages(prev => [{
+        id: Date.now(),
+        imageUrl: pollinationsUrl,
+        prompt,
+        type: templateType,
+        score: Math.floor(Math.random() * 10 + 88),
+        createdAt: new Date().toISOString(),
+      }, ...prev]);
+
+      setStatusMsg('✅ ¡Imagen generada con éxito!');
+    } catch (err) {
+      if (err.message === 'timeout') {
+        // On timeout — try flux-schnell as fallback (faster model)
+        setStatusMsg('⏳ Flux tardó mucho, intentando modelo rápido...');
+        const fastUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=${Math.min(w||1024,512)}&height=${Math.min(h||1024,512)}&seed=${seed}&nologo=true&model=turbo`;
         try {
-          await Promise.race([fetch(url), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 90000))]);
-          imageUrl = url;
-        } catch { imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&model=turbo&nologo=true&seed=${seed}`; }
+          await new Promise((resolve, reject) => {
+            const img2 = new window.Image();
+            const t2 = setTimeout(() => { img2.src=''; reject(new Error('timeout2')); }, 60000);
+            img2.onload = () => { clearTimeout(t2); resolve(); };
+            img2.onerror = () => { clearTimeout(t2); reject(new Error('load_error2')); };
+            img2.src = fastUrl;
+          });
+          setGenCount(c => c + 1);
+          setGeneratedImages(prev => [{
+            id: Date.now(),
+            imageUrl: fastUrl,
+            prompt,
+            type: templateType,
+            score: Math.floor(Math.random() * 8 + 82),
+            createdAt: new Date().toISOString(),
+          }, ...prev]);
+          setStatusMsg('✅ ¡Imagen generada con modelo turbo!');
+        } catch {
+          setStatusMsg('❌ Pollinations no disponible ahora. Intenta en unos minutos.');
+        }
       } else {
-        if (!openaiKey) { setError('Ingresa tu clave de OpenAI en el campo de arriba'); setGenerating(false); return; }
-        setError('OpenAI requiere implementacion backend'); setGenerating(false); return;
+        setStatusMsg('❌ Error al generar. Verifica conexión e intenta de nuevo.');
       }
-      const scores = { Hero:95, Oferta:88, 'Antes/Despues':92, Beneficios:85, 'Tabla Comparativa':78, 'Prueba de Autoridad':80, Testimonios:82, 'Modo de Uso':75, Logistica:70, 'Preguntas Frecuentes':72 };
-      setGeneratedImages((prev) => [{ id: Date.now(), url: imageUrl, prompt, timestamp: new Date(), impact: scores[selectedTemplate?.category] || 80 }, ...prev]);
-    } catch (err) { setError(`Error al generar: ${err.message}`); } finally { setGenerating(false); }
-  }, [selectedEngine, openaiKey, selectedTemplate, productName, size, language, bgColor, details, buildPrompt]);
+    } finally {
+      setLoading(false);
+    }
+  }, [builtPrompt, size, templateType, selectedProduct]);
 
-  const handleSelectTemplate = useCallback((tpl) => { setPendingTemplateId(tpl.id); setSelectedTemplate(tpl); }, []);
+  // ─── GENERATE WITH OPENAI ─────────────────────────────────────────────────
+  const handleGenerateOpenAI = useCallback(async () => {
+    if (!openaiKey) { setStatusMsg('⚠️ Ingresa tu OpenAI API Key.'); return; }
+    setLoading(true);
+    setStatusMsg('🤖 Generando con OpenAI DALL-E...');
+    const prompt = builtPrompt;
+    setLastPrompt(prompt);
+    const [w, h] = size.split('x').map(Number);
 
-  const handleDownload = useCallback((url) => {
-    const a = document.createElement('a'); a.href = url; a.download = `imagen-ia-${Date.now()}.png`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }, []);
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 60000);
+      const resp = await fetch('https://api.openai.com/v1/images/generations', {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model: 'dall-e-3', prompt, n: 1, size: `${w || 1024}x${h || 1024}`, quality: 'hd' }),
+      });
+      clearTimeout(timer);
+      const data = await resp.json();
+      const imageUrl = data?.data?.[0]?.url;
+      if (!imageUrl) throw new Error(data?.error?.message || 'No image returned');
+
+      setGenCount(c => c + 1);
+      setGeneratedImages(prev => [{
+        id: Date.now(),
+        imageUrl,
+        prompt,
+        type: templateType,
+        score: Math.floor(Math.random() * 5 + 93),
+        createdAt: new Date().toISOString(),
+      }, ...prev]);
+
+      fetchJsonSafe('ai-images/save-external', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl, prompt, type: templateType, productId: selectedProduct || null, model: 'openai-dalle3', size }),
+      }).then(() => fetchImages()).catch(() => {});
+
+      setStatusMsg('✅ ¡Imagen OpenAI generada!');
+    } catch (err) {
+      setStatusMsg(`❌ Error OpenAI: ${err.message || 'desconocido'}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [builtPrompt, size, openaiKey, templateType, selectedProduct]);
+
+  const handleGenerate = () => model === 'openai' ? handleGenerateOpenAI() : handleGenerateWithPollinations();
 
   return (
-    <div className={styles.container}>
-      {/* Header */}
-      <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:'8px' }}>
-        <div>
-          <h1 className={styles.title} style={{ textAlign:'left',marginBottom:'4px' }}>{productName || 'Generador de Imagenes IA'}</h1>
-          <div style={{ color:'#999',fontSize:'14px' }}>Genera secciones profesionales para landing pages</div>
-        </div>
-      </div>
+    <div className="imagenesIA-wrapper">
+      <header className="imagenesIA-header">
+        <h2>✨ Imágenes IA — Alto Impacto</h2>
+        <button className="status-badge connected" onClick={() => fetchImages()}>✅ Conectado</button>
+      </header>
 
-      {/* Model Selector — 2 engines */}
-      <div className={styles.card}>
-        <div style={{ marginBottom:'16px',fontWeight:500 }}>Selecciona tu modelo IA:</div>
-        <div className={styles.modelSelector}>
-          <button className={`${styles.modelOption} ${selectedEngine==='pollinations'?styles.modelSelected:''}`} onClick={()=>setSelectedEngine('pollinations')}>
-            <div style={{ fontWeight:500 }}>Pollinations IA</div>
-            <div style={{ fontSize:'12px',opacity:0.7 }}>Genera sin coste. Rapido y potente.</div>
-            <div style={{ fontSize:'11px',color:'#22c55e',fontWeight:600,marginTop:'4px' }}>GRATIS</div>
-            {selectedEngine==='pollinations'&&<span className={styles.badge}>&#10003;</span>}
-          </button>
-          <button className={`${styles.modelOption} ${selectedEngine==='openai'?styles.modelSelected:''}`} onClick={()=>setSelectedEngine('openai')}>
-            <div style={{ fontWeight:500 }}>OpenAI</div>
-            <div style={{ fontSize:'12px',opacity:0.7 }}>Maxima calidad con API Key.</div>
-            <div style={{ fontSize:'11px',color:'#f59e0b',fontWeight:600,marginTop:'4px' }}>PREMIUM</div>
-            {selectedEngine==='openai'&&<span className={styles.badge}>&#10003;</span>}
-          </button>
-        </div>
-        {selectedEngine==='openai'&&(
-          <div style={{ marginTop:'16px' }}>
-            <input type="password" placeholder="Ingresa tu API key de OpenAI" value={openaiKey} onChange={(e)=>setOpenaiKey(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'6px',border:'1px solid #2d2d44',fontSize:'14px',boxSizing:'border-box',backgroundColor:'#1a1a2e',color:'#e0e0e0' }} />
-          </div>
-        )}
-      </div>
+      <section className="imagenesIA-form">
+        <h3>🎨 Generador de Imágenes IA</h3>
+        <p>Genera imágenes persuasivas de alto impacto al estilo ecom-magic.</p>
 
-      {/* Generar Seccion de Landing */}
-      <div className={styles.card}>
-        <div style={{ display:'flex',alignItems:'center',gap:'12px',marginBottom:'8px' }}>
-          <span style={{ fontSize:'24px' }}>&#10024;</span>
-          <div>
-            <div style={{ fontWeight:600,fontSize:'16px' }}>Generar Seccion de Landing</div>
-            <div style={{ fontSize:'13px',color:'#999' }}>Selecciona una plantilla de referencia y sube de 1 a 3 fotos de tu producto.</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Template + Photos Row */}
-      <div style={{ display:'grid',gridTemplateColumns:'1.2fr 1fr',gap:'16px',marginBottom:'20px' }}>
-        {/* Plantilla */}
-        <div className={styles.card} style={{ marginBottom:0 }}>
-          <div style={{ fontWeight:500,marginBottom:'12px' }}>Plantilla</div>
-          {selectedTemplate ? (
-            <div onClick={()=>setGalleryOpen(true)} style={{ cursor:'pointer',borderRadius:'8px',overflow:'hidden',border:'2px solid #7c3aed',position:'relative' }}>
-              <img src={selectedTemplate.thumb} alt="Selected" style={{ width:'100%',height:'200px',objectFit:'cover' }} />
-              <div style={{ position:'absolute',bottom:'8px',left:'8px',backgroundColor:'rgba(0,0,0,0.7)',color:'#fff',padding:'4px 10px',borderRadius:'4px',fontSize:'12px' }}>{selectedTemplate.category}</div>
-            </div>
-          ) : (
-            <div onClick={()=>setGalleryOpen(true)} style={{ border:'2px dashed #7c3aed',borderRadius:'12px',padding:'40px 20px',textAlign:'center',cursor:'pointer',backgroundColor:'rgba(124,58,237,0.05)' }}>
-              <div style={{ fontSize:'32px',marginBottom:'8px',opacity:0.6 }}>&#128444;</div>
-              <div style={{ fontWeight:500,color:'#ccc' }}>Seleccionar Plantilla</div>
-              <div style={{ fontSize:'13px',color:'#888',marginTop:'4px' }}>de la Galeria EcomMagic</div>
-            </div>
-          )}
-        </div>
-
-        {/* Fotos del Producto */}
-        <div className={styles.card} style={{ marginBottom:0 }}>
-          <div style={{ fontWeight:500,marginBottom:'4px' }}>Fotos del Producto</div>
-          <div style={{ fontSize:'12px',color:'#888',marginBottom:'12px' }}>(agrega de 1 a 3 fotos de tu producto)</div>
-          <div style={{ display:'grid',gridTemplateColumns:'repeat(3, 1fr)',gap:'10px' }}>
-            {[0,1,2].map((i)=>(
-              <div key={i} className={styles.photoSlot} onClick={()=>fileInputRefs.current[i]?.click()}>
-                {productPhotos[i] ? (
-                  <div style={{ position:'relative',width:'100%',height:'100%' }}>
-                    <img src={productPhotos[i]} alt={`Foto ${i+1}`} style={{ width:'100%',height:'100%',objectFit:'cover',borderRadius:'6px' }} />
-                    <button onClick={(e)=>{e.stopPropagation();setProductPhotos(prev=>{const n=[...prev];n[i]=null;return n})}} style={{ position:'absolute',top:'4px',right:'4px',background:'rgba(0,0,0,0.6)',color:'#fff',border:'none',borderRadius:'50%',width:'20px',height:'20px',cursor:'pointer',fontSize:'12px',display:'flex',alignItems:'center',justifyContent:'center' }}>&#10005;</button>
-                  </div>
-                ) : (
-                  <div style={{ textAlign:'center' }}>
-                    <div style={{ fontSize:'20px',marginBottom:'4px' }}>+</div>
-                    <div style={{ fontSize:'11px' }}>Imagen {i+1}</div>
-                  </div>
-                )}
-                <input ref={(r)=>(fileInputRefs.current[i]=r)} type="file" accept="image/*" hidden onChange={(e)=>handlePhotoUpload(i,e.target.files?.[0])} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Color + Tamano + Idioma Row */}
-      <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'16px',marginBottom:'20px' }}>
-        <div className={styles.card} style={{ marginBottom:0 }}>
-          <div style={{ display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px' }}>
-            <span style={{ fontSize:'14px' }}>&#127912;</span>
-            <label style={{ fontWeight:500,fontSize:'14px' }}>Color de Fondo Predominante</label>
-            <span style={{ fontSize:'12px',color:'#888' }}>(Opcional)</span>
-          </div>
-          <input type="text" placeholder="Ej: Rojo, Azul oscuro..." value={bgColor} onChange={(e)=>setBgColor(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #2d2d44',backgroundColor:'#1a1a2e',color:'#e0e0e0',fontSize:'14px',boxSizing:'border-box' }} />
-        </div>
-        <div className={styles.card} style={{ marginBottom:0 }}>
-          <div style={{ display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px' }}>
-            <span style={{ fontSize:'14px' }}>&#8596;</span>
-            <label style={{ fontWeight:500,fontSize:'14px' }}>Tamano de Salida</label>
-          </div>
-          <select value={size} onChange={(e)=>setSize(e.target.value)} className={styles.select}>
-            <option value="1080x1080">Instagram Cuadrado (1080x1080)</option>
-            <option value="1080x1350">Instagram Vertical (1080x1350)</option>
-            <option value="1200x628">Facebook Horizontal (1200x628)</option>
-            <option value="1080x1920">Story / TikTok (1080x1920)</option>
-          </select>
-        </div>
-        <div className={styles.card} style={{ marginBottom:0 }}>
-          <div style={{ display:'flex',alignItems:'center',gap:'6px',marginBottom:'8px' }}>
-            <span style={{ fontSize:'14px' }}>&#127760;</span>
-            <label style={{ fontWeight:500,fontSize:'14px' }}>Idioma de Salida</label>
-          </div>
-          <select value={language} onChange={(e)=>setLanguage(e.target.value)} className={styles.select}>
-            <option value="Espanol">Espanol</option>
-            <option value="English">English</option>
-            <option value="Portugues">Portugues</option>
-            <option value="Frances">Frances</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Personalizacion del Anuncio */}
-      <div className={styles.card}>
-        <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-          <div style={{ display:'flex',alignItems:'center',gap:'8px' }}>
-            <span style={{ fontSize:'16px' }}>&#10024;</span>
-            <span style={{ fontWeight:500 }}>Personalizacion del Anuncio</span>
-          </div>
-          <div onClick={()=>setPersonalization(!personalization)} style={{ width:'44px',height:'24px',borderRadius:'12px',backgroundColor:personalization?'#7c3aed':'#444',cursor:'pointer',position:'relative',transition:'background-color 0.2s' }}>
-            <div style={{ width:'20px',height:'20px',borderRadius:'50%',backgroundColor:'#fff',position:'absolute',top:'2px',left:personalization?'22px':'2px',transition:'left 0.2s' }} />
-          </div>
-        </div>
-
-        {personalization && (
-          <div style={{ marginTop:'20px' }}>
-            {/* Nombre del Producto */}
-            <div style={{ marginBottom:'16px' }}>
-              <label style={{ fontWeight:500,display:'block',marginBottom:'8px',fontSize:'14px' }}>Nombre del Producto</label>
-              <input type="text" placeholder="Ej: Sebo de Res, Jabon Artesanal..." value={productName} onChange={(e)=>setProductName(e.target.value)} style={{ width:'100%',padding:'10px 12px',borderRadius:'8px',border:'1px solid #2d2d44',backgroundColor:'#1a1a2e',color:'#e0e0e0',fontSize:'14px',boxSizing:'border-box' }} />
-            </div>
-
-            {/* Desarrollar Angulo de Ventas */}
-            <button style={{ width:'100%',padding:'14px',backgroundColor:'#16213e',border:'1px solid #2d2d44',borderRadius:'8px',color:'#ccc',fontSize:'14px',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'16px',transition:'all 0.2s' }}
-              onMouseEnter={(e)=>{e.currentTarget.style.borderColor='#7c3aed';e.currentTarget.style.color='#fff'}}
-              onMouseLeave={(e)=>{e.currentTarget.style.borderColor='#2d2d44';e.currentTarget.style.color='#ccc'}}
-              onClick={()=>{if(productName){setDetails(`Producto: ${productName}. Beneficios principales del producto para el cliente. Calidad premium, resultados visibles.`)}}}
-            >
-              <span>&#10024;</span> Desarrollar Angulo de Ventas General con IA
+        {/* Model selector */}
+        <div className="model-selector">
+          {MODEL_OPTIONS.map(m => (
+            <button key={m} className={`model-btn ${model === m ? 'active' : ''}`} onClick={() => setModel(m)}>
+              {m === 'pollinations' ? (
+                <><span className="model-icon">🌸</span><span className="model-name">Pollinations IA</span><span className="model-desc">Genera sin coste. Rápido y potente.</span><span className="model-badge free">GRATIS</span></>
+              ) : (
+                <><span className="model-icon">🧠</span><span className="model-name">OpenAI</span><span className="model-desc">Máxima calidad con API Key.</span><span className="model-badge premium">PREMIUM</span></>
+              )}
             </button>
+          ))}
+        </div>
 
-            {/* Detalles del Producto */}
-            <div>
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:'8px' }}>
-                <label style={{ fontWeight:500,fontSize:'14px',display:'flex',alignItems:'center',gap:'6px' }}>
-                  <span>&#128196;</span> Detalles del Producto
-                </label>
-                <span style={{ fontSize:'12px',color:'#888' }}>Max. 650 caracteres</span>
-              </div>
-              <textarea value={details} onChange={(e)=>{if(e.target.value.length<=650)setDetails(e.target.value)}} placeholder="Describe tu producto, beneficios, ingredientes, combos disponibles..." style={{ width:'100%',minHeight:'100px',padding:'12px',borderRadius:'8px',border:'1px solid #2d2d44',backgroundColor:'#1a1a2e',color:'#e0e0e0',fontSize:'14px',boxSizing:'border-box',resize:'vertical',fontFamily:'inherit' }} />
-              <div style={{ textAlign:'right',fontSize:'12px',color:'#666',marginTop:'4px' }}>{details.length}/650</div>
-            </div>
+        {model === 'openai' && (
+          <div className="api-key-field">
+            <label>OpenAI API Key</label>
+            <input type="password" value={openaiKey} onChange={e => setOpenaiKey(e.target.value)} placeholder="sk-..." />
           </div>
         )}
-      </div>
 
-      {/* Generate Button */}
-      <div className={styles.btnRow}>
-        <button className={styles.generateBtn} onClick={handleGenerate} disabled={generating}>
-          {generating ? 'Generando...' : 'Generar Imagen'}
-        </button>
-      </div>
+        {/* Template selector */}
+        <label>Plantilla de Estilo</label>
+        <div className="template-actions">
+          <button className={`template-gallery-btn ${showGallery ? 'active' : ''}`} onClick={() => setShowGallery(v => !v)}>
+            🖼 {selectedTemplate ? selectedTemplate.name : 'Seleccionar de Galería'}
+            <span className="template-sub">{selectedTemplate ? selectedTemplate.type : 'Sin plantilla'}</span>
+          </button>
+          <button className="template-upload-btn" onClick={() => fileRefs[0].current?.click()}>
+            📁 Subir desde PC
+          </button>
+          <input ref={fileRefs[0]} type="file" accept="image/*" style={{ display: 'none' }}
+            onChange={e => e.target.files[0] && setSelectedTemplate({ name: e.target.files[0].name, custom: true })} />
+        </div>
 
-      {selectedEngine==='pollinations'&&(
-        <div className={styles.statusText}>Usando Pollinations Flux - Generacion hasta 90 segundos</div>
-      )}
-
-      {error&&(<div style={{ backgroundColor:'rgba(255,0,0,0.1)',color:'#f87171',padding:'12px',borderRadius:'6px',fontSize:'14px',marginBottom:'16px',border:'1px solid rgba(255,0,0,0.2)' }}>{error}</div>)}
-
-      {/* Generated Images */}
-      {generatedImages.length>0&&(
-        <div className={styles.generatedSection}>
-          <h2 style={{ marginBottom:'16px' }}>Imagenes Generadas</h2>
-          <div className={styles.generatedGrid}>
-            {generatedImages.map((img)=>(
-              <div key={img.id} className={styles.generatedCard}>
-                <div style={{ position:'relative',width:'100%',paddingBottom:'100%',overflow:'hidden',borderRadius:'8px' }}>
-                  <img src={img.url} alt="Generated" style={{ position:'absolute',top:0,left:0,width:'100%',height:'100%',objectFit:'cover' }} />
-                </div>
-                <div style={{ marginTop:'12px',display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-                  <div className={styles.impactBadge}>Impacto: {img.impact}%</div>
-                </div>
-                <div style={{ marginTop:'8px',display:'flex',gap:'8px' }}>
-                  <button style={{ flex:1,padding:'8px',backgroundColor:'#16213e',border:'1px solid #2d2d44',color:'#ccc',borderRadius:'4px',cursor:'pointer',fontSize:'12px' }} onClick={()=>window.open(img.url)}>Ver</button>
-                  <button style={{ flex:1,padding:'8px',backgroundColor:'#7c3aed',color:'#fff',border:'none',borderRadius:'4px',cursor:'pointer',fontSize:'12px' }} onClick={()=>handleDownload(img.url)}>Descargar</button>
-                </div>
+        {showGallery && (
+          <div className="template-gallery">
+            {ECOM_MAGIC_TEMPLATES.map(t => (
+              <div key={t.id} className={`template-card ${selectedTemplate?.id === t.id ? 'selected' : ''}`}
+                onClick={() => { setSelectedTemplate(t); setTemplateType(t.type); setShowGallery(false); }}>
+                <img src={t.url} alt={t.name} onError={e => e.target.style.display='none'} />
+                <span>{t.name}</span>
+                <span className="template-score">⚡ {t.score}%</span>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
 
-      <GalleryModal
-        isOpen={galleryOpen}
-        onClose={()=>{setGalleryOpen(false);setPendingTemplateId(null)}}
-        onSelect={handleSelectTemplate}
-        selectedId={pendingTemplateId}
-        templates={ECOM_TEMPLATES}
-        categories={GALLERY_CATEGORIES}
-      />
+        {/* Template type chips */}
+        <label>Tipo de Imagen</label>
+        <div className="type-chips">
+          {templateOptions.map(t => (
+            <button key={t} className={`type-chip ${templateType === t ? 'active' : ''}`}
+              onClick={() => setTemplateType(t)}>{t}</button>
+          ))}
+        </div>
+
+        {/* Product photos */}
+        <label>Fotos del Producto</label>
+        <p className="photo-hint">Sube 1-3 fotos — el sistema extraerá colores y branding automáticamente</p>
+        <div className="photo-slots">
+          {[0, 1, 2].map(i => (
+            <label key={i} className="uploadSlot" onClick={() => fileRefs[i].current?.click()}>
+              {productPhotos[i] ? (
+                <img src={URL.createObjectURL(productPhotos[i])} alt={`Foto ${i+1}`} className="photo-preview" />
+              ) : (
+                <><span className="plus-icon">+</span><span>Foto {i+1}</span></>
+              )}
+              <input ref={i === 0 ? fileRefs[0] : i === 1 ? fileRefs[1] : fileRefs[2]}
+                type="file" accept="image/*" style={{ display: 'none' }}
+                onChange={e => e.target.files[0] && handlePhotoUpload(i, e.target.files[0])} />
+            </label>
+          ))}
+        </div>
+
+        {brandColor && (
+          <div className="brand-color-badge">
+            🎨 Color detectado: <span style={{ background: brandColor, padding: '2px 10px', borderRadius: 4, marginLeft: 6 }}>{brandColor}</span>
+          </div>
+        )}
+
+        {/* Size & Product */}
+        <div className="form-row">
+          <div className="form-group">
+            <label>Tamaño</label>
+            <select value={size} onChange={e => setSize(e.target.value)}>
+              {sizeOptions.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label>Producto</label>
+            <select value={selectedProduct} onChange={e => setSelectedProduct(e.target.value)}>
+              <option value="">Seleccionar producto</option>
+              {products.map(p => <option key={p.id} value={p.id}>{p.title || p.name}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Creative controls */}
+        <div className="creative-controls-header">
+          <span>⚙️ Controles Creativos</span>
+          <span className="creative-sub">Define ángulo de venta, avatar y más</span>
+          <button className={`toggle-btn ${showCreativeControls ? 'on' : ''}`}
+            onClick={() => setShowCreativeControls(v => !v)} />
+        </div>
+
+        {showCreativeControls && (
+          <div className="creative-controls">
+            <div className="form-group">
+              <label>Ángulo de venta</label>
+              <textarea rows={2} value={angle} onChange={e => setAngle(e.target.value)}
+                placeholder="Ej: Mejora foco mental y memoria sin cafeína en 30 días" />
+            </div>
+            <div className="form-group">
+              <label>Avatar del cliente</label>
+              <textarea rows={2} value={benefit} onChange={e => setBenefit(e.target.value)}
+                placeholder="Ej: Emprendedores 28-45 años con niebla mental" />
+            </div>
+            <div className="form-group">
+              <label>Estilo visual</label>
+              <input type="text" value={style} onChange={e => setStyle(e.target.value)}
+                placeholder="Ej: minimalista, dark luxury, colorful pop" />
+            </div>
+          </div>
+        )}
+
+        {/* Generate buttons */}
+        <div className="generate-row">
+          <button className="generate-btn primary" onClick={handleGenerate} disabled={loading}>
+            {loading ? '⏳ Generando...' : `🌸 Generar Imagen${genCount > 0 ? ` (${genCount})` : ''} Gratis`}
+          </button>
+          <button className="generate-btn secondary" onClick={fetchImages}>🔃 Actualizar Galería</button>
+        </div>
+
+        <div className="model-info-bar">
+          🌸 Pollinations Flux — Gratis, sin API key. Prompts optimizados para alto impacto.
+        </div>
+
+        {statusMsg && (
+          <div className={`status-msg ${statusMsg.startsWith('❌') ? 'error' : statusMsg.startsWith('✅') ? 'success' : 'info'}`}>
+            {statusMsg}
+          </div>
+        )}
+
+        {lastPrompt && (
+          <details className="prompt-details" open={showPrompt}>
+            <summary onClick={() => setShowPrompt(v => !v)}>▶ 🔍 Ver prompt usado</summary>
+            <pre className="prompt-text">{lastPrompt}</pre>
+          </details>
+        )}
+      </section>
+
+      {/* Gallery */}
+      <section className="imagenesIA-gallery">
+        <h3>🖼 Imágenes Generadas <span className="gallery-hint">Ejemplos de referencia ↓</span></h3>
+        <div className="images-grid">
+          {generatedImages.length === 0 && (
+            <div className="no-images">No hay imágenes aún. ¡Genera la primera!</div>
+          )}
+          {generatedImages.map((img, i) => (
+            <article key={img.id || i} className="image-card">
+              {img.isReference && <span className="ref-badge">Referencia</span>}
+              <img
+                src={resolveImageUrl(img.imageUrl)}
+                alt={`Imagen ${i + 1}`}
+                loading="lazy"
+                onError={e => { e.target.style.opacity = '0.3'; }}
+              />
+              <div className="image-meta">
+                <span className="image-type">{img.type || templateType}</span>
+                {img.score && <span className="image-score">⚡ {img.score}%</span>}
+              </div>
+              <div className="image-actions">
+                <button onClick={() => window.open(resolveImageUrl(img.imageUrl), '_blank')}>Ver</button>
+                <a href={resolveImageUrl(img.imageUrl)} download={`imagen-${img.type || 'ia'}-${i+1}.jpg`}>
+                  <button>Descargar</button>
+                </a>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
