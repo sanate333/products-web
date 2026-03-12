@@ -103,46 +103,7 @@ export const router = createBrowserRouter([
         path: '/nube',
         element: <Navigate to='/co' replace />,
     },
-    {
-        path: '/',
-        element: <IndexLayout />,
-    },
-    {
-        path: '/catalogo',
-        element: <IndexLayout pageMode="catalogo" />,
-    },
-    {
-        path: '/catolog',
-        element: <IndexLayout pageMode="catalogo" />,
-    },
-    {
-        path: '/:storeSlug',
-        element: <IndexLayout />,
-    },
-    {
-        path: '/:storeSlug/catalogo',
-        element: <IndexLayout pageMode="catalogo" />,
-    },
-    {
-        path: '/:storeSlug/catolog',
-        element: <IndexLayout pageMode="catalogo" />,
-    },
-    {
-        path: '/',
-        element: <PagesLayaut />,
-        children: [
-            { path: 'producto/:productoSlug', element: <PageDetail /> },
-            { path: 'producto/:idProducto/:producto', element: <PageDetail /> },
-        ],
-    },
-    {
-        path: '/:storeSlug',
-        element: <PagesLayaut />,
-        children: [
-            { path: 'producto/:productoSlug', element: <PageDetail /> },
-            { path: 'producto/:idProducto/:producto', element: <PageDetail /> },
-        ],
-    },
+    // ─── DASHBOARD (antes de /:storeSlug para evitar conflicto) ───
     {
         path: '/dashboard',
         element: <MainLayout />,
@@ -162,5 +123,47 @@ export const router = createBrowserRouter([
     {
         path: '/dashboard/:storeSlug/*',
         element: <StoreDashboardRedirect />,
+    },
+    // ─── PUBLIC ROUTES ───
+    {
+        path: '/',
+        element: <IndexLayout />,
+    },
+    {
+        path: '/catalogo',
+        element: <IndexLayout pageMode="catalogo" />,
+    },
+    {
+        path: '/catolog',
+        element: <IndexLayout pageMode="catalogo" />,
+    },
+    {
+        path: '/',
+        element: <PagesLayaut />,
+        children: [
+            { path: 'producto/:productoSlug', element: <PageDetail /> },
+            { path: 'producto/:idProducto/:producto', element: <PageDetail /> },
+        ],
+    },
+    // ─── STORE SLUG ROUTES (catch-all dinámico, debe ir al final) ───
+    {
+        path: '/:storeSlug',
+        element: <IndexLayout />,
+    },
+    {
+        path: '/:storeSlug/catalogo',
+        element: <IndexLayout pageMode="catalogo" />,
+    },
+    {
+        path: '/:storeSlug/catolog',
+        element: <IndexLayout pageMode="catalogo" />,
+    },
+    {
+        path: '/:storeSlug',
+        element: <PagesLayaut />,
+        children: [
+            { path: 'producto/:productoSlug', element: <PageDetail /> },
+            { path: 'producto/:idProducto/:producto', element: <PageDetail /> },
+        ],
     },
 ]);
