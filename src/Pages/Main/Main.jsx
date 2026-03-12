@@ -145,6 +145,46 @@ export default function Main() {
 
             <section className='containerSection'>
                 <HeaderDash />
+
+                {/* ─── SELECTOR HOME FREE / HOME PLUS ─── */}
+                <div className='homeSelectorCard'>
+                    <div className='homeSelectorHeader'>
+                        <span className='homeSelectorIcon'>🌐</span>
+                        <div>
+                            <h3>Página de inicio — sanate.store</h3>
+                            <p>Elige qué versión ven tus clientes al entrar</p>
+                        </div>
+                    </div>
+                    <div className='homeSelectorBtns'>
+                        <a
+                            href='/home-free'
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='homeSelectorBtn homeSelectorBtnFree'
+                        >
+                            <span className='homeSelectorBtnIcon'>🛒</span>
+                            <span>
+                                <strong>Home Free</strong>
+                                <small>Tienda clásica React</small>
+                            </span>
+                            <span className='homeSelectorArrow'>↗ Ver</span>
+                        </a>
+                        <a
+                            href='/'
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='homeSelectorBtn homeSelectorBtnPlus'
+                        >
+                            <span className='homeSelectorBtnIcon'>✨</span>
+                            <span>
+                                <strong>Home Plus</strong>
+                                <small>Landing V5 — Nueva</small>
+                            </span>
+                            <span className='homeSelectorActive'>● ACTIVA</span>
+                        </a>
+                    </div>
+                </div>
+
                 <div className='installDashCard'>
                     <div>
                         <h3>Instalar app Sanate</h3>

@@ -116,6 +116,95 @@
     gap: 2rem;
 }
 
+/* ─── HOME SELECTOR ─── */
+.homeSelectorCard{
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    box-shadow: 0px 4px 15px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.homeSelectorHeader{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.homeSelectorIcon{
+    font-size: 26px;
+    line-height: 1;
+}
+.homeSelectorHeader h3{
+    margin: 0;
+    font-size: 1rem;
+}
+.homeSelectorHeader p{
+    margin: 3px 0 0;
+    color: #4b4b4b;
+    font-size: 0.85rem;
+}
+.homeSelectorBtns{
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.homeSelectorBtn{
+    flex: 1;
+    min-width: 180px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: box-shadow 0.18s, transform 0.12s;
+    cursor: pointer;
+}
+.homeSelectorBtn:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.13);
+}
+.homeSelectorBtnFree{
+    background: #f0f6ff;
+    border-color: #c2d8f5;
+    color: #1a3a5c;
+}
+.homeSelectorBtnPlus{
+    background: linear-gradient(135deg,#07192E,#0C2240);
+    border-color: #3DC9E8;
+    color: #fff;
+}
+.homeSelectorBtnIcon{
+    font-size: 22px;
+    flex-shrink: 0;
+}
+.homeSelectorBtn span strong{
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+.homeSelectorBtn span small{
+    font-size: 0.78rem;
+    opacity: 0.7;
+}
+.homeSelectorArrow{
+    margin-left: auto;
+    font-size: 0.8rem;
+    opacity: 0.65;
+}
+.homeSelectorActive{
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3DC9E8;
+    background: rgba(61,201,232,0.12);
+    padding: 2px 8px;
+    border-radius: 100px;
+    white-space: nowrap;
+}
+
 @media (max-width: 1024px){
     .containerGrid{
        flex-direction: column;
