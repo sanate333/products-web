@@ -28,7 +28,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;-webkit-tap-highlight-color:transparent}
-body{font-family:var(--sans);background:var(--white);color:var(--navy);overflow-x:hidden;line-height:1.6;font-size:16px}
+body{font-family:var(--sans);background:var(--white);color:var(--navy);overflow-x:hidden;line-height:1.65;font-size:17px}
 img{display:block;max-width:100%;object-fit:cover}
 a{text-decoration:none;color:inherit}
 button{cursor:pointer;font-family:var(--sans);border:none;outline:none}
@@ -74,7 +74,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .hh1{font-family:var(--serif);font-size:clamp(40px,6vw,72px);font-weight:300;line-height:1.08;color:#fff;margin-bottom:16px}
 .hh1 em{font-style:italic;color:var(--sky2)}
 .hh1 .hs{display:block;font-weight:600;background:linear-gradient(110deg,var(--gold2),#f0dc8a 55%,#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.hlead{font-size:15.5px;color:rgba(210,235,248,.68);line-height:1.82;max-width:480px;margin-bottom:24px}
+.hlead{font-size:17px;color:rgba(210,235,248,.75);line-height:1.82;max-width:480px;margin-bottom:24px}
 .hctas{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:26px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;border-radius:var(--r);transition:var(--t);white-space:nowrap;cursor:pointer;border:none}
 .btn-gold{background:linear-gradient(135deg,var(--gold),var(--goldd));color:#fff;box-shadow:var(--shg)}
@@ -125,7 +125,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .ti{display:flex;align-items:center;gap:8px;padding:12px 18px;border-right:1px solid rgba(255,255,255,.05)}
 .ti:last-child{border-right:none}
 .ti-ico{width:28px;height:28px;border-radius:50%;background:rgba(61,201,232,.09);border:1px solid rgba(61,201,232,.16);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
-.ti strong{display:block;color:#fff;font-size:11.5px;font-weight:600}
+.ti strong{display:block;color:#fff;font-size:13px;font-weight:600}
 .ti span{font-size:10px;color:rgba(210,235,248,.36)}
 @media(max-width:600px){.ti{padding:9px 12px}.ti span{display:none}.ti strong{font-size:10.5px}}
 
@@ -144,30 +144,30 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .urg-btn:hover{background:var(--navy)}
 
 /* ─── SECTIONS ─── */
-.sec{padding:60px 0}
+.sec{padding:50px 0}
 .sec-off{background:var(--off)}
 .sec-navy{background:linear-gradient(150deg,var(--navy),var(--navy2))}
 .sec-dark{background:var(--black)}
-.sh{margin-bottom:38px}
+.sh{margin-bottom:28px}
 .sh.c{text-align:center}
 .sh.c .sh-sub{margin:8px auto 0}
 .sh-tag{display:inline-flex;align-items:center;gap:6px;font-size:9px;font-weight:800;letter-spacing:2.5px;text-transform:uppercase;color:var(--skyd);margin-bottom:7px}
 .sh-tag::before{content:'—';opacity:.4}
-.sh-title{font-family:var(--serif);font-size:clamp(30px,4vw,52px);font-weight:300;color:var(--navy);line-height:1.14;margin-bottom:10px}
+.sh-title{font-family:var(--serif);font-size:clamp(34px,4.2vw,56px);font-weight:300;color:var(--navy);line-height:1.14;margin-bottom:10px}
 .sh-title em{font-style:italic;color:var(--skyd)}
 .sh-title strong{font-weight:700}
 .sh-title.w{color:#fff}
-.sh-sub{font-size:15px;color:var(--gray);line-height:1.75;max-width:500px}
+.sh-sub{font-size:16.5px;color:var(--gray);line-height:1.8;max-width:500px}
 
 /* ─── COMBOS ─── */
-.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.cg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
 @media(max-width:840px){.cg{grid-template-columns:1fr}}
-.cc{border-radius:14px;overflow:hidden;border:1.5px solid var(--off);box-shadow:var(--sh);transition:var(--t);cursor:pointer;display:flex;flex-direction:column;background:#fff}
+.cc{border-radius:14px;overflow:hidden;border:1.5px solid var(--off);box-shadow:var(--sh);transition:var(--t);cursor:pointer;display:flex;flex-direction:column;background:#fff;min-height:unset}
 .cc:hover{transform:translateY(-6px);box-shadow:var(--shh);border-color:rgba(61,201,232,.26)}
 .cc.star{border-color:var(--gold);box-shadow:0 4px 22px rgba(201,160,48,.12)}
 .cc.star:hover{box-shadow:0 18px 52px rgba(201,160,48,.24)}
-.cc-img{height:180px;overflow:hidden;position:relative}
-.cc-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s var(--ease)}
+.cc-img{height:200px;overflow:hidden;position:relative;background:var(--off)}
+.cc-img img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .4s var(--ease)}
 .cc:hover .cc-img img{transform:scale(1.05)}
 .rib{position:absolute;top:10px;right:10px;font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;border-radius:100px}
 .rib.gold{background:var(--gold);color:#fff}
@@ -177,12 +177,12 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .cc-top{padding:18px 20px 14px}
 .cc.star .cc-top{background:linear-gradient(140deg,var(--navy),var(--navy3))}
 .cc-tname{font-family:var(--serif);font-size:20px;font-weight:400;color:var(--navy);margin-bottom:5px;line-height:1.24}
-.cc.star .cc-tname{color:#fff}
-.cc-tsub{font-size:13.5px;color:var(--gray);line-height:1.55}
-.cc.star .cc-tsub{color:rgba(210,235,248,.52)}
+.cc.star .cc-tname{color:#fff !important}
+.cc-tsub{font-size:14.5px;color:var(--gray);line-height:1.55}
+.cc.star .cc-tsub{color:rgba(210,235,248,.72) !important}
 .cc-body{padding:14px 20px 18px;flex:1;display:flex;flex-direction:column}
 .cc-items{flex:1;margin-bottom:14px}
-.cc-it{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;padding:5px 0;border-bottom:1px solid rgba(7,25,46,.06);line-height:1.5}
+.cc-it{display:flex;align-items:flex-start;gap:8px;font-size:14px;color:#374151;padding:5px 0;border-bottom:1px solid rgba(7,25,46,.06);line-height:1.5}
 .cc-it:last-child{border-bottom:none}
 .ck{color:var(--skyd);font-weight:700;flex-shrink:0;font-size:12px}
 .cc.star .ck{color:var(--gold)}
@@ -190,7 +190,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .cc.star .cc-it{color:rgba(210,235,248,.82);border-bottom-color:rgba(255,255,255,.07)}
 .cc.star .cc-items .cc-it{color:rgba(210,235,248,.82)}
 .cc-pricing{background:rgba(7,25,46,.04);border:1px solid rgba(7,25,46,.06);border-radius:9px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-.cc.star .cc-pricing{background:rgba(201,160,48,.09);border-color:rgba(201,160,48,.2)}
+.cc.star .cc-pricing{background:rgba(201,160,48,.09);border-color:rgba(201,160,48,.2)}.cc.star .cc-old{color:rgba(210,235,248,.65) !important}.cc.star .cc-micro{color:rgba(210,235,248,.55) !important}
 .cc-old{font-size:10.5px;color:var(--gray2);text-decoration:line-through;display:block}
 .cc-price{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--navy);display:block;line-height:1.1}
 .cc.star .cc-price{color:var(--gold2)}
@@ -209,8 +209,8 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .tcard{border-radius:14px;overflow:hidden;border:1.5px solid var(--off);box-shadow:var(--sh);background:#fff;transition:var(--t);cursor:pointer}
 .tcard:hover{transform:translateY(-5px);box-shadow:var(--shh);border-color:rgba(201,160,48,.3)}
 .tcard.best{border-color:var(--gold)}
-.tc-img{height:150px;overflow:hidden;position:relative}
-.tc-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.tc-img{height:170px;overflow:hidden;position:relative;background:var(--off)}
+.tc-img img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .4s}
 .tcard:hover .tc-img img{transform:scale(1.05)}
 .tc-body{padding:14px 16px 16px}
 .tc-name{font-family:var(--serif);font-size:19px;color:var(--navy);margin-bottom:4px}
@@ -240,8 +240,8 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .padd:hover{background:var(--gold);border-color:var(--gold)}
 .pinfo{padding:13px 14px 15px;flex:1;display:flex;flex-direction:column}
 .pcat{font-size:9px;font-weight:700;color:var(--skyd);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}
-.pname{font-size:14.5px;font-weight:500;color:var(--navy);margin-bottom:3px;line-height:1.32}
-.pdesc{font-size:10.5px;color:var(--gray2);line-height:1.42;margin-bottom:8px;flex:1}
+.pname{font-size:16px;font-weight:500;color:var(--navy);margin-bottom:3px;line-height:1.32}
+.pdesc{font-size:12px;color:var(--gray2);line-height:1.5;margin-bottom:8px;flex:1}
 .pstars{font-size:11px;color:var(--gold);margin-bottom:5px}
 .pstars span{color:var(--gray2);font-size:10px;margin-left:1px}
 .ppr{display:flex;align-items:baseline;gap:5px}
@@ -340,7 +340,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .tc2.feat{border-color:var(--gold);box-shadow:0 4px 22px rgba(201,160,48,.12)}
 .tq{font-family:var(--serif);font-size:50px;color:rgba(61,201,232,.1);position:absolute;top:8px;left:14px;line-height:1;pointer-events:none}
 .tstars{color:var(--gold);font-size:12px;margin-bottom:9px}
-.ttxt{font-size:14px;color:var(--navy);line-height:1.75;font-style:italic;margin-bottom:14px;position:relative;z-index:1}
+.ttxt{font-size:15.5px;color:var(--navy);line-height:1.78;font-style:italic;margin-bottom:14px;position:relative;z-index:1}
 .tfoot{display:flex;align-items:center;gap:9px}
 .tav2{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
 .tav2.a{background:linear-gradient(135deg,var(--sky),var(--skyd))}
@@ -574,7 +574,7 @@ footer{background:var(--black);color:rgba(255,255,255,.4)}
 .upsell-skip:hover{color:rgba(210,235,248,.5)}
 
 /* ─── VARIANT SELECTOR ─── */
-.var-wrap{background:rgba(61,201,232,.05);border:1.5px solid rgba(61,201,232,.18);border-radius:10px;padding:12px 13px;margin-bottom:12px}
+.var-wrap{background:rgba(61,201,232,.05);border:1.5px solid rgba(61,201,232,.18);border-radius:10px;padding:12px 13px;margin-bottom:12px;max-height:160px;overflow-y:auto}
 .var-lbl{font-size:10.5px;font-weight:800;color:var(--navy);letter-spacing:.3px;margin-bottom:9px;display:flex;align-items:center;justify-content:space-between}
 .var-total{background:var(--sky);color:#fff;font-size:9.5px;font-weight:800;padding:2px 9px;border-radius:100px;transition:var(--t)}
 .var-total.full{background:var(--green)}
@@ -989,7 +989,7 @@ a,button,[onclick]{cursor:none}
     </div>
     <div class="qso-bdy">
       <div class="qso-img">
-        <img src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=640&h=200&fit=crop&q=80" alt="Taller SÁNATE Armenia"/>
+        <img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Laboratorio artesanal SÁNATE — Armenia, Quindío"/>
       </div>
       <p class="qso-p">Somos una marca <strong>100% colombiana</strong> con sede en <strong>Armenia, Quindío</strong>. Nacimos de una convicción simple: la piel y la mente se cuidan mejor con ingredientes que la naturaleza ya tiene.</p>
       <p class="qso-p">Desde hace más de <strong>4 años</strong> elaboramos cada producto de forma artesanal, en lotes pequeños, con activos puros y sin rellenos. Sin parabenos, sin sulfatos, sin ingredientes que no puedas pronunciar.</p>
@@ -1001,11 +1001,11 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="qso-team">
         <div class="qst">
-          <img src="https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=300&h=160&fit=crop&q=80" alt="Laboratorio SÁNATE"/>
+          <img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Sebo de Res SÁNATE — elaboración artesanal"/>
           <div class="qst-cap"><strong>Laboratorio propio</strong><span>Armenia, Quindío 🇨🇴</span></div>
         </div>
         <div class="qst">
-          <img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=300&h=160&fit=crop&q=80" alt="Productos SÁNATE"/>
+          <img src="https://sanate.store/imagenes_productos/1000736990.jpg" alt="Jabones artesanales SÁNATE"/>
           <div class="qst-cap"><strong>Activos certificados</strong><span>Sin rellenos, sin engaños</span></div>
         </div>
       </div>
@@ -1203,7 +1203,7 @@ a,button,[onclick]{cursor:none}
       <div class="prov-catalog">
 
         <div class="pc-item">
-          <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=80&h=80&fit=crop&q=80" alt="Jabón Cúrcuma"/>
+          <img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Jabón Cúrcuma SÁNATE"/>
           <div class="pc-info">
             <div class="pc-name">Jabón Cúrcuma 100g</div>
             <div class="pc-ref">REF: JAB-CUR-100</div>
@@ -1217,7 +1217,7 @@ a,button,[onclick]{cursor:none}
         </div>
 
         <div class="pc-item">
-          <img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?w=80&h=80&fit=crop&q=80" alt="Jabón Avena"/>
+          <img src="https://sanate.store/imagenes_productos/1000736990.jpg" alt="Jabón Avena & Arroz SÁNATE"/>
           <div class="pc-info">
             <div class="pc-name">Jabón Avena & Arroz 100g</div>
             <div class="pc-ref">REF: JAB-AVE-100</div>
@@ -1231,7 +1231,7 @@ a,button,[onclick]{cursor:none}
         </div>
 
         <div class="pc-item featured">
-          <img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=80&h=80&fit=crop&q=80" alt="Sebo de Res"/>
+          <img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Sebo de Res SÁNATE"/>
           <div class="pc-info">
             <div class="pc-name">Sebo de Res — Frasco grande</div>
             <div class="pc-ref">REF: SEB-GRD-001</div>
@@ -1245,7 +1245,7 @@ a,button,[onclick]{cursor:none}
         </div>
 
         <div class="pc-item featured">
-          <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop&q=80" alt="Melena de León"/>
+          <img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León SÁNATE"/>
           <div class="pc-info">
             <div class="pc-name">Melena de León 250mg x60</div>
             <div class="pc-ref">REF: MEL-250-060</div>
@@ -1259,7 +1259,7 @@ a,button,[onclick]{cursor:none}
         </div>
 
         <div class="pc-item">
-          <img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=80&h=80&fit=crop&q=80" alt="Polen"/>
+          <img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Polen SÁNATE"/>
           <div class="pc-info">
             <div class="pc-name">Polen Premium 500mg x50</div>
             <div class="pc-ref">REF: POL-500-050</div>
@@ -1273,7 +1273,7 @@ a,button,[onclick]{cursor:none}
         </div>
 
         <div class="pc-item">
-          <img src="https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=80&h=80&fit=crop&q=80" alt="Shampoo"/>
+          <img src="https://sanate.store/imagenes_productos/1000748981.jpg" alt="Shampoo SÁNATE"/>
           <div class="pc-info">
             <div class="pc-name">Shampoo Natural 450ml</div>
             <div class="pc-ref">REF: SHA-NAT-450</div>
@@ -1536,15 +1536,15 @@ a,button,[onclick]{cursor:none}
         <div class="hctitle">Ritual Completo<br/><em>Sebo + Jabones + Polen</em></div>
         <div class="hcsub">Manchas, acné, piel opaca. Resultados visibles desde la semana 2. +5.000 clientas felices.</div>
         <div class="hcimgs">
-          <div class="hcimg"><img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=150&h=150&fit=crop&q=80" alt="Jabón Cúrcuma"/><div class="hcimgn">Cúrcuma</div></div>
-          <div class="hcimg"><img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=150&h=150&fit=crop&q=80" alt="Sebo de Res"/><div class="hcimgn">Sebo</div></div>
-          <div class="hcimg"><img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=150&h=150&fit=crop&q=80" alt="Polen"/><div class="hcimgn">Polen</div></div>
+          <div class="hcimg"><img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Jabón Cúrcuma SÁNATE"/><div class="hcimgn">Cúrcuma</div></div>
+          <div class="hcimg"><img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Sebo de Res SÁNATE"/><div class="hcimgn">Sebo</div></div>
+          <div class="hcimg"><img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Polen SÁNATE"/><div class="hcimgn">Polen</div></div>
         </div>
         <div class="hcpr">
           <div><span class="hcold">Antes $149.000</span><span class="hcnew">$99.000</span></div>
           <span class="hcsave">Ahorras $50K</span>
         </div>
-        <button class="hcbtn" onclick="addItem({id:'c4',name:'Combo Secreto Japonés',desc:'Sebo grande + 2 jabones + exfoliante',price:99000,img:'https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=80&h=80&fit=crop'})">🛒 Agregar al carrito</button>
+        <button class="hcbtn" onclick="addItem({id:'c4',name:'Combo Secreto Japonés',desc:'Sebo grande + 2 jabones + exfoliante',price:99000,img:'https://sanate.store/imagenes_productos/1000745738.jpg'})">🛒 Agregar al carrito</button>
         <p class="hcmicro">🔒 Garantía 30 días · Pago contra entrega · Envío GRATIS</p>
       </div>
     </div>
@@ -1638,14 +1638,14 @@ a,button,[onclick]{cursor:none}
       <div class="pain-card">
         <div class="pain-before-after">
           <div class="pain-img-wrap">
-            <img src="https://images.unsplash.com/photo-1590439471364-192aa70c0b53?w=400&h=320&fit=crop&q=85" alt="Piel con manchas e hiperpigmentación" loading="lazy"/>
+            <img src="https://images.pexels.com/photos/4046567/pexels-photo-4046567.jpeg?w=400&h=320&fit=crop&q=85" alt="Piel con manchas e hiperpigmentación — antes SÁNATE" loading="lazy"/>
             <div class="pain-label before-lbl">ANTES</div>
             <div class="pain-overlay">
               <p class="pain-quote">"Llevaba años intentando borrar las manchas. Nada funcionaba."</p>
             </div>
           </div>
           <div class="pain-img-wrap after-wrap">
-            <img src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=400&h=320&fit=crop&q=85" alt="Piel luminosa y clara — después de SÁNATE" loading="lazy"/>
+            <img src="https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?w=400&h=320&fit=crop&q=85" alt="Piel luminosa y clara — después de SÁNATE" loading="lazy"/>
             <div class="pain-label after-lbl">DESPUÉS</div>
             <div class="pain-after-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1670,14 +1670,14 @@ a,button,[onclick]{cursor:none}
       <div class="pain-card">
         <div class="pain-before-after">
           <div class="pain-img-wrap">
-            <img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?w=400&h=320&fit=crop&q=85" alt="Piel con acné y brotes activos" loading="lazy"/>
+            <img src="https://images.pexels.com/photos/4046316/pexels-photo-4046316.jpeg?w=500&h=500&fit=crop&q=90" alt="Piel con acné y brotes activos — antes SÁNATE" loading="lazy"/>
             <div class="pain-label before-lbl">ANTES</div>
             <div class="pain-overlay">
               <p class="pain-quote">"El acné me hizo perder la confianza en mí misma."</p>
             </div>
           </div>
           <div class="pain-img-wrap after-wrap">
-            <img src="https://images.unsplash.com/photo-1596755389378-c31d21fd1273?w=400&h=320&fit=crop&q=85" alt="Piel limpia y radiante después del tratamiento" loading="lazy"/>
+            <img src="https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?w=500&h=500&fit=crop&q=90" alt="Piel limpia y radiante — después SÁNATE" loading="lazy"/>
             <div class="pain-label after-lbl">DESPUÉS</div>
             <div class="pain-after-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1702,14 +1702,14 @@ a,button,[onclick]{cursor:none}
       <div class="pain-card">
         <div class="pain-before-after">
           <div class="pain-img-wrap">
-            <img src="https://images.unsplash.com/photo-1544027993-37dbfe43562a?w=400&h=320&fit=crop&q=85" alt="Estrés, cansancio y niebla mental" loading="lazy"/>
+            <img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León SÁNATE — antes: niebla mental y ansiedad" loading="lazy"/>
             <div class="pain-label before-lbl">ANTES</div>
             <div class="pain-overlay">
               <p class="pain-quote">"Ansiedad, niebla mental, no podía concentrarme en nada."</p>
             </div>
           </div>
           <div class="pain-img-wrap after-wrap">
-            <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=320&fit=crop&q=85" alt="Energía, claridad mental y bienestar" loading="lazy"/>
+            <img src="https://sanate.store/imagenes_productos/1000044531.jpg" alt="Melena de León SÁNATE — después: claridad mental y energía" loading="lazy"/>
             <div class="pain-label after-lbl">DESPUÉS</div>
             <div class="pain-after-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1752,11 +1752,11 @@ a,button,[onclick]{cursor:none}
         <!-- Before/After Comparison Slider -->
         <div class="ba-compare" id="baCompare">
           <div class="ba-compare-before">
-            <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=500&h=400&fit=crop&q=85" alt="Antes SÁNATE" loading="lazy"/>
+            <img src="https://images.pexels.com/photos/4046316/pexels-photo-4046316.jpeg?w=500&h=500&fit=crop&q=90" alt="Antes SÁNATE — piel con manchas y acné" loading="lazy"/>
             <div class="ba-compare-label">ANTES</div>
           </div>
           <div class="ba-compare-after" id="baAfter" style="width:50%">
-            <img src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=500&h=400&fit=crop&q=85" alt="Después SÁNATE — piel transformada" loading="lazy"/>
+            <img src="https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?w=500&h=500&fit=crop&q=90" alt="Después SÁNATE — piel transformada y luminosa" loading="lazy"/>
             <div class="ba-compare-label right">DESPUÉS</div>
           </div>
           <div class="ba-slider-line" id="baLine" style="left:50%">
@@ -1784,7 +1784,7 @@ a,button,[onclick]{cursor:none}
     <div class="cg fu">
       <!-- C1 -->
       <div class="cc">
-        <div class="cc-img"><img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=480&h=180&fit=crop&q=80" alt="Tripack"/><span class="rib sky">Precio competitivo</span></div>
+        <div class="cc-img"><img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Pack x3 Jabones Artesanales SÁNATE"/><span class="rib sky">Precio competitivo</span></div>
         <div class="cc-top"><div class="cc-tname">Combo 1 — x3 Jabones a elección</div><div class="cc-tsub">Elige tus 3 jabones. Artesanales 100g c/u.</div></div>
         <div class="cc-body">
           <div class="cc-items">
@@ -1800,13 +1800,13 @@ a,button,[onclick]{cursor:none}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $99.000</span><span class="cc-price">$66.000</span></div><span class="cc-disc">-33%</span></div>
-          <button class="cc-cta" id="btn-c1" onclick="addVarItem('c1',3,'Combo x3 Jabones',66000,'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=80&h=80&fit=crop')">🛒 Agregar</button>
+          <button class="cc-cta" id="btn-c1" onclick="addVarItem('c1',3,'Combo x3 Jabones',66000,'https://sanate.store/imagenes_productos/1000744990.jpg')">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días · Pago contra entrega</div>
         </div>
       </div>
       <!-- C2 STAR -->
       <div class="cc star">
-        <div class="cc-img"><img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=480&h=180&fit=crop&q=80" alt="Secreto Japonés"/><span class="rib gold">⭐ El más elegido</span></div>
+        <div class="cc-img"><img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Combo Secreto Japonés SÁNATE — Sebo de Res + Jabones"/><span class="rib gold">⭐ El más elegido</span></div>
         <div class="cc-top"><div class="cc-tname">Combo 4 — Secreto Japonés</div><div class="cc-tsub">El tratamiento más elegido. +5.000 pieles transformadas. Resultados en 21 días.</div></div>
         <div class="cc-body">
           <div class="cc-items">
@@ -1825,13 +1825,13 @@ a,button,[onclick]{cursor:none}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $129.000</span><span class="cc-price">$99.000</span></div><span class="cc-disc">-23%</span></div>
-          <button class="cc-cta" id="btn-c4" onclick="addVarItem('c4',2,'Combo Secreto Japonés',99000,'https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=80&h=80&fit=crop')">🛒 Quiero este combo — $99.000</button>
+          <button class="cc-cta" id="btn-c4" onclick="addVarItem('c4',2,'Combo Secreto Japonés',99000,'https://sanate.store/imagenes_productos/1000745738.jpg')">🛒 Quiero este combo — $99.000</button>
           <div class="cc-micro">🔒 Garantía 30 días · Resultado o devolución · 8% OFF por transferencia</div>
         </div>
       </div>
       <!-- C3 -->
       <div class="cc">
-        <div class="cc-img"><img src="https://images.unsplash.com/photo-1611072965656-e1a6e39a2bff?w=480&h=180&fit=crop&q=80" alt="Piel Sensible"/><span class="rib navy">Piel delicada</span></div>
+        <div class="cc-img"><img src="https://sanate.store/imagenes_productos/1000736990.jpg" alt="Jabón Avena y Arroz SÁNATE — Piel sensible"/><span class="rib navy">Piel delicada</span></div>
         <div class="cc-top"><div class="cc-tname">Combo 3 — Piel Sensible</div><div class="cc-tsub">Para pieles delicadas, bebés y mamás. Avena, Arroz y prueba de Sebo.</div></div>
         <div class="cc-body">
           <div class="cc-items">
@@ -1840,7 +1840,7 @@ a,button,[onclick]{cursor:none}
             <div class="cc-it"><span class="ck">✓</span>Apto para todas las edades</div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $92.000</span><span class="cc-price">$66.000</span></div><span class="cc-disc">-28%</span></div>
-          <button class="cc-cta" onclick="addItem({id:'c3',name:'Combo Piel Sensible',desc:'2 jabones Avena + Sebo 10g prueba',price:66000,img:'https://images.unsplash.com/photo-1611072965656-e1a6e39a2bff?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="cc-cta" onclick="addItem({id:'c3',name:'Combo Piel Sensible',desc:'2 jabones Avena + Sebo 10g prueba',price:66000,img:'https://sanate.store/imagenes_productos/1000736990.jpg'})">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días</div>
         </div>
       </div>
@@ -1848,7 +1848,7 @@ a,button,[onclick]{cursor:none}
     <!-- Row 2 combos con Polen -->
     <div class="cg fu" style="margin-top:16px">
       <div class="cc">
-        <div class="cc-img"><img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?w=480&h=180&fit=crop&q=80" alt="6 Jabones"/><span class="rib sky">Máximo ahorro</span></div>
+        <div class="cc-img"><img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="6 Jabones Cúrcuma SÁNATE"/><span class="rib sky">Máximo ahorro</span></div>
         <div class="cc-top"><div class="cc-tname">Combo 6 — 6 Jabones a elección</div><div class="cc-tsub">Para quienes ya aman SÁNATE. El precio unitario más bajo.</div></div>
         <div class="cc-body">
           <div class="cc-items">
@@ -1865,13 +1865,13 @@ a,button,[onclick]{cursor:none}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $210.000</span><span class="cc-price">$136.000</span></div><span class="cc-disc">-35%</span></div>
-          <button class="cc-cta" id="btn-c6" onclick="addVarItem('c6',6,'Combo 6 Jabones',136000,'https://images.unsplash.com/photo-1612817288484-6f916006741a?w=80&h=80&fit=crop')">🛒 Agregar</button>
+          <button class="cc-cta" id="btn-c6" onclick="addVarItem('c6',6,'Combo 6 Jabones',136000,'https://sanate.store/imagenes_productos/1000744990.jpg')">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días</div>
         </div>
       </div>
       <!-- C Polen -->
       <div class="cc star">
-        <div class="cc-img"><img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=480&h=180&fit=crop&q=80" alt="Integral Colágeno Polen"/><span class="rib gold">🍯 Colágeno natural</span></div>
+        <div class="cc-img"><img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Combo Integral Colágeno — Sebo + Jabones + Polen SÁNATE"/><span class="rib gold">🍯 Colágeno natural</span></div>
         <div class="cc-top"><div class="cc-tname">Combo 7 — Integral Colágeno Natural</div><div class="cc-tsub">Polen multifloral 500mg del Huila: el colágeno natural de Colombia. Piel radiante + energía + defensas desde adentro.</div></div>
         <div class="cc-body">
           <div class="cc-items">
@@ -1881,12 +1881,12 @@ a,button,[onclick]{cursor:none}
             <div class="cc-it"><span class="ck">✓</span>Envío GRATIS 🚚 · Pago contra entrega</div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $280.000</span><span class="cc-price">$169.900</span></div><span class="cc-disc">-39%</span></div>
-          <button class="cc-cta" onclick="addItem({id:'c7',name:'Combo Integral Colágeno',desc:'Sebo + 2 jabones Avena + Polen 500mg x90',price:169900,img:'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=80&h=80&fit=crop'})">🛒 Quiero este combo — $169.900</button>
+          <button class="cc-cta" onclick="addItem({id:'c7',name:'Combo Integral Colágeno',desc:'Sebo + 2 jabones Avena + Polen 500mg x90',price:169900,img:'https://sanate.store/imagenes_productos/1000750133.jpg'})">🛒 Quiero este combo — $169.900</button>
           <div class="cc-micro">🔒 Garantía 30 días · 8% OFF por transferencia · Resultado o devolución</div>
         </div>
       </div>
       <div class="cc">
-        <div class="cc-img"><img src="https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=480&h=180&fit=crop&q=80" alt="Doble Sebo"/><span class="rib navy">Uso familiar</span></div>
+        <div class="cc-img"><img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Combo Doble Sebo de Res SÁNATE"/><span class="rib navy">Uso familiar</span></div>
         <div class="cc-top"><div class="cc-tname">Combo 5 — Doble Sebo Grande</div><div class="cc-tsub">Ideal para tratamientos largos o familias. El mejor precio por unidad de Sebo.</div></div>
         <div class="cc-body">
           <div class="cc-items">
@@ -1903,7 +1903,7 @@ a,button,[onclick]{cursor:none}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $169.000</span><span class="cc-price">$136.900</span></div><span class="cc-disc">-19%</span></div>
-          <button class="cc-cta" id="btn-c5" onclick="addVarItem('c5',2,'Combo Doble Sebo Grande',136900,'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=80&h=80&fit=crop')">🛒 Agregar</button>
+          <button class="cc-cta" id="btn-c5" onclick="addVarItem('c5',2,'Combo Doble Sebo Grande',136900,'https://sanate.store/imagenes_productos/1000745738.jpg')">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días</div>
         </div>
       </div>
@@ -1922,62 +1922,62 @@ a,button,[onclick]{cursor:none}
     <div class="tickera-grid fu">
       <!-- T1 -->
       <div class="tcard">
-        <div class="tc-img"><img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=150&fit=crop&q=80" alt="Tickera Melena"/><span class="rib sky" style="font-size:9px;top:8px;left:8px;right:auto">Mente + Piel</span></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León SÁNATE — Tickera Mente Clara"/><span class="rib sky" style="font-size:9px;top:8px;left:8px;right:auto">Mente + Piel</span></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Mente Clara</div>
           <div class="tc-desc">Sebo + Jabones + Melena de León 250mg para piel y cognición.</div>
           <div class="tc-pr"><span class="tc-price">$119.000</span><span class="tc-old">$195.000</span><span class="tc-disc">-39%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t1',name:'Tickera Mente Clara',desc:'Sebo + 2 jabones + Melena de León x60',price:119000,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'t1',name:'Tickera Mente Clara',desc:'Sebo + 2 jabones + Melena de León x60',price:119000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- T2 BEST -->
       <div class="tcard best">
-        <div class="tc-img"><img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=400&h=150&fit=crop&q=80" alt="Tickera Estrella"/><span class="rib gold" style="font-size:9px;top:8px;left:8px;right:auto">⭐ Top ventas</span></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Tickera Estrella Total SÁNATE"/><span class="rib gold" style="font-size:9px;top:8px;left:8px;right:auto">⭐ Top ventas</span></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Estrella Total</div>
           <div class="tc-desc">Sebo + 3 jabones + Melena 250mg + Polen 500mg. El ritual completo SÁNATE.</div>
           <div class="tc-pr"><span class="tc-price">$159.000</span><span class="tc-old">$280.000</span><span class="tc-disc">-43%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t2',name:'Tickera Estrella Total',desc:'Sebo + 3 jabones + Melena + Polen',price:159000,img:'https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=80&h=80&fit=crop'})">🛒 El mejor valor</button>
+          <button class="tc-btn" onclick="addItem({id:'t2',name:'Tickera Estrella Total',desc:'Sebo + 3 jabones + Melena + Polen',price:159000,img:'https://sanate.store/imagenes_productos/1000750133.jpg'})">🛒 El mejor valor</button>
         </div>
       </div>
       <!-- T3 -->
       <div class="tcard">
-        <div class="tc-img"><img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=400&h=150&fit=crop&q=80" alt="Tickera Polen"/><span class="rib gold" style="font-size:9px;top:8px;left:8px;right:auto">🍯 Colágeno natural</span></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Polen Multifloral 500mg SÁNATE — Tickera Polen"/><span class="rib gold" style="font-size:9px;top:8px;left:8px;right:auto">🍯 Colágeno natural</span></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Polen Premium</div>
           <div class="tc-desc">Sebo + 3 jabones + Polen multifloral 500mg x90 cáps. Colágeno desde adentro.</div>
           <div class="tc-pr"><span class="tc-price">$169.900</span><span class="tc-old">$265.000</span><span class="tc-disc">-36%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t3',name:'Tickera Polen Premium',desc:'Sebo + 3 jabones + Polen 500mg x90',price:169900,img:'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'t3',name:'Tickera Polen Premium',desc:'Sebo + 3 jabones + Polen 500mg x90',price:169900,img:'https://sanate.store/imagenes_productos/1000750133.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- T4 -->
       <div class="tcard">
-        <div class="tc-img"><img src="https://images.unsplash.com/photo-1612817288484-6f916006741a?w=400&h=150&fit=crop&q=80" alt="Tickera Familiar"/></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Tickera Familiar SÁNATE — 6 jabones + 2 Sebos"/></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Familiar</div>
           <div class="tc-desc">6 jabones + 2 Sebos grandes. Para toda la familia por meses.</div>
           <div class="tc-pr"><span class="tc-price">$189.000</span><span class="tc-old">$288.000</span><span class="tc-disc">-34%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t4',name:'Tickera Familiar',desc:'6 jabones + 2 Sebos grandes',price:189000,img:'https://images.unsplash.com/photo-1612817288484-6f916006741a?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'t4',name:'Tickera Familiar',desc:'6 jabones + 2 Sebos grandes',price:189000,img:'https://sanate.store/imagenes_productos/1000745738.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- T5 -->
       <div class="tcard best">
-        <div class="tc-img"><img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400&h=150&fit=crop&q=80" alt="Tickera Power"/><span class="rib green" style="font-size:9px;top:8px;left:8px;right:auto">🧠 Mejor combo mental</span></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000044531.jpg" alt="Tickera Power Mental SÁNATE — Melena León + Polen"/><span class="rib green" style="font-size:9px;top:8px;left:8px;right:auto">🧠 Mejor combo mental</span></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Power Mental</div>
           <div class="tc-desc">Melena de León 250mg x120 + Polen 500mg x90 + 2 Sebos grandes. Mente y piel al 100%.</div>
           <div class="tc-pr"><span class="tc-price">$219.000</span><span class="tc-old">$365.000</span><span class="tc-disc">-40%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t5',name:'Tickera Power Mental',desc:'Melena x120 + Polen x90 + 2 Sebos',price:219000,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'t5',name:'Tickera Power Mental',desc:'Melena x120 + Polen x90 + 2 Sebos',price:219000,img:'https://sanate.store/imagenes_productos/1000044531.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- T6 -->
       <div class="tcard">
-        <div class="tc-img"><img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=400&h=150&fit=crop&q=80" alt="Tickera Máxima"/><span class="rib navy" style="font-size:9px;top:8px;left:8px;right:auto">🌟 Ritual completo</span></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Tickera Máxima SÁNATE — catálogo completo"/><span class="rib navy" style="font-size:9px;top:8px;left:8px;right:auto">🌟 Ritual completo</span></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Máxima SÁNATE</div>
           <div class="tc-desc">6 jabones + 2 Sebos + Melena 250mg x120 + Polen 500mg x90 + Shampoo + Acondicionador. <strong style="color:var(--gold)">🎁 +Jabón 100g de REGALO por superar $230K</strong></div>
           <div class="tc-pr"><span class="tc-price">$239.000</span><span class="tc-old">$440.000</span><span class="tc-disc">-46%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t6',name:'Tickera Máxima SÁNATE',desc:'Todo el catálogo SÁNATE + jabón 100g de regalo',price:239000,img:'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=80&h=80&fit=crop'})">🛒 El pack completo — $239.000</button>
+          <button class="tc-btn" onclick="addItem({id:'t6',name:'Tickera Máxima SÁNATE',desc:'Todo el catálogo SÁNATE + jabón 100g de regalo',price:239000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">🛒 El pack completo — $239.000</button>
         </div>
       </div>
     </div>
@@ -1992,7 +1992,7 @@ a,button,[onclick]{cursor:none}
       <!-- CH1 -->
       <div class="tcard">
         <div class="tc-img" style="height:160px">
-          <img src="https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=400&h=160&fit=crop&q=80" alt="Combo Shampoo + Néctar"/>
+          <img src="https://sanate.store/imagenes_productos/1000748981.jpg" alt="Combo Capilar Shampoo + Néctar SÁNATE"/>
           <span class="rib sky" style="font-size:9px;top:8px;left:8px;right:auto">💆 Cabello sano</span>
         </div>
         <div class="tc-body">
@@ -2003,13 +2003,13 @@ a,button,[onclick]{cursor:none}
             <div style="display:flex;gap:5px;align-items:center">✨ <strong>Néctar Capilar 200ml</strong> <span style="color:var(--gray2);font-size:10px">brillo · hidratación · peinar</span></div>
           </div>
           <div class="tc-pr"><span class="tc-price">$55.000</span><span class="tc-old">$75.000</span><span class="tc-disc">-27%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'ch1',name:'Combo Capilar Básico',desc:'Shampoo 450ml + Néctar Capilar 200ml',price:55000,img:'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'ch1',name:'Combo Capilar Básico',desc:'Shampoo 450ml + Néctar Capilar 200ml',price:55000,img:'https://sanate.store/imagenes_productos/1000748981.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- CH2 BEST -->
       <div class="tcard best">
         <div class="tc-img" style="height:160px">
-          <img src="https://images.unsplash.com/photo-1607602878872-59f2de5f8f22?w=400&h=160&fit=crop&q=80" alt="Combo Capilar + Jabones"/>
+          <img src="https://sanate.store/imagenes_productos/1000748981.jpg" alt="Combo Cabello y Piel SÁNATE — Shampoo + jabones"/>
           <span class="rib gold" style="font-size:9px;top:8px;left:8px;right:auto">⭐ Más completo</span>
         </div>
         <div class="tc-body">
@@ -2029,13 +2029,13 @@ a,button,[onclick]{cursor:none}
             </div>
           </div>
           <div class="tc-pr"><span class="tc-price">$119.000</span><span class="tc-old">$175.000</span><span class="tc-disc">-32%</span></div>
-          <button class="tc-btn" id="btn-ch2" onclick="addVarItem('ch2',3,'Combo Cabello & Piel',119000,'https://images.unsplash.com/photo-1607602878872-59f2de5f8f22?w=80&h=80&fit=crop')">🛒 El más completo</button>
+          <button class="tc-btn" id="btn-ch2" onclick="addVarItem('ch2',3,'Combo Cabello & Piel',119000,'https://sanate.store/imagenes_productos/1000748981.jpg')">🛒 El más completo</button>
         </div>
       </div>
       <!-- CH3 -->
       <div class="tcard">
         <div class="tc-img" style="height:160px">
-          <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&h=160&fit=crop&q=80" alt="Kit Capilar Premium"/>
+          <img src="https://sanate.store/imagenes_productos/1000748981.jpg" alt="Kit Capilar Premium SÁNATE"/>
           <span class="rib navy" style="font-size:9px;top:8px;left:8px;right:auto">👑 Premium</span>
         </div>
         <div class="tc-body">
@@ -2046,7 +2046,7 @@ a,button,[onclick]{cursor:none}
             <div style="display:flex;gap:5px;align-items:center">🧴 <strong>Sebo de Res grande</strong> + <strong>2 jabones</strong></div>
           </div>
           <div class="tc-pr"><span class="tc-price">$169.000</span><span class="tc-old">$251.000</span><span class="tc-disc">-33%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'ch3',name:'Kit Capilar Premium',desc:'Shampoo 450ml + Néctar + Sebo grande + 2 jabones',price:169000,img:'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=80&h=80&fit=crop'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'ch3',name:'Kit Capilar Premium',desc:'Shampoo 450ml + Néctar + Sebo grande + 2 jabones',price:169000,img:'https://sanate.store/imagenes_productos/1000748981.jpg'})">🛒 Agregar</button>
         </div>
       </div>
     </div>
@@ -2076,12 +2076,12 @@ a,button,[onclick]{cursor:none}
           <div><div class="sn">0</div><div class="sl">Rellenos o aditivos</div></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:18px">
-          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;border:1px solid rgba(61,201,232,.1);text-align:center;cursor:pointer" onclick="addItem({id:'m1',name:'Melena de León x60 — 250mg',desc:'60 cápsulas puras 250mg',price:89900,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop'})">
+          <div style="background:rgba(255,255,255,.06);border-radius:10px;padding:14px;border:1px solid rgba(61,201,232,.1);text-align:center;cursor:pointer" onclick="addItem({id:'m1',name:'Melena de León x60 — 250mg',desc:'60 cápsulas puras 250mg',price:89900,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">
             <div style="font-family:var(--serif);font-size:20px;color:var(--gold2);font-weight:600;margin-bottom:4px">$89.900</div>
             <div style="font-size:10.5px;color:rgba(210,235,248,.55);margin-bottom:10px">x60 cápsulas 250mg</div>
             <button class="btn btn-sky" style="width:100%;padding:9px;font-size:10.5px">🛒 Agregar</button>
           </div>
-          <div style="background:rgba(201,160,48,.09);border-radius:10px;padding:14px;border:1px solid rgba(201,160,48,.22);text-align:center;cursor:pointer" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas puras 250mg · mejor precio/cáp',price:129900,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop'})">
+          <div style="background:rgba(201,160,48,.09);border-radius:10px;padding:14px;border:1px solid rgba(201,160,48,.22);text-align:center;cursor:pointer" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas puras 250mg · mejor precio/cáp',price:129900,img:'https://sanate.store/imagenes_productos/1000044531.jpg'})">
             <div style="font-size:9.5px;font-weight:800;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">⭐ Mejor precio/cáp</div>
             <div style="font-family:var(--serif);font-size:20px;color:var(--gold2);font-weight:600;margin-bottom:4px">$129.900</div>
             <div style="font-size:10.5px;color:rgba(210,235,248,.55);margin-bottom:10px">x120 cápsulas 250mg</div>
@@ -2111,9 +2111,9 @@ a,button,[onclick]{cursor:none}
     <div class="pg fu">
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=350&h=180&fit=crop&q=80" alt="Jabón Cúrcuma"/>
+          <img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Jabón Artesanal Cúrcuma + Ácido Kójico SÁNATE"/>
           <span class="ptag tl">-49%</span><span class="ptag tr">🔥 HOT</span>
-          <button class="padd" onclick="addItem({id:'j1',name:'Pack x3 Jabón Cúrcuma',desc:'100g c/u · manchas · acné · ácido kójico',price:66000,img:'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'j1',name:'Pack x3 Jabón Cúrcuma',desc:'100g c/u · manchas · acné · ácido kójico',price:66000,img:'https://sanate.store/imagenes_productos/1000744990.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Jabones · Cúrcuma</div>
@@ -2125,9 +2125,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=350&h=180&fit=crop&q=80" alt="Sebo de Res"/>
+          <img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Sebo de Res Original SÁNATE — Secreto Japonés"/>
           <span class="ptag tr">⭐ Premium</span>
-          <button class="padd" onclick="addItem({id:'s1',name:'Sebo de Res Original — Grande',desc:'Frasco vidrio · tapa de lujo · Regenera manchas',price:76000,img:'https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'s1',name:'Sebo de Res Original — Grande',desc:'Frasco vidrio · tapa de lujo · Regenera manchas',price:76000,img:'https://sanate.store/imagenes_productos/1000745738.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Cremas · Sebo de Res</div>
@@ -2139,9 +2139,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=350&h=180&fit=crop&q=80" alt="Melena de León"/>
+          <img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León 250mg — SÁNATE · hongo noótropo"/>
           <span class="ptag tl">250mg puro</span><span class="ptag tr">🧠 Estrella</span>
-          <button class="padd" onclick="addItem({id:'m1',name:'Melena de León x60 — 250mg',desc:'60 cápsulas 250mg puras · memoria · sueño',price:89900,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'m1',name:'Melena de León x60 — 250mg',desc:'60 cápsulas 250mg puras · memoria · sueño',price:89900,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Melena de León</div>
@@ -2153,9 +2153,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=350&h=180&fit=crop&q=80" alt="Polen Premium"/>
+          <img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Polen Multifloral 500mg — SÁNATE · Huila Colombia"/>
           <span class="ptag tl">500mg</span><span class="ptag tr">🍯 Huila</span>
-          <button class="padd" onclick="addItem({id:'p1',name:'Polen Premium Huila x90 — 500mg',desc:'Multifloral 500mg · colágeno natural · energía',price:106000,img:'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'p1',name:'Polen Premium Huila x90 — 500mg',desc:'Multifloral 500mg · colágeno natural · energía',price:106000,img:'https://sanate.store/imagenes_productos/1000750133.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Polen Multifloral</div>
@@ -2167,9 +2167,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=350&h=180&fit=crop&q=80" alt="Jabón Caléndula"/>
+          <img src="https://sanate.store/imagenes_productos/1000747650.jpg" alt="Jabón Caléndula + Aloe Vera SÁNATE"/>
           <span class="ptag tl">Nuevo</span>
-          <button class="padd" onclick="addItem({id:'j3',name:'Jabón Caléndula & Aloe Vera',desc:'100g · regenera · calma · piel sensible',price:29000,img:'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'j3',name:'Jabón Caléndula & Aloe Vera',desc:'100g · regenera · calma · piel sensible',price:29000,img:'https://sanate.store/imagenes_productos/1000747650.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Jabones · Caléndula</div>
@@ -2181,9 +2181,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=350&h=180&fit=crop&q=80" alt="Shampoo"/>
+          <img src="https://sanate.store/imagenes_productos/1000748981.jpg" alt="Shampoo Natural Anticaída 450ml — SÁNATE"/>
           <span class="ptag tr">Natural</span>
-          <button class="padd" onclick="addItem({id:'sh1',name:'Shampoo Natural 450ml',desc:'Anticaída · crecimiento · hidratación',price:40000,img:'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'sh1',name:'Shampoo Natural 450ml',desc:'Anticaída · crecimiento · hidratación',price:40000,img:'https://sanate.store/imagenes_productos/1000748981.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Cabello · Shampoo</div>
@@ -2195,9 +2195,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=350&h=180&fit=crop&q=80" alt="Néctar Capilar"/>
+          <img src="https://sanate.store/imagenes_productos/1000747650.jpg" alt="Néctar Capilar 200ml SÁNATE — crema para peinar"/>
           <span class="ptag tl">✨ Nuevo</span><span class="ptag tr">Peinar</span>
-          <button class="padd" onclick="addItem({id:'nc1',name:'Néctar Capilar 200ml',desc:'Crema para peinar · brillo · sin frizz · hidratación',price:35000,img:'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'nc1',name:'Néctar Capilar 200ml',desc:'Crema para peinar · brillo · sin frizz · hidratación',price:35000,img:'https://sanate.store/imagenes_productos/1000747650.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Cabello · Crema para peinar</div>
@@ -2209,9 +2209,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=350&h=180&fit=crop&q=80" alt="Polen x50"/>
+          <img src="https://sanate.store/imagenes_productos/1000750135.jpg" alt="Polen Multifloral x50 500mg SÁNATE"/>
           <span class="ptag tl">Económico</span>
-          <button class="padd" onclick="addItem({id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Polen</div>
@@ -2223,9 +2223,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=350&h=180&fit=crop&q=80" alt="Melena x120"/>
+          <img src="https://sanate.store/imagenes_productos/1000044531.jpg" alt="Melena de León x120 250mg — SÁNATE"/>
           <span class="ptag tr">Mejor precio</span>
-          <button class="padd" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas · mejor precio por cápsula',price:129900,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop'})">+</button>
+          <button class="padd" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas · mejor precio por cápsula',price:129900,img:'https://sanate.store/imagenes_productos/1000044531.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Melena de León</div>
@@ -2364,14 +2364,10 @@ a,button,[onclick]{cursor:none}
     </div>
     <div class="vg fu">
       <div class="vcard" onclick="window.open('https://www.instagram.com/sanate.col/reels/','_blank')">
-        <div class="vthumb" style="background:linear-gradient(135deg,#FFE8C8,#FFD6A5);display:flex;align-items:center;justify-content:center;height:200px">
-          <div style="text-align:center">
-            <div style="font-size:48px;margin-bottom:8px">🧼✨</div>
-            <div style="font-size:13px;font-weight:600;color:var(--navy)">Jabón Cúrcuma</div>
-            <div style="font-size:11px;color:var(--gray)">Antes y después real</div>
-          </div>
-          <div class="vplay"><button class="vplay-btn">▶</button></div>
-          <span class="vtiktok">📸 Reels</span>
+        <div class="vthumb" style="height:200px;position:relative">
+          <img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Jabón Cúrcuma SÁNATE — Reels Instagram" style="width:100%;height:100%;object-fit:cover"/>
+          <div class="vplay"><button class="vplay-btn" style="background:rgba(255,255,255,.95)">▶</button></div>
+          <span class="vtiktok">📸 @sanate.col</span>
         </div>
         <div class="vinfo">
           <div class="vtitle">Transformación con Jabón de Cúrcuma — manchas y acné en 3 semanas</div>
@@ -2379,14 +2375,10 @@ a,button,[onclick]{cursor:none}
         </div>
       </div>
       <div class="vcard" onclick="window.open('https://www.instagram.com/sanate.col/reels/','_blank')">
-        <div class="vthumb" style="background:linear-gradient(135deg,#E8F4FD,#C8E6F5);display:flex;align-items:center;justify-content:center;height:200px">
-          <div style="text-align:center">
-            <div style="font-size:48px;margin-bottom:8px">🧴💎</div>
-            <div style="font-size:13px;font-weight:600;color:var(--navy)">Sebo de Res</div>
-            <div style="font-size:11px;color:var(--gray)">El secreto japonés</div>
-          </div>
-          <div class="vplay"><button class="vplay-btn">▶</button></div>
-          <span class="vtiktok">📸 Reels</span>
+        <div class="vthumb" style="height:200px;position:relative">
+          <img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Sebo de Res SÁNATE — Reels Instagram" style="width:100%;height:100%;object-fit:cover"/>
+          <div class="vplay"><button class="vplay-btn" style="background:rgba(255,255,255,.95)">▶</button></div>
+          <span class="vtiktok">📸 @sanate.col</span>
         </div>
         <div class="vinfo">
           <div class="vtitle">Sebo de Res Original: así se usa para resultados en 21 días</div>
@@ -2394,14 +2386,10 @@ a,button,[onclick]{cursor:none}
         </div>
       </div>
       <div class="vcard" onclick="window.open('https://www.instagram.com/sanate.col/reels/','_blank')">
-        <div class="vthumb" style="background:linear-gradient(135deg,#F0E8FF,#DDD0F5);display:flex;align-items:center;justify-content:center;height:200px">
-          <div style="text-align:center">
-            <div style="font-size:48px;margin-bottom:8px">🍄🧠</div>
-            <div style="font-size:13px;font-weight:600;color:var(--navy)">Melena de León</div>
-            <div style="font-size:11px;color:var(--gray)">Memoria y enfoque</div>
-          </div>
-          <div class="vplay"><button class="vplay-btn">▶</button></div>
-          <span class="vtiktok">📸 Reels</span>
+        <div class="vthumb" style="height:200px;position:relative">
+          <img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León SÁNATE — Reels Instagram" style="width:100%;height:100%;object-fit:cover"/>
+          <div class="vplay"><button class="vplay-btn" style="background:rgba(255,255,255,.95)">▶</button></div>
+          <span class="vtiktok">📸 @sanate.col</span>
         </div>
         <div class="vinfo">
           <div class="vtitle">Melena de León 250mg — claridad mental, menos ansiedad, sueño reparador</div>
@@ -2425,19 +2413,19 @@ a,button,[onclick]{cursor:none}
     </div>
     <div class="ig2 fu">
       <div class="ic">
-        <div class="ic-img-wrap"><img src="https://images.unsplash.com/photo-1575386930965-fe2d8c41d08d?w=120&h=120&fit=crop&q=85" alt="Cúrcuma" loading="lazy"/></div>
+        <div class="ic-img-wrap"><img src="https://sanate.store/imagenes_productos/1000744990.jpg" alt="Cúrcuma SÁNATE" loading="lazy"/></div>
         <div class="ic-name">Cúrcuma + Ácido Kójico</div><div class="ic-sci">Curcuma longa + Kojic acid</div><div class="ic-txt">Aclara manchas, reduce inflamación y unifica el tono desde la primera semana. El dúo más poderoso contra hiperpigmentación.</div><span class="ic-pill">Anti-manchas N°1</span>
       </div>
       <div class="ic">
-        <div class="ic-img-wrap"><img src="https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=120&h=120&fit=crop&q=85" alt="Sebo de Res" loading="lazy"/></div>
+        <div class="ic-img-wrap"><img src="https://sanate.store/imagenes_productos/1000745738.jpg" alt="Sebo de Res SÁNATE" loading="lazy"/></div>
         <div class="ic-name">Sebo de Res</div><div class="ic-sci">Tallow bovinum</div><div class="ic-txt">Idéntico al sebo humano. Absorción instantánea, sin poros tapados. Regenera la barrera cutánea en profundidad.</div><span class="ic-pill">Secreto japonés</span>
       </div>
       <div class="ic">
-        <div class="ic-img-wrap"><img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?w=120&h=120&fit=crop&q=85" alt="Melena de León" loading="lazy"/></div>
+        <div class="ic-img-wrap"><img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León SÁNATE" loading="lazy"/></div>
         <div class="ic-name">Melena de León 250mg</div><div class="ic-sci">Hericium erinaceus</div><div class="ic-txt">Estimula NGF para memoria, reduce ansiedad y mejora sueño. 250mg puros sin rellenos de ningún tipo.</div><span class="ic-pill">Noótropo natural</span>
       </div>
       <div class="ic">
-        <div class="ic-img-wrap"><img src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=120&h=120&fit=crop&q=85" alt="Polen Premium" loading="lazy"/></div>
+        <div class="ic-img-wrap"><img src="https://sanate.store/imagenes_productos/1000750133.jpg" alt="Polen Multifloral SÁNATE" loading="lazy"/></div>
         <div class="ic-name">Polen Multifloral 500mg</div><div class="ic-sci">Pollen · Huila, Colombia</div><div class="ic-txt">Colágeno natural del Huila. 500mg por cápsula — energía, defensas, piel desde adentro. Sin aditivos.</div><span class="ic-pill">Colágeno natural</span>
       </div>
     </div>
@@ -2816,12 +2804,12 @@ document.getElementById('qsoOv').addEventListener('click',e=>{if(e.target===docu
 // ─── UPSELL ENGINE ───
 // Catálogo de ofertas flash para upsell
 const upsellCatalog=[
-  {id:'up_jabon1',name:'Jabón Artesanal 100g — a elección',why:'🔥 Lleva 1 jabón extra',desc:'Cúrcuma · Avena & Arroz · o Caléndula',price:15000,oldPrice:29000,img:'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?w=80&h=80&fit=crop',triggers:['s1','c5','ch3'],notIfHas:['c1','c4','c6','j1','j3']},
-  {id:'up_polen50',name:'Polen 500mg x50 cáps',why:'💛 Colágeno desde adentro',desc:'Multifloral del Huila · energía · piel',price:39000,oldPrice:69900,img:'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?w=80&h=80&fit=crop',triggers:['s1','c4','c1','j1','j3'],notIfHas:['p1','p2','c7','t3']},
-  {id:'up_melena60',name:'Melena de León x60 — 250mg',why:'🧠 Para la mente también',desc:'Memoria · sueño · concentración · 250mg',price:39000,oldPrice:89900,img:'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=80&h=80&fit=crop',triggers:['s1','c4','c1','c7','j1'],notIfHas:['m1','m2','t1','t2','t5']},
-  {id:'up_sebo',name:'Sebo de Res Original — Grande',why:'✨ El secreto japonés',desc:'Frasco vidrio · regenera manchas · hidrata',price:39000,oldPrice:76000,img:'https://images.unsplash.com/photo-1556228841-a3c527ebefe5?w=80&h=80&fit=crop',triggers:['c1','j1','j3','p1','p2','m1'],notIfHas:['s1','c4','c5','c7','ch3','t2']},
-  {id:'up_nectar',name:'Néctar Capilar 200ml',why:'💆 Para tu cabello también',desc:'Crema para peinar · brillo · sin frizz',price:15000,oldPrice:35000,img:'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=80&h=80&fit=crop',triggers:['sh1','ch1'],notIfHas:['nc1','ch2','ch3']},
-  {id:'up_shampoo',name:'Shampoo Natural 450ml',why:'💧 Completa tu rutina capilar',desc:'Anticaída · sin sulfatos · brillo natural',price:15000,oldPrice:40000,img:'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=80&h=80&fit=crop',triggers:['nc1'],notIfHas:['sh1','ch1','ch2','ch3']},
+  {id:'up_jabon1',name:'Jabón Artesanal 100g — a elección',why:'🔥 Lleva 1 jabón extra',desc:'Cúrcuma · Avena & Arroz · o Caléndula',price:15000,oldPrice:29000,img:'https://sanate.store/imagenes_productos/1000747650.jpg',triggers:['s1','c5','ch3'],notIfHas:['c1','c4','c6','j1','j3']},
+  {id:'up_polen50',name:'Polen 500mg x50 cáps',why:'💛 Colágeno desde adentro',desc:'Multifloral del Huila · energía · piel',price:39000,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750133.jpg',triggers:['s1','c4','c1','j1','j3'],notIfHas:['p1','p2','c7','t3']},
+  {id:'up_melena60',name:'Melena de León x60 — 250mg',why:'🧠 Para la mente también',desc:'Memoria · sueño · concentración · 250mg',price:39000,oldPrice:89900,img:'https://sanate.store/imagenes_productos/1000044536.jpg',triggers:['s1','c4','c1','c7','j1'],notIfHas:['m1','m2','t1','t2','t5']},
+  {id:'up_sebo',name:'Sebo de Res Original — Grande',why:'✨ El secreto japonés',desc:'Frasco vidrio · regenera manchas · hidrata',price:39000,oldPrice:76000,img:'https://sanate.store/imagenes_productos/1000745738.jpg',triggers:['c1','j1','j3','p1','p2','m1'],notIfHas:['s1','c4','c5','c7','ch3','t2']},
+  {id:'up_nectar',name:'Néctar Capilar 200ml',why:'💆 Para tu cabello también',desc:'Crema para peinar · brillo · sin frizz',price:15000,oldPrice:35000,img:'https://sanate.store/imagenes_productos/1000747650.jpg',triggers:['sh1','ch1'],notIfHas:['nc1','ch2','ch3']},
+  {id:'up_shampoo',name:'Shampoo Natural 450ml',why:'💧 Completa tu rutina capilar',desc:'Anticaída · sin sulfatos · brillo natural',price:15000,oldPrice:40000,img:'https://sanate.store/imagenes_productos/1000748981.jpg',triggers:['nc1'],notIfHas:['sh1','ch1','ch2','ch3']},
 ];
 const upsellAdded=new Set();
 
