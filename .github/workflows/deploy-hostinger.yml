@@ -38,6 +38,7 @@ jobs:
           local-dir: ./build/
           server-dir: /public_html/
           dangerous-clean-slate: false
+          force-upload: true
           exclude: |
             **/.git*
             **/.git*/**
