@@ -41,12 +41,19 @@ RewriteRule ^waBackendUrl\.php$ waBackendUrl.php [L,QSA]
 RewriteRule ^api/co/register/?$ api/co/register/index.php [L,QSA]
 RewriteRule ^api/co/leads/?$ api/co/leads/index.php [L,QSA]
 RewriteRule ^co/?$ /index.html [L]
+
+# ── Archivos estáticos que NO deben pasar al SPA ──
+RewriteRule ^home\.html$ - [L]
+RewriteRule ^proveedores\.html$ - [L]
+
 # Home Plus V5 FINAL — activa en /
 RewriteRule ^$ /home.html [L]
 # Home Free React — accesible en /home-free
 RewriteRule ^home-free/?$ /index.html [L]
 # Portal proveedores
 RewriteRule ^proveedores/?$ /proveedores.html [L]
+
+# SPA catch-all — solo si el archivo NO existe
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]

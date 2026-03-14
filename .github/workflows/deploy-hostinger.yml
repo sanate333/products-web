@@ -28,6 +28,15 @@ jobs:
           CI: false
           GENERATE_SOURCEMAP: false
 
+      - name: Verify build contents
+        run: |
+          echo "=== HTML files in build/ ==="
+          ls -la build/*.html
+          echo "=== .htaccess ==="
+          head -5 build/.htaccess
+          echo "=== home.html lang check ==="
+          head -2 build/home.html
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
