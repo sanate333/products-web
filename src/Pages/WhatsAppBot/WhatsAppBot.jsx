@@ -635,7 +635,7 @@ function SocialConnector({ platform }) {
   var BASE = (ls.getItem('wa_backend_url') || 'https://sanate-baileys.onrender.com/api/whatsapp').replace('/api/whatsapp', '');
   var SECRET = ls.getItem('wa_secret') || 'sanate_secret_2025';
   var H = { 'x-secret': SECRET };
-  var META_APP_ID = '1468787708298775';h
+  var META_APP_ID = '1468787708298775';
   var STORE_ID = 'default';
   var CFGS = {
     instagram: {
