@@ -372,6 +372,18 @@ export default function MonitorGlobalAI({ standalone = false }) {
     return () => clearTimeout(timer);
   }, []);
 
+  // ── Ocultar widget de versión inyectado por Hostinger ──
+  useEffect(() => {
+    const hideHsWidget = () => {
+      const el = document.getElementById('hs-widget');
+      if (el) { el.style.display = 'none'; el.style.visibility = 'hidden'; }
+    };
+    hideHsWidget();
+    const observer = new MutationObserver(hideHsWidget);
+    observer.observe(document.body, { childList: true, subtree: false });
+    return () => observer.disconnect();
+  }, []);
+
   const frameClass = standalone ? 'monitorGlobalAIFrame monitorGlobalAIFrameStandalone' : 'monitorGlobalAIFrame';
   const wrapClass = standalone ? 'monitorGlobalAIFrameWrap monitorGlobalAIFrameWrapStandalone' : 'monitorGlobalAIFrameWrap';
 
@@ -381,8 +393,7 @@ export default function MonitorGlobalAI({ standalone = false }) {
         <header className='monitorGlobalAIHeader'>
           <div>
             <h2>Monitor Global AI</h2>
-            <p>Cards compactas, modo lite fluido y panel Colombia inteligente.</p>
-          </div>
+                      </div>
           <div className='monitorGlobalAIActions'>
             <button type='button' onClick={() => setReloadNonce(Date.now())}>
               <FontAwesomeIcon icon={faRotateRight} /> Recargar
