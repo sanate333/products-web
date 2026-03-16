@@ -3024,6 +3024,106 @@ if (fs.existsSync(buildDir)) {
 
 // Intentar iniciar con HTTPS (cert auto-firmado local, instalado como trusted)
 // Esto permite que sanate.store (HTTPS) llame a localhost sin bloqueo de Chrome PNA
+// ═══════════════════════════════════════════════════════════════════════
+// ── COLOMBIA INTELIGENTE — RSS feeds + topic extraction + investment AI ──
+// ═══════════════════════════════════════════════════════════════════════
+
+const COLOMBIA_RSS_FEEDS = [
+  { name: 'El Tiempo', url: 'https://www.eltiempo.com/rss/colombia.xml' },
+  { name: 'Semana', url: 'https://www.semana.com/rss' },
+  { name: 'RCN Radio', url: 'https://www.rcnradio.com/feeds/colombia.xml' },
+  { name: 'Blu Radio', url: 'https://www.bluradio.com/rss' },
+  { name: 'Portafolio', url: 'https://www.portafolio.co/rss/economia.xml' },
+];
+
+const colombiaCache = { news: null, topics: null, parties: null, candidates: null, virals: null, investment: null, lastFetch: 0 };
+const COLOMBIA_CACHE_TTL = 45000;
+
+async function fetchRSSFeed(feedUrl, feedName, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const resp = await fetch(feedUrl, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'SanateMonitor/1.0', 'Accept': 'application/rss+xml, application/xml, text/xml' }
+    });
+    clearTimeout(timer);
+    if (!resp.ok) return [];
+    const xml = await resp.text();
+    const items = [];
+    const itemRegex = /<item>([\s\S]*?)<\/item>/gi;
+    let match;
+    while ((match = itemRegex.exec(xml)) !== null && items.length < 8) {
+      const block = match[1];
+      const titleMatch = block.match(/<title><!\[CDATA\[(.*?)\]\]>|<title>(.*?)<\/title>/);
+      const descMatch = block.match(/<description><!\[CDATA\[(.*?)\]\]>|<description>(.*?)<\/description>/);
+      const dateMatch = block.match(/<pubDate>(.*?)<\/pubDate>/);
+      const linkMatch = block.match(/<link>(.*?)<\/link>/);
+      const title = (titleMatch?.[1] || titleMatch?.[2] || '').trim();
+      if (!title) continue;
+      const pubDate = dateMatch?.[1] ? new Date(dateMatch[1]) : new Date();
+      const hours = pubDate.getHours();
+      const mins = String(pubDate.getMinutes()).padStart(2, '0');
+      items.push({ id: feedName + '-' + items.length, title, source: feedName, hour: hours + ':' + mins, summary: (descMatch?.[1] || descMatch?.[2] || '').replace(/<[^>]+>/g, '').trim().slice(0, 180), link: (linkMatch?.[1] || '').trim(), updatedAt: pubDate.toISOString() });
+    }
+    return items;
+  } catch { clearTimeout(timer); return []; }
+}
+
+async function refreshColombiaData() {
+  if (Date.now() - colombiaCache.lastFetch < COLOMBIA_CACHE_TTL && colombiaCache.news) return;
+  const feedResults = await Promise.allSettled(COLOMBIA_RSS_FEEDS.map(f => fetchRSSFeed(f.url, f.name)));
+  const allNews = feedResults.flatMap(r => r.status === 'fulfilled' ? r.value : []);
+  allNews.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  colombiaCache.news = allNews.slice(0, 20);
+  const topicKeywords = {
+    'Gobierno y congreso': ['gobierno', 'congreso', 'senado', 'presidente', 'petro', 'reforma'],
+    'Seguridad regional': ['seguridad', 'militar', 'ejercito', 'policia', 'conflicto', 'guerrilla'],
+    'Economia y empleo': ['economia', 'empleo', 'desempleo', 'pib', 'inflacion', 'banco', 'dolar'],
+    'Salud publica': ['salud', 'hospital', 'eps', 'vacuna'],
+    'Educacion': ['educacion', 'universidad', 'escuela'],
+    'Medio ambiente': ['ambiente', 'deforestacion', 'cambio climatico'],
+    'Tecnologia e innovacion': ['tecnologia', 'digital', 'ia', 'startups'],
+    'Deportes Colombia': ['seleccion', 'futbol', 'olimpicos', 'ciclismo'],
+  };
+  const topicScores = {};
+  for (const item of allNews) {
+    const text = (item.title + ' ' + item.summary).toLowerCase();
+    for (const [topic, keywords] of Object.entries(topicKeywords)) {
+      if (keywords.some(kw => text.includes(kw))) topicScores[topic] = (topicScores[topic] || 0) + 1;
+    }
+  }
+  colombiaCache.topics = Object.entries(topicScores).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([title], idx) => ({ id: idx + 1, title }));
+  colombiaCache.parties = [
+    { id: 'p1', title: 'Pacto Historico', party: 'Coalicion gobierno' },
+    { id: 'p2', title: 'Centro Democratico', party: 'Oposicion' },
+    { id: 'p3', title: 'Partido Liberal', party: 'Independiente' },
+    { id: 'p4', title: 'Partido Conservador', party: 'Independiente' },
+    { id: 'p5', title: 'Partido Verde', party: 'Coalicion gobierno' },
+    { id: 'p6', title: 'Cambio Radical', party: 'Independiente' },
+  ];
+  colombiaCache.candidates = [
+    { id: 'c1', title: 'Gustavo Petro', studies: 'Presidente actual', recognitions: 'Pacto Historico' },
+    { id: 'c2', title: 'Maria Fernanda Cabal', studies: 'Senadora', recognitions: 'Centro Democratico' },
+    { id: 'c3', title: 'Sergio Fajardo', studies: 'Ex-gobernador Antioquia', recognitions: 'Independiente' },
+    { id: 'c4', title: 'German Vargas Lleras', studies: 'Ex-vicepresidente', recognitions: 'Cambio Radical' },
+  ];
+  colombiaCache.virals = [];
+  colombiaCache.investment = [
+    { asset: 'ETF iColcap', type: 'ETF', horizon: '15d', score: 7, thesis: 'Indice colombiano con potencial de recuperacion' },
+    { asset: 'Ecopetrol', type: 'accion', horizon: '2m', score: 6, thesis: 'Petrolera estatal, dividendos atractivos' },
+    { asset: 'Bancolombia', type: 'accion', horizon: '15d', score: 7, thesis: 'Sector bancario solido' },
+  ];
+  colombiaCache.lastFetch = Date.now();
+}
+
+app.get('/api/colombia/news', async (req, res) => { try { await refreshColombiaData(); res.json({ items: colombiaCache.news || [] }); } catch { res.json({ items: [] }); } });
+app.get('/api/colombia/topics', async (req, res) => { try { await refreshColombiaData(); res.json({ items: colombiaCache.topics || [] }); } catch { res.json({ items: [] }); } });
+app.get('/api/colombia/parties', async (req, res) => { try { await refreshColombiaData(); res.json({ items: colombiaCache.parties || [] }); } catch { res.json({ items: [] }); } });
+app.get('/api/colombia/candidates', async (req, res) => { try { await refreshColombiaData(); res.json({ items: colombiaCache.candidates || [] }); } catch { res.json({ items: [] }); } });
+app.get('/api/colombia/virals', async (req, res) => { try { await refreshColombiaData(); res.json({ items: colombiaCache.virals || [] }); } catch { res.json({ items: [] }); } });
+app.get('/api/colombia/investment-insights', async (req, res) => { try { await refreshColombiaData(); res.json({ ideas: colombiaCache.investment || [] }); } catch { res.json({ ideas: [] }); } });
+
 // SPA fallback - serve index.html for all unmatched routes
 app.get('*', (req, res) => {
   const pubHtml = path.join(__dirname, '..', 'public_html', 'index.html');
