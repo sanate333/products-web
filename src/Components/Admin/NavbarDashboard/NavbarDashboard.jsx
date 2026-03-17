@@ -4,36 +4,18 @@ import './NavbarDashboard.css'
 import { Link as Anchor, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faHome,
-  faUser,
-  faBoxOpen,
-  faImages,
-  faAddressBook,
-  faTags,
-  faTag,
-  faClipboardList,
-  faBell,
-  faUsers,
-  faMagic,
-  faComments,
-  faStore,
-  faGlobe,
-  faBrain,
-  faWallet,
-  faTruck,
-  faCalendarAlt,
-  faPlayCircle,
-  faSlidersH,
-  faUserShield,
-  faEnvelope,
-  faRobot,
+  faHome, faUser, faBoxOpen, faImages, faAddressBook,
+  faTags, faTag, faClipboardList, faBell, faUsers,
+  faMagic, faComments, faStore, faGlobe, faBrain,
+  faWallet, faTruck, faCalendarAlt, faPlayCircle,
+  faSlidersH, faUserShield, faEnvelope, faRobot,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
 
 const SECTIONS = [
   {
-    label: 'ðª TIENDA',
+    label: 'TIENDA',
     items: [
       { to: '/dashboard', icon: faHome, text: 'Inicio' },
       { to: '/dashboard/pedidos', icon: faClipboardList, text: 'Pedidos' },
@@ -43,25 +25,25 @@ const SECTIONS = [
     ],
   },
   {
-    label: 'ðï¸ CATÃLOGO',
+    label: 'CATÁLOGO',
     items: [
-      { to: '/dashboard/categorias', icon: faTags, text: 'CategorÃ­as' },
+      { to: '/dashboard/categorias', icon: faTags, text: 'Categorías' },
       { to: '/dashboard/sub-banners', icon: faImages, text: 'Sub-Banners' },
-      { to: '/dashboard/codigos', icon: faTag, text: 'CÃ³digos' },
+      { to: '/dashboard/codigos', icon: faTag, text: 'Códigos' },
       { to: '/dashboard/contacto', icon: faEnvelope, text: 'Contacto' },
     ],
   },
   {
-    label: 'ð£ MARKETING',
+    label: 'MARKETING',
     items: [
-      { to: '/dashboard/imagenes-ia', icon: faMagic, text: 'ImÃ¡genes IA' },
+      { to: '/dashboard/imagenes-ia', icon: faMagic, text: 'Imágenes IA' },
       { to: '/dashboard/landing-pages', icon: faGlobe, text: 'Landing Pages' },
       { to: '/dashboard/whatsapp-bot', icon: faComments, text: 'WhatsApp Bot' },
       { to: '/dashboard/oasis-chat', icon: faRobot, text: 'Oasis IA Chat' },
     ],
   },
   {
-    label: 'âï¸ OPERACIÃN',
+    label: 'OPERACIÓN',
     items: [
       { to: '/dashboard/notificaciones', icon: faBell, text: 'Notificaciones' },
       { to: '/dashboard/monitor', icon: faBrain, text: 'Monitor Global IA' },
@@ -71,7 +53,7 @@ const SECTIONS = [
     ],
   },
   {
-    label: 'ð§ SISTEMA',
+    label: 'SISTEMA',
     items: [
       { to: '/dashboard/usuarios', icon: faUserShield, text: 'Usuarios' },
       { to: '/dashboard/tutoriales', icon: faPlayCircle, text: 'Tutoriales' },
@@ -88,7 +70,6 @@ export default function Navbar({ isOpen = false, onClose }) {
     }
   };
 
-  // Detect if current path matches item (exact or startsWith for sub-routes)
   const isActive = (itemTo) => {
     if (itemTo === '/dashboard') return location.pathname === '/dashboard' || location.pathname === '/dashboard/'
     return location.pathname.startsWith(itemTo)
@@ -111,7 +92,8 @@ export default function Navbar({ isOpen = false, onClose }) {
                 className={isActive(item.to) ? 'activeLink' : ''}
                 title={item.text}
               >
-                <FontAwesomeIcon icon={item.icon} /> {item.text}
+                <FontAwesomeIcon icon={item.icon} />
+                {item.text}
               </Anchor>
             ))}
           </React.Fragment>
