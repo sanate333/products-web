@@ -34,12 +34,5 @@ jobs:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: 21
           local-dir: ./public_html/
-          server-dir: /public_html/
-          dangerous-clean-slate: true
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/whatsapp-proxy.php
+          dangerous-clean-slate: false
