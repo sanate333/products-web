@@ -25,6 +25,7 @@ import {
   faSlidersH,
   faUserShield,
   faEnvelope,
+  faRobot,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
@@ -55,6 +56,7 @@ const SECTIONS = [
       { to: '/dashboard/imagenes-ia',   icon: faMagic,       text: 'Imágenes IA' },
       { to: '/dashboard/landing-pages', icon: faGlobe,       text: 'Landing Pages' },
       { to: '/dashboard/whatsapp-bot',  icon: faComments,    text: 'WhatsApp Bot' },
+      { to: '/dashboard/oasis-chat',   icon: faRobot,       text: 'Oasis IA Chat' },
     ],
   },
   {
@@ -92,28 +94,29 @@ export default function Navbar({ isOpen = false, onClose }) {
     }
 
     return (
-        <div className={`navbarDashboard ${isOpen ? 'navbarDashboardOpen' : 'navbarDashboardClosed'}`}>
-            <Anchor className='logo' to='/dashboard'>
-                <img src={logo} alt="logo" />
-            </Anchor>
-            <div className='links'>
+        
+
+            
+                
+            
+            
+
                 {SECTIONS.map(section => (
-                    <React.Fragment key={section.label}>
-                        <div className="nav-section-label">{section.label}</div>
+                    
+                        
+{section.label}
+
                         {section.items.map(item => (
-                            <Anchor
-                                key={item.to}
-                                onClick={handleClose}
-                                to={item.to}
-                                className={isActive(item.to) ? 'activeLink' : ''}
-                            >
-                                <FontAwesomeIcon icon={item.icon} /> {item.text}
-                            </Anchor>
+                            
+                                 {item.text}
+                            
                         ))}
-                    </React.Fragment>
+                    
                 ))}
-            </div>
-            <Logout />
-        </div>
+            
+
+            
+        
+
     );
 }
