@@ -7,7 +7,7 @@ const SUPABASE_SOCIAL_URL = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/
 
 export default function OasisChat() {
   const [messages, setMessages] = useState([
-    { role: 'ai', text: 'Hola, soy Oasis IA. ¿En que puedo ayudarte hoy?' }
+    { role: 'ai', text: 'Hola, soy Oasis IA. Â¿En que puedo ayudarte hoy?' }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,7 +44,7 @@ export default function OasisChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'set_config', ai_enabled: enabled })
       });
-    } catch (e) { }
+    } catch (e) { /* silent */ }
   };
 
   const sendMessage = async () => {
@@ -89,104 +89,81 @@ export default function OasisChat() {
   };
 
   const formatMessage = (text) => {
-    const parts = text.split(/(BACKTICK3[\s\S]*?BACKTICK3)/g);
+    // Simple code block detection
+    const parts = text.split(/(```[\s\S]*?```)/g);
     return parts.map((part, i) => {
-      if (part.startsWith('BACKTICK3') && part.endsWith('BACKTICK3')) {
+      if (part.startsWith('```') && part.endsWith('```')) {
         const code = part.slice(3, -3).replace(/^\w+\n/, '');
-        return 
-{code}
-;
+        return <pre key={i}><code>{code}</code></pre>;
       }
-      return {part};
+      return <span key={i}>{part}</span>;
     });
   };
 
   return (
-    
-
-      
-      
-      
-
-        
-
-          
-
-            
-            
-
-              
-Oasis IA
-
-              
-Asistente inteligente para tu negocio
-
-            
-
-            
-
-              Motor:
-               setProvider(e.target.value)}>
-                Auto
-                Claude
-                Gemini
-              
-            
-
-            
-
-              
-                IA Auto-responder
-                 toggleAI(e.target.checked)}
+    <div>
+      <Header />
+      <HeaderDash title="Oasis IA Chat" />
+      <div style={{ padding: '20px', maxWidth: 900, margin: '0 auto' }}>
+        <div className="oasis-chat-page">
+          <div className="oasis-chat-header">
+            <span className="oasis-chat-header-dot" />
+            <div>
+              <h3>Oasis IA</h3>
+              <p>Asistente inteligente para tu negocio</p>
+            </div>
+            <div className="oasis-chat-provider-select">
+              <span>Motor:</span>
+              <select value={provider} onChange={e => setProvider(e.target.value)}>
+                <option value="auto">Auto</option>
+                <option value="claude">Claude</option>
+                <option value="gemini">Gemini</option>
+              </select>
+            </div>
+            <div className="oasis-chat-toggle">
+              <label>
+                <span>IA Auto-responder</span>
+                <input
+                  type="checkbox"
+                  checked={aiEnabled}
+                  onChange={e => toggleAI(e.target.checked)}
                 />
-              
-            
+              </label>
+            </div>
+          </div>
 
-          
-
-
-          
-
+          <div className="oasis-chat-messages">
             {messages.map((msg, i) => (
-              
-
+              <div key={i} className={`oasis-chat-msg oasis-chat-msg-${msg.role}`}>
                 {msg.role === 'ai' ? formatMessage(msg.text) : msg.text}
                 {msg.provider && (
-                  
-
+                  <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: 4 }}>
                     via {msg.provider}
-                  
-
+                  </div>
                 )}
-              
-
+              </div>
             ))}
             {loading && (
-              
-Pensando...
-
+              <div className="oasis-chat-typing">Pensando...</div>
             )}
-            
+            <div ref={messagesEndRef} />
+          </div>
 
-          
-
-
-          
-
-             setInput(e.target.value)}
+          <div className="oasis-chat-input-area">
+            <input
+              type="text"
+              placeholder="Escribe tu mensaje..."
+              value={input}
+              onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={loading}
             />
-            
-              ▶
-            
-          
-
-        
-
-      
-
-    
-
+            <button onClick={sendMessage} disabled={loading || !input.trim()}>
+              &#9654;
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
-    }
+}
