@@ -1,6 +1,6 @@
 /* ── NavbarDashboard — sidebar colapsable ── */
 .navbarDashboard {
-    background-color: var(--color1);
+    background: linear-gradient(180deg, #0b3d5b 0%, #0a2e44 100%);
     display: flex;
     flex-direction: column;
     width: 4rem;
@@ -52,7 +52,7 @@
     align-items: center;
     width: 100%;
     gap: 0.85rem;
-    color: rgba(255,255,255,0.82);
+    color: rgba(255,255,255,0.92);
     margin-top: 0.05rem;
     padding: 8px 1.1em;
     border-radius: 30px 0 0 30px;
@@ -68,15 +68,15 @@
     opacity: 0.85;
 }
 .navbarDashboard a:hover {
-    background-color: var(--gris);
-    color: var(--color1);
+    background-color: rgba(255,255,255,0.12);
+    color: #ffffff;
 }
 .navbarDashboard a:hover svg { opacity: 1; }
 
 .navbarDashboard a.active,
 .activeLink {
-    background-color: var(--gris) !important;
-    color: var(--color1) !important;
+    background-color: rgba(255,255,255,0.18) !important;
+    color: #ffffff !important;
     font-weight: 700;
 }
 
@@ -86,7 +86,7 @@
     font-weight: 800;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.35);
+    color: rgba(255, 255, 255, 0.55);
     padding: 0.85rem 1.1rem 0.18rem;
     white-space: nowrap;
     overflow: hidden;
