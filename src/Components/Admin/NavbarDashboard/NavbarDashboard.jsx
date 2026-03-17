@@ -32,7 +32,7 @@ import Logout from '../Logout/Logout';
 
 const SECTIONS = [
   {
-    label: '🛒 TIENDA',
+    label: 'ð TIENDA',
     items: [
       { to: '/dashboard',              icon: faHome,         text: 'Inicio' },
       { to: '/dashboard/pedidos',      icon: faClipboardList, text: 'Pedidos' },
@@ -42,25 +42,25 @@ const SECTIONS = [
     ],
   },
   {
-    label: '🏷️ CATÁLOGO',
+    label: 'ð·ï¸ CATÃLOGO',
     items: [
-      { to: '/dashboard/categorias',   icon: faTags,         text: 'Categorías' },
+      { to: '/dashboard/categorias',   icon: faTags,         text: 'CategorÃ­as' },
       { to: '/dashboard/sub-banners',  icon: faImages,       text: 'Sub-Banners' },
-      { to: '/dashboard/codigos',      icon: faTag,          text: 'Códigos' },
+      { to: '/dashboard/codigos',      icon: faTag,          text: 'CÃ³digos' },
       { to: '/dashboard/contacto',     icon: faEnvelope,     text: 'Contacto' },
     ],
   },
   {
-    label: '📣 MARKETING',
+    label: 'ð£ MARKETING',
     items: [
-      { to: '/dashboard/imagenes-ia',   icon: faMagic,       text: 'Imágenes IA' },
+      { to: '/dashboard/imagenes-ia',   icon: faMagic,       text: 'ImÃ¡genes IA' },
       { to: '/dashboard/landing-pages', icon: faGlobe,       text: 'Landing Pages' },
       { to: '/dashboard/whatsapp-bot',  icon: faComments,    text: 'WhatsApp Bot' },
       { to: '/dashboard/oasis-chat',   icon: faRobot,       text: 'Oasis IA Chat' },
     ],
   },
   {
-    label: '⚙️ OPERACIÓN',
+    label: 'âï¸ OPERACIÃN',
     items: [
       { to: '/dashboard/notificaciones', icon: faBell,        text: 'Notificaciones' },
       { to: '/dashboard/monitor',        icon: faBrain,       text: 'Monitor Global IA' },
@@ -70,7 +70,7 @@ const SECTIONS = [
     ],
   },
   {
-    label: '🔧 SISTEMA',
+    label: 'ð§ SISTEMA',
     items: [
       { to: '/dashboard/usuarios',   icon: faUserShield,  text: 'Usuarios' },
       { to: '/dashboard/tutoriales', icon: faPlayCircle,  text: 'Tutoriales' },
@@ -94,29 +94,28 @@ export default function Navbar({ isOpen = false, onClose }) {
     }
 
     return (
-        
-
-            
-                
-            
-            
-
+        <div className={`navbarDashboard ${isOpen ? 'navbarDashboardOpen' : 'navbarDashboardClosed'}`}>
+            <Anchor className='logo' to='/dashboard'>
+                <img src={logo} alt="logo" />
+            </Anchor>
+            <div className='links'>
                 {SECTIONS.map(section => (
-                    
-                        
-{section.label}
-
+                    <React.Fragment key={section.label}>
+                        <div className="nav-section-label">{section.label}</div>
                         {section.items.map(item => (
-                            
-                                 {item.text}
-                            
+                            <Anchor
+                                key={item.to}
+                                onClick={handleClose}
+                                to={item.to}
+                                className={isActive(item.to) ? 'activeLink' : ''}
+                            >
+                                <FontAwesomeIcon icon={item.icon} /> {item.text}
+                            </Anchor>
                         ))}
-                    
+                    </React.Fragment>
                 ))}
-            
-
-            
-        
-
+            </div>
+            <Logout />
+        </div>
     );
 }
