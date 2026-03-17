@@ -1,0 +1,208 @@
+.oasis-chat-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 120px);
+    max-height: 800px;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+
+.oasis-chat-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #0b3d5b 0%, #0a2e44 100%);
+    color: #fff;
+}
+
+.oasis-chat-header-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.25);
+}
+
+.oasis-chat-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.oasis-chat-header p {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    opacity: 0.7;
+}
+
+.oasis-chat-toggle {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+}
+
+.oasis-chat-toggle label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.oasis-chat-toggle input[type="checkbox"] {
+    width: 36px;
+    height: 20px;
+    appearance: none;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.oasis-chat-toggle input[type="checkbox"]:checked {
+    background: #22c55e;
+}
+
+.oasis-chat-toggle input[type="checkbox"]::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s;
+}
+
+.oasis-chat-toggle input[type="checkbox"]:checked::after {
+    transform: translateX(16px);
+}
+
+.oasis-chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f8fafc;
+}
+
+.oasis-chat-msg {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    word-wrap: break-word;
+}
+
+.oasis-chat-msg-user {
+    align-self: flex-end;
+    background: #0ea5e9;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.oasis-chat-msg-ai {
+    align-self: flex-start;
+    background: #ffffff;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    border-bottom-left-radius: 4px;
+}
+
+.oasis-chat-msg-ai pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    margin: 8px 0;
+}
+
+.oasis-chat-msg-ai code {
+    font-family: 'Fira Code', monospace;
+}
+
+.oasis-chat-typing {
+    align-self: flex-start;
+    padding: 12px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.oasis-chat-input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.oasis-chat-input-area input {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.oasis-chat-input-area input:focus {
+    border-color: #0ea5e9;
+}
+
+.oasis-chat-input-area button {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: #0ea5e9;
+    color: #fff;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.oasis-chat-input-area button:hover {
+    background: #0284c7;
+}
+
+.oasis-chat-input-area button:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+
+.oasis-chat-provider-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    opacity: 0.8;
+}
+
+.oasis-chat-provider-select select {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 0.78rem;
+  }
