@@ -1,9 +1,11 @@
-# ── Disable LiteSpeed Cache for HTML pages ──
+# ── Disable LiteSpeed Cache GLOBALLY ──
 <IfModule LiteSpeed>
 CacheLookup off
 </IfModule>
+
+# ── No-cache headers for HTML, JS, CSS, JSON ──
 <IfModule mod_headers.c>
-<FilesMatch "\.(html)$">
+<FilesMatch "\.(html|js|css|json)$">
 Header set Cache-Control "no-cache, no-store, must-revalidate"
 Header set Pragma "no-cache"
 Header set Expires "0"
@@ -13,6 +15,8 @@ Header set Expires "0"
 DirectoryIndex home.html index.html index.php
 RewriteEngine On
 RewriteBase /
+
+# ── API Routes ──
 RewriteRule ^api/ops/notifications/campaigns/?$ apiOpsNotificationsCampaigns.php [L,QSA]
 RewriteRule ^api/ops/notifications/campaigns/([0-9]+)/send/?$ apiOpsNotificationsCampaignSend.php?id=$1 [L,QSA]
 RewriteRule ^api/ops/notifications/campaigns/([0-9]+)/deliveries/?$ apiOpsNotificationsCampaignDeliveries.php?id=$1 [L,QSA]
@@ -54,18 +58,18 @@ RewriteRule ^api/co/register/?$ api/co/register/index.php [L,QSA]
 RewriteRule ^api/co/leads/?$ api/co/leads/index.php [L,QSA]
 RewriteRule ^co/?$ /index.html [L]
 
-# ── Archivos estáticos: servir directo, NO pasar al SPA ──
+# ── Static files: serve directly, DO NOT pass to SPA ──
 RewriteRule ^home\.html$ - [L]
 RewriteRule ^proveedores\.html$ - [L]
 
-# Home Plus V5 FINAL — activa en /
+# Home Plus V5 FINAL
 RewriteRule ^$ /home.html [L]
-# Home Free React — accesible en /home-free
+# Home Free React
 RewriteRule ^home-free/?$ /index.html [L]
 # Portal proveedores
 RewriteRule ^proveedores/?$ /proveedores.html [L]
 
-# SPA catch-all — solo si el archivo NO existe
+# SPA catch-all — only if file does NOT exist
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]
