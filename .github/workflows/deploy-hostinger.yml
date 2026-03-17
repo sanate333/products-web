@@ -29,7 +29,7 @@ jobs:
           GENERATE_SOURCEMAP: false
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Achtion@v4.3.5
         with:
           server: ${{ secrets.FTP_HOST }}
           username: ${{ secrets.FTP_USER }}
@@ -37,7 +37,7 @@ jobs:
           port: 21
           local-dir: ./build/
           server-dir: /public_html/
-          dangerous-clean-slate: false
+          dangerous-clean-slate: true
           exclude: |
             **/.git*
             **/.git*/**
