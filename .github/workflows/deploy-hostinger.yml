@@ -1,8 +1,8 @@
-name: Deploy Hostinger
+hname: Deploy Hostinger
 
 on:
   push:
-    branches:
+    branches:h
       - main
   workflow_dispatch:
 
@@ -35,7 +35,7 @@ jobs:
           username: ${{ secrets.FTP_USER }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: 21
-          local-dir: ./build/
+          local-dir: ./public_html/
           server-dir: /public_html/
           dangerous-clean-slate: true
           exclude: |
