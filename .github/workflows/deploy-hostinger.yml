@@ -1,8 +1,8 @@
-hname: Deploy Hostinger
+name: Deploy Hostinger
 
 on:
   push:
-    branches:h
+    branches:
       - main
   workflow_dispatch:
 
