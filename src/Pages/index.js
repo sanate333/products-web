@@ -82,6 +82,8 @@ const storeDashboardChildren = [
     { path: 'notificaciones', element: <Notificaciones /> },
     { path: 'monitor-global-ai', element: <MonitorGlobalAI /> },
     { path: 'monitor', element: <MonitorGlobalAI /> },
+    { path: 'oasis-chat', element: <OasisChat /> },
+    { path: 'chat-ia', element: <OasisChat /> },
     { path: 'ofertas-carrito', element: <OfertasCarrito /> },
     { path: 'wallet', element: <Wallet /> },
     { path: 'dropshipping', element: <Dropshipping /> },
@@ -106,7 +108,7 @@ export const router = createBrowserRouter([
         path: '/nube',
         element: <Navigate to='/co' replace />,
     },
-    // âââ DASHBOARD (antes de /:storeSlug para evitar conflicto) âââ
+    // --- DASHBOARD (antes de /:storeSlug para evitar conflicto) ---
     {
         path: '/dashboard',
         element: <MainLayout />,
@@ -127,7 +129,7 @@ export const router = createBrowserRouter([
         path: '/dashboard/:storeSlug/*',
         element: <StoreDashboardRedirect />,
     },
-    // âââ PUBLIC ROUTES âââ
+    // --- PUBLIC ROUTES ---
     {
         path: '/',
         element: <IndexLayout />,
@@ -148,7 +150,7 @@ export const router = createBrowserRouter([
             { path: 'producto/:idProducto/:producto', element: <PageDetail /> },
         ],
     },
-    // âââ STORE SLUG ROUTES (catch-all dinÃ¡mico, debe ir al final) âââ
+    // --- STORE SLUG ROUTES (catch-all dinamico, debe ir al final) ---
     {
         path: '/:storeSlug',
         element: <IndexLayout />,
