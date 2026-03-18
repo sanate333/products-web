@@ -9,14 +9,14 @@ if (session_status() === PHP_SESSION_NONE) {
 $bypassEmail = 'admin@gmail.com';
 $bypassPass  = 'admin1234';
 
-// ── Bypass: no requiere base de datos ni .env ──────────────────────────────
+// -- Bypass: no requiere base de datos ni .env
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $emailLogin    = $_POST['email']     ?? '';
+    $emailLogin      = $_POST['email']      ?? '';
     $contrasenaLogin = $_POST['contrasena'] ?? '';
     if ($emailLogin === $bypassEmail && $contrasenaLogin === $bypassPass) {
-        $_SESSION['usuario_id']    = 0;
-        $_SESSION['rol']           = 'admin';
-        $_SESSION['default_admin'] = true;
+        $_SESSION['usuario_id']     = 0;
+        $_SESSION['rol']            = 'admin';
+        $_SESSION['default_admin']  = true;
         $_SESSION['usuario_nombre'] = 'Administrador';
         $_SESSION['usuario_email']  = $emailLogin;
         echo json_encode([
@@ -28,11 +28,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ── Conexion via config.php (tiene fallback de credenciales sin .env) ──────
+// -- Conexion via config.php (tiene fallback de credenciales sin .env)
 require __DIR__ . '/config.php';
 
+// Guardia defensiva: getenv() devuelve false (no null) cuando la var no existe.
+// empty() cubre false, '', null y 0.
+if (empty($DB_USER) || empty($DB_MAIN)) {
+    $DB_HOST = 'localhost';
+    $DB_PORT = '3306';
+    $DB_MAIN = 'u274689770_sanate';
+    $DB_USER = 'u274689770_sanate';
+    $DB_PASS = 'Sanate009';
+}
+
 try {
-    $dsn     = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_MAIN};charset=utf8mb4";
+    $dsn      = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_MAIN};charset=utf8mb4";
     $conexion = new PDO($dsn, $DB_USER, $DB_PASS);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
