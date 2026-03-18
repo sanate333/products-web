@@ -1,169 +1,181 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faPaperclip,
+  faGlobe,
+  faPlus,
+  faTimes,
+  faCopy,
+  faCheck,
+} from '@fortawesome/free-solid-svg-icons';
 import Header from '../Header/Header';
 import HeaderDash from '../../Components/Admin/HeaderDash/HeaderDash';
 import './OasisChat.css';
 
-const SUPABASE_SOCIAL_URL = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api';
-
-export default function OasisChat() {
-  const [messages, setMessages] = useState([
-    { role: 'ai', text: 'Hola, soy Oasis IA. Â¿En que puedo ayudarte hoy?' }
-  ]);
+const OasisChat = () => {
+  const [mode, setMode] = useState('chat');
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [provider, setProvider] = useState('auto');
-  const [aiEnabled, setAiEnabled] = useState(false);
+  const [webSearch, setWebSearch] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [conversations, setConversations] = useState([]);
+  const [currentConversationId, setCurrentConversationId] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const textareaRef = useRef(null);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, loading]);
-
-  // Load AI toggle state
-  useEffect(() => {
-    fetch(SUPABASE_SOCIAL_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_config' })
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data && data.config) {
-          setAiEnabled(!!data.config.ai_enabled);
-          if (data.config.provider) setProvider(data.config.provider);
-        }
-      })
-      .catch(() => {});
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const toggleAI = async (enabled) => {
-    setAiEnabled(enabled);
-    try {
-      await fetch(SUPABASE_SOCIAL_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set_config', ai_enabled: enabled })
-      });
-    } catch (e) { /* silent */ }
+  useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+    }
+  }, [input]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('oasisConversations');
+    if (saved) { const parsed = JSON.parse(saved); setConversations(parsed); if (parsed.length > 0) { setCurrentConversationId(parsed[0].id); setMessages(parsed[0].messages); } }
+  }, []);
+
+  const resizeImage = (file) => new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); let w = img.width, h = img.height; if (w > 800) { h = (h * 800) / w; w = 800; } canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL(file.type)); }; img.src = e.target.result; };
+    reader.readAsDataURL(file);
+  });
+
+  const handleFileUpload = async (e) => {
+    for (const file of Array.from(e.target.files)) {
+      if (file.type.startsWith('image/')) { const resized = await resizeImage(file); setUploadedFiles(prev => [...prev, { id: Math.random().toString(36).substr(2,9), name: file.name, type: file.type, data: resized, isImage: true }]); }
+      else { const reader = new FileReader(); reader.onload = (ev) => { setUploadedFiles(prev => [...prev, { id: Math.random().toString(36).substr(2,9), name: file.name, type: file.type, data: ev.target.result, isImage: false }]); }; reader.readAsDataURL(file); }
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMsg = input.trim();
-    setInput('');
-    setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
-    setLoading(true);
+  const removeFile = (id) => setUploadedFiles(prev => prev.filter(f => f.id !== id));
 
+  const newChat = () => {
+    const id = Math.random().toString(36).substr(2,9);
+    setConversations(prev => [{ id, messages: [], timestamp: new Date().toISOString() }, ...prev]);
+    setCurrentConversationId(id); setMessages([]); setInput(''); setUploadedFiles([]);
+    if (isMobile) setShowSidebar(false);
+  };
+
+  const loadConversation = (convId) => {
+    const conv = conversations.find(c => c.id === convId);
+    if (conv) { setCurrentConversationId(convId); setMessages(conv.messages); setInput(''); setUploadedFiles([]); if (isMobile) setShowSidebar(false); }
+  };
+
+  const sendMessage = useCallback(async () => {
+    if (!input.trim() && uploadedFiles.length === 0) return;
+    const userMsg = { id: Math.random().toString(36).substr(2,9), role: 'user', content: input, files: uploadedFiles, timestamp: new Date().toISOString() };
+    setMessages(prev => [...prev, userMsg]); setInput(''); setUploadedFiles([]); setLoading(true);
     try {
-      const history = messages.slice(-10).map(m => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.text
-      }));
-
-      const res = await fetch(SUPABASE_SOCIAL_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'chat',
-          message: userMsg,
-          history: history,
-          provider: provider
-        })
+      const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
+      const res = await fetch('https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'chat_v2', message: input || 'Process attached files', history, files: uploadedFiles.map(f => ({ name: f.name, type: f.type, data: f.data })), web_search: webSearch, mode })
       });
-
       const data = await res.json();
-      const reply = data.reply || data.error || 'Sin respuesta';
-      setMessages(prev => [...prev, { role: 'ai', text: reply, provider: data.usedProvider }]);
+      const aiMsg = { id: Math.random().toString(36).substr(2,9), role: 'assistant', content: data.reply || 'Error: No response', sources: data.sources || [], timestamp: new Date().toISOString() };
+      setMessages(prev => [...prev, aiMsg]);
+      if (currentConversationId) { setConversations(prev => prev.map(c => c.id === currentConversationId ? { ...c, messages: [...c.messages, userMsg, aiMsg] } : c)); }
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'ai', text: 'Error de conexion: ' + err.message }]);
-    } finally {
-      setLoading(false);
-    }
+      setMessages(prev => [...prev, { id: Math.random().toString(36).substr(2,9), role: 'assistant', content: 'Error: ' + err.message, timestamp: new Date().toISOString() }]);
+    } finally { setLoading(false); }
+  }, [input, uploadedFiles, messages, webSearch, mode, currentConversationId]);
+
+  useEffect(() => { if (conversations.length > 0) localStorage.setItem('oasisConversations', JSON.stringify(conversations)); }, [conversations]);
+
+  const renderMarkdown = (text) => {
+    let h = text;
+    h = h.replace(/```(\w+)?\n([\s\S]*?)```/g, (m, lang, code) => '<pre class="code-block"><code>' + code.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></pre>');
+    h = h.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+    h = h.replace(/^### (.*?)$/gm, '<h3>$1</h3>'); h = h.replace(/^## (.*?)$/gm, '<h2>$1</h2>'); h = h.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+    h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); h = h.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    h = h.replace(/^\* (.*?)$/gm, '<li>$1</li>'); h = h.replace(/^\d+\. (.*?)$/gm, '<li>$1</li>');
+    h = h.replace(/\n\n/g, '</p><p>'); return '<p>' + h + '</p>';
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
-
-  const formatMessage = (text) => {
-    // Simple code block detection
-    const parts = text.split(/(```[\s\S]*?```)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith('```') && part.endsWith('```')) {
-        const code = part.slice(3, -3).replace(/^\w+\n/, '');
-        return <pre key={i}><code>{code}</code></pre>;
-      }
-      return <span key={i}>{part}</span>;
-    });
-  };
+  const copyToClipboard = (text, id) => { navigator.clipboard.writeText(text); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); };
+  const truncName = (n, max=20) => n.length > max ? n.slice(0,max-3)+'...' : n;
+  const fmtTime = (ts) => { const d = new Date(ts), now = new Date(), dm = Math.floor((now-d)/60000); if (dm < 1) return 'ahora'; if (dm < 60) return dm+'m'; if (dm < 1440) return Math.floor(dm/60)+'h'; return d.toLocaleDateString(); };
 
   return (
-    <div>
+    <div style={{ width:'100%', height:'100vh', display:'flex', flexDirection:'column', backgroundColor:'#fff' }}>
       <Header />
-      <HeaderDash title="Oasis IA Chat" />
-      <div style={{ padding: '20px', maxWidth: 900, margin: '0 auto' }}>
-        <div className="oasis-chat-page">
-          <div className="oasis-chat-header">
-            <span className="oasis-chat-header-dot" />
-            <div>
-              <h3>Oasis IA</h3>
-              <p>Asistente inteligente para tu negocio</p>
+      <HeaderDash />
+      <div style={{ display:'flex', flex:1, overflow:'hidden', position:'relative' }}>
+        <div className='sidebar' style={{ width:280, backgroundColor:'#2D2D2D', color:'#fff', display:'flex', flexDirection:'column', borderRight:'1px solid #e5e7eb', transition:'transform 0.3s', zIndex:100, transform: isMobile && !showSidebar ? 'translateX(-100%)' : 'translateX(0)' }}>
+          <button className='new-chat-btn' onClick={newChat}><FontAwesomeIcon icon={faPlus} style={{marginRight:8}} /> Nuevo Chat</button>
+          <div className='conversations-list' style={{ flex:1, overflowY:'auto', padding:16 }}>
+            <h3 className='conversation-title'>Historial</h3>
+            {conversations.length === 0 ? <p className='empty-state'>Sin conversaciones</p> : conversations.map(conv => (
+              <button key={conv.id} className={'conversation-item' + (currentConversationId === conv.id ? ' conversation-item-active' : '')} onClick={() => loadConversation(conv.id)}>
+                <span className='conv-text'>{conv.messages[0]?.content?.slice(0,30) || 'Nueva conversaci\u00f3n'}</span>
+                <span className='conv-time'>{fmtTime(conv.timestamp)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        {isMobile && showSidebar && <div className='overlay' onClick={() => setShowSidebar(false)} />}
+        <div className='chat-area' style={{ flex:1, display:'flex', flexDirection:'column', backgroundColor:'#fff' }}>
+          <div className='chat-header'>
+            {isMobile && <button className='mobile-menu-btn' onClick={() => setShowSidebar(!showSidebar)}>\u2630</button>}
+            <div className='tabs-container'>
+              <button className={'tab' + (mode==='chat'?' tab-active':'')} onClick={() => setMode('chat')}>Chat</button>
+              <button className={'tab' + (mode==='code'?' tab-active':'')} onClick={() => setMode('code')}>C\u00f3digo</button>
             </div>
-            <div className="oasis-chat-provider-select">
-              <span>Motor:</span>
-              <select value={provider} onChange={e => setProvider(e.target.value)}>
-                <option value="auto">Auto</option>
-                <option value="claude">Claude</option>
-                <option value="gemini">Gemini</option>
-              </select>
-            </div>
-            <div className="oasis-chat-toggle">
-              <label>
-                <span>IA Auto-responder</span>
-                <input
-                  type="checkbox"
-                  checked={aiEnabled}
-                  onChange={e => toggleAI(e.target.checked)}
-                />
-              </label>
+            <div className='header-right'>
+              <button className={'icon-btn' + (webSearch?' icon-btn-active':'')} onClick={() => setWebSearch(!webSearch)} title='B\u00fasqueda Web'><FontAwesomeIcon icon={faGlobe} /></button>
             </div>
           </div>
-
-          <div className="oasis-chat-messages">
-            {messages.map((msg, i) => (
-              <div key={i} className={`oasis-chat-msg oasis-chat-msg-${msg.role}`}>
-                {msg.role === 'ai' ? formatMessage(msg.text) : msg.text}
-                {msg.provider && (
-                  <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: 4 }}>
-                    via {msg.provider}
-                  </div>
-                )}
+          <div className='messages-container' style={{ flex:1, overflowY:'auto', padding:24, display:'flex', flexDirection:'column', gap:16 }}>
+            {messages.length === 0 ? (
+              <div className='empty-chat' style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', flex:1, gap:12 }}>
+                <h1 className='welcome-title'>Oasis IA</h1>
+                <p className='welcome-subtitle'>Powered by Claude Sonnet 4.6</p>
+                <p className='welcome-text'>{mode==='chat' ? 'Escribe algo para comenzar' : 'Comparte tu c\u00f3digo y te ayudo a mejorarlo'}</p>
+              </div>
+            ) : messages.map(msg => (
+              <div key={msg.id} className={'message-row ' + (msg.role==='user'?'user-message':'assistant-message')}>
+                <div className={msg.role==='user'?'user-bubble':'assistant-bubble'}>
+                  <div className='message-content' dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.content) }} />
+                  {msg.files && msg.files.length > 0 && <div className='file-preview-container'>{msg.files.map(f => <div key={f.id} className='file-preview'>{f.isImage ? <img src={f.data} alt={f.name} className='preview-image' /> : <div className='file-preview-text'>\ud83d\udcc4 {truncName(f.name)}</div>}</div>)}</div>}
+                  {msg.sources && msg.sources.length > 0 && <div className='sources-container'><h4 className='sources-title'>Fuentes</h4>{msg.sources.map((s,i) => <a key={i} href={s.url} target='_blank' rel='noopener' className='source-link'>{s.title}</a>)}</div>}
+                  {msg.role==='assistant' && <button className={'copy-btn'+(copiedId===msg.id?' copy-btn-active':'')} onClick={() => copyToClipboard(msg.content,msg.id)}><FontAwesomeIcon icon={copiedId===msg.id?faCheck:faCopy} style={{marginRight:4}} />{copiedId===msg.id?'Copiado':'Copiar'}</button>}
+                </div>
               </div>
             ))}
-            {loading && (
-              <div className="oasis-chat-typing">Pensando...</div>
-            )}
+            {loading && <div className='message-row assistant-message'><div className='assistant-bubble'><div className='typing-indicator'><span className='typing-dot' style={{animationDelay:'0s'}} /><span className='typing-dot' style={{animationDelay:'0.2s'}} /><span className='typing-dot' style={{animationDelay:'0.4s'}} /></div></div></div>}
             <div ref={messagesEndRef} />
           </div>
-
-          <div className="oasis-chat-input-area">
-            <input
-              type="text"
-              placeholder="Escribe tu mensaje..."
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={loading}
-            />
-            <button onClick={sendMessage} disabled={loading || !input.trim()}>
-              &#9654;
-            </button>
+          <div className='input-area'>
+            {uploadedFiles.length > 0 && <div className='uploaded-files-container'>{uploadedFiles.map(f => <div key={f.id} className='uploaded-file'>{f.isImage ? <img src={f.data} alt={f.name} className='uploaded-image' /> : <div className='uploaded-file-name'>{truncName(f.name)}</div>}<button className='remove-file-btn' onClick={() => removeFile(f.id)}><FontAwesomeIcon icon={faTimes} /></button></div>)}</div>}
+            <div className='input-wrapper'>
+              <textarea ref={textareaRef} className='textarea' placeholder='Mensaje a Oasis IA...' value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }} disabled={loading} />
+              <div className='input-actions'>
+                <button className='attach-btn' onClick={() => fileInputRef.current?.click()} disabled={loading} title='Adjuntar archivos'><FontAwesomeIcon icon={faPaperclip} /></button>
+                <input ref={fileInputRef} type='file' multiple onChange={handleFileUpload} style={{display:'none'}} accept='image/*,.pdf,.doc,.docx,.txt,.json,.csv' />
+                <button className={'send-btn' + (loading?' send-btn-disabled':'')} onClick={sendMessage} disabled={loading || (!input.trim() && uploadedFiles.length===0)}>Enviar</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default OasisChat;
