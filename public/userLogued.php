@@ -20,6 +20,16 @@ if (!empty($_SESSION['default_admin'])) {
 // ── Conexion via config.php (tiene fallback de credenciales sin .env) ──────
 require __DIR__ . '/config.php';
 
+// Guardia defensiva: getenv() devuelve false (no null) cuando la var no existe.
+// empty() cubre false, '', null y 0.
+if (empty($DB_USER) || empty($DB_MAIN)) {
+    $DB_HOST = 'localhost';
+    $DB_PORT = '3306';
+    $DB_MAIN = 'u274689770_sanate';
+    $DB_USER = 'u274689770_sanate';
+    $DB_PASS = 'Sanate009';
+}
+
 $conexion = null;
 try {
     $dsn      = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_MAIN};charset=utf8mb4";
