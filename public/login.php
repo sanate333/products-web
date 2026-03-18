@@ -1,79 +1,68 @@
 <?php
 header("Content-Type: application/json");
 header("Access-Control-Allow-Origin: *");
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $bypassEmail = 'admin@gmail.com';
-$bypassPass = 'admin1234';
+$bypassPass  = 'admin1234';
 
-// Bypass sin tocar la base de datos
+// ── Bypass: no requiere base de datos ni .env ──────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $emailLogin = $_POST['email'] ?? '';
+    $emailLogin    = $_POST['email']     ?? '';
     $contrasenaLogin = $_POST['contrasena'] ?? '';
-
     if ($emailLogin === $bypassEmail && $contrasenaLogin === $bypassPass) {
-        $_SESSION['usuario_id'] = 0;
-        $_SESSION['rol'] = 'admin';
+        $_SESSION['usuario_id']    = 0;
+        $_SESSION['rol']           = 'admin';
         $_SESSION['default_admin'] = true;
         $_SESSION['usuario_nombre'] = 'Administrador';
-        $_SESSION['usuario_email'] = $emailLogin;
-
-        $usuario = [
-            "idUsuario" => 0,
-            "nombre" => "Administrador",
-            "email" => $emailLogin,
-        ];
-
-        echo json_encode(["mensaje" => "ok", "redirect" => "dashboard.php", "usuario" => $usuario]);
+        $_SESSION['usuario_email']  = $emailLogin;
+        echo json_encode([
+            "mensaje"  => "ok",
+            "redirect" => "dashboard.php",
+            "usuario"  => ["idUsuario" => 0, "nombre" => "Administrador", "email" => $emailLogin],
+        ]);
         exit();
     }
 }
 
-// Si no es bypass, intentamos contra la base de datos
-require __DIR__ . '/vendor/autoload.php';
-use Dotenv\Dotenv;
-
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-$servidor = $_ENV['DB_HOST'] . ':' . $_ENV['DB_PORT'];
-$usuario = $_ENV['DB_USER'];
-$contrasena = $_ENV['DB_PASS'];
-$dbname = $_ENV['DB_NAME'];
+// ── Conexion via config.php (tiene fallback de credenciales sin .env) ──────
+require __DIR__ . '/config.php';
 
 try {
-    $dsn = "mysql:host=$servidor;dbname=$dbname";
-    $conexion = new PDO($dsn, $usuario, $contrasena);
+    $dsn     = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_MAIN};charset=utf8mb4";
+    $conexion = new PDO($dsn, $DB_USER, $DB_PASS);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        $emailLogin = $_POST['email'] ?? '';
+        $emailLogin      = $_POST['email']      ?? '';
         $contrasenaLogin = $_POST['contrasena'] ?? '';
 
-        $sqlCheckCredenciales = "SELECT idUsuario, nombre, email, contrasena, rol FROM `usuarios` WHERE email = :email";
-        $stmtCheckCredenciales = $conexion->prepare($sqlCheckCredenciales);
-        $stmtCheckCredenciales->bindParam(':email', $emailLogin);
-        $stmtCheckCredenciales->execute();
+        $sql  = "SELECT idUsuario, nombre, email, contrasena, rol FROM usuarios WHERE email = :email";
+        $stmt = $conexion->prepare($sql);
+        $stmt->bindParam(':email', $emailLogin);
+        $stmt->execute();
 
-        if ($stmtCheckCredenciales->rowCount() > 0) {
-            $row = $stmtCheckCredenciales->fetch(PDO::FETCH_ASSOC);
-            $contrasenaHash = $row['contrasena'];
-
-            if (password_verify($contrasenaLogin, $contrasenaHash)) {
-                if ($row['rol'] == 'admin') {
-                    $_SESSION['usuario_id'] = $row['idUsuario'];
-                    $_SESSION['rol'] = $row['rol'];
-                    $_SESSION['default_admin'] = false;
+        if ($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (password_verify($contrasenaLogin, $row['contrasena'])) {
+                if ($row['rol'] === 'admin') {
+                    $_SESSION['usuario_id']     = $row['idUsuario'];
+                    $_SESSION['rol']            = $row['rol'];
+                    $_SESSION['default_admin']  = false;
                     $_SESSION['usuario_nombre'] = $row['nombre'];
-                    $_SESSION['usuario_email'] = $row['email'];
-
-                    $usuario = [
-                        "idUsuario" => $row['idUsuario'],
-                        "nombre" => $row['nombre'],
-                        "email" => $row['email'],
-                    ];
-
-                    echo json_encode(["mensaje" => "ok", "redirect" => "dashboard.php", "usuario" => $usuario]);
+                    $_SESSION['usuario_email']  = $row['email'];
+                    echo json_encode([
+                        "mensaje"  => "ok",
+                        "redirect" => "dashboard.php",
+                        "usuario"  => [
+                            "idUsuario" => $row['idUsuario'],
+                            "nombre"    => $row['nombre'],
+                            "email"     => $row['email'],
+                        ],
+                    ]);
                 } else {
                     echo json_encode(["error" => "No tienes permisos para acceder"]);
                 }
@@ -87,6 +76,6 @@ try {
     } else {
         echo json_encode(["error" => "Metodo no permitido"]);
     }
-} catch (PDOException $error) {
-    echo json_encode(["error" => "Error de conexion: " . $error->getMessage()]);
+} catch (PDOException $e) {
+    echo json_encode(["error" => "Error de conexion: " . $e->getMessage()]);
 }
