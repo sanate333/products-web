@@ -1,34 +1,29 @@
 <?php
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
-session_start();
 
-// Responder rápido para admin por bypass
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// ── Respuesta rapida para admin bypass (sin DB) ────────────────────────────
 if (!empty($_SESSION['default_admin'])) {
     echo json_encode([
         "idUsuario" => 0,
-        "nombre" => $_SESSION['usuario_nombre'] ?? 'Administrador',
-        "email" => $_SESSION['usuario_email'] ?? 'admin@gmail.com',
-        "rol" => "admin"
+        "nombre"    => $_SESSION['usuario_nombre'] ?? 'Administrador',
+        "email"     => $_SESSION['usuario_email']  ?? 'admin@gmail.com',
+        "rol"       => "admin",
     ]);
     exit();
 }
 
-// Cargar variables de entorno
-require __DIR__ . '/vendor/autoload.php';
-use Dotenv\Dotenv;
+// ── Conexion via config.php (tiene fallback de credenciales sin .env) ──────
+require __DIR__ . '/config.php';
 
-$dotenv = Dotenv::createImmutable(__DIR__);
-$dotenv->load();
-
-$servidor = $_ENV['DB_HOST'] . ':' . $_ENV['DB_PORT'];
-$usuario = $_ENV['DB_USER'];
-$contrasena = $_ENV['DB_PASS'];
-$dbname = $_ENV['DB_NAME'];
-
+$conexion = null;
 try {
-    $dsn = "mysql:host=$servidor;dbname=$dbname";
-    $conexion = new PDO($dsn, $usuario, $contrasena);
+    $dsn      = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_MAIN};charset=utf8mb4";
+    $conexion = new PDO($dsn, $DB_USER, $DB_PASS);
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if (!isset($_SESSION['usuario_id'])) {
@@ -37,25 +32,23 @@ try {
     }
 
     $usuarioId = $_SESSION['usuario_id'];
+    $sql       = "SELECT idUsuario, nombre, email, rol FROM usuarios WHERE idUsuario = :id";
+    $stmt      = $conexion->prepare($sql);
+    $stmt->bindParam(':id', $usuarioId);
 
-    $sqlSelectUsuario = "SELECT idUsuario, nombre, email, rol FROM `usuarios` WHERE idUsuario = :idUsuario";
-    $stmtUsuario = $conexion->prepare($sqlSelectUsuario);
-    $stmtUsuario->bindParam(':idUsuario', $usuarioId);
-
-    if ($stmtUsuario->execute()) {
-        if ($stmtUsuario->rowCount() > 0) {
-            $resultadoUsuario = $stmtUsuario->fetch(PDO::FETCH_ASSOC);
-            echo json_encode($resultadoUsuario);
+    if ($stmt->execute()) {
+        if ($stmt->rowCount() > 0) {
+            echo json_encode($stmt->fetch(PDO::FETCH_ASSOC));
         } else {
             echo json_encode(["error" => "Usuario no encontrado"]);
         }
     } else {
         echo json_encode(["error" => "Error al ejecutar la consulta SQL"]);
     }
-} catch (PDOException $error) {
-    echo json_encode(["error" => "Error de conexion: " . $error->getMessage()]);
-} catch (Exception $error) {
-    echo json_encode(["error" => "Error desconocido: " . $error->getMessage()]);
+} catch (PDOException $e) {
+    echo json_encode(["error" => "Error de conexion: " . $e->getMessage()]);
+} catch (Exception $e) {
+    echo json_encode(["error" => "Error: " . $e->getMessage()]);
 } finally {
     $conexion = null;
 }
