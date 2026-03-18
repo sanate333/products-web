@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperclip, faGlobe, faPlus, faTimes, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip, faGlobe, faPlus, faTimes, faCopiar, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Header from '../Header/Header';
 import HeaderDash from '../../Components/Admin/HeaderDash/HeaderDash';
 import './OasisChat.css';
@@ -14,7 +14,7 @@ const OasisChat = () => {
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [conversations, setConversations] = useState([]);
   const [currentConversationId, setCurrentConversationId] = useState(null);
-  const [copiedId, setCopiedId] = useState(null);
+  const [copiedId, setCopiadoId] = useState(null);
   const [showSidebar, setShowSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const messagesEndRef = useRef(null);
@@ -49,14 +49,14 @@ const OasisChat = () => {
   }, [input, uploadedFiles, messages, webSearch, mode, currentConversationId]);
 
   const renderMarkdown = (text) => { let h = text; h = h.replace(/```(\w+)?\n([\s\S]*?)```/g, (m,l,c) => '<pre class="code-block"><code>' + c.trim().replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</code></pre>'); h = h.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>'); h = h.replace(/^### (.*?)$/gm, '<h3>$1</h3>'); h = h.replace(/^## (.*?)$/gm, '<h2>$1</h2>'); h = h.replace(/^# (.*?)$/gm, '<h1>$1</h1>'); h = h.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); h = h.replace(/\*([^*]+)\*/g, '<em>$1</em>'); h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>'); h = h.replace(/^[*-] (.*?)$/gm, '<li>$1</li>'); h = h.replace(/^\d+\. (.*?)$/gm, '<li>$1</li>'); h = h.replace(/\n\n/g, '</p><p>'); return '<p>' + h + '</p>'; };
-  const copyToClipboard = (t, id) => { navigator.clipboard.writeText(t); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); };
+  const copyToClipboard = (t, id) => { navigator.clipboard.writeText(t); setCopiadoId(id); setTimeout(() => setCopiadoId(null), 2000); };
   const truncName = (n, max=20) => n.length > max ? n.slice(0,max-3)+'...' : n;
   const fmtTime = (ts) => { const d = new Date(ts), dm = Math.floor((new Date()-d)/60000); if (dm<1) return 'ahora'; if (dm<60) return dm+'m'; if (dm<1440) return Math.floor(dm/60)+'h'; return d.toLocaleDateString(); };
 
   return (
-    <div style={{width:'100%',height:'100vh',display:'flex',flexDirection:'column',backgroundColor:'#fff'}}>
-      <Header />
-      <HeaderDash />
+    <div style={{width:'100%',minHeight:'calc(100vh - 180px)',display:'flex',flexDirection:'column',backgroundColor:'#fff'}}>
+      {/* Header provided by dashboard */}
+      {/* HeaderDash provided by dashboard */}
       <div style={{display:'flex',flex:1,overflow:'hidden',position:'relative'}}>
         <div className='sidebar' style={{width:280,backgroundColor:'#2D2D2D',color:'#fff',display:'flex',flexDirection:'column',borderRight:'1px solid #e5e7eb',transition:'transform 0.3s',zIndex:100,transform:isMobile&&!showSidebar?'translateX(-100%)':'translateX(0)'}}>
           <button className='new-chat-btn' onClick={newChat}><FontAwesomeIcon icon={faPlus} style={{marginRight:8}}/> Nuevo Chat</button>
@@ -76,14 +76,14 @@ const OasisChat = () => {
             <div className='header-right'><button className={'icon-btn'+(webSearch?' icon-btn-active':'')} onClick={()=>setWebSearch(!webSearch)} title='Busqueda Web'><FontAwesomeIcon icon={faGlobe}/></button></div>
           </div>
           <div className='messages-container' style={{flex:1,overflowY:'auto',padding:24,display:'flex',flexDirection:'column',gap:16}}>
-            {messages.length===0?(<div className='empty-chat' style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flex:1,gap:12}}><h1 className='welcome-title'>Oasis IA</h1><p className='welcome-subtitle'>Powered by Claude Sonnet 4.6</p><p className='welcome-text'>{mode==='chat'?'Escribe algo para comenzar':'Comparte tu codigo y te ayudo'}</p></div>):messages.map(msg=>(<div key={msg.id} className={'message-row '+(msg.role==='user'?'user-message':'assistant-message')}><div className={msg.role==='user'?'user-bubble':'assistant-bubble'}><div className='message-content' dangerouslySetInnerHTML={{__html:renderMarkdown(msg.content)}}/>{msg.files&&msg.files.length>0&&<div className='file-preview-container'>{msg.files.map(f=><div key={f.id} className='file-preview'>{f.isImage?<img src={f.data} alt={f.name} className='preview-image'/>:<div className='file-preview-text'>{truncName(f.name)}</div>}</div>)}</div>}{msg.sources&&msg.sources.length>0&&<div className='sources-container'><h4 className='sources-title'>Fuentes</h4>{msg.sources.map((s,i)=><a key={i} href={s.url} target='_blank' rel='noopener' className='source-link'>{s.title}</a>)}</div>}{msg.role==='assistant'&&<button className={'copy-btn'+(copiedId===msg.id?' copy-btn-active':'')} onClick={()=>copyToClipboard(msg.content,msg.id)}><FontAwesomeIcon icon={copiedId===msg.id?faCheck:faCopy} style={{marginRight:4}}/>{copiedId===msg.id?'Copiado':'Copiar'}</button>}</div></div>))}
+            {messages.length===0?(<div className='empty-chat' style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flex:1,gap:12}}><h1 className='welcome-title'>Chat IA</h1><p className='welcome-subtitle'>Powered by Claude Sonnet 4.6</p><p className='welcome-text'>{mode==='chat'?'Escribe algo para comenzar':'Comparte tu codigo y te ayudo'}</p></div>):messages.map(msg=>(<div key={msg.id} className={'message-row '+(msg.role==='user'?'user-message':'assistant-message')}><div className={msg.role==='user'?'user-bubble':'assistant-bubble'}><div className='message-content' dangerouslySetInnerHTML={{__html:renderMarkdown(msg.content)}}/>{msg.files&&msg.files.length>0&&<div className='file-preview-container'>{msg.files.map(f=><div key={f.id} className='file-preview'>{f.isImage?<img src={f.data} alt={f.name} className='preview-image'/>:<div className='file-preview-text'>{truncName(f.name)}</div>}</div>)}</div>}{msg.sources&&msg.sources.length>0&&<div className='sources-container'><h4 className='sources-title'>Fuentes</h4>{msg.sources.map((s,i)=><a key={i} href={s.url} target='_blank' rel='noopener' className='source-link'>{s.title}</a>)}</div>}{msg.role==='assistant'&&<button className={'copy-btn'+(copiedId===msg.id?' copy-btn-active':'')} onClick={()=>copyToClipboard(msg.content,msg.id)}><FontAwesomeIcon icon={copiedId===msg.id?faCheck:faCopiar} style={{marginRight:4}}/>{copiedId===msg.id?'Copiado':'Copiar'}</button>}</div></div>))}
             {loading&&<div className='message-row assistant-message'><div className='assistant-bubble'><div className='typing-indicator'><span className='typing-dot'/><span className='typing-dot'/><span className='typing-dot'/></div></div></div>}
             <div ref={messagesEndRef}/>
           </div>
           <div className='input-area'>
             {uploadedFiles.length>0&&<div className='uploaded-files-container'>{uploadedFiles.map(f=><div key={f.id} className='uploaded-file'>{f.isImage?<img src={f.data} alt={f.name} className='uploaded-image'/>:<div className='uploaded-file-name'>{truncName(f.name)}</div>}<button className='remove-file-btn' onClick={()=>removeFile(f.id)}><FontAwesomeIcon icon={faTimes}/></button></div>)}</div>}
             <div className='input-wrapper'>
-              <textarea ref={textareaRef} className='textarea' placeholder='Mensaje a Oasis IA...' value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}} disabled={loading}/>
+              <textarea ref={textareaRef} className='textarea' placeholder='Mensaje a Chat IA...' value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}} disabled={loading}/>
               <div className='input-actions'>
                 <button className='attach-btn' onClick={()=>fileInputRef.current?.click()} disabled={loading} title='Adjuntar'><FontAwesomeIcon icon={faPaperclip}/></button>
                 <input ref={fileInputRef} type='file' multiple onChange={handleFileUpload} style={{display:'none'}} accept='image/*,.pdf,.doc,.docx,.txt,.json,.csv'/>
