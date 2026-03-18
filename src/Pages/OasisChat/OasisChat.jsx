@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperclip, faGlobe, faPlus, faTimes, faCopiar, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip, faGlobe, faPlus, faTimes, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
 import Header from '../Header/Header';
 import HeaderDash from '../../Components/Admin/HeaderDash/HeaderDash';
 import './OasisChat.css';
