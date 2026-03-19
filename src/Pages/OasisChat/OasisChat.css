@@ -121,3 +121,42 @@ button { font-family: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 ::selection { background-color: var(--color-primary); color: var(--color-user-text); }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+
+
+/* Page wrapper - integrates with dashboard layout */
+.oasis-chat-page { width: 100%; min-height: calc(100vh - 180px); display: flex; flex-direction: column; background-color: #fff; }
+.oasis-chat-container { display: flex; flex: 1; overflow: hidden; position: relative; }
+
+/* Renamed sidebar to avoid conflicts with dashboard */
+.oasis-sidebar { width: 280px; background-color: var(--color-dark-bg); color: var(--color-sidebar-text); display: flex; flex-direction: column; border-right: 1px solid var(--color-border); transition: transform var(--transition-smooth); position: relative; z-index: 50; overflow: hidden; }
+.oasis-sidebar::-webkit-scrollbar { width: 6px; }
+.oasis-sidebar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 3px; }
+
+/* Conversation metadata */
+.conv-meta { display: flex; align-items: center; justify-content: space-between; }
+.conv-delete-btn { background: none; border: none; color: var(--color-text-tertiary); font-size: 11px; cursor: pointer; padding: 2px 4px; border-radius: 3px; opacity: 0; transition: opacity 0.2s, color 0.2s; }
+.conversation-item:hover .conv-delete-btn { opacity: 0.7; }
+.conv-delete-btn:hover { opacity: 1 !important; color: #ef4444; }
+.conversation-item-active .conv-delete-btn { color: rgba(255,255,255,0.7); }
+.conversation-item-active .conv-delete-btn:hover { color: #fff; }
+
+/* Message actions */
+.message-actions { display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md); flex-wrap: wrap; }
+.preview-btn { background-color: #2563eb; color: #fff; border: none; padding: var(--spacing-xs) var(--spacing-md); border-radius: var(--radius-sm); cursor: pointer; font-size: 12px; transition: all var(--transition-base); display: flex; align-items: center; gap: var(--spacing-xs); }
+.preview-btn:hover { background-color: #1d4ed8; }
+
+/* HTML Preview Panel */
+.preview-panel { width: 45%; min-width: 320px; max-width: 600px; border-left: 1px solid var(--color-border); display: flex; flex-direction: column; background-color: #fff; }
+.preview-panel-header { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-sm) var(--spacing-lg); border-bottom: 1px solid var(--color-border); font-weight: 600; font-size: 13px; color: var(--color-text-secondary); background-color: var(--color-message-bg-light); }
+.preview-close-btn { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 14px; padding: 4px; }
+.preview-close-btn:hover { color: var(--color-primary); }
+.preview-iframe { flex: 1; border: none; width: 100%; background: #fff; }
+
+/* Mobile overlay */
+.oasis-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 199; }
+.oasis-sidebar-hidden { transform: translateX(-110%); }
+
+@media (max-width: 768px) {
+  .oasis-sidebar { position: fixed; top: 0; left: 0; width: 85%; max-width: 320px; height: 100vh; z-index: 200; }
+  .preview-panel { position: fixed; top: 0; right: 0; width: 100%; height: 100vh; z-index: 300; min-width: unset; max-width: unset; }
+                  }
