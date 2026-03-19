@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip, faGlobe, faPlus, faTimes, faCopy, faCheck, faEye, faTrash, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
-import Header from '../Header/Header';
-import HeaderDash from '../../Components/Admin/HeaderDash/HeaderDash';
 import './OasisChat.css';
 
 const SUPABASE_FN = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api';
@@ -184,9 +182,7 @@ const OasisChat = () => {
   const fmtTime = (ts) => { const d = new Date(ts), dm = Math.floor((new Date()-d)/60000); if (dm<1) return 'ahora'; if (dm<60) return dm+'m'; if (dm<1440) return Math.floor(dm/60)+'h'; return d.toLocaleDateString(); };
 
   return (
-    <div className="oasis-chat-page">
-      <Header />
-      <HeaderDash />
+    <div style={{width:'100%',display:'flex',flexDirection:'column',flex:1}}>
       <div className="oasis-chat-container">
         {/* Chat History Sidebar */}
         <div className={'oasis-sidebar' + (isMobile && !showChatSidebar ? ' oasis-sidebar-hidden' : '')}>
