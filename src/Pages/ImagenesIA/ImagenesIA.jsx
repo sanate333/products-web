@@ -346,7 +346,7 @@ export default function ImagenesIA() {
   const handleGenerate = () => model === 'openai' ? handleGenerateOpenAI() : handleGenerateWithPollinations();
 
   return (
-    <div className="imagenesIA-wrapper">
+    <div className="imagenesIA-wrapper imagenesIA">
       <header className="imagenesIA-header">
         <h2>✨ Imágenes IA — Alto Impacto</h2>
         <button className="status-badge connected" onClick={() => fetchImages()}>✅ Conectado</button>
