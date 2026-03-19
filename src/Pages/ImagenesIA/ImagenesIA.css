@@ -899,3 +899,198 @@
   border-radius: 999px;
   padding: 2px 7px;
 }
+/* ==========================================
+   ECOM-MAGIC.AI UI OVERRIDE v1.0
+   Professional layout + card styling
+   ========================================== */
+
+.imagenesIA {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr;
+  justify-content: stretch !important;
+  padding: 0 !important;
+}
+
+.imagenesIA-wrapper.imagenesIA {
+  display: grid !important;
+  grid-template-columns: 1fr;
+  justify-content: stretch !important;
+  padding: 0 !important;
+}
+
+.imagenesIA-header {
+  background: var(--panel, #171b22);
+  border-bottom: 1px solid var(--line, #2a3240);
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.imagenesIA-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.imagenesIA-form {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 28px;
+  padding: 24px;
+  width: 100%;
+  max-width: 100%;
+}
+
+.iaCard {
+  background: var(--panel, #171b22);
+  border: 1px solid var(--line, #2a3240);
+  border-radius: 14px;
+  padding: 20px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.iaCard:hover {
+  border-color: var(--primary, #7a3cff);
+  box-shadow: 0 4px 16px rgba(122, 60, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.model-btn {
+  background: var(--panel, #171b22);
+  border: 1px solid var(--line, #2a3240);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: var(--muted, #9aa7bd);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  flex: 1;
+  text-align: center;
+}
+
+.model-btn:hover {
+  border-color: var(--primary, #7a3cff);
+  color: var(--text, #e7edf8);
+  background: rgba(122, 60, 255, 0.06);
+}
+
+.model-btn.active {
+  border-color: var(--primary, #7a3cff);
+  background: linear-gradient(135deg, rgba(122, 60, 255, 0.14) 0%, rgba(95, 42, 208, 0.08) 100%);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(122, 60, 255, 0.12);
+}
+
+.type-chip {
+  background: var(--panel, #171b22);
+  border: 1px solid var(--line, #2a3240);
+  border-radius: 10px;
+  padding: 10px 16px;
+  color: var(--muted, #9aa7bd);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.type-chip:hover {
+  border-color: var(--primary, #7a3cff);
+  color: var(--text, #e7edf8);
+  background: rgba(122, 60, 255, 0.06);
+  transform: translateY(-1px);
+}
+
+.type-chip.active {
+  border-color: var(--primary, #7a3cff);
+  background: linear-gradient(135deg, rgba(122, 60, 255, 0.16) 0%, rgba(95, 42, 208, 0.1) 100%);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(122, 60, 255, 0.1);
+}
+
+.photo-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.uploadSlot {
+  border: 2px dashed var(--line, #2a3240);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(23, 27, 34, 0.5);
+}
+
+.uploadSlot:hover {
+  border-color: var(--primary, #7a3cff);
+  background: rgba(122, 60, 255, 0.06);
+}
+
+.imagenesIA-form select,
+.imagenesIA-form input[type="text"],
+.imagenesIA-form textarea {
+  background: var(--bg, #0e1117);
+  border: 1px solid var(--line, #2a3240);
+  border-radius: 10px;
+  color: var(--text, #e7edf8);
+  padding: 10px 14px;
+  font-size: 13px;
+  width: 100%;
+  transition: all 0.25s ease;
+}
+
+.imagenesIA-form select:focus,
+.imagenesIA-form input[type="text"]:focus,
+.imagenesIA-form textarea:focus {
+  outline: none;
+  border-color: var(--primary, #7a3cff);
+  box-shadow: 0 0 0 3px rgba(122, 60, 255, 0.1);
+}
+
+.imagenesIA-form label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--muted, #9aa7bd);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.imagenesIA-form button:not(.type-chip):not(.model-btn):not(.serverChip) {
+  background: linear-gradient(135deg, var(--primary, #7a3cff) 0%, #9d5eff 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(122, 60, 255, 0.25);
+}
+
+.imagenesIA-form button:not(.type-chip):not(.model-btn):not(.serverChip):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(122, 60, 255, 0.35);
+}
+
+.imagenesIA-gallery {
+  padding: 24px;
+}
+
+@media (max-width: 900px) {
+  .imagenesIA-form {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+}
