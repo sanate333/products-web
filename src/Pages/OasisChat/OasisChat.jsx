@@ -283,5 +283,3 @@ const OasisChat = () => {
 
 
 export default OasisChat;
-
-export default OasisChat;
