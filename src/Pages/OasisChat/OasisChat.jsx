@@ -18,7 +18,6 @@ const OasisChat = () => {
   const [copiedId, setCopiadoId] = useState(null);
   const [showChatSidebar, setShowChatSidebar] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const [dashMenuOpen, setDashMenuOpen] = useState(false);
   const [previewHtml, setPreviewHtml] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -185,8 +184,7 @@ const OasisChat = () => {
 
   return (
     <div style={{display:'flex',width:'100%',height:'100vh'}}>
-      <NavbarDashboard isOpen={dashMenuOpen} onClose={() => setDashMenuOpen(false)} />
-      {dashMenuOpen && <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.35)',zIndex:1090}} onClick={() => setDashMenuOpen(false)} />}
+      <NavbarDashboard  />
       <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",minWidth:0}}>
         {/* Chat History Sidebar */}
         <div className={'oasis-sidebar' + (isMobile && !showChatSidebar ? ' oasis-sidebar-hidden' : '')}>
@@ -212,7 +210,6 @@ const OasisChat = () => {
         {/* Main Chat Area */}
         <div className='chat-area' style={{flex:1,display:'flex',flexDirection:'column',backgroundColor:'#fff',overflow:'hidden'}}>
           <div className='chat-header'>
-            <button style={{background:'none',border:'none',fontSize:18,cursor:'pointer',color:'#6b7280',padding:'4px 8px',display:'flex',alignItems:'center'}} onClick={() => setDashMenuOpen(!dashMenuOpen)} title='Menu Dashboard'>☰</button>
             {isMobile && <button className='mobile-menu-btn' onClick={() => setShowChatSidebar(!showChatSidebar)}><FontAwesomeIcon icon={showChatSidebar ? faChevronLeft : faPlus}/></button>}
             <div className='tabs-container'>
               <button className={'tab'+(mode==='chat'?' tab-active':'')} onClick={()=>setMode('chat')}>Chat</button>
