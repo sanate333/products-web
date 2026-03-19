@@ -631,11 +631,8 @@ function BtnMsgEditor({ BU, sec }) {
 
 // Social Connector
 function SocialConnector({ platform }) {
-  var ls = typeof localStorage !== 'undefined' ? localStorage : { getItem: () => null };
-  var BASE = (ls.getItem('wa_backend_url') || 'https://sanate-baileys.onrender.com/api/whatsapp').replace('/api/whatsapp', '');
-  var SECRET = ls.getItem('wa_secret') || 'sanate_secret_2025';
-  var H = { 'x-secret': SECRET };
-  var META_APP_ID = '1468787708298775';
+  var SUPABASE_FN = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api';
+  var META_APP_ID = '2337348940109240';
   var STORE_ID = 'default';
   var CFGS = {
     instagram: {
@@ -652,14 +649,14 @@ function SocialConnector({ platform }) {
     }
   };
   var cfg = CFGS[platform] || CFGS.instagram;
-  var redirectUri = BASE + '/api/social/' + platform + '/callback';
+  var redirectUri = 'https://sanate.store/api/social/' + platform + '/callback.php';
   var [status, setStatus] = useState('idle');
   var [account, setAccount] = useState(null);
   function checkStatus() {
-    return fetch(BASE + '/api/social/status?storeId=' + STORE_ID, { headers: H })
+    return fetch(SUPABASE_FN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'status', platform: platform, storeId: STORE_ID }) })
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(data) {
-        var pd = data && data[platform]; if (pd && pd.connected !== false) { setStatus('connected'); setAccount(pd); return true; }
+        if (data && data.connected) { setStatus('connected'); setAccount(data); return true; }
         return false;
       }).catch(function() { return false; });
   }
@@ -700,10 +697,10 @@ function SocialConnector({ platform }) {
     }, 1000);
   }
   function handleDisconnect() {
-    fetch(BASE + '/api/social/disconnect', {
+    fetch(SUPABASE_FN, {
       method: 'POST',
-      headers: Object.assign({}, H, { 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ platform: platform, storeId: STORE_ID })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'disconnect', platform: platform, storeId: STORE_ID })
     }).then(function() { setStatus('idle'); setAccount(null); }).catch(function() {});
   }
   if (status === 'connected') {
