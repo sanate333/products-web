@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperclip, faGlobe, faPlus, faTimes, faCopy, faCheck, faEye, faTrash, faChevronLeft } from '@fortawesome/free-solid-svg-icons';
+import Header from '../Header/Header';
 import './OasisChat.css';
 
 const SUPABASE_FN = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api';
@@ -183,6 +184,7 @@ const OasisChat = () => {
 
   return (
     <div style={{width:'100%',display:'flex',flexDirection:'column',flex:1}}>
+      <Header />
       <div className="oasis-chat-container">
         {/* Chat History Sidebar */}
         <div className={'oasis-sidebar' + (isMobile && !showChatSidebar ? ' oasis-sidebar-hidden' : '')}>
