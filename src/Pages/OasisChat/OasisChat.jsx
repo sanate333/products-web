@@ -184,11 +184,10 @@ const OasisChat = () => {
   const fmtTime = (ts) => { const d = new Date(ts), dm = Math.floor((new Date()-d)/60000); if (dm<1) return 'ahora'; if (dm<60) return dm+'m'; if (dm<1440) return Math.floor(dm/60)+'h'; return d.toLocaleDateString(); };
 
   return (
-    <div style={{display:'flex',width:'100%',minHeight:'100vh',overflow:'hidden'}}>
+    <div style={{display:'flex',width:'100%',height:'100vh'}}>
       <NavbarDashboard isOpen={dashMenuOpen} onClose={() => setDashMenuOpen(false)} />
-      {dashMenuOpen && <button type='button' style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.35)',border:'none',zIndex:1090}} onClick={() => setDashMenuOpen(false)} />}
-      <div style={{display:'flex',flex:1,overflow:'hidden',flexDirection:'column'}}>
-        <div style={{display:'flex',flex:1,overflow:'hidden'}}>
+      {dashMenuOpen && <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.35)',zIndex:1090}} onClick={() => setDashMenuOpen(false)} />}
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",minWidth:0}}>
         {/* Chat History Sidebar */}
         <div className={'oasis-sidebar' + (isMobile && !showChatSidebar ? ' oasis-sidebar-hidden' : '')}>
           <button className='new-chat-btn' onClick={newChat}><FontAwesomeIcon icon={faPlus} style={{marginRight:8}}/> Nuevo Chat</button>
@@ -213,7 +212,7 @@ const OasisChat = () => {
         {/* Main Chat Area */}
         <div className='chat-area' style={{flex:1,display:'flex',flexDirection:'column',backgroundColor:'#fff',overflow:'hidden'}}>
           <div className='chat-header'>
-            <button style={{background:'none',border:'none',fontSize:20,cursor:'pointer',color:'#6b7280',padding:'4px 8px'}} onClick={() => setDashMenuOpen(!dashMenuOpen)} title='Menu'>☰</button>
+            <button style={{background:'none',border:'none',fontSize:18,cursor:'pointer',color:'#6b7280',padding:'4px 8px',display:'flex',alignItems:'center'}} onClick={() => setDashMenuOpen(!dashMenuOpen)} title='Menu Dashboard'>☰</button>
             {isMobile && <button className='mobile-menu-btn' onClick={() => setShowChatSidebar(!showChatSidebar)}><FontAwesomeIcon icon={showChatSidebar ? faChevronLeft : faPlus}/></button>}
             <div className='tabs-container'>
               <button className={'tab'+(mode==='chat'?' tab-active':'')} onClick={()=>setMode('chat')}>Chat</button>
@@ -265,8 +264,7 @@ const OasisChat = () => {
             )}
           </div>
 
-          </div>
-        {/* Input Area */}
+          {/* Input Area */}
           <div className='input-area'>
             {uploadedFiles.length>0&&<div className='uploaded-files-container'>{uploadedFiles.map(f=><div key={f.id} className='uploaded-file'>{f.isImage?<img src={f.data} alt={f.name} className='uploaded-image'/>:<div className='uploaded-file-name'>{truncName(f.name)}</div>}<button className='remove-file-btn' onClick={()=>removeFile(f.id)}><FontAwesomeIcon icon={faTimes}/></button></div>)}</div>}
             <div className='input-wrapper'>
