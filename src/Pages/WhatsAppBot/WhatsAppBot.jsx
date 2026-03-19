@@ -665,11 +665,10 @@ function SocialConnector({ platform }) {
     var stateStr = encodeURIComponent(JSON.stringify({platform: platform, storeId: STORE_ID}));
       var authUrl;
       if (platform === 'instagram') {
-                  authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
+                  authUrl = 'https://www.instagram.com/oauth/authorize?client_id=' + META_APP_ID
                     + '&redirect_uri=' + encodeURIComponent(redirectUri)
-                    + '&scope=' + encodeURIComponent('instagram_basic,instagram_manage_messages,pages_show_list,pages_read_engagement')
-                    + '&response_type=code'
-                    + '&state=' + stateStr;
+                    + '&scope=instagram_business_basic,instagram_business_manage_messages'
+                    + '&response_type=code';
       } else {
         authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
           + '&redirect_uri=' + encodeURIComponent(redirectUri)
