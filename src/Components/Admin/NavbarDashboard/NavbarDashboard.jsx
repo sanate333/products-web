@@ -39,7 +39,7 @@ const SECTIONS = [
       { to: '/dashboard/imagenes-ia', icon: faMagic, text: 'Imágenes IA' },
       { to: '/dashboard/landing-pages', icon: faGlobe, text: 'Landing Pages' },
       { to: '/dashboard/whatsapp-bot', icon: faComments, text: 'WhatsApp Bot' },
-      { to: '/dashboard/oasis-chat', icon: faRobot, text: 'Oasis IA Chat' },
+      { to: '/dashboard/oasis-chat', icon: faRobot, text: 'Chat IA' },
     ],
   },
   {
