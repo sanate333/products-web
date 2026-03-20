@@ -637,9 +637,9 @@ function SocialConnector({ platform }) {
   var CFGS = {
     instagram: {
       lbl: 'Instagram', icon: '📸',
-      scope: 'pages_show_list,instagram_business_manage_comments,pages_manage_metadata,business_management',
+      scope: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments',
       color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)',
-      note: 'Requiere Instagram Business vinculado a una Página de Facebook'
+      note: 'Conecta tu cuenta de Instagram'
     },
     messenger: {
       lbl: 'Messenger', icon: '💬',
