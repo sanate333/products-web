@@ -1346,13 +1346,17 @@ export default function WhatsAppBot() {
   async function loadIGChats() {
     try {
       var SB = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api';
-      const res = await fetch(SB, {
+      const res = fetch(SB, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'ig_chats' })
       });
-      if (!res.ok) { console.warn('[IG] loadIGChats HTTP', res.status); return; }
-      const data = await res.json();
+      const response = await res;
+      if (!response.ok) { console.warn('[IG] loadIGChats HTTP', response.status); return; }
+      const data = await response.json();
+      if (data.needs_reconnect) {
+        console.warn('[IG] Token expired, needs reconnect');
+      }
       const igChats = (data.chats || []).map(function(c) {
         return {
           id: c.id,
@@ -1362,7 +1366,8 @@ export default function WhatsAppBot() {
           unread: c.unread || 0,
           platform: 'instagram',
           isGroup: false,
-          pic: '',
+          photoUrl: c.pic || '',
+          username: c.username || null,
           _ts: c.time ? new Date(c.time).getTime() : 0
         };
       });
