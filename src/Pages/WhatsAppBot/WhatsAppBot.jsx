@@ -668,7 +668,7 @@ function SocialConnector({ platform }) {
                   authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID + ''
                     + '&redirect_uri=' + encodeURIComponent(redirectUri)
                     + '&scope=' + encodeURIComponent(cfg.scope)
-                    + '&response_type=code&state=' + stateStr';
+                    + '&response_type=code&state=' + stateStr;
       } else {
         authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
           + '&redirect_uri=' + encodeURIComponent(redirectUri)
