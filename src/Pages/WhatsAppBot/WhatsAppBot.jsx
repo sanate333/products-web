@@ -743,6 +743,7 @@ export default function WhatsAppBot() {
   const [toast,       setToast]       = useState('')
   const [search,      setSearch]      = useState('')
   const [chatFilter,  setChatFilter]  = useState('todos')
+  var [igNeedsReconnect, setIgNeedsReconnect] = useState(false);
   const [showContact, setShowContact] = useState(false)
 
   // ── Análisis de cliente ───────────────────────────────────────
@@ -1357,6 +1358,7 @@ export default function WhatsAppBot() {
       if (data.needs_reconnect) {
         console.warn('[IG] Token expired, needs reconnect');
       }
+      setIgNeedsReconnect(data.needs_reconnect || false);
       const igChats = (data.chats || []).map(function(c) {
         return {
           id: c.id,
@@ -2636,6 +2638,24 @@ ${conversation}`
             ))}
           </div>
           <div className="wbv5-il-convs">
+                  {chatFilter === 'instagram' && filteredChats.length === 0 && (
+                    <div style={{textAlign:'center',padding:'40px 20px',color:'#888'}}>
+                      <div style={{fontSize:'48px',marginBottom:'16px'}}>\u{1F4F8}</div>
+                      {igNeedsReconnect ? (
+                        <div>
+                          <p style={{fontSize:'16px',fontWeight:'600',color:'#e74c3c',marginBottom:'8px'}}>Token de Instagram expirado</p>
+                          <p style={{fontSize:'14px',marginBottom:'16px'}}>Necesitas reconectar tu cuenta de Instagram</p>
+                          <button onClick={function(){window.open('https://www.instagram.com/oauth/authorize?enable_fb_login=0&force_authentication=1&client_id=2337348940109240&redirect_uri=https://sanate.store/dashboard/oasis-chat&response_type=code&scope=instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments','igAuth','width=600,height=700')}} style={{padding:'10px 24px',background:'linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)',color:'white',border:'none',borderRadius:'8px',cursor:'pointer',fontSize:'14px',fontWeight:'600'}}>Reconectar Instagram</button>
+                        </div>
+                      ) : (
+                        <div>
+                          <p style={{fontSize:'16px',fontWeight:'600',marginBottom:'8px'}}>Instagram conectado</p>
+                          <p style={{fontSize:'14px',marginBottom:'8px'}}>Los chats aparecen cuando recibas mensajes en Instagram</p>
+                          <p style={{fontSize:'12px',color:'#aaa'}}>Los mensajes se sincronizan automaticamente</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {status !== 'connected' && chats.length === 0 ? (
                     <div className="wbv5-empty-state">
                       <div style={{ fontSize: '1.5rem', marginBottom: '.4rem' }}>📱</div>
