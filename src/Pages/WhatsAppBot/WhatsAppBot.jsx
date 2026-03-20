@@ -5,14 +5,14 @@ import Header from '../Header/Header'
 
 const DEFAULT_BU     = 'https://sanate.store/api/whatsapp'
 const DEFAULT_SECRET = 'sanate_secret_2025'
-// Ã¢ÂÂÃ¢ÂÂ Backend URL y Secret Ã¢ÂÂ configurables en Ajustes Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Backend URL y Secret ÃÂ¢ÃÂÃÂ configurables en Ajustes ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
 let MEDIA_BASE = BU.replace('/api/whatsapp', '')
 let H          = { 'x-secret': (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })() }
 let HJ         = { ...H, 'Content-Type': 'application/json' }
 const N8N_WH = 'https://oasiss.app.n8n.cloud/webhook/whatsapp-sanate'
 
-// Ã¢ÂÂÃ¢ÂÂ localStorage helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ localStorage helpers ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 const MSGS_KEY   = 'wb_msgs_'
 const ACTIVE_KEY = 'wb_active_chat'
 const CHATS_KEY  = 'wb_master_chats'
@@ -23,7 +23,7 @@ function activePut(c)            { try { localStorage.setItem(ACTIVE_KEY, c ? JS
 function chatsMasterGet()        { try { return JSON.parse(localStorage.getItem(CHATS_KEY) || '[]') } catch { return [] } }
 function chatsMasterPut(chats)   { try { localStorage.setItem(CHATS_KEY, JSON.stringify(chats.slice(0, 500))) } catch {} }
 
-// Ã¢ÂÂÃ¢ÂÂ campo: normalizar mensajes del backend Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ campo: normalizar mensajes del backend ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function normMsg(m) {
   const ts = m.timestamp || m.time || ''
   const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return ts.substring(11, 16) } })() : ''
@@ -41,7 +41,7 @@ function normMsg(m) {
   }
 }
 
-// Ã¢ÂÂÃ¢ÂÂ limpiar JID de Baileys Ã¢ÂÂ nÃÂºmero legible Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ limpiar JID de Baileys ÃÂ¢ÃÂÃÂ nÃÂÃÂºmero legible ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function cleanPhone(phone, id) {
   if (phone && phone.startsWith('+')) return phone
   if (phone && /^\d{7,}$/.test(phone)) return '+' + phone
@@ -50,14 +50,14 @@ function cleanPhone(phone, id) {
   return phone || id || ''
 }
 
-// Ã¢ÂÂÃ¢ÂÂ campo: normalizar chats del backend Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ campo: normalizar chats del backend ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function normChat(c) {
   const ts = c.lastMessageAt || c.updatedAt || ''
   const hhmm = ts ? (() => { try { return new Date(ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) } catch { return '' } })() : ''
   const chatId = c.chatId || c.id || ''
   const phone  = cleanPhone(c.phone, chatId)
   const isGroup = chatId.includes('@g.us')
-  // Limpia nombres que son JIDs (ej: "1234567890@s.whatsapp.net" Ã¢ÂÂ usa el telÃÂ©fono)
+  // Limpia nombres que son JIDs (ej: "1234567890@s.whatsapp.net" ÃÂ¢ÃÂÃÂ usa el telÃÂÃÂ©fono)
   const rawName = String(c.pushName || c.notify || c.name || '').trim()
   const name = (rawName && !rawName.includes('@')) ? rawName : (isGroup ? 'Grupo' : phone)
   return {
@@ -68,36 +68,36 @@ function normChat(c) {
     photoUrl: c.photoUrl || c.avatar || '',
     preview:  c.lastMessagePreview || c.preview || '',
     time:     hhmm,
-    _ts:      ts ? new Date(ts).getTime() : 0,  // timestamp numÃÂ©rico para sort
+    _ts:      ts ? new Date(ts).getTime() : 0,  // timestamp numÃÂÃÂ©rico para sort
     unread:   c.unreadCount ?? c.unread ?? 0,
   }
 }
 
 const FLOW_NODES = {
   bienvenida: [
-    { id: 'n1', x: 200, y: 50,  type: 'trigger',   icon: 'Ã°ÂÂÂ©', color: 'b', title: 'Mensaje recibido',    desc: 'Primer mensaje del usuario' },
-    { id: 'n2', x: 200, y: 155, type: 'condition',  icon: 'Ã°ÂÂÂ', color: 'a', title: 'ÃÂ¿Es nuevo contacto?', desc: 'Verifica si es primera vez' },
-    { id: 'n3', x: 70,  y: 265, type: 'message',    icon: 'Ã°ÂÂÂ', color: 'g', title: 'Bienvenida',          desc: 'ÃÂ¡Hola {nombre}! Bienvenido Ã°ÂÂÂ' },
-    { id: 'n4', x: 330, y: 265, type: 'message',    icon: 'Ã°ÂÂÂ', color: 'g', title: 'Retorno',             desc: 'ÃÂ¡QuÃÂ© bueno verte de nuevo!' },
-    { id: 'n5', x: 200, y: 372, type: 'menu',       icon: 'Ã°ÂÂÂ', color: 'b', title: 'MenÃÂº principal',     desc: 'Ã°ÂÂÂÃ¯Â¸Â Productos | Ã°ÂÂÂ¦ Pedidos | Ã°ÂÂÂ Soporte' },
-    { id: 'n6', x: 70,  y: 468, type: 'action',     icon: 'Ã°ÂÂÂ', color: 'p', title: 'Ã¢ÂÂ Guardar',           desc: 'Guardar contacto en CRM' },
-    { id: 'n7', x: 330, y: 468, type: 'end',        icon: 'Ã°ÂÂÂ', color: 'r', title: 'Fin',                 desc: 'ConversaciÃÂ³n finalizada' },
+    { id: 'n1', x: 200, y: 50,  type: 'trigger',   icon: 'ÃÂ°ÃÂÃÂÃÂ©', color: 'b', title: 'Mensaje recibido',    desc: 'Primer mensaje del usuario' },
+    { id: 'n2', x: 200, y: 155, type: 'condition',  icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'a', title: 'ÃÂÃÂ¿Es nuevo contacto?', desc: 'Verifica si es primera vez' },
+    { id: 'n3', x: 70,  y: 265, type: 'message',    icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'g', title: 'Bienvenida',          desc: 'ÃÂÃÂ¡Hola {nombre}! Bienvenido ÃÂ°ÃÂÃÂÃÂ' },
+    { id: 'n4', x: 330, y: 265, type: 'message',    icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'g', title: 'Retorno',             desc: 'ÃÂÃÂ¡QuÃÂÃÂ© bueno verte de nuevo!' },
+    { id: 'n5', x: 200, y: 372, type: 'menu',       icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'b', title: 'MenÃÂÃÂº principal',     desc: 'ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Productos | ÃÂ°ÃÂÃÂÃÂ¦ Pedidos | ÃÂ°ÃÂÃÂÃÂ Soporte' },
+    { id: 'n6', x: 70,  y: 468, type: 'action',     icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'p', title: 'ÃÂ¢ÃÂÃÂ Guardar',           desc: 'Guardar contacto en CRM' },
+    { id: 'n7', x: 330, y: 468, type: 'end',        icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'r', title: 'Fin',                 desc: 'ConversaciÃÂÃÂ³n finalizada' },
   ],
   carrito: [
-    { id: 'n1', x: 200, y: 45,  type: 'trigger',   icon: 'Ã°ÂÂÂ', color: 'b', title: 'Carrito abandonado', desc: '>24h sin comprar' },
-    { id: 'n2', x: 200, y: 150, type: 'message',   icon: 'Ã°ÂÂÂ', color: 'g', title: 'Recordatorio',       desc: 'Oye! Dejaste algo en tu carrito Ã°ÂÂÂ' },
-    { id: 'n3', x: 200, y: 250, type: 'condition', icon: 'Ã°ÂÂÂ', color: 'a', title: 'ÃÂ¿RespondiÃÂ³?',        desc: 'Verificar interacciÃÂ³n' },
-    { id: 'n4', x: 60,  y: 355, type: 'action',    icon: 'Ã°ÂÂÂ³', color: 'g', title: 'Ã¢ÂÂ Compra',           desc: 'sanate.store/checkout' },
-    { id: 'n5', x: 340, y: 355, type: 'message',   icon: 'Ã¢ÂÂ°', color: 'b', title: 'Follow-up 48h',      desc: 'ÃÂltimo recordatorio' },
-    { id: 'n6', x: 200, y: 455, type: 'end',       icon: 'Ã¢ÂÂ', color: 'g', title: 'Fin',                desc: 'Archivar' },
+    { id: 'n1', x: 200, y: 45,  type: 'trigger',   icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'b', title: 'Carrito abandonado', desc: '>24h sin comprar' },
+    { id: 'n2', x: 200, y: 150, type: 'message',   icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'g', title: 'Recordatorio',       desc: 'Oye! Dejaste algo en tu carrito ÃÂ°ÃÂÃÂÃÂ' },
+    { id: 'n3', x: 200, y: 250, type: 'condition', icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'a', title: 'ÃÂÃÂ¿RespondiÃÂÃÂ³?',        desc: 'Verificar interacciÃÂÃÂ³n' },
+    { id: 'n4', x: 60,  y: 355, type: 'action',    icon: 'ÃÂ°ÃÂÃÂÃÂ³', color: 'g', title: 'ÃÂ¢ÃÂÃÂ Compra',           desc: 'sanate.store/checkout' },
+    { id: 'n5', x: 340, y: 355, type: 'message',   icon: 'ÃÂ¢ÃÂÃÂ°', color: 'b', title: 'Follow-up 48h',      desc: 'ÃÂÃÂltimo recordatorio' },
+    { id: 'n6', x: 200, y: 455, type: 'end',       icon: 'ÃÂ¢ÃÂÃÂ', color: 'g', title: 'Fin',                desc: 'Archivar' },
   ],
   soporte: [
-    { id: 'n1', x: 200, y: 50,  type: 'trigger',   icon: 'Ã°ÂÂÂ', color: 'b', title: 'Soporte',         desc: 'Keyword: soporte/ayuda' },
-    { id: 'n2', x: 200, y: 150, type: 'message',   icon: 'Ã°ÂÂ¤Â', color: 'g', title: 'Bot responde',    desc: 'Describe tu problema' },
-    { id: 'n3', x: 200, y: 250, type: 'condition', icon: 'Ã°ÂÂÂ', color: 'a', title: 'ÃÂ¿Resuelto?',      desc: 'Bot | Humano' },
-    { id: 'n4', x: 70,  y: 355, type: 'action',    icon: 'Ã°ÂÂÂ', color: 'a', title: 'Ã¢ÂÂ Agente',        desc: 'Desactivar bot' },
-    { id: 'n5', x: 330, y: 355, type: 'message',   icon: 'Ã¢ÂÂ', color: 'g', title: 'ConfirmaciÃÂ³n',    desc: 'ÃÂ¿Algo mÃÂ¡s?' },
-    { id: 'n6', x: 200, y: 455, type: 'end',       icon: 'Ã°ÂÂÂ', color: 'r', title: 'Fin',             desc: 'Cerrar caso' },
+    { id: 'n1', x: 200, y: 50,  type: 'trigger',   icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'b', title: 'Soporte',         desc: 'Keyword: soporte/ayuda' },
+    { id: 'n2', x: 200, y: 150, type: 'message',   icon: 'ÃÂ°ÃÂÃÂ¤ÃÂ', color: 'g', title: 'Bot responde',    desc: 'Describe tu problema' },
+    { id: 'n3', x: 200, y: 250, type: 'condition', icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'a', title: 'ÃÂÃÂ¿Resuelto?',      desc: 'Bot | Humano' },
+    { id: 'n4', x: 70,  y: 355, type: 'action',    icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'a', title: 'ÃÂ¢ÃÂÃÂ Agente',        desc: 'Desactivar bot' },
+    { id: 'n5', x: 330, y: 355, type: 'message',   icon: 'ÃÂ¢ÃÂÃÂ', color: 'g', title: 'ConfirmaciÃÂÃÂ³n',    desc: 'ÃÂÃÂ¿Algo mÃÂÃÂ¡s?' },
+    { id: 'n6', x: 200, y: 455, type: 'end',       icon: 'ÃÂ°ÃÂÃÂÃÂ', color: 'r', title: 'Fin',             desc: 'Cerrar caso' },
   ],
 }
 
@@ -117,40 +117,40 @@ const TAG_STYLES = {
   delay:     { background: '#f3f4f6', color: '#6b7280' },
   gpt:       { background: '#d1fae5', color: '#065f46' },
 }
-const TAG_NAMES = { message: 'MSG', menu: 'MENÃÂ', condition: 'COND', action: 'ACTION', trigger: 'TRIG', end: 'FIN', delay: 'WAIT', gpt: 'GPT' }
+const TAG_NAMES = { message: 'MSG', menu: 'MENÃÂÃÂ', condition: 'COND', action: 'ACTION', trigger: 'TRIG', end: 'FIN', delay: 'WAIT', gpt: 'GPT' }
 
 const FLOWS_LIST = [
-  { key: 'bienvenida', name: 'Flujo de bienvenida',    trigger: 'Ã°ÂÂÂ© Primer mensaje', badge: 'badge-blue',  runs: 123, ctr: '58%', date: '20/02/2026' },
-  { key: 'carrito',    name: 'Flujo carrito',           trigger: 'Ã°ÂÂÂ Carrito',        badge: 'badge-amber', runs: 230, ctr: '63%', date: '20/02/2026' },
-  { key: 'soporte',    name: 'Flujo soporte',           trigger: 'Ã°ÂÂÂ Keyword',        badge: 'badge-green', runs: 84,  ctr: '47%', date: '20/02/2026' },
+  { key: 'bienvenida', name: 'Flujo de bienvenida',    trigger: 'ÃÂ°ÃÂÃÂÃÂ© Primer mensaje', badge: 'badge-blue',  runs: 123, ctr: '58%', date: '20/02/2026' },
+  { key: 'carrito',    name: 'Flujo carrito',           trigger: 'ÃÂ°ÃÂÃÂÃÂ Carrito',        badge: 'badge-amber', runs: 230, ctr: '63%', date: '20/02/2026' },
+  { key: 'soporte',    name: 'Flujo soporte',           trigger: 'ÃÂ°ÃÂÃÂÃÂ Keyword',        badge: 'badge-green', runs: 84,  ctr: '47%', date: '20/02/2026' },
 ]
 
 const DEFAULT_TRIGGERS = [
-  { id: 'tr1', name: 'Sin respuesta 1h',      condition: 'no_reply',    delay: 60,   unit: 'min', producto: 'General', message: 'ÃÂ¡Hola {nombre}! Ã°ÂÂÂ Vi que revisaste nuestra info.\nÃÂ¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy Ã°ÂÂÂ', active: false, mediaType: null, mediaUrl: '' },
-  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',       delay: 180,  unit: 'min', producto: 'General', message: 'Hola {nombre} Ã°ÂÂÂ QuerÃÂ­a enviarte nuestra mejor oferta de hoy.\nÃÂ¿CuÃÂ¡l es tu producto favorito? Ã°ÂÂÂ¿\nTe armo un combo personalizado Ã°ÂÂÂ', active: false, mediaType: null, mediaUrl: '' },
-  { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: 'Ã°ÂÂÂ¥ ÃÂ¡ÃÂltimo aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\nÃÂ¿Lo reservamos? Responde SÃÂ y te lo aparto ahora mismo Ã°ÂÂÂª', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr1', name: 'Sin respuesta 1h',      condition: 'no_reply',    delay: 60,   unit: 'min', producto: 'General', message: 'ÃÂÃÂ¡Hola {nombre}! ÃÂ°ÃÂÃÂÃÂ Vi que revisaste nuestra info.\nÃÂÃÂ¿Te puedo ayudar a resolver alguna duda?\nTenemos combos especiales solo por hoy ÃÂ°ÃÂÃÂÃÂ', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr2', name: 'Visto sin responder 3h', condition: 'seen',       delay: 180,  unit: 'min', producto: 'General', message: 'Hola {nombre} ÃÂ°ÃÂÃÂÃÂ QuerÃÂÃÂ­a enviarte nuestra mejor oferta de hoy.\nÃÂÃÂ¿CuÃÂÃÂ¡l es tu producto favorito? ÃÂ°ÃÂÃÂÃÂ¿\nTe armo un combo personalizado ÃÂ°ÃÂÃÂÃÂ', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'tr3', name: 'Cierre 24h',             condition: 'no_purchase', delay: 1440, unit: 'min', producto: 'General', message: 'ÃÂ°ÃÂÃÂÃÂ¥ ÃÂÃÂ¡ÃÂÃÂltimo aviso, {nombre}!\nTu combo favorito tiene 15% OFF solo hoy.\nÃÂÃÂ¿Lo reservamos? Responde SÃÂÃÂ y te lo aparto ahora mismo ÃÂ°ÃÂÃÂÃÂª', active: false, mediaType: null, mediaUrl: '' },
 ]
 
 const DEFAULT_KW_TRIGGERS = [
-  { id: 'kw1', name: 'Ã°ÂÂÂ Precio / CuÃÂ¡nto vale',    condition: 'keyword', keyword: 'precio, precios, cuanto vale, cuÃÂ¡nto vale, cuanto cuesta, cuÃÂ¡nto cuesta, valor, costo', delay: 0, unit: 'min', producto: 'Ventas',    message: 'Ã°ÂÂÂ *Combo 1* Ã¢ÂÂ Tripack Mixto (3 Jabones) Ã¢ÂÂ *$59.000*\nÃ°ÂÂÂ *Combo 2* Ã¢ÂÂ 3 Jabones a elecciÃÂ³n Ã¢ÂÂ *$59.000*\nÃ°ÂÂÂ¿ *Combo 3* Ã¢ÂÂ 2 Jabones + Sebo 10g Ã¢ÂÂ *$63.000*\nÃ¢Â­Â *Combo 5* Ã¢ÂÂ MÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante Ã¢ÂÂ *$119.000*\n\nÃ°ÂÂÂ EnvÃÂ­o GRATIS | Ã°ÂÂÂ³ Contra entrega | Nequi *8% OFF*\n\nÃÂ¿CuÃÂ¡l te llevas hoy? Ã°ÂÂÂ', active: true,  mediaType: null, mediaUrl: '' },
-  { id: 'kw2', name: 'Ã°ÂÂÂ Combos / Productos',       condition: 'keyword', keyword: 'combo, combos, productos, catalogo, catÃÂ¡logo, que tienes, quÃÂ© tienes, que vendes, quÃÂ© vendes, info, informaciÃÂ³n, informacion', delay: 0, unit: 'min', producto: 'Ventas',    message: 'Ã°ÂÂÂ¥ COMBOS MÃÂS PEDIDOS Ã¢ÂÂ PRECIOS BAJOS POR TIEMPO LIMITADO Ã°ÂÂÂ¥\n\nÃ°ÂÂÂ *Combo 1* Ã¢ÂÂ Tripack Mixto (3 Jabones: CalÃÂ©ndula+CÃÂºrcuma+Avena) Ã¢ÂÂ *$59.000* (antes $105.000)\nÃ°ÂÂÂ *Combo 3* Ã¢ÂÂ 2 Jabones + Sebo de Res 10g Ã¢ÂÂ *$63.000* (antes $79.000)\nÃ¢Â­Â *Combo 5* Ã¢ÂÂ MÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante Ã¢ÂÂ *$119.000* (antes $159.000)\n\nÃ°ÂÂÂ EnvÃÂ­o GRATIS a toda Colombia Ã°ÂÂÂ³ Pagas al recibir Ã¢ÂÂ sin riesgo\nÃ¢ÂÂ° ÃÂ¿Te reservo el mÃÂ¡s vendido? Ã°ÂÂÂ', active: true,  mediaType: null, mediaUrl: '' },
-  { id: 'kw3', name: 'Ã°ÂÂÂ Hola / Bienvenida',        condition: 'keyword', keyword: 'hola, buenas, buenos dias, buenos dÃÂ­as, buenas tardes, buenas noches, hi, hello, saludos', delay: 0, unit: 'min', producto: 'Inicio',    message: 'Hola {nombre} Ã°ÂÂÂÃ°ÂÂÂ ÃÂ¡Bienvenido a SÃÂ¡nate! QuÃÂ© bueno tenerte por aquÃÂ­ Ã°ÂÂÂ\n\nÃÂ¿Buscas algo para *acnÃÂ©*, *manchas*, *piel seca* o *zonas ÃÂ­ntimas*?\nCuÃÂ©ntame y te recomiendo el combo perfecto Ã¢ÂÂ¨', active: false, mediaType: null, mediaUrl: '' },
-  { id: 'kw4', name: 'Ã°ÂÂÂ Confirmar / Datos pedido', condition: 'keyword', keyword: 'si quiero, sÃÂ­ quiero, lo quiero, lo compro, confirmar, confirmo, mis datos, datos, direcciÃÂ³n, pedir, pedido', delay: 0, unit: 'min', producto: 'Pedidos',   message: 'ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨\n\nPara confirmar tu pedido envÃÂ­ame:\n1Ã¯Â¸ÂÃ¢ÂÂ£ Nombre y Apellido\nÃ°ÂÂÂ± TelÃÂ©fono de contacto\nÃ°ÂÂÂ Ciudad y Departamento\nÃ°ÂÂÂ  DirecciÃÂ³n exacta\nÃ°ÂÂÂ¦ Barrio\n\nQuedo atenta para procesarlo de inmediato Ã°ÂÂÂ', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw1', name: 'ÃÂ°ÃÂÃÂÃÂ Precio / CuÃÂÃÂ¡nto vale',    condition: 'keyword', keyword: 'precio, precios, cuanto vale, cuÃÂÃÂ¡nto vale, cuanto cuesta, cuÃÂÃÂ¡nto cuesta, valor, costo', delay: 0, unit: 'min', producto: 'Ventas',    message: 'ÃÂ°ÃÂÃÂÃÂ *Combo 1* ÃÂ¢ÃÂÃÂ Tripack Mixto (3 Jabones) ÃÂ¢ÃÂÃÂ *$59.000*\nÃÂ°ÃÂÃÂÃÂ *Combo 2* ÃÂ¢ÃÂÃÂ 3 Jabones a elecciÃÂÃÂ³n ÃÂ¢ÃÂÃÂ *$59.000*\nÃÂ°ÃÂÃÂÃÂ¿ *Combo 3* ÃÂ¢ÃÂÃÂ 2 Jabones + Sebo 10g ÃÂ¢ÃÂÃÂ *$63.000*\nÃÂ¢ÃÂ­ÃÂ *Combo 5* ÃÂ¢ÃÂÃÂ MÃÂÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante ÃÂ¢ÃÂÃÂ *$119.000*\n\nÃÂ°ÃÂÃÂÃÂ EnvÃÂÃÂ­o GRATIS | ÃÂ°ÃÂÃÂÃÂ³ Contra entrega | Nequi *8% OFF*\n\nÃÂÃÂ¿CuÃÂÃÂ¡l te llevas hoy? ÃÂ°ÃÂÃÂÃÂ', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw2', name: 'ÃÂ°ÃÂÃÂÃÂ Combos / Productos',       condition: 'keyword', keyword: 'combo, combos, productos, catalogo, catÃÂÃÂ¡logo, que tienes, quÃÂÃÂ© tienes, que vendes, quÃÂÃÂ© vendes, info, informaciÃÂÃÂ³n, informacion', delay: 0, unit: 'min', producto: 'Ventas',    message: 'ÃÂ°ÃÂÃÂÃÂ¥ COMBOS MÃÂÃÂS PEDIDOS ÃÂ¢ÃÂÃÂ PRECIOS BAJOS POR TIEMPO LIMITADO ÃÂ°ÃÂÃÂÃÂ¥\n\nÃÂ°ÃÂÃÂÃÂ *Combo 1* ÃÂ¢ÃÂÃÂ Tripack Mixto (3 Jabones: CalÃÂÃÂ©ndula+CÃÂÃÂºrcuma+Avena) ÃÂ¢ÃÂÃÂ *$59.000* (antes $105.000)\nÃÂ°ÃÂÃÂÃÂ *Combo 3* ÃÂ¢ÃÂÃÂ 2 Jabones + Sebo de Res 10g ÃÂ¢ÃÂÃÂ *$63.000* (antes $79.000)\nÃÂ¢ÃÂ­ÃÂ *Combo 5* ÃÂ¢ÃÂÃÂ MÃÂÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante ÃÂ¢ÃÂÃÂ *$119.000* (antes $159.000)\n\nÃÂ°ÃÂÃÂÃÂ EnvÃÂÃÂ­o GRATIS a toda Colombia ÃÂ°ÃÂÃÂÃÂ³ Pagas al recibir ÃÂ¢ÃÂÃÂ sin riesgo\nÃÂ¢ÃÂÃÂ° ÃÂÃÂ¿Te reservo el mÃÂÃÂ¡s vendido? ÃÂ°ÃÂÃÂÃÂ', active: true,  mediaType: null, mediaUrl: '' },
+  { id: 'kw3', name: 'ÃÂ°ÃÂÃÂÃÂ Hola / Bienvenida',        condition: 'keyword', keyword: 'hola, buenas, buenos dias, buenos dÃÂÃÂ­as, buenas tardes, buenas noches, hi, hello, saludos', delay: 0, unit: 'min', producto: 'Inicio',    message: 'Hola {nombre} ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ ÃÂÃÂ¡Bienvenido a SÃÂÃÂ¡nate! QuÃÂÃÂ© bueno tenerte por aquÃÂÃÂ­ ÃÂ°ÃÂÃÂÃÂ\n\nÃÂÃÂ¿Buscas algo para *acnÃÂÃÂ©*, *manchas*, *piel seca* o *zonas ÃÂÃÂ­ntimas*?\nCuÃÂÃÂ©ntame y te recomiendo el combo perfecto ÃÂ¢ÃÂÃÂ¨', active: false, mediaType: null, mediaUrl: '' },
+  { id: 'kw4', name: 'ÃÂ°ÃÂÃÂÃÂ Confirmar / Datos pedido', condition: 'keyword', keyword: 'si quiero, sÃÂÃÂ­ quiero, lo quiero, lo compro, confirmar, confirmo, mis datos, datos, direcciÃÂÃÂ³n, pedir, pedido', delay: 0, unit: 'min', producto: 'Pedidos',   message: 'ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨\n\nPara confirmar tu pedido envÃÂÃÂ­ame:\n1ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Nombre y Apellido\nÃÂ°ÃÂÃÂÃÂ± TelÃÂÃÂ©fono de contacto\nÃÂ°ÃÂÃÂÃÂ Ciudad y Departamento\nÃÂ°ÃÂÃÂÃÂ  DirecciÃÂÃÂ³n exacta\nÃÂ°ÃÂÃÂÃÂ¦ Barrio\n\nQuedo atenta para procesarlo de inmediato ÃÂ°ÃÂÃÂÃÂ', active: true,  mediaType: null, mediaUrl: '' },
 ]
 
 const DEFAULT_PLANTILLAS = [
-  { id: 'tpl_bienvenida',  nombre: 'Bienvenida',            categoria: 'Inicio',       mensaje: 'Hola {nombre} Ã°ÂÂÂÃ°ÂÂÂ ÃÂ¡Bienvenido! QuÃÂ© bueno tenerte por aquÃÂ­ Ã°ÂÂÂ\n\nÃÂ¿Quieres saber cÃÂ³mo se usa, los combos disponibles y el obsequio activo Ã°ÂÂÂ?\nResponde SÃÂ­ o No Ã¢ÂÂ¨' },
-  { id: 'tpl_info_ofertas', nombre: 'Info + Combos + Precios', categoria: 'Ventas',    mensaje: 'Ã°ÂÂÂ¥ COMBOS MÃÂS PEDIDOS Ã¢ÂÂ PRECIOS BAJOS POR TIEMPO LIMITADO Ã°ÂÂÂ¥\n\nÃ°ÂÂÂ *Combo 1* Ã¢ÂÂ Tripack Mixto (3 Jabones: CalÃÂ©ndula+CÃÂºrcuma+Avena) Ã¢ÂÂ *$59.000* (antes $105.000)\nÃ°ÂÂÂ *Combo 3* Ã¢ÂÂ 2 Jabones + Sebo de Res 10g Ã¢ÂÂ *$63.000* (antes $79.000)\nÃ¢Â­Â *Combo 5* Ã¢ÂÂ MÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante Ã¢ÂÂ *$119.000* (antes $159.000)\n\nÃ°ÂÂÂ EnvÃÂ­o GRATIS a toda Colombia Ã°ÂÂÂ³ Pagas al recibir Ã¢ÂÂ sin riesgo\nÃ¢ÂÂ° Se estÃÂ¡n agotando rÃÂ¡pido... ÃÂ¿Te reservo el mÃÂ¡s vendido? Ã°ÂÂÂ' },
-  { id: 'tpl_confirmacion', nombre: 'ConfirmaciÃÂ³n de pedido',  categoria: 'Pedidos',   mensaje: 'Tu pedido ha sido confirmado exitosamente y eres muy importante para nosotros Ã°ÂÂÂ\n\nÃ°ÂÂÂ¦ Por favor, estate pendiente del envÃÂ­o y del repartidor de Inter RapidÃÂ­simo Ã°ÂÂÂ\nNormalmente la entrega se realiza en 1 a 3 dÃÂ­as hÃÂ¡biles, dependiendo de tu ciudad.\n\nÃÂ¡Gracias por ser parte de la familia SÃÂ¡nate! Ã°ÂÂÂ' },
-  { id: 'tpl_seguimiento', nombre: 'Seguimiento sin compra',  categoria: 'Seguimiento', mensaje: 'Hola {nombre} Ã°ÂÂÂ\n\nÃÂ¿Pudiste revisar la informaciÃÂ³n que te enviÃÂ©? Ã°ÂÂÂ¿\n\nHoy tenemos un descuento especial Ã¢ÂÂ los precios y el obsequio son *solo por hoy* Ã¢ÂÂ°\n\nÃÂ¿Te reservo el mÃÂ¡s vendido antes de que se agote? Ã°ÂÂÂ' },
-  { id: 'tpl_precio',      nombre: 'Precios y combos (lista)', categoria: 'Ventas',    mensaje: 'Ã°ÂÂÂ *Combo 1* Ã¢ÂÂ Tripack Mixto (3 Jabones) Ã¢ÂÂ *$59.000*\nÃ°ÂÂÂ *Combo 2* Ã¢ÂÂ 3 Jabones a elecciÃÂ³n Ã¢ÂÂ *$59.000*\nÃ°ÂÂÂ¿ *Combo 3* Ã¢ÂÂ 2 Jabones + Sebo 10g Ã¢ÂÂ *$63.000*\nÃ¢Â­Â *Combo 5* Ã¢ÂÂ MÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante Ã¢ÂÂ *$119.000*\n\nÃ°ÂÂÂ EnvÃÂ­o GRATIS | Ã°ÂÂÂ³ Contra entrega | Nequi *8% OFF*\n\nÃÂ¿CuÃÂ¡l te llevas hoy? Ã°ÂÂÂ' },
-  { id: 'tpl_datos',       nombre: 'Solicitud de datos',       categoria: 'Pedidos',   mensaje: 'ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨\n\nPara confirmar tu pedido envÃÂ­ame:\n1Ã¯Â¸ÂÃ¢ÂÂ£ Nombre y Apellido\nÃ°ÂÂÂ± TelÃÂ©fono de contacto\nÃ°ÂÂÂ Ciudad y Departamento\nÃ°ÂÂÂ  DirecciÃÂ³n exacta\nÃ°ÂÂÂ¦ Barrio\n\nQuedo atenta para procesarlo de inmediato Ã°ÂÂÂ' },
+  { id: 'tpl_bienvenida',  nombre: 'Bienvenida',            categoria: 'Inicio',       mensaje: 'Hola {nombre} ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ ÃÂÃÂ¡Bienvenido! QuÃÂÃÂ© bueno tenerte por aquÃÂÃÂ­ ÃÂ°ÃÂÃÂÃÂ\n\nÃÂÃÂ¿Quieres saber cÃÂÃÂ³mo se usa, los combos disponibles y el obsequio activo ÃÂ°ÃÂÃÂÃÂ?\nResponde SÃÂÃÂ­ o No ÃÂ¢ÃÂÃÂ¨' },
+  { id: 'tpl_info_ofertas', nombre: 'Info + Combos + Precios', categoria: 'Ventas',    mensaje: 'ÃÂ°ÃÂÃÂÃÂ¥ COMBOS MÃÂÃÂS PEDIDOS ÃÂ¢ÃÂÃÂ PRECIOS BAJOS POR TIEMPO LIMITADO ÃÂ°ÃÂÃÂÃÂ¥\n\nÃÂ°ÃÂÃÂÃÂ *Combo 1* ÃÂ¢ÃÂÃÂ Tripack Mixto (3 Jabones: CalÃÂÃÂ©ndula+CÃÂÃÂºrcuma+Avena) ÃÂ¢ÃÂÃÂ *$59.000* (antes $105.000)\nÃÂ°ÃÂÃÂÃÂ *Combo 3* ÃÂ¢ÃÂÃÂ 2 Jabones + Sebo de Res 10g ÃÂ¢ÃÂÃÂ *$63.000* (antes $79.000)\nÃÂ¢ÃÂ­ÃÂ *Combo 5* ÃÂ¢ÃÂÃÂ MÃÂÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante ÃÂ¢ÃÂÃÂ *$119.000* (antes $159.000)\n\nÃÂ°ÃÂÃÂÃÂ EnvÃÂÃÂ­o GRATIS a toda Colombia ÃÂ°ÃÂÃÂÃÂ³ Pagas al recibir ÃÂ¢ÃÂÃÂ sin riesgo\nÃÂ¢ÃÂÃÂ° Se estÃÂÃÂ¡n agotando rÃÂÃÂ¡pido... ÃÂÃÂ¿Te reservo el mÃÂÃÂ¡s vendido? ÃÂ°ÃÂÃÂÃÂ' },
+  { id: 'tpl_confirmacion', nombre: 'ConfirmaciÃÂÃÂ³n de pedido',  categoria: 'Pedidos',   mensaje: 'Tu pedido ha sido confirmado exitosamente y eres muy importante para nosotros ÃÂ°ÃÂÃÂÃÂ\n\nÃÂ°ÃÂÃÂÃÂ¦ Por favor, estate pendiente del envÃÂÃÂ­o y del repartidor de Inter RapidÃÂÃÂ­simo ÃÂ°ÃÂÃÂÃÂ\nNormalmente la entrega se realiza en 1 a 3 dÃÂÃÂ­as hÃÂÃÂ¡biles, dependiendo de tu ciudad.\n\nÃÂÃÂ¡Gracias por ser parte de la familia SÃÂÃÂ¡nate! ÃÂ°ÃÂÃÂÃÂ' },
+  { id: 'tpl_seguimiento', nombre: 'Seguimiento sin compra',  categoria: 'Seguimiento', mensaje: 'Hola {nombre} ÃÂ°ÃÂÃÂÃÂ\n\nÃÂÃÂ¿Pudiste revisar la informaciÃÂÃÂ³n que te enviÃÂÃÂ©? ÃÂ°ÃÂÃÂÃÂ¿\n\nHoy tenemos un descuento especial ÃÂ¢ÃÂÃÂ los precios y el obsequio son *solo por hoy* ÃÂ¢ÃÂÃÂ°\n\nÃÂÃÂ¿Te reservo el mÃÂÃÂ¡s vendido antes de que se agote? ÃÂ°ÃÂÃÂÃÂ' },
+  { id: 'tpl_precio',      nombre: 'Precios y combos (lista)', categoria: 'Ventas',    mensaje: 'ÃÂ°ÃÂÃÂÃÂ *Combo 1* ÃÂ¢ÃÂÃÂ Tripack Mixto (3 Jabones) ÃÂ¢ÃÂÃÂ *$59.000*\nÃÂ°ÃÂÃÂÃÂ *Combo 2* ÃÂ¢ÃÂÃÂ 3 Jabones a elecciÃÂÃÂ³n ÃÂ¢ÃÂÃÂ *$59.000*\nÃÂ°ÃÂÃÂÃÂ¿ *Combo 3* ÃÂ¢ÃÂÃÂ 2 Jabones + Sebo 10g ÃÂ¢ÃÂÃÂ *$63.000*\nÃÂ¢ÃÂ­ÃÂ *Combo 5* ÃÂ¢ÃÂÃÂ MÃÂÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante ÃÂ¢ÃÂÃÂ *$119.000*\n\nÃÂ°ÃÂÃÂÃÂ EnvÃÂÃÂ­o GRATIS | ÃÂ°ÃÂÃÂÃÂ³ Contra entrega | Nequi *8% OFF*\n\nÃÂÃÂ¿CuÃÂÃÂ¡l te llevas hoy? ÃÂ°ÃÂÃÂÃÂ' },
+  { id: 'tpl_datos',       nombre: 'Solicitud de datos',       categoria: 'Pedidos',   mensaje: 'ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨\n\nPara confirmar tu pedido envÃÂÃÂ­ame:\n1ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Nombre y Apellido\nÃÂ°ÃÂÃÂÃÂ± TelÃÂÃÂ©fono de contacto\nÃÂ°ÃÂÃÂÃÂ Ciudad y Departamento\nÃÂ°ÃÂÃÂÃÂ  DirecciÃÂÃÂ³n exacta\nÃÂ°ÃÂÃÂÃÂ¦ Barrio\n\nQuedo atenta para procesarlo de inmediato ÃÂ°ÃÂÃÂÃÂ' },
 ]
 
-// Ã¢ÂÂÃ¢ÂÂ Mapa de geo por cÃÂ³digo de paÃÂ­s / ÃÂ¡rea Colombia Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Mapa de geo por cÃÂÃÂ³digo de paÃÂÃÂ­s / ÃÂÃÂ¡rea Colombia ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 const GEO_MAP = {
-  col: { '1':'BogotÃÂ¡ÃÂ·CUN','2':'CaliÃÂ·VAL','4':'MedellÃÂ­nÃÂ·ANT','5':'BarranquillaÃÂ·ATL','6':'ManizalesÃÂ·CAL','7':'BucaramangaÃÂ·SAN','8':'CartagenaÃÂ·BOL','9':'LeticiaÃÂ·AMA' },
-  cc:  { '1':'USAÃÂ·US Ã°ÂÂÂºÃ°ÂÂÂ¸','52':'MÃÂ©xicoÃÂ·MX Ã°ÂÂÂ²Ã°ÂÂÂ½','34':'EspaÃÂ±aÃÂ·ES Ã°ÂÂÂªÃ°ÂÂÂ¸','54':'ArgentinaÃÂ·AR Ã°ÂÂÂ¦Ã°ÂÂÂ·','55':'BrasilÃÂ·BR Ã°ÂÂÂ§Ã°ÂÂÂ·','56':'ChileÃÂ·CL Ã°ÂÂÂ¨Ã°ÂÂÂ±','51':'PerÃÂºÃÂ·PE Ã°ÂÂÂµÃ°ÂÂÂª','58':'VenezuelaÃÂ·VE Ã°ÂÂÂ»Ã°ÂÂÂª','593':'EcuadorÃÂ·EC Ã°ÂÂÂªÃ°ÂÂÂ¨','57':'ColombiaÃÂ·CO Ã°ÂÂÂ¨Ã°ÂÂÂ´' },
+  col: { '1':'BogotÃÂÃÂ¡ÃÂÃÂ·CUN','2':'CaliÃÂÃÂ·VAL','4':'MedellÃÂÃÂ­nÃÂÃÂ·ANT','5':'BarranquillaÃÂÃÂ·ATL','6':'ManizalesÃÂÃÂ·CAL','7':'BucaramangaÃÂÃÂ·SAN','8':'CartagenaÃÂÃÂ·BOL','9':'LeticiaÃÂÃÂ·AMA' },
+  cc:  { '1':'USAÃÂÃÂ·US ÃÂ°ÃÂÃÂÃÂºÃÂ°ÃÂÃÂÃÂ¸','52':'MÃÂÃÂ©xicoÃÂÃÂ·MX ÃÂ°ÃÂÃÂÃÂ²ÃÂ°ÃÂÃÂÃÂ½','34':'EspaÃÂÃÂ±aÃÂÃÂ·ES ÃÂ°ÃÂÃÂÃÂªÃÂ°ÃÂÃÂÃÂ¸','54':'ArgentinaÃÂÃÂ·AR ÃÂ°ÃÂÃÂÃÂ¦ÃÂ°ÃÂÃÂÃÂ·','55':'BrasilÃÂÃÂ·BR ÃÂ°ÃÂÃÂÃÂ§ÃÂ°ÃÂÃÂÃÂ·','56':'ChileÃÂÃÂ·CL ÃÂ°ÃÂÃÂÃÂ¨ÃÂ°ÃÂÃÂÃÂ±','51':'PerÃÂÃÂºÃÂÃÂ·PE ÃÂ°ÃÂÃÂÃÂµÃÂ°ÃÂÃÂÃÂª','58':'VenezuelaÃÂÃÂ·VE ÃÂ°ÃÂÃÂÃÂ»ÃÂ°ÃÂÃÂÃÂª','593':'EcuadorÃÂÃÂ·EC ÃÂ°ÃÂÃÂÃÂªÃÂ°ÃÂÃÂÃÂ¨','57':'ColombiaÃÂÃÂ·CO ÃÂ°ÃÂÃÂÃÂ¨ÃÂ°ÃÂÃÂÃÂ´' },
 }
 function phoneToGeo(phone) {
   if (!phone) return null
@@ -160,55 +160,55 @@ function phoneToGeo(phone) {
     if (mobile.startsWith('3')) {
       const area = raw.substring(2, 3)
       const city = GEO_MAP.col[area]
-      if (city) { const [c,d] = city.split('ÃÂ·'); return { label: `${c} ÃÂ· ${d}`, flag: 'Ã°ÂÂÂ¨Ã°ÂÂÂ´' } }
-      return { label: 'Colombia ÃÂ· CO', flag: 'Ã°ÂÂÂ¨Ã°ÂÂÂ´' }
+      if (city) { const [c,d] = city.split('ÃÂÃÂ·'); return { label: `${c} ÃÂÃÂ· ${d}`, flag: 'ÃÂ°ÃÂÃÂÃÂ¨ÃÂ°ÃÂÃÂÃÂ´' } }
+      return { label: 'Colombia ÃÂÃÂ· CO', flag: 'ÃÂ°ÃÂÃÂÃÂ¨ÃÂ°ÃÂÃÂÃÂ´' }
     }
   }
   for (const [cc, label] of Object.entries(GEO_MAP.cc)) {
-    if (raw.startsWith(cc)) { const [c,d] = label.split(' ')[0].split('ÃÂ·'); return { label: `${c} ÃÂ· ${d}`, flag: label.split(' ')[1] || '' } }
+    if (raw.startsWith(cc)) { const [c,d] = label.split(' ')[0].split('ÃÂÃÂ·'); return { label: `${c} ÃÂÃÂ· ${d}`, flag: label.split(' ')[1] || '' } }
   }
   return null
 }
 
-const TRAINING_TEMPLATE = `Ã°ÂÂÂ¢ NOMBRE DEL NEGOCIO: Sanate
-Ã°ÂÂÂ SITIO WEB: sanate.store
-Ã°ÂÂÂ± WHATSAPP: +57 XXX XXX XXXX
+const TRAINING_TEMPLATE = `ÃÂ°ÃÂÃÂÃÂ¢ NOMBRE DEL NEGOCIO: Sanate
+ÃÂ°ÃÂÃÂÃÂ SITIO WEB: sanate.store
+ÃÂ°ÃÂÃÂÃÂ± WHATSAPP: +57 XXX XXX XXXX
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-Ã°ÂÂÂ¯ PERSONALIDAD DEL ASISTENTE
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-Eres un cerrador de ventas experto, amable, cÃÂ¡lido y natural.
-Nunca suenas como un robot. Haces pausas, usas emojis estratÃÂ©gicamente,
-escuchas al cliente, identificas su necesidad y ofreces la soluciÃÂ³n perfecta.
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+ÃÂ°ÃÂÃÂÃÂ¯ PERSONALIDAD DEL ASISTENTE
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+Eres un cerrador de ventas experto, amable, cÃÂÃÂ¡lido y natural.
+Nunca suenas como un robot. Haces pausas, usas emojis estratÃÂÃÂ©gicamente,
+escuchas al cliente, identificas su necesidad y ofreces la soluciÃÂÃÂ³n perfecta.
 Siempre terminas con una pregunta de cierre clara.
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-Ã°ÂÂÂÃ¯Â¸Â PRODUCTOS Y PRECIOS
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-[Pega aquÃÂ­ tus productos con precios]
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ PRODUCTOS Y PRECIOS
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+[Pega aquÃÂÃÂ­ tus productos con precios]
 Ejemplo:
-- Combo Detox 30 dÃÂ­as: $150.000
-- Pack EnergÃÂ­a Total: $89.000
+- Combo Detox 30 dÃÂÃÂ­as: $150.000
+- Pack EnergÃÂÃÂ­a Total: $89.000
 - Kit Bienestar Premium: $220.000
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-Ã°ÂÂÂ¥ COMBOS Y OFERTAS ESPECIALES
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+ÃÂ°ÃÂÃÂÃÂ¥ COMBOS Y OFERTAS ESPECIALES
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 [Describe tus combos, precios, descuentos, vigencia]
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-Ã°ÂÂÂ¬ ESTILO DE CONVERSACIÃÂN
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+ÃÂ°ÃÂÃÂÃÂ¬ ESTILO DE CONVERSACIÃÂÃÂN
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 1. Saluda con el nombre del cliente
-2. Identifica quÃÂ© necesita con 1 pregunta
-3. Ofrece el producto mÃÂ¡s adecuado
+2. Identifica quÃÂÃÂ© necesita con 1 pregunta
+3. Ofrece el producto mÃÂÃÂ¡s adecuado
 4. Da 1-2 beneficios clave (no abrumes)
-5. Cierre: "ÃÂ¿Te lo reservamos?" / "ÃÂ¿Lo tomamos?"
-6. Si dice que va a pensar: envÃÂ­a oferta por tiempo limitado
+5. Cierre: "ÃÂÃÂ¿Te lo reservamos?" / "ÃÂÃÂ¿Lo tomamos?"
+6. Si dice que va a pensar: envÃÂÃÂ­a oferta por tiempo limitado
 
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-Ã°ÂÂÂ« NUNCA HACER
-Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+ÃÂ°ÃÂÃÂÃÂ« NUNCA HACER
+ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 - Dar precios sin contexto del producto
 - Responder con listas largas
 - Olvidar hacer una pregunta de cierre
@@ -218,18 +218,18 @@ Ejemplo:
 const COLORS_AV  = ['#d1fae5', '#dbeafe', '#ede9fe', '#fef3c7', '#fee2e2']
 const COLORS_TXT = ['#065f46', '#1d4ed8', '#5b21b6', '#92400e', '#b91c1c']
 
-// Ã¢ÂÂÃ¢ÂÂ Resolver URL de media: blob / http completo / ruta relativa Ã¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Resolver URL de media: blob / http completo / ruta relativa ÃÂ¢ÃÂÃÂ
 function resolveMediaUrl(url) {
   if (!url) return ''
   if (url.startsWith('blob:') || url.startsWith('data:')) return url
   if (url.startsWith('http://') || url.startsWith('https://')) return url
-  // Ruta relativa Ã¢ÂÂ anteponer MEDIA_BASE
+  // Ruta relativa ÃÂ¢ÃÂÃÂ anteponer MEDIA_BASE
   return MEDIA_BASE + (url.startsWith('/') ? url : '/' + url)
 }
 
-// Ã¢ÂÂÃ¢ÂÂ Componente: chat de prueba del bot IA Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Componente: chat de prueba del bot IA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, tip, msgMode, useEmojis, useStyles }) {
-  const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: 'ÃÂ¡Hola! Soy tu bot de prueba. ÃÂ¿En quÃÂ© te puedo ayudar? Ã°ÂÂÂ' }])
+  const [msgs, setMsgs] = React.useState([{ role: 'assistant', txt: 'ÃÂÃÂ¡Hola! Soy tu bot de prueba. ÃÂÃÂ¿En quÃÂÃÂ© te puedo ayudar? ÃÂ°ÃÂÃÂÃÂ' }])
   const [inp,  setInp]  = React.useState('')
   const [busy, setBusy] = React.useState(false)
 
@@ -270,38 +270,38 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
       const history = msgs.slice(-8).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.txt }))
       const baseCtx = (trainingPrompt || aiPrompt || '').substring(0, 5500)
 
-      // Bloques condicionales segÃÂºn configuraciÃÂ³n de estilo
+      // Bloques condicionales segÃÂÃÂºn configuraciÃÂÃÂ³n de estilo
       const tc_stylesBlock = (useStyles !== false)
-        ? `Ã¢ÂÂ¢ FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ Ã¢ÂÂ ÃÂºsalos en precios, nombres de combos y beneficios clave\nÃ¢ÂÂ¢ NUNCA uses **doble asterisco** Ã¢ÂÂ solo *uno a cada lado*`
-        : `Ã¢ÂÂ¢ Texto plano ÃÂNICAMENTE Ã¢ÂÂ sin asteriscos ni formato. PROHIBIDO *negritas*, _cursiva_ o ~tachado~`
+        ? `ÃÂ¢ÃÂÃÂ¢ FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ ÃÂ¢ÃÂÃÂ ÃÂÃÂºsalos en precios, nombres de combos y beneficios clave\nÃÂ¢ÃÂÃÂ¢ NUNCA uses **doble asterisco** ÃÂ¢ÃÂÃÂ solo *uno a cada lado*`
+        : `ÃÂ¢ÃÂÃÂ¢ Texto plano ÃÂÃÂNICAMENTE ÃÂ¢ÃÂÃÂ sin asteriscos ni formato. PROHIBIDO *negritas*, _cursiva_ o ~tachado~`
       const tc_emojisBlock = (useEmojis !== false)
-        ? `Ã¢ÂÂ¢ Emojis: mÃÂ¡x 2 por mensaje, ÃÂºsalos estratÃÂ©gicamente como viÃÂ±etas o ÃÂ©nfasis`
-        : `Ã¢ÂÂ¢ PROHIBIDO usar emojis Ã¢ÂÂ solo texto plano`
+        ? `ÃÂ¢ÃÂÃÂ¢ Emojis: mÃÂÃÂ¡x 2 por mensaje, ÃÂÃÂºsalos estratÃÂÃÂ©gicamente como viÃÂÃÂ±etas o ÃÂÃÂ©nfasis`
+        : `ÃÂ¢ÃÂÃÂ¢ PROHIBIDO usar emojis ÃÂ¢ÃÂÃÂ solo texto plano`
       const tc_multiMsgBlock = (msgMode !== 'completo')
-        ? `ENVÃÂO POR PARTES:\nDivide en 2 a 5 mensajes separados por el separador EXACTO: ||||\nÃ¢ÂÂ¢ Parte 1 Ã¢ÂÂ gancho o contexto Ã¢ÂÂ no lo reveles todo\nÃ¢ÂÂ¢ Partes intermedias Ã¢ÂÂ desarrolla con intriga o mini-pregunta\nÃ¢ÂÂ¢ ÃÂltima parte Ã¢ÂÂ pregunta de cierre de venta\nEjemplo:\nTenemos varias opciones${(useEmojis !== false) ? ' Ã°ÂÂÂ¿' : ''}\n||||\n${(useStyles !== false) ? '*Combo A*' : 'Combo A'} Ã¢ÂÂ beneficio Ã¢ÂÂ ${(useStyles !== false) ? '*$66.000*' : '$66.000'}\n||||\nÃÂ¿CuÃÂ¡l prefieres${(useEmojis !== false) ? ' Ã°ÂÂÂ' : '?'}`
-        : `ENVÃÂO COMPLETO:\nResponde en UN solo mensaje bien organizado (mÃÂ¡x 6 lÃÂ­neas). NO uses |||| separador.`
+        ? `ENVÃÂÃÂO POR PARTES:\nDivide en 2 a 5 mensajes separados por el separador EXACTO: ||||\nÃÂ¢ÃÂÃÂ¢ Parte 1 ÃÂ¢ÃÂÃÂ gancho o contexto ÃÂ¢ÃÂÃÂ no lo reveles todo\nÃÂ¢ÃÂÃÂ¢ Partes intermedias ÃÂ¢ÃÂÃÂ desarrolla con intriga o mini-pregunta\nÃÂ¢ÃÂÃÂ¢ ÃÂÃÂltima parte ÃÂ¢ÃÂÃÂ pregunta de cierre de venta\nEjemplo:\nTenemos varias opciones${(useEmojis !== false) ? ' ÃÂ°ÃÂÃÂÃÂ¿' : ''}\n||||\n${(useStyles !== false) ? '*Combo A*' : 'Combo A'} ÃÂ¢ÃÂÃÂ beneficio ÃÂ¢ÃÂÃÂ ${(useStyles !== false) ? '*$66.000*' : '$66.000'}\n||||\nÃÂÃÂ¿CuÃÂÃÂ¡l prefieres${(useEmojis !== false) ? ' ÃÂ°ÃÂÃÂÃÂ' : '?'}`
+        : `ENVÃÂÃÂO COMPLETO:\nResponde en UN solo mensaje bien organizado (mÃÂÃÂ¡x 6 lÃÂÃÂ­neas). NO uses |||| separador.`
 
       // Embudo de ventas para el Test Chat
-      const tc_salesFunnel = `EMBUDO DE VENTAS PROBADO Ã¢ÂÂ SIGUE ESTE ORDEN:
-PASO 2 Ã¢ÂÂ DIAGNÃÂSTICO (antes de precios): "ÃÂ¿Lo buscas para acnÃÂ©, manchas, piel seca o zonas ÃÂ­ntimas?"
-PASO 3 Ã¢ÂÂ PRESENTACIÃÂN: Recomienda combo exacto${(useStyles !== false) ? ' con *negrita* en precios y nombres' : ''} + obsequio.
-PASO 4 Ã¢ÂÂ CIERRE con elecciÃÂ³n forzada: "ÃÂ¿CuÃÂ¡l te llevas, el${(useStyles !== false) ? ' *Combo 1*' : ' Combo 1'} o el${(useStyles !== false) ? ' *Combo 5*' : ' Combo 5'}? Ã°ÂÂÂ"
-PASO 5 Ã¢ÂÂ DATOS: "ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨ EnvÃÂ­ame: Nombre / TelÃÂ©fono / Ciudad / DirecciÃÂ³n / Barrio"
+      const tc_salesFunnel = `EMBUDO DE VENTAS PROBADO ÃÂ¢ÃÂÃÂ SIGUE ESTE ORDEN:
+PASO 2 ÃÂ¢ÃÂÃÂ DIAGNÃÂÃÂSTICO (antes de precios): "ÃÂÃÂ¿Lo buscas para acnÃÂÃÂ©, manchas, piel seca o zonas ÃÂÃÂ­ntimas?"
+PASO 3 ÃÂ¢ÃÂÃÂ PRESENTACIÃÂÃÂN: Recomienda combo exacto${(useStyles !== false) ? ' con *negrita* en precios y nombres' : ''} + obsequio.
+PASO 4 ÃÂ¢ÃÂÃÂ CIERRE con elecciÃÂÃÂ³n forzada: "ÃÂÃÂ¿CuÃÂÃÂ¡l te llevas, el${(useStyles !== false) ? ' *Combo 1*' : ' Combo 1'} o el${(useStyles !== false) ? ' *Combo 5*' : ' Combo 5'}? ÃÂ°ÃÂÃÂÃÂ"
+PASO 5 ÃÂ¢ÃÂÃÂ DATOS: "ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨ EnvÃÂÃÂ­ame: Nombre / TelÃÂÃÂ©fono / Ciudad / DirecciÃÂÃÂ³n / Barrio"
 
-CATÃÂLOGO SÃÂNATE:
-Ã¢ÂÂ¢ ${(useStyles !== false) ? '*Combo 1*' : 'Combo 1'} Tripack Mixto (3 Jabones) Ã¢ÂÂ ${(useStyles !== false) ? '*$59.000*' : '$59.000'} (antes $105.000)
-Ã¢ÂÂ¢ ${(useStyles !== false) ? '*Combo 2*' : 'Combo 2'} 3 Jabones a elecciÃÂ³n Ã¢ÂÂ ${(useStyles !== false) ? '*$59.000*' : '$59.000'} (antes $105.000)
-Ã¢ÂÂ¢ ${(useStyles !== false) ? '*Combo 3*' : 'Combo 3'} 2 Jabones + Sebo 10g Ã¢ÂÂ ${(useStyles !== false) ? '*$63.000*' : '$63.000'} (antes $79.000)
-Ã¢ÂÂ¢ ${(useStyles !== false) ? '*Combo 5*' : 'Combo 5'} MÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante Ã¢ÂÂ ${(useStyles !== false) ? '*$119.000*' : '$119.000'} (antes $159.000)
-Ã¢ÂÂ¢ JabÃÂ³n individual: ${(useStyles !== false) ? '*$22.000*' : '$22.000'}
-Nequi/transferencia: ${(useStyles !== false) ? '*8% OFF*' : '8% OFF'} | EnvÃÂ­o GRATIS a toda Colombia | Contra entrega disponible
+CATÃÂÃÂLOGO SÃÂÃÂNATE:
+ÃÂ¢ÃÂÃÂ¢ ${(useStyles !== false) ? '*Combo 1*' : 'Combo 1'} Tripack Mixto (3 Jabones) ÃÂ¢ÃÂÃÂ ${(useStyles !== false) ? '*$59.000*' : '$59.000'} (antes $105.000)
+ÃÂ¢ÃÂÃÂ¢ ${(useStyles !== false) ? '*Combo 2*' : 'Combo 2'} 3 Jabones a elecciÃÂÃÂ³n ÃÂ¢ÃÂÃÂ ${(useStyles !== false) ? '*$59.000*' : '$59.000'} (antes $105.000)
+ÃÂ¢ÃÂÃÂ¢ ${(useStyles !== false) ? '*Combo 3*' : 'Combo 3'} 2 Jabones + Sebo 10g ÃÂ¢ÃÂÃÂ ${(useStyles !== false) ? '*$63.000*' : '$63.000'} (antes $79.000)
+ÃÂ¢ÃÂÃÂ¢ ${(useStyles !== false) ? '*Combo 5*' : 'Combo 5'} MÃÂÃÂS VENDIDO: 4 Jabones + Sebo + Exfoliante ÃÂ¢ÃÂÃÂ ${(useStyles !== false) ? '*$119.000*' : '$119.000'} (antes $159.000)
+ÃÂ¢ÃÂÃÂ¢ JabÃÂÃÂ³n individual: ${(useStyles !== false) ? '*$22.000*' : '$22.000'}
+Nequi/transferencia: ${(useStyles !== false) ? '*8% OFF*' : '8% OFF'} | EnvÃÂÃÂ­o GRATIS a toda Colombia | Contra entrega disponible
 
-FRASES DE CIERRE (ÃÂºsalas): "ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨" / "Los precios son de hoy solamente" / "Se agotan rÃÂ¡pido"
-REGLAS: Ã¢ÂÂ Nunca precio sin diagnÃÂ³stico | Ã¢ÂÂ Nunca pregunta abierta al cierre | Ã¢ÂÂ Siempre celebra la elecciÃÂ³n`
+FRASES DE CIERRE (ÃÂÃÂºsalas): "ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨" / "Los precios son de hoy solamente" / "Se agotan rÃÂÃÂ¡pido"
+REGLAS: ÃÂ¢ÃÂÃÂ Nunca precio sin diagnÃÂÃÂ³stico | ÃÂ¢ÃÂÃÂ Nunca pregunta abierta al cierre | ÃÂ¢ÃÂÃÂ Siempre celebra la elecciÃÂÃÂ³n`
 
       const enhancedSys = baseCtx
-        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÃÂTICAS WHATSAPP:\nÃ¢ÂÂ¢ Mensajes cortos: mÃÂ¡x 3-4 lÃÂ­neas POR MENSAJE\n${tc_stylesBlock}\n${tc_emojisBlock}\nÃ¢ÂÂ¢ VARÃÂA tus respuestas Ã¢ÂÂ nunca repitas el mismo saludo\nÃ¢ÂÂ¢ Adapta el tono al cliente\nÃ¢ÂÂ¢ Eres una persona real, NUNCA te presentes como IA o bot\n\n${tc_multiMsgBlock}\n\n${tc_salesFunnel}\n\nPROHIBIDO:\nÃ¢ÂÂ Frases genÃÂ©ricas | Ã¢ÂÂ Decir que eres IA`
-        : `Eres una asesora de ventas de SÃÂ¡nate Colombia Ã¢ÂÂ jabones artesanales naturales. Eres una persona real. NUNCA te presentes como IA.\n${tc_stylesBlock}\n${tc_emojisBlock}\nMensajes cortos (mÃÂ¡x 3-4 lÃÂ­neas). VarÃÂ­a tus respuestas.\n\n${tc_multiMsgBlock}\n\n${tc_salesFunnel}`
+        ? `${baseCtx}\n\n---\nINSTRUCCIONES CRÃÂÃÂTICAS WHATSAPP:\nÃÂ¢ÃÂÃÂ¢ Mensajes cortos: mÃÂÃÂ¡x 3-4 lÃÂÃÂ­neas POR MENSAJE\n${tc_stylesBlock}\n${tc_emojisBlock}\nÃÂ¢ÃÂÃÂ¢ VARÃÂÃÂA tus respuestas ÃÂ¢ÃÂÃÂ nunca repitas el mismo saludo\nÃÂ¢ÃÂÃÂ¢ Adapta el tono al cliente\nÃÂ¢ÃÂÃÂ¢ Eres una persona real, NUNCA te presentes como IA o bot\n\n${tc_multiMsgBlock}\n\n${tc_salesFunnel}\n\nPROHIBIDO:\nÃÂ¢ÃÂÃÂ Frases genÃÂÃÂ©ricas | ÃÂ¢ÃÂÃÂ Decir que eres IA`
+        : `Eres una asesora de ventas de SÃÂÃÂ¡nate Colombia ÃÂ¢ÃÂÃÂ jabones artesanales naturales. Eres una persona real. NUNCA te presentes como IA.\n${tc_stylesBlock}\n${tc_emojisBlock}\nMensajes cortos (mÃÂÃÂ¡x 3-4 lÃÂÃÂ­neas). VarÃÂÃÂ­a tus respuestas.\n\n${tc_multiMsgBlock}\n\n${tc_salesFunnel}`
 
       const reply = await localCallAI([
         { role: 'system', content: enhancedSys },
@@ -313,12 +313,12 @@ REGLAS: Ã¢ÂÂ Nunca precio sin diagnÃÂ³stico | Ã¢ÂÂ Nunca pr
       if (parts.length > 1) {
         setMsgs(p => [...p, ...parts.map(txt => ({ role: 'assistant', txt }))])
       } else {
-        setMsgs(p => [...p, { role: 'assistant', txt: reply || 'Ã¢ÂÂ Ã¯Â¸Â Sin respuesta de la IA' }])
+        setMsgs(p => [...p, { role: 'assistant', txt: reply || 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Sin respuesta de la IA' }])
       }
     } catch (e) {
       const errTxt = e?.message === 'no_key'
-        ? 'Ã¢ÂÂ Ã¯Â¸Â Configura tu API Key de OpenAI o Gemini en Ajustes Ã¢ÂÂ API & Tokens'
-        : `Ã¢ÂÂ Ã¯Â¸Â Error IA: ${e?.message || 'Verifica tu API Key'}`
+        ? 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura tu API Key de OpenAI o Gemini en Ajustes ÃÂ¢ÃÂÃÂ API & Tokens'
+        : `ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error IA: ${e?.message || 'Verifica tu API Key'}`
       setMsgs(p => [...p, { role: 'assistant', txt: errTxt }])
     }
     setBusy(false)
@@ -327,22 +327,22 @@ REGLAS: Ã¢ÂÂ Nunca precio sin diagnÃÂ³stico | Ã¢ÂÂ Nunca pr
     <div style={{ border: '1px solid #e5e7eb', borderRadius: 10, overflow: 'hidden' }}>
       <div style={{ background: '#075e54', padding: '.55rem 1rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
         <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#25d366', boxShadow: '0 0 0 3px rgba(37,211,102,.3)' }} />
-        <span style={{ color: '#fff', fontSize: '.78rem', fontWeight: 700 }}>Ã°ÂÂ¤Â Bot IA Ã¢ÂÂ Modo prueba</span>
-        <button style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '.2rem .6rem', fontSize: '.68rem', cursor: 'pointer' }} onClick={() => setMsgs([{ role: 'assistant', txt: 'ÃÂ¡Hola! Soy tu bot de prueba. ÃÂ¿En quÃÂ© te puedo ayudar? Ã°ÂÂÂ' }])}>Ã°ÂÂÂ Reiniciar</button>
+        <span style={{ color: '#fff', fontSize: '.78rem', fontWeight: 700 }}>ÃÂ°ÃÂÃÂ¤ÃÂ Bot IA ÃÂ¢ÃÂÃÂ Modo prueba</span>
+        <button style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.15)', border: 'none', color: '#fff', borderRadius: 6, padding: '.2rem .6rem', fontSize: '.68rem', cursor: 'pointer' }} onClick={() => setMsgs([{ role: 'assistant', txt: 'ÃÂÃÂ¡Hola! Soy tu bot de prueba. ÃÂÃÂ¿En quÃÂÃÂ© te puedo ayudar? ÃÂ°ÃÂÃÂÃÂ' }])}>ÃÂ°ÃÂÃÂÃÂ Reiniciar</button>
       </div>
       <div style={{ background: '#e5ddd5', padding: '.75rem', minHeight: 200, maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '.35rem' }}>
         {msgs.map((m, i) => (
           <div key={i} style={{ maxWidth: '78%', alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start', background: m.role === 'user' ? '#dcf8c6' : '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.77rem', lineHeight: 1.5, boxShadow: '0 1px 2px rgba(0,0,0,.1)' }}>
-            {m.role === 'assistant' && <div style={{ fontSize: '.58rem', color: '#7c3aed', fontWeight: 700, marginBottom: '.1rem' }}>Ã°ÂÂ¤Â IA</div>}
+            {m.role === 'assistant' && <div style={{ fontSize: '.58rem', color: '#7c3aed', fontWeight: 700, marginBottom: '.1rem' }}>ÃÂ°ÃÂÃÂ¤ÃÂ IA</div>}
             {m.txt}
           </div>
         ))}
-        {busy && <div style={{ alignSelf: 'flex-start', background: '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.75rem', color: '#9ca3af' }}>Ã¢ÂÂ³ Pensando...</div>}
+        {busy && <div style={{ alignSelf: 'flex-start', background: '#fff', borderRadius: 10, padding: '.45rem .75rem', fontSize: '.75rem', color: '#9ca3af' }}>ÃÂ¢ÃÂÃÂ³ Pensando...</div>}
       </div>
       <div style={{ background: '#f0f0f0', padding: '.5rem .75rem', display: 'flex', gap: '.5rem' }}>
         <input style={{ flex: 1, border: 'none', borderRadius: 24, padding: '.42rem 1rem', fontSize: '.76rem', outline: 'none', background: '#fff', fontFamily: 'inherit' }}
           value={inp} onChange={e => setInp(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }} placeholder="Escribe un mensaje de prueba..." disabled={busy} />
-        <button style={{ width: 36, height: 36, background: '#075e54', color: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '.9rem' }} onClick={send} disabled={busy}>{busy ? 'Ã¢ÂÂ³' : 'Ã¢ÂÂ¤'}</button>
+        <button style={{ width: 36, height: 36, background: '#075e54', color: '#fff', border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '.9rem' }} onClick={send} disabled={busy}>{busy ? 'ÃÂ¢ÃÂÃÂ³' : 'ÃÂ¢ÃÂÃÂ¤'}</button>
       </div>
     </div>
   )
@@ -354,13 +354,13 @@ const DEFAULT_TAGS = [
   { id: 'tg3', name: 'Cliente VIP',     color: '#8b5cf6' },
   { id: 'tg4', name: 'Soporte',         color: '#ef4444' },
   { id: 'tg5', name: 'Recurrente',      color: '#10b981' },
-  { id: 'tg6', name: 'Preparar',        color: '#2563eb' }, // azul Ã¢ÂÂ auto cuando detecta pedido
-  { id: 'tg7', name: 'Facturado',       color: '#16a34a' }, // verde Ã¢ÂÂ cambio manual
+  { id: 'tg6', name: 'Preparar',        color: '#2563eb' }, // azul ÃÂ¢ÃÂÃÂ auto cuando detecta pedido
+  { id: 'tg7', name: 'Facturado',       color: '#16a34a' }, // verde ÃÂ¢ÃÂÃÂ cambio manual
   { id: 'tg8', name: 'Reserva',         color: '#7c3aed' },
 ]
 
-// Keywords que indican intenciÃÂ³n de pedido
-const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 'llevar', 'cuÃÂ¡nto cuesta', 'cuanto cuesta', 'cuÃÂ¡nto vale', 'cuanto vale', 'precio', 'pago', 'transferencia', 'domicilio', 'envÃÂ­o', 'envio', 'me interesa', 'lo quiero', 'cÃÂ³mo pago', 'como pago', 'cÃÂ³mo compro', 'como compro', 'quiero uno', 'quiero comprar', 'cuantos', 'disponible', 'tienes', 'hay']
+// Keywords que indican intenciÃÂÃÂ³n de pedido
+const ORDER_KEYWORDS = ['quiero', 'pedido', 'pedir', 'comprar', 'me lo llevan', 'llevar', 'cuÃÂÃÂ¡nto cuesta', 'cuanto cuesta', 'cuÃÂÃÂ¡nto vale', 'cuanto vale', 'precio', 'pago', 'transferencia', 'domicilio', 'envÃÂÃÂ­o', 'envio', 'me interesa', 'lo quiero', 'cÃÂÃÂ³mo pago', 'como pago', 'cÃÂÃÂ³mo compro', 'como compro', 'quiero uno', 'quiero comprar', 'cuantos', 'disponible', 'tienes', 'hay']
 
 
 function DifusionesMasivas({ BU, sec }) {
@@ -386,15 +386,15 @@ function DifusionesMasivas({ BU, sec }) {
     load();
   };
   const delJob = async (id) => {
-    if (!window.confirm('ÃÂ¿Eliminar difusiÃÂ³n?')) return;
+    if (!window.confirm('ÃÂÃÂ¿Eliminar difusiÃÂÃÂ³n?')) return;
     await fetch(BU+'/broadcast/'+id,{method:'DELETE',headers:{'x-secret':sec}}).catch(()=>{});
     load();
   };
   return (
     <div style={{display:'flex',flexDirection:'column',height:'100%',background:'#111'}}>
       <div style={{display:'flex',gap:'8px',padding:'12px 16px',borderBottom:'1px solid #2a2a2a',background:'#0d0d0d'}}>
-        <button onClick={()=>setTab('list')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='list'?'#25d366':'transparent',color:tab==='list'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>Ã°ÂÂÂ Difusiones</button>
-        <button onClick={()=>setTab('new')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='new'?'#25d366':'transparent',color:tab==='new'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>Ã¢ÂÂ Nueva</button>
+        <button onClick={()=>setTab('list')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='list'?'#25d366':'transparent',color:tab==='list'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>ÃÂ°ÃÂÃÂÃÂ Difusiones</button>
+        <button onClick={()=>setTab('new')} style={{flex:1,padding:'8px',borderRadius:'8px',border:'1px solid #333',background:tab==='new'?'#25d366':'transparent',color:tab==='new'?'#fff':'#aaa',cursor:'pointer',fontWeight:'600',fontSize:'13px'}}>ÃÂ¢ÃÂÃÂ Nueva</button>
       </div>
       {tab==='list' && (
         <div style={{flex:1,overflowY:'auto',padding:'12px',display:'flex',flexDirection:'column',gap:'10px'}}>
@@ -403,15 +403,15 @@ function DifusionesMasivas({ BU, sec }) {
             <div key={j.id} style={{background:'#1a1a1a',borderRadius:'10px',padding:'12px',border:'1px solid #2a2a2a'}}>
               <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'8px'}}>
                 <span style={{fontWeight:'600',color:'#eee',fontSize:'13px'}}>{j.name||j.id}</span>
-                <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'12px',background:j.status==='running'?'#22c55e22':'#f59e0b22',color:j.status==='running'?'#22c55e':'#f59e0b'}}>{j.status==='running'?'Ã¢ÂÂ¶ Activo':'Ã¢ÂÂ¸ Pausado'}</span>
+                <span style={{fontSize:'11px',padding:'2px 8px',borderRadius:'12px',background:j.status==='running'?'#22c55e22':'#f59e0b22',color:j.status==='running'?'#22c55e':'#f59e0b'}}>{j.status==='running'?'ÃÂ¢ÃÂÃÂ¶ Activo':'ÃÂ¢ÃÂÃÂ¸ Pausado'}</span>
               </div>
-              <div style={{fontSize:'12px',color:'#999',marginBottom:'8px'}}>{j.sentCount||0} enviados ÃÂ· {j.totalNumbers||0} total ÃÂ· {j.errors||0} errores</div>
+              <div style={{fontSize:'12px',color:'#999',marginBottom:'8px'}}>{j.sentCount||0} enviados ÃÂÃÂ· {j.totalNumbers||0} total ÃÂÃÂ· {j.errors||0} errores</div>
               <div style={{height:'4px',background:'#333',borderRadius:'2px',marginBottom:'10px',overflow:'hidden'}}>
                 <div style={{height:'100%',background:'#25d366',width:j.totalNumbers?((j.sentCount||0)/j.totalNumbers*100)+'%':'0%',borderRadius:'2px',transition:'width 0.3s'}}></div>
               </div>
               <div style={{display:'flex',gap:'8px'}}>
-                <button onClick={()=>toggleJob(j.id,j.status==='running'?'paused':'running')} style={{flex:1,padding:'6px',borderRadius:'6px',border:'1px solid #333',background:'transparent',color:'#25d366',cursor:'pointer',fontSize:'12px'}}>{j.status==='running'?'Ã¢ÂÂ¸ Pausar':'Ã¢ÂÂ¶ Reanudar'}</button>
-                <button onClick={()=>delJob(j.id)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#ef4444',cursor:'pointer',fontSize:'12px'}}>Ã°ÂÂÂ</button>
+                <button onClick={()=>toggleJob(j.id,j.status==='running'?'paused':'running')} style={{flex:1,padding:'6px',borderRadius:'6px',border:'1px solid #333',background:'transparent',color:'#25d366',cursor:'pointer',fontSize:'12px'}}>{j.status==='running'?'ÃÂ¢ÃÂÃÂ¸ Pausar':'ÃÂ¢ÃÂÃÂ¶ Reanudar'}</button>
+                <button onClick={()=>delJob(j.id)} style={{padding:'6px 12px',borderRadius:'6px',border:'1px solid rgba(239,68,68,0.3)',background:'transparent',color:'#ef4444',cursor:'pointer',fontSize:'12px'}}>ÃÂ°ÃÂÃÂÃÂ</button>
               </div>
             </div>
           ))}
@@ -420,11 +420,11 @@ function DifusionesMasivas({ BU, sec }) {
       {tab==='new' && (
         <div style={{flex:1,overflowY:'auto',padding:'16px',display:'flex',flexDirection:'column',gap:'12px'}}>
           <div>
-            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Nombre campaÃÂ±a</label>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>Nombre campaÃÂÃÂ±a</label>
             <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="Ej: Promo Marzo" style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'13px',boxSizing:'border-box'}} />
           </div>
           <div>
-            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>NÃÂºmeros (uno por lÃÂ­nea o separados por coma)</label>
+            <label style={{color:'#aaa',fontSize:'12px',marginBottom:'4px',display:'block'}}>NÃÂÃÂºmeros (uno por lÃÂÃÂ­nea o separados por coma)</label>
             <textarea value={form.numbers} onChange={e=>setForm(f=>({...f,numbers:e.target.value}))} rows={5} placeholder="5215512345678" style={{width:'100%',padding:'8px 10px',borderRadius:'8px',border:'1px solid #333',background:'#1a1a1a',color:'#fff',fontSize:'12px',resize:'vertical',boxSizing:'border-box'}} />
           </div>
           <div>
@@ -454,7 +454,7 @@ function DifusionesMasivas({ BU, sec }) {
             </div>
           </div>
           <button onClick={create} disabled={sending} style={{padding:'12px',borderRadius:'8px',border:'none',background:sending?'#333':'#25d366',color:'#fff',cursor:sending?'not-allowed':'pointer',fontWeight:'700',fontSize:'14px',marginTop:'4px'}}>
-            {sending ? 'Ã¢ÂÂ³ Enviando...' : 'Ã°ÂÂÂ Iniciar DifusiÃÂ³n'}
+            {sending ? 'ÃÂ¢ÃÂÃÂ³ Enviando...' : 'ÃÂ°ÃÂÃÂÃÂ Iniciar DifusiÃÂÃÂ³n'}
           </button>
         </div>
       )}
@@ -512,10 +512,10 @@ function DispositivosPage({ BU, sec }) {
   };
   const del=(id)=>fetch(BU+'/devices/'+id,{method:'DELETE',headers:{'x-secret':S}}).then(load);
   const SC={connected:'#4caf50',qr:'#ff9800',disconnected:'#555',connecting:'#2196f3'};
-  const SL={connected:'Ã¢ÂÂ Conectado',qr:'Ã°ÂÂÂ± Escanear QR',disconnected:'Ã¢Â­Â Desconectado',connecting:'Ã¢ÂÂ³ Conectando'};
+  const SL={connected:'ÃÂ¢ÃÂÃÂ Conectado',qr:'ÃÂ°ÃÂÃÂÃÂ± Escanear QR',disconnected:'ÃÂ¢ÃÂ­ÃÂ Desconectado',connecting:'ÃÂ¢ÃÂÃÂ³ Conectando'};
   return (
     <div style={{padding:24,maxWidth:800,margin:'0 auto'}}>
-      <h2 style={{marginTop:0}}>Ã°ÂÂÂ± Dispositivos WhatsApp</h2>
+      <h2 style={{marginTop:0}}>ÃÂ°ÃÂÃÂÃÂ± Dispositivos WhatsApp</h2>
       <p style={{color:'#888',marginTop:-8,marginBottom:20,fontSize:14}}>Conecta hasta 10 dispositivos WhatsApp. Cada uno tiene sus chats y puede usarse en difusiones masivas.</p>
       <div style={{display:'flex',gap:10,marginBottom:24}}>
         <input value={newId} onChange={e=>setNewId(e.target.value)} onKeyDown={e=>e.key==='Enter'&&add()} placeholder="ID del nuevo dispositivo (ej: telefono2)" style={{flex:1,padding:'10px 14px',background:'#2a2a2a',border:'1px solid #444',borderRadius:8,color:'#fff'}}/>
@@ -526,7 +526,7 @@ function DispositivosPage({ BU, sec }) {
         <div key={d.id} style={{background:'#1a1a1a',border:'1px solid #2a2a2a',borderRadius:10,padding:20,marginBottom:14}}>
           <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
             <div>
-              <div style={{fontWeight:700,fontSize:15}}>{d.id==='default'?'Ã°ÂÂÂ± Dispositivo Principal':'Ã°ÂÂÂ± '+d.id}</div>
+              <div style={{fontWeight:700,fontSize:15}}>{d.id==='default'?'ÃÂ°ÃÂÃÂÃÂ± Dispositivo Principal':'ÃÂ°ÃÂÃÂÃÂ± '+d.id}</div>
               <div style={{color:'#777',fontSize:12,marginTop:3}}>{d.chats} chats &nbsp;|&nbsp; {d.contacts} contactos</div>
             </div>
             <div style={{display:'flex',gap:8,alignItems:'center'}}>
@@ -538,7 +538,7 @@ function DispositivosPage({ BU, sec }) {
           {qrs[d.id]?.qr&&(
             <div style={{marginTop:16,textAlign:'center'}}>
               <img src={qrs[d.id].qr} alt="QR" style={{width:220,height:220,borderRadius:8,border:'3px solid #25d366'}}/>
-              <div style={{color:'#888',fontSize:12,marginTop:8}}>Abre WhatsApp Ã¢ÂÂ Dispositivos vinculados Ã¢ÂÂ Vincular dispositivo</div>
+              <div style={{color:'#888',fontSize:12,marginTop:8}}>Abre WhatsApp ÃÂ¢ÃÂÃÂ Dispositivos vinculados ÃÂ¢ÃÂÃÂ Vincular dispositivo</div>
             </div>
           )}
         </div>
@@ -565,7 +565,7 @@ function BtnMsgEditor({ BU, sec }) {
   }, [open]);
   const send = async () => {
     const btns = buttons.map(b => b.trim()).filter(Boolean);
-    if (!phone.trim() || !body.trim() || !btns.length) { alert('Completa destinatario, mensaje y al menos 1 botÃÂ³n'); return; }
+    if (!phone.trim() || !body.trim() || !btns.length) { alert('Completa destinatario, mensaje y al menos 1 botÃÂÃÂ³n'); return; }
     setSending(true); setResult(null);
     try {
       const jid = phone.trim().replace(/\D/g, '') + '@s.whatsapp.net';
@@ -575,17 +575,17 @@ function BtnMsgEditor({ BU, sec }) {
         body: JSON.stringify({ to: jid, body: body.trim(), buttons: btns.map((b, i) => ({ id: 'b' + i, text: b })) })
       });
       const d = await r.json();
-      setResult(d.ok ? 'Ã¢ÂÂ Enviado' : 'Ã¢ÂÂ ' + (d.error || 'Error'));
+      setResult(d.ok ? 'ÃÂ¢ÃÂÃÂ Enviado' : 'ÃÂ¢ÃÂÃÂ ' + (d.error || 'Error'));
       if (d.ok) { setBody(''); setPhone(''); setButtons(['', '', '']); }
-    } catch (e) { setResult('Ã¢ÂÂ ' + e.message); }
+    } catch (e) { setResult('ÃÂ¢ÃÂÃÂ ' + e.message); }
     setSending(false);
   };
   return (
     <div style={{ marginTop: 20, border: '1px solid #1e4d2b', borderRadius: 8, overflow: open ? 'visible' : 'hidden' }}>
       <div onClick={() => setOpen(o => !o)}
         style={{ background: '#0d2b1a', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}>
-        <span style={{ color: '#c8e6c9', fontWeight: 600, fontSize: 14 }}>Ã°ÂÂÂ² Mensajes con Botones Interactivos</span>
-        <span style={{ color: '#888', fontSize: 12 }}>{open ? 'Ã¢ÂÂ² cerrar' : 'Ã¢ÂÂ¼ crear nuevo'}</span>
+        <span style={{ color: '#c8e6c9', fontWeight: 600, fontSize: 14 }}>ÃÂ°ÃÂÃÂÃÂ² Mensajes con Botones Interactivos</span>
+        <span style={{ color: '#888', fontSize: 12 }}>{open ? 'ÃÂ¢ÃÂÃÂ² cerrar' : 'ÃÂ¢ÃÂÃÂ¼ crear nuevo'}</span>
       </div>
       {open && (
         <div style={{ padding: '14px 16px', background: '#0a1f12' }}>
@@ -596,7 +596,7 @@ function BtnMsgEditor({ BU, sec }) {
             {contacts.length > 0 && (
               <select value={phone} onChange={e => setPhone(e.target.value)}
                 style={{ width: '100%', marginTop: 4, background: '#111', border: '1px solid #1e4d2b', borderRadius: 4, color: '#aaa', padding: '5px 8px', fontSize: 12 }}>
-                <option value=''>Ã¢ÂÂ o seleccionar contacto Ã¢ÂÂ</option>
+                <option value=''>ÃÂ¢ÃÂÃÂ o seleccionar contacto ÃÂ¢ÃÂÃÂ</option>
                 {contacts.map(c => <option key={c.id} value={(c.id || '').replace('@s.whatsapp.net', '')}>{c.name || c.id}</option>)}
               </select>
             )}
@@ -607,20 +607,20 @@ function BtnMsgEditor({ BU, sec }) {
               style={{ width: '100%', background: '#111', border: '1px solid #1e4d2b', borderRadius: 4, color: '#eee', padding: '6px 8px', fontSize: 13, boxSizing: 'border-box', resize: 'vertical' }} />
           </div>
           <div style={{ marginBottom: 12 }}>
-            <label style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 4 }}>Botones (mÃÂ¡x 3)</label>
+            <label style={{ color: '#888', fontSize: 12, display: 'block', marginBottom: 4 }}>Botones (mÃÂÃÂ¡x 3)</label>
             {[0, 1, 2].map(i => (
               <input key={i} value={buttons[i]}
                 onChange={e => setButtons(bs => { const n = [...bs]; n[i] = e.target.value; return n; })}
-                placeholder={i === 0 ? 'BotÃÂ³n 1 (requerido)' : 'BotÃÂ³n ' + (i + 1) + ' (opcional)'}
+                placeholder={i === 0 ? 'BotÃÂÃÂ³n 1 (requerido)' : 'BotÃÂÃÂ³n ' + (i + 1) + ' (opcional)'}
                 style={{ width: '100%', background: '#111', border: '1px solid ' + (i === 0 ? '#1e4d2b' : '#162e1c'), borderRadius: 4, color: '#eee', padding: '5px 8px', fontSize: 13, boxSizing: 'border-box', marginBottom: 4 }} />
             ))}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button onClick={send} disabled={sending}
               style={{ background: sending ? '#1a3a2a' : '#25d366', color: '#fff', border: 'none', borderRadius: 5, padding: '7px 18px', fontWeight: 700, cursor: sending ? 'not-allowed' : 'pointer', fontSize: 14 }}>
-              {sending ? 'Ã¢ÂÂ³ Enviando...' : 'Ã°ÂÂÂ¤ Enviar con Botones'}
+              {sending ? 'ÃÂ¢ÃÂÃÂ³ Enviando...' : 'ÃÂ°ÃÂÃÂÃÂ¤ Enviar con Botones'}
             </button>
-            {result && <span style={{ fontSize: 13, color: result.startsWith('Ã¢ÂÂ') ? '#4caf50' : '#f44336' }}>{result}</span>}
+            {result && <span style={{ fontSize: 13, color: result.startsWith('ÃÂ¢ÃÂÃÂ') ? '#4caf50' : '#f44336' }}>{result}</span>}
           </div>
         </div>
       )}
@@ -636,16 +636,16 @@ function SocialConnector({ platform }) {
   var STORE_ID = 'default';
   var CFGS = {
     instagram: {
-      lbl: 'Instagram', icon: 'Ã°ÂÂÂ¸',
+      lbl: 'Instagram', icon: 'ÃÂ°ÃÂÃÂÃÂ¸',
       scope: 'instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments',
       color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)',
       note: 'Conecta tu cuenta de Instagram'
     },
     messenger: {
-      lbl: 'Messenger', icon: 'Ã°ÂÂÂ¬',
+      lbl: 'Messenger', icon: 'ÃÂ°ÃÂÃÂÃÂ¬',
       scope: 'pages_messaging,pages_manage_metadata,pages_show_list',
       color: '#0084FF', grad: 'linear-gradient(135deg,#0084FF,#0052CC)',
-      note: 'Requiere una PÃÂ¡gina de Facebook'
+      note: 'Requiere una PÃÂÃÂ¡gina de Facebook'
     }
   };
   var cfg = CFGS[platform] || CFGS.instagram;
@@ -706,13 +706,13 @@ function SocialConnector({ platform }) {
   }
   if (status === 'connected') {
     return React.createElement('div', { style: { textAlign: 'center', padding: '40px 20px' } },
-      React.createElement('div', { style: { width: 80, height: 80, borderRadius: '50%', background: cfg.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 36 } }, 'Ã¢ÂÂ'),
+      React.createElement('div', { style: { width: 80, height: 80, borderRadius: '50%', background: cfg.grad, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: 36 } }, 'ÃÂ¢ÃÂÃÂ'),
       React.createElement('h3', { style: { color: cfg.color, margin: '0 0 8px' } }, cfg.lbl + ' Conectado'),
       React.createElement('p', { style: { color: '#666', margin: '0 0 24px' } }, account ? (account.name || 'Conectado') : 'Conectado'),
       React.createElement('button', {
         onClick: handleDisconnect,
         style: { background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', cursor: 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, margin: '0 auto' }
-      }, 'Ã°ÂÂÂ Desconectar ' + cfg.lbl)
+      }, 'ÃÂ°ÃÂÃÂÃÂ Desconectar ' + cfg.lbl)
     );
   }
   return React.createElement('div', { style: { textAlign: 'center', padding: '40px 20px' } },
@@ -723,7 +723,7 @@ function SocialConnector({ platform }) {
       onClick: status === 'connecting' ? null : handleConnect,
       disabled: status === 'connecting',
       style: { background: status === 'connecting' ? '#ccc' : cfg.color, color: '#fff', border: 'none', borderRadius: 8, padding: '12px 24px', cursor: status === 'connecting' ? 'not-allowed' : 'pointer', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8, margin: '0 auto' }
-    }, status === 'connecting' ? 'Ã¢ÂÂ³ Conectando...' : 'Ã°ÂÂÂ Conectar ' + cfg.lbl),
+    }, status === 'connecting' ? 'ÃÂ¢ÃÂÃÂ³ Conectando...' : 'ÃÂ°ÃÂÃÂÃÂ Conectar ' + cfg.lbl),
     React.createElement('p', { style: { color: '#999', fontSize: 13, marginTop: 12 } }, cfg.note)
   );
 }
@@ -745,12 +745,12 @@ export default function WhatsAppBot() {
   const [chatFilter,  setChatFilter]  = useState('todos')
   const [showContact, setShowContact] = useState(false)
 
-  // Ã¢ÂÂÃ¢ÂÂ AnÃÂ¡lisis de cliente Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ AnÃÂÃÂ¡lisis de cliente ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [showAnalysisPanel, setShowAnalysisPanel] = useState(false)
   const [clientAnalysis,    setClientAnalysis]    = useState(() => { try { return JSON.parse(localStorage.getItem('wa_client_analysis') || '{}') } catch { return {} } })
   const [analysisLoading,   setAnalysisLoading]   = useState(false)
 
-  // Ã¢ÂÂÃ¢ÂÂ Etiquetas persistentes por chat Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Etiquetas persistentes por chat ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [chatsTags,         setChatsTags]         = useState(() => { try { return JSON.parse(localStorage.getItem('wa_chats_tags') || '{}') } catch { return {} } })
   const [n8nOk,       setN8nOk]       = useState(N8N_WH ? true : null)
   const [curFlow,     setCurFlow]     = useState('bienvenida')
@@ -774,18 +774,18 @@ export default function WhatsAppBot() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false)
   const [contactStatus,     setContactStatus]     = useState('Nuevo')
 
-  // Ã¢ÂÂÃ¢ÂÂ IA / ChatGPT Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ IA / ChatGPT ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [serverOnline,       setServerOnline]       = useState(null)
   const [aiEnabled,          setAiEnabled]          = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_enabled') || 'false') } catch { return false } })
   const [aiContactMap,       setAiContactMap]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_ai_contact_map') || '{}') } catch { return {} } })
-  // Ã¢ÂÂÃ¢ÂÂ Disparadores por contacto (true = activos, false = pausados para ese chat) Ã¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Disparadores por contacto (true = activos, false = pausados para ese chat) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [triggerContactMap,  setTriggerContactMap]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_trigger_contact_map') || '{}') } catch { return {} } })
   const [openaiKey,          setOpenaiKey]          = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
   const [geminiKey,          setGeminiKey]          = useState(() => { try { return localStorage.getItem('wa_gemini_key') || '' } catch { return '' } })
   const [aiModel,        setAiModel]        = useState('gpt-4o')
-  const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en espaÃÂ±ol.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en espaÃÂ±ol.' } })
+  const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en espaÃÂÃÂ±ol.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en espaÃÂÃÂ±ol.' } })
 
-  // Ã¢ÂÂÃ¢ÂÂ Entrenamiento IA Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Entrenamiento IA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [trainingPrompt,   setTrainingPrompt]   = useState(() => { try { return localStorage.getItem('wa_training_prompt') || TRAINING_TEMPLATE } catch { return TRAINING_TEMPLATE } })
   const [trainingTab,      setTrainingTab]      = useState('asistente')
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
@@ -797,59 +797,59 @@ export default function WhatsAppBot() {
   })
   const [generatingWizard, setGeneratingWizard] = useState(false)
 
-  // Ã¢ÂÂÃ¢ÂÂ Clientes Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Clientes ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [clientes,       setClientes]       = useState(() => { try { return JSON.parse(localStorage.getItem('wa_clientes') || '[]') } catch { return [] } })
   const [clienteSearch,  setClienteSearch]  = useState('')
   const [clienteDetail,  setClienteDetail]  = useState(null)  // cliente seleccionado
 
-  // Ã¢ÂÂÃ¢ÂÂ Disparadores Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Disparadores ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [triggers,         setTriggers]         = useState(() => { try { return JSON.parse(localStorage.getItem('wa_triggers') || 'null') || DEFAULT_TRIGGERS } catch { return DEFAULT_TRIGGERS } })
-  const [editTrigger,      setEditTrigger]      = useState(null)   // trigger en ediciÃÂ³n (null=cerrado)
+  const [editTrigger,      setEditTrigger]      = useState(null)   // trigger en ediciÃÂÃÂ³n (null=cerrado)
   const [generatingTrigger,setGeneratingTrigger]= useState(false)
 
-  // Ã¢ÂÂÃ¢ÂÂ Plantillas Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Plantillas ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [plantillas,    setPlantillas]    = useState(() => { try { return JSON.parse(localStorage.getItem('wa_plantillas') || 'null') || DEFAULT_PLANTILLAS } catch { return DEFAULT_PLANTILLAS } })
   const [editPlantilla, setEditPlantilla] = useState(null)  // null=cerrado, obj=editando
 
-  // Ã¢ÂÂÃ¢ÂÂ Geo & Timing Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Geo & Timing ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [botDelay,       setBotDelay]       = useState(() => { try { return parseInt(localStorage.getItem('wa_bot_delay') || '3') } catch { return 3 } })
   const [simulateTyping, setSimulateTyping] = useState(true)
 
-  // Ã¢ÂÂÃ¢ÂÂ AI Message Style Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ AI Message Style ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [msgMode,   setMsgMode]   = useState(() => { try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })
   const [useEmojis, setUseEmojis] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })
   const [useStyles, setUseStyles] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })
 
-  // Ã¢ÂÂÃ¢ÂÂ Backend URL & Secret Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Backend URL & Secret ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [backendUrlInput, setBackendUrlInput] = useState(() => BU.replace('/api/whatsapp', ''))
   const [secretInput,     setSecretInput]     = useState(() => H['x-secret'])
 
-  // Ã¢ÂÂÃ¢ÂÂ Bot Nativo (flujo conversacional sin APIs externas) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Bot Nativo (flujo conversacional sin APIs externas) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [nbEnabled, setNbEnabled] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_nb_enabled') || 'false') } catch { return false } })
-  const [nbWelcome, setNbWelcome] = useState(() => { try { return localStorage.getItem('wa_nb_welcome') || 'ÃÂ¡Hola {{nombre}}! Ã°ÂÂÂ Bienvenido/a a *Sanate Store* Ã°ÂÂÂ¿\nÃÂ¿En quÃÂ© te puedo ayudar hoy?' } catch { return '' } })
-  const [nbMenu, setNbMenu] = useState(() => { try { return localStorage.getItem('wa_nb_menu') || '1. Ã°ÂÂÂ Ver productos\n2. Ã°ÂÂÂ¦ Estado de mi pedido\n3. Ã°ÂÂÂ¬ Hablar con un asesor\n4. Ã¢ÂÂ¹Ã¯Â¸Â MÃÂ¡s informaciÃÂ³n' } catch { return '' } })
-  const [nbMenuMap, setNbMenuMap] = useState(() => { try { return localStorage.getItem('wa_nb_menu_map') || '{"1":{"reply":"Ã°ÂÂÂ Puedes ver todo nuestro catÃÂ¡logo en:\\nhttps://sanate.store\\n\\nÃÂ¿Te interesa algo en especial?","next":"free"},"2":{"reply":"Ã°ÂÂÂ¦ EnvÃÂ­ame tu nÃÂºmero de pedido o tu nombre completo para buscarlo.","next":"free"},"3":{"reply":"Ã°ÂÂÂ ÃÂ¡Perfecto! Un asesor te atenderÃÂ¡ pronto.","next":"escalated"},"4":{"reply":"Ã¢ÂÂ¹Ã¯Â¸Â Somos *Sanate Store* Ã¢ÂÂ productos naturales Ã°ÂÂÂ¿\\nÃ°ÂÂÂ EnvÃÂ­os a todo el paÃÂ­s\\nÃ°ÂÂÂ³ Pagos seguros","next":"menu"}}' } catch { return '{}' } })
+  const [nbWelcome, setNbWelcome] = useState(() => { try { return localStorage.getItem('wa_nb_welcome') || 'ÃÂÃÂ¡Hola {{nombre}}! ÃÂ°ÃÂÃÂÃÂ Bienvenido/a a *Sanate Store* ÃÂ°ÃÂÃÂÃÂ¿\nÃÂÃÂ¿En quÃÂÃÂ© te puedo ayudar hoy?' } catch { return '' } })
+  const [nbMenu, setNbMenu] = useState(() => { try { return localStorage.getItem('wa_nb_menu') || '1. ÃÂ°ÃÂÃÂÃÂ Ver productos\n2. ÃÂ°ÃÂÃÂÃÂ¦ Estado de mi pedido\n3. ÃÂ°ÃÂÃÂÃÂ¬ Hablar con un asesor\n4. ÃÂ¢ÃÂÃÂ¹ÃÂ¯ÃÂ¸ÃÂ MÃÂÃÂ¡s informaciÃÂÃÂ³n' } catch { return '' } })
+  const [nbMenuMap, setNbMenuMap] = useState(() => { try { return localStorage.getItem('wa_nb_menu_map') || '{"1":{"reply":"ÃÂ°ÃÂÃÂÃÂ Puedes ver todo nuestro catÃÂÃÂ¡logo en:\\nhttps://sanate.store\\n\\nÃÂÃÂ¿Te interesa algo en especial?","next":"free"},"2":{"reply":"ÃÂ°ÃÂÃÂÃÂ¦ EnvÃÂÃÂ­ame tu nÃÂÃÂºmero de pedido o tu nombre completo para buscarlo.","next":"free"},"3":{"reply":"ÃÂ°ÃÂÃÂÃÂ ÃÂÃÂ¡Perfecto! Un asesor te atenderÃÂÃÂ¡ pronto.","next":"escalated"},"4":{"reply":"ÃÂ¢ÃÂÃÂ¹ÃÂ¯ÃÂ¸ÃÂ Somos *Sanate Store* ÃÂ¢ÃÂÃÂ productos naturales ÃÂ°ÃÂÃÂÃÂ¿\\nÃÂ°ÃÂÃÂÃÂ EnvÃÂÃÂ­os a todo el paÃÂÃÂ­s\\nÃÂ°ÃÂÃÂÃÂ³ Pagos seguros","next":"menu"}}' } catch { return '{}' } })
   const [nbTTL, setNbTTL] = useState(() => { try { return parseInt(localStorage.getItem('wa_nb_ttl') || '24') || 24 } catch { return 24 } })
   const [nbEscalate, setNbEscalate] = useState(() => { try { return localStorage.getItem('wa_nb_escalate') || 'agente,humano,persona,asesor,ayuda real,hablar con alguien' } catch { return '' } })
   const [nbDelay, setNbDelay] = useState(() => { try { return parseInt(localStorage.getItem('wa_nb_delay') || '800') || 800 } catch { return 800 } })
   const [nbAskName, setNbAskName] = useState(() => { try { return JSON.parse(localStorage.getItem('wa_nb_ask_name') || 'true') } catch { return true } })
-  const [nbAskNameMsg, setNbAskNameMsg] = useState(() => { try { return localStorage.getItem('wa_nb_ask_name_msg') || 'Antes de continuar, ÃÂ¿cÃÂ³mo te llamas? Ã°ÂÂÂ' } catch { return '' } })
-  const [nbFallback, setNbFallback] = useState(() => { try { return localStorage.getItem('wa_nb_fallback') || 'No entendÃÂ­ tu mensaje Ã°ÂÂÂ Escribe *menu* para ver las opciones.' } catch { return '' } })
+  const [nbAskNameMsg, setNbAskNameMsg] = useState(() => { try { return localStorage.getItem('wa_nb_ask_name_msg') || 'Antes de continuar, ÃÂÃÂ¿cÃÂÃÂ³mo te llamas? ÃÂ°ÃÂÃÂÃÂ' } catch { return '' } })
+  const [nbFallback, setNbFallback] = useState(() => { try { return localStorage.getItem('wa_nb_fallback') || 'No entendÃÂÃÂ­ tu mensaje ÃÂ°ÃÂÃÂÃÂ Escribe *menu* para ver las opciones.' } catch { return '' } })
   const [nbSessions, setNbSessions] = useState([])
   const [nbLeads, setNbLeads] = useState([])
 
-  // Ã¢ÂÂÃ¢ÂÂ AI reply generator Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ AI reply generator ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   const [generatingAiReply, setGeneratingAiReply] = useState(false)
   const [aiTyping,          setAiTyping]          = useState(false) // indicator "IA respondiendo..."
 
-  // Auto-reply deduplication: IDs ya procesados por el bot automÃÂ¡tico
+  // Auto-reply deduplication: IDs ya procesados por el bot automÃÂÃÂ¡tico
   const aiProcessedRef      = useRef(new Set())
   const autoReplyingRef     = useRef(false)
   const autoReplyTimerRef   = useRef(null)  // debounce timer
-  const autoReplyGenRef     = useRef(0)     // generaciÃÂ³n: se incrementa para cancelar respuesta en curso
-  const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat Ã¢ÂÂ evita responder historial
+  const autoReplyGenRef     = useRef(0)     // generaciÃÂÃÂ³n: se incrementa para cancelar respuesta en curso
+  const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat ÃÂ¢ÃÂÃÂ evita responder historial
   const kwFiredRef          = useRef(new Set()) // dedup para triggers de palabra clave (msgId_triggerId)
-  const sentTextsRef        = useRef([])         // ÃÂºltimos 30 textos ENVIADOS por el bot Ã¢ÂÂ eco prevention
+  const sentTextsRef        = useRef([])         // ÃÂÃÂºltimos 30 textos ENVIADOS por el bot ÃÂ¢ÃÂÃÂ eco prevention
 
   // Refs para evitar stale closures en polling y ping
   const statusRef        = useRef('disconnected') // siempre tiene el status actual
@@ -870,13 +870,13 @@ export default function WhatsAppBot() {
   const tip    = msg => { setToast(msg); setTimeout(() => setToast(''), 3000) }
   const scroll = ()  => setTimeout(() => { if (msgsRef.current) msgsRef.current.scrollTop = 9999 }, 100)
 
-  // Ocultar FloatingMenuDashboard mientras estamos en esta pÃÂ¡gina
+  // Ocultar FloatingMenuDashboard mientras estamos en esta pÃÂÃÂ¡gina
   useEffect(() => { // eslint-disable-line
     document.body.classList.add('wabotPage')
     return () => document.body.classList.remove('wabotPage')
   }, []) // eslint-disable-line
 
-  // Si localStorage tiene URL local (localhost/127.0.0.1), migrar al DEFAULT_BU pÃÂºblico
+  // Si localStorage tiene URL local (localhost/127.0.0.1), migrar al DEFAULT_BU pÃÂÃÂºblico
   useEffect(() => { // eslint-disable-line
     const stored = (() => { try { return localStorage.getItem('wa_backend_url') || '' } catch { return '' } })()
     const isLocal = !stored || stored.includes('localhost') || stored.includes('127.0.0.1')
@@ -887,7 +887,7 @@ export default function WhatsAppBot() {
     }
   }, []) // eslint-disable-line
 
-  // Mantener refs sincronizadas (evitan stale closures en callbacks asÃÂ­ncronos)
+  // Mantener refs sincronizadas (evitan stale closures en callbacks asÃÂÃÂ­ncronos)
   useEffect(() => { statusRef.current = status }, [status]) // eslint-disable-line
   useEffect(() => { activeRef.current = active  }, [active]) // eslint-disable-line
 
@@ -908,7 +908,7 @@ export default function WhatsAppBot() {
     return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVisible) }
   }, []) // eslint-disable-line
 
-  // Ã¢ÂÂÃ¢ÂÂ SSE real-time client Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ SSE real-time client ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   React.useEffect(() => {
     if (status !== 'connected') return
     let es = null, retryTimer = null
@@ -921,7 +921,7 @@ export default function WhatsAppBot() {
             if (d.type === 'chat_update') {
               setChats(prev => {
                 const idx = prev.findIndex(c => c.id === d.chatId)
-                if (idx === -1) { loadC(); loadIGChats().catch(() => {}); return prev }
+                if (idx === -1) { loadC(); return prev }
                 const next = [...prev]
                 next[idx] = { ...next[idx], lastMsg: d.lastMsg, unread: d.unread, _ts: d.lastMsgTime }
                 return next.sort((a,b) => (b._ts||0) - (a._ts||0))
@@ -930,7 +930,7 @@ export default function WhatsAppBot() {
             } else if (d.type === 'status') {
               const s = d.status === 'open' ? 'connected' : (d.status || 'disconnected')
               setStatus(s)
-              if (s === 'connected') loadC(); loadIGChats().catch(() => {})
+              if (s === 'connected') loadC()
             }
           } catch {}
         }
@@ -941,7 +941,7 @@ export default function WhatsAppBot() {
     return () => { if (es) { es.close(); es = null }; if (retryTimer) clearTimeout(retryTimer) }
   }, [status]) // eslint-disable-line
 
-  // Polling mensajes cuando hay chat activo Ã¢ÂÂ 1.5s, independiente del status (usa ref)
+  // Polling mensajes cuando hay chat activo ÃÂ¢ÃÂÃÂ 1.5s, independiente del status (usa ref)
   useEffect(() => { // eslint-disable-line
     if (!active?.id) return
     const chatId = active.id
@@ -958,11 +958,11 @@ export default function WhatsAppBot() {
     autoReplyingRef.current = false
     autoReplyGenRef.current += 1           // invalida cualquier respuesta en vuelo del chat anterior
     clearTimeout(autoReplyTimerRef.current) // cancela debounce pendiente del chat anterior
-    aiProcessedRef.current = new Set()     // limpia dedup Ã¢ÂÂ chat nuevo = pizarra en blanco
+    aiProcessedRef.current = new Set()     // limpia dedup ÃÂ¢ÃÂÃÂ chat nuevo = pizarra en blanco
     kwFiredRef.current     = new Set()     // limpia dedup de triggers de keyword
   }, [active?.id]) // eslint-disable-line
 
-  // Ã¢ÂÂÃ¢ÂÂ Auto-reply: detectar mensajes nuevos entrantes y responder automÃÂ¡ticamente Ã¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Auto-reply: detectar mensajes nuevos entrantes y responder automÃÂÃÂ¡ticamente ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   useEffect(() => { // eslint-disable-line
     if (!active || !msgs.length) return
     const incoming = msgs.filter(m => m.dir === 'r')
@@ -976,9 +976,9 @@ export default function WhatsAppBot() {
     const contentKey = `r_${(lastIn.txt || '').substring(0, 40)}`
     if (aiProcessedRef.current.has(contentKey)) return
 
-    // Ã¢ÂÂÃ¢ÂÂ ECO PREVENTION: ignorar mensajes que el bot enviÃÂ³ recientemente Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ ECO PREVENTION: ignorar mensajes que el bot enviÃÂÃÂ³ recientemente ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
     // El backend a veces refleja el mensaje saliente como mensaje entrante (eco de Baileys).
-    // Si el texto coincide con algo enviado en los ÃÂºltimos 60s, ignorar.
+    // Si el texto coincide con algo enviado en los ÃÂÃÂºltimos 60s, ignorar.
     if (lastIn.txt) {
       const incomingText = lastIn.txt.trim().toLowerCase()
       const isEcho = sentTextsRef.current.some(s => s.txt === incomingText)
@@ -996,7 +996,7 @@ export default function WhatsAppBot() {
     // Grace period de 4s al abrir el chat para no responder el historial
     if (Date.now() - chatOpenedAtRef.current < 4000) return
 
-    // Ã¢ÂÂÃ¢ÂÂ Disparadores de Palabra Clave (independientes de IA ON/OFF) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Disparadores de Palabra Clave (independientes de IA ON/OFF) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
     if (lastIn.txt && isTriggerActive(active.id)) {
       const msgLow = lastIn.txt.toLowerCase()
       const kwTriggers = triggers.filter(t => t.active && t.condition === 'keyword' && t.keyword && t.message)
@@ -1014,10 +1014,10 @@ export default function WhatsAppBot() {
       }
     }
 
-    // Verificar que IA estÃÂ© ON para este chat y haya API key
+    // Verificar que IA estÃÂÃÂ© ON para este chat y haya API key
     if (!isAiActive(active.id)) return
     if (!hasAiKey) return
-    // Si la IA ya estaba generando una respuesta Ã¢ÂÂ cancelarla (el cliente mandÃÂ³ algo nuevo)
+    // Si la IA ya estaba generando una respuesta ÃÂ¢ÃÂÃÂ cancelarla (el cliente mandÃÂÃÂ³ algo nuevo)
     if (autoReplyingRef.current) {
       autoReplyGenRef.current += 1
       autoReplyingRef.current = false
@@ -1027,43 +1027,43 @@ export default function WhatsAppBot() {
     if (lastIn.txt) autoTagOrder(active.id, lastIn.txt)
 
     // Debounce: respetar el botDelay configurado en Ajustes
-    // Lee directamente de localStorage Ã¢ÂÂ cap en 15s para evitar valores obsoletos altos
+    // Lee directamente de localStorage ÃÂ¢ÃÂÃÂ cap en 15s para evitar valores obsoletos altos
     const configDelay = Math.min(15, Math.max(0, parseInt(localStorage.getItem('wa_bot_delay') || '3') || 0))
-    // MÃÂ­nimo 400ms (natural feel) + debounce para esperar si el cliente sigue escribiendo
+    // MÃÂÃÂ­nimo 400ms (natural feel) + debounce para esperar si el cliente sigue escribiendo
     const totalDelay = configDelay * 1000 + 400
-    // Ã¢ÂÂ Ã¯Â¸Â Capturar chatId AHORA (antes del timeout) para evitar stale closure.
+    // ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Capturar chatId AHORA (antes del timeout) para evitar stale closure.
     // Si el usuario cambia de chat durante la espera, el chatId capturado ya no coincide
-    // con active.id al disparar Ã¢ÂÂ autoReplyToMsg aborta y NO responde en el chat incorrecto.
+    // con active.id al disparar ÃÂ¢ÃÂÃÂ autoReplyToMsg aborta y NO responde en el chat incorrecto.
     const capturedChatId = active.id
     clearTimeout(autoReplyTimerRef.current)
     autoReplyTimerRef.current = setTimeout(() => autoReplyToMsg(lastIn, capturedChatId), totalDelay)
   }, [msgs]) // eslint-disable-line
 
-  // Ã¢ÂÂÃ¢ÂÂ Persistir etiquetas cuando el usuario las cambia manualmente Ã¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Persistir etiquetas cuando el usuario las cambia manualmente ÃÂ¢ÃÂÃÂ
   useEffect(() => { // eslint-disable-line
     if (active?.id) saveContactTagsMap(active.id, contactTags)
   }, [contactTags]) // eslint-disable-line
 
-  // Restaurar chat activo y pÃÂ¡gina desde localStorage cuando se conecta
+  // Restaurar chat activo y pÃÂÃÂ¡gina desde localStorage cuando se conecta
   useEffect(() => { // eslint-disable-line
     if (status !== 'connected') return
     const saved = activeGet()
     if (saved && !active) {
       setActive(saved)
-      setPage('chat')  // volver siempre al chat, no a la secciÃÂ³n anterior
+      setPage('chat')  // volver siempre al chat, no a la secciÃÂÃÂ³n anterior
       try { localStorage.setItem('wb_current_page', 'chat') } catch {}
       loadM(saved.id, false)
     }
   }, [status]) // eslint-disable-line
 
-  // Polling QR agresivo cuando estamos en pÃÂ¡gina conexion esperando QR
+  // Polling QR agresivo cuando estamos en pÃÂÃÂ¡gina conexion esperando QR
   useEffect(() => { // eslint-disable-line
     if (page !== 'conexion' || (status !== 'connecting' && status !== 'qr')) return
     const t = setInterval(loadQR, 2500)
     return () => clearInterval(t)
   }, [page, status]) // eslint-disable-line
 
-  // Redibujar QR en canvas cuando cambia la URL, la pÃÂ¡gina o el status
+  // Redibujar QR en canvas cuando cambia la URL, la pÃÂÃÂ¡gina o el status
   useEffect(() => {
     if (page !== 'conexion') return
     setTimeout(() => {
@@ -1161,7 +1161,7 @@ export default function WhatsAppBot() {
       recorder.start()
       mediaRecorderRef.current = recorder
       setIsRecording(true)
-    } catch { tip('Ã¢ÂÂ No se pudo acceder al micrÃÂ³fono. Verifica permisos del navegador.') }
+    } catch { tip('ÃÂ¢ÃÂÃÂ No se pudo acceder al micrÃÂÃÂ³fono. Verifica permisos del navegador.') }
   }
 
   function stopRecording() {
@@ -1185,27 +1185,27 @@ export default function WhatsAppBot() {
     scroll()
   }
 
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ API Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // Ã¢ÂÂ  Ã°ÂÂÂ QR CRÃÂTICO Ã¢ÂÂ NO MODIFICAR ESTAS FUNCIONES              Ã¢ÂÂ
-  // Ã¢ÂÂ  ping ÃÂ· loadQR ÃÂ· drawQR ÃÂ· drawQRWaiting ÃÂ· regenerateQR     Ã¢ÂÂ
-  // Ã¢ÂÂ  Cualquier cambio en estas 5 funciones puede romper el QR  Ã¢ÂÂ
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ API ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂ  ÃÂ°ÃÂÃÂÃÂ QR CRÃÂÃÂTICO ÃÂ¢ÃÂÃÂ NO MODIFICAR ESTAS FUNCIONES              ÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂ  ping ÃÂÃÂ· loadQR ÃÂÃÂ· drawQR ÃÂÃÂ· drawQRWaiting ÃÂÃÂ· regenerateQR     ÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂ  Cualquier cambio en estas 5 funciones puede romper el QR  ÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
       setServerOnline(prev => {
-        // Primera vez online Ã¢ÂÂ sincronizar settings al backend en background
+        // Primera vez online ÃÂ¢ÃÂÃÂ sincronizar settings al backend en background
         if (prev !== true) setTimeout(() => syncSettingsToBackend({ silent: true }), 1200)
         return true
       })
-      // IMPORTANTE: evaluar correctamente; sin parÃÂ©ntesis la precedencia es incorrecta
+      // IMPORTANTE: evaluar correctamente; sin parÃÂÃÂ©ntesis la precedencia es incorrecta
       const s = (d.ok === false) ? 'disconnected' : (d.status === 'qr' ? 'connecting' : (d.status || 'disconnected'))
       setStatus(s)
       setPhone(d.phone || '')
       if (s === 'connected') {
-        try { await loadC(); loadIGChats() } catch {}
-        // TambiÃÂ©n refrescar mensajes del chat activo para no perder mensajes nuevos
+        try { await loadC() } catch {}
+        // TambiÃÂÃÂ©n refrescar mensajes del chat activo para no perder mensajes nuevos
         if (activeRef.current?.id) loadM(activeRef.current.id, false).catch(() => {})
         setTimeout(drawQRConnected, 80)
       }
@@ -1251,13 +1251,13 @@ export default function WhatsAppBot() {
       ctx.fillStyle='#f9fafb'; ctx.fillRect(x+6,y+6,32,32)
       ctx.fillStyle='#d1d5db'; ctx.fillRect(x+11,y+11,22,22)
     }
-    // PatrÃÂ³n de puntos central
+    // PatrÃÂÃÂ³n de puntos central
     ctx.fillStyle = '#e5e7eb'
     for (let r=0;r<6;r++) for (let c=0;c<6;c++)
       if ((r+c)%2===0) ctx.fillRect(74+c*9, 74+r*9, 7, 7)
   }
 
-  // Canvas de ÃÂ©xito: QR skeleton en verde con checkmark overlay cuando estÃÂ¡ conectado
+  // Canvas de ÃÂÃÂ©xito: QR skeleton en verde con checkmark overlay cuando estÃÂÃÂ¡ conectado
   function drawQRConnected() {
     const canvas = qrRef.current
     if (!canvas) return
@@ -1272,13 +1272,13 @@ export default function WhatsAppBot() {
       ctx.fillStyle = '#f0fdf4'; ctx.fillRect(x+6, y+6, 32, 32)
       ctx.fillStyle = '#86efac'; ctx.fillRect(x+11, y+11, 22, 22)
     }
-    // PatrÃÂ³n central de puntos verdes
+    // PatrÃÂÃÂ³n central de puntos verdes
     ctx.fillStyle = '#86efac'
     for (let r=0;r<6;r++) for (let c=0;c<6;c++)
       if ((r+c)%2===0) ctx.fillRect(74+c*9, 74+r*9, 7, 7)
     // Overlay verde semitransparente
     ctx.fillStyle = 'rgba(22, 163, 74, 0.78)'; ctx.fillRect(0, 0, s, s)
-    // CÃÂ­rculo blanco central
+    // CÃÂÃÂ­rculo blanco central
     ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.beginPath()
     ctx.arc(s/2, s/2 - 10, 48, 0, Math.PI * 2); ctx.fill()
     // Checkmark grande
@@ -1289,7 +1289,7 @@ export default function WhatsAppBot() {
     // Texto "Conectado"
     ctx.fillStyle = '#fff'; ctx.font = 'bold 13px system-ui,sans-serif'
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
-    ctx.fillText('Ã¢ÂÂ Conectado', s/2, s - 14)
+    ctx.fillText('ÃÂ¢ÃÂÃÂ Conectado', s/2, s - 14)
   }
 
   async function loadC() {
@@ -1298,12 +1298,12 @@ export default function WhatsAppBot() {
       if (!r.ok) { console.warn('[WA][loadC] HTTP', r.status); return }
       const d = await r.json()
       const serverChats = (d.chats || []).map(normChat)
-      // Ã¢ÂÂÃ¢ÂÂ Merge: combinar server + localStorage master list Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Merge: combinar server + localStorage master list ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
       const cached = chatsMasterGet()
       const map = new Map()
       // Primero cargar cached (para no perder chats antiguos)
       cached.forEach(c => { if (c.id) map.set(c.id, c) })
-      // Server data sobreescribe (tiene info mÃÂ¡s reciente)
+      // Server data sobreescribe (tiene info mÃÂÃÂ¡s reciente)
       serverChats.forEach(c => {
         const old = map.get(c.id)
         map.set(c.id, {
@@ -1342,7 +1342,7 @@ export default function WhatsAppBot() {
     }
   }
 
-  // ââ Instagram chats from Supabase ââââââââââââââââââââââââââ
+  // Ã¢ÂÂÃ¢ÂÂ Instagram chats from Supabase Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
   async function loadIGChats() {
     try {
       var SUPABASE_FN = 'https://lvmeswlvszsmvgaasazs.supabase.co/functions/v1/social-api';
@@ -1384,7 +1384,7 @@ export default function WhatsAppBot() {
     } catch (e) { console.error('[IG] loadIGChats error:', e); }
   }
 
-  // ── Load Instagram chats on mount (independent of WhatsApp) ──
+  // ââ Load Instagram chats on mount (independent of WhatsApp) ââ
   useEffect(function() {
     loadIGChats();
     var igInterval = setInterval(function() { loadIGChats(); }, 30000);
@@ -1392,7 +1392,7 @@ export default function WhatsAppBot() {
   }, []);
 
   async function loadM(chatId, sc = true) {
-    // Mostrar cachÃÂ© inmediatamente
+    // Mostrar cachÃÂÃÂ© inmediatamente
     const cached = cacheGet(chatId)
     if (cached.length) { setMsgs(cached); if (sc) scroll() }
     try {
@@ -1407,7 +1407,7 @@ export default function WhatsAppBot() {
   }
 
   async function openChat(c) {
-    chatOpenedAtRef.current = Date.now() // marca tiempo de apertura Ã¢ÂÂ grace period anti-historial
+    chatOpenedAtRef.current = Date.now() // marca tiempo de apertura ÃÂ¢ÃÂÃÂ grace period anti-historial
     aiProcessedRef.current.clear()        // limpiar procesados del chat anterior
     setActive(c); setShowContact(false); setShowAnalysisPanel(false)
     activePut(c)
@@ -1445,14 +1445,14 @@ export default function WhatsAppBot() {
       trackSentText(inp)
       setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
       setInp(''); scroll()
-    } catch { tip('Ã¢ÂÂ Ã¯Â¸Â Error al enviar') }
+    } catch { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error al enviar') }
     setSending(false)
   }
 
   async function sendFile(file, type) {
     if (!file || !active || status !== 'connected') return
     setSending(true); setAttachOpen(false)
-    tip('Ã°ÂÂÂ¤ Enviando archivo...')
+    tip('ÃÂ°ÃÂÃÂÃÂ¤ Enviando archivo...')
     try {
       const fd = new FormData()
       fd.append('file', file)
@@ -1466,18 +1466,18 @@ export default function WhatsAppBot() {
         const ft = type || (mime.startsWith('image') ? 'image' : mime.startsWith('audio') ? 'audio' : mime.startsWith('video') ? 'video' : 'document')
         const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: '', time: t, type: ft, mediaUrl, mimeType: mime, fileName: file.name, status: 'sent' }
         setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
-        scroll(); tip('Ã¢ÂÂ Archivo enviado')
-      } else { tip('Ã¢ÂÂ Ã¯Â¸Â Error: ' + (d.error || 'no se pudo enviar')) }
-    } catch { tip('Ã¢ÂÂ Ã¯Â¸Â Error al enviar archivo') }
+        scroll(); tip('ÃÂ¢ÃÂÃÂ Archivo enviado')
+      } else { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error: ' + (d.error || 'no se pudo enviar')) }
+    } catch { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error al enviar archivo') }
     setSending(false)
   }
 
   async function regenerateQR() {
     setQrDataUrl(null); setStatus('connecting')
-    // drawQRWaiting despuÃÂ©s de que React renderice el canvas (si no estaba visible)
+    // drawQRWaiting despuÃÂÃÂ©s de que React renderice el canvas (si no estaba visible)
     setTimeout(drawQRWaiting, 80)
     try { await fetch(BU + '/logout', { method: 'POST', headers: H }) } catch {}
-    tip('Ã°ÂÂÂ Generando QR...')
+    tip('ÃÂ°ÃÂÃÂÃÂ Generando QR...')
     setTimeout(loadQR, 2000)
     setTimeout(loadQR, 4500)
     setTimeout(loadQR, 7000)
@@ -1486,18 +1486,18 @@ export default function WhatsAppBot() {
   async function disconnectWA() {
     try { await fetch(BU + '/logout', { method: 'POST', headers: H }) } catch {}
     setStatus('disconnected'); setPhone(''); setChats([]); setActive(null); setQrDataUrl(null)
-    tip('Ã°ÂÂÂ WhatsApp desconectado')
+    tip('ÃÂ°ÃÂÃÂÃÂ WhatsApp desconectado')
   }
 
   async function checkN8N() {
-    setN8nOk(null); tip('Ã°ÂÂÂ Verificando n8n...')
+    setN8nOk(null); tip('ÃÂ°ÃÂÃÂÃÂ Verificando n8n...')
     try {
       await fetch('https://oasiss.app.n8n.cloud', { mode: 'no-cors' })
-      setN8nOk(true); tip('Ã¢ÂÂ n8n Cloud operativo')
-    } catch { setN8nOk(false); tip('Ã¢ÂÂ Ã¯Â¸Â n8n no responde') }
+      setN8nOk(true); tip('ÃÂ¢ÃÂÃÂ n8n Cloud operativo')
+    } catch { setN8nOk(false); tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ n8n no responde') }
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ IA / ChatGPT helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ IA / ChatGPT helpers ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function saveAiKey(v)     {
     setOpenaiKey(v)
     try { localStorage.setItem('wa_openai_key', v) } catch {}
@@ -1507,7 +1507,7 @@ export default function WhatsAppBot() {
   function saveGeminiKey(v) { setGeminiKey(v);   try { localStorage.setItem('wa_gemini_key', v) } catch {} }
   function saveAiPrompt(v)  { setAiPrompt(v);    try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
 
-  // Ã¢ÂÂÃ¢ÂÂ Llamada IA universal (OpenAI o Gemini) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Llamada IA universal (OpenAI o Gemini) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   async function callAI({ messages, maxTokens = 400 }) {
     // Preferir OpenAI si hay key, fallback a Gemini
     if (openaiKey) {
@@ -1521,7 +1521,7 @@ export default function WhatsAppBot() {
       return data.choices?.[0]?.message?.content?.trim() || ''
     }
     if (geminiKey) {
-      // Convertir formato OpenAI Ã¢ÂÂ Gemini
+      // Convertir formato OpenAI ÃÂ¢ÃÂÃÂ Gemini
       const systemMsg = messages.find(m => m.role === 'system')
       const userMsgs  = messages.filter(m => m.role !== 'system')
       const parts = []
@@ -1549,7 +1549,7 @@ export default function WhatsAppBot() {
     setAiEnabled(prev => {
       const next = !prev
       try { localStorage.setItem('wa_ai_enabled', JSON.stringify(next)) } catch {}
-      tip(next ? 'Ã°ÂÂ¤Â IA activada Ã¢ÂÂ respuestas automÃÂ¡ticas ON' : 'Ã°ÂÂ¤Â IA desactivada')
+      tip(next ? 'ÃÂ°ÃÂÃÂ¤ÃÂ IA activada ÃÂ¢ÃÂÃÂ respuestas automÃÂÃÂ¡ticas ON' : 'ÃÂ°ÃÂÃÂ¤ÃÂ IA desactivada')
       // Sincronizar al backend para que el servidor sepa el estado
       setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
       return next
@@ -1567,18 +1567,18 @@ export default function WhatsAppBot() {
   function resetAllAiContacts() {
     setAiContactMap({})
     try { localStorage.setItem('wa_ai_contact_map', '{}') } catch {}
-    tip('Ã°ÂÂÂ« IA desactivada en todos los contactos')
+    tip('ÃÂ°ÃÂÃÂÃÂ« IA desactivada en todos los contactos')
   }
-  // IA activa SOLO si hay activaciÃÂ³n explÃÂ­cita para este contacto (true en aiContactMap)
-  // Y ademÃÂ¡s el global aiEnabled estÃÂ¡ ON (interruptor maestro en Ajustes).
-  // Esto evita que todos los chats respondan automÃÂ¡ticamente Ã¢ÂÂ cada contacto debe
-  // ser activado individualmente con el botÃÂ³n "Ã°ÂÂ¤Â IA OFF Ã¢ÂÂ IA ON" del header del chat.
+  // IA activa SOLO si hay activaciÃÂÃÂ³n explÃÂÃÂ­cita para este contacto (true en aiContactMap)
+  // Y ademÃÂÃÂ¡s el global aiEnabled estÃÂÃÂ¡ ON (interruptor maestro en Ajustes).
+  // Esto evita que todos los chats respondan automÃÂÃÂ¡ticamente ÃÂ¢ÃÂÃÂ cada contacto debe
+  // ser activado individualmente con el botÃÂÃÂ³n "ÃÂ°ÃÂÃÂ¤ÃÂ IA OFF ÃÂ¢ÃÂÃÂ IA ON" del header del chat.
   function isAiActive(chatId) {
-    if (!aiEnabled) return false           // interruptor maestro apagado Ã¢ÂÂ nada responde
+    if (!aiEnabled) return false           // interruptor maestro apagado ÃÂ¢ÃÂÃÂ nada responde
     return true   // modo Auto: IA activa para todos los contactos cuando aiEnabled es true
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Eco prevention: registra texto enviado para que el bot no responda su propio eco Ã¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Eco prevention: registra texto enviado para que el bot no responda su propio eco ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function trackSentText(text) {
     if (!text) return
     const now = Date.now()
@@ -1589,12 +1589,12 @@ export default function WhatsAppBot() {
     ].slice(-30)
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Disparadores por contacto Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // Por defecto los triggers estÃÂ¡n INACTIVOS Ã¢ÂÂ el usuario activa manualmente por contacto.
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Disparadores por contacto ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+  // Por defecto los triggers estÃÂÃÂ¡n INACTIVOS ÃÂ¢ÃÂÃÂ el usuario activa manualmente por contacto.
   function isTriggerActive(chatId) {
     if (!chatId) return false
     const override = triggerContactMap[chatId]
-    return override === true   // DEBE ser activaciÃÂ³n explÃÂ­cita Ã¢ÂÂ default: OFF
+    return override === true   // DEBE ser activaciÃÂÃÂ³n explÃÂÃÂ­cita ÃÂ¢ÃÂÃÂ default: OFF
   }
   function toggleTriggerContact(chatId) {
     if (!chatId) return
@@ -1603,11 +1603,11 @@ export default function WhatsAppBot() {
       try { localStorage.setItem('wa_trigger_contact_map', JSON.stringify(updated)) } catch {}
       return updated
     })
-    tip(isTriggerActive(chatId) ? 'Ã¢ÂÂ¡ Disparadores pausados para este contacto' : 'Ã¢ÂÂ¡ Disparadores reactivados para este contacto')
+    tip(isTriggerActive(chatId) ? 'ÃÂ¢ÃÂÃÂ¡ Disparadores pausados para este contacto' : 'ÃÂ¢ÃÂÃÂ¡ Disparadores reactivados para este contacto')
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Auto-reply automÃÂ¡tico cuando llega un mensaje nuevo y la IA estÃÂ¡ ON Ã¢ÂÂÃ¢ÂÂ
-  // Ã¢ÂÂÃ¢ÂÂ Enviar mensaje de disparador por palabra clave Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Auto-reply automÃÂÃÂ¡tico cuando llega un mensaje nuevo y la IA estÃÂÃÂ¡ ON ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Enviar mensaje de disparador por palabra clave ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   async function sendTriggerKeywordMsg(trigger, targetChatId) {
     if (!targetChatId) return
     const clientName = chats.find(c => c.id === targetChatId)?.name || targetChatId.split('@')[0] || 'Cliente'
@@ -1631,21 +1631,21 @@ export default function WhatsAppBot() {
         setMsgs(p => { const next = [...p, newMsg]; cachePut(targetChatId, next); return next })
         scroll()
       }
-      tip(`Ã¢ÂÂ¡ Disparador "${trigger.name}" enviado`)
+      tip(`ÃÂ¢ÃÂÃÂ¡ Disparador "${trigger.name}" enviado`)
       await fetch(`${BU}/chats/${encodeURIComponent(targetChatId)}/presence`, {
         method: 'POST', headers: HJ, body: JSON.stringify({ action: 'paused' }),
       }).catch(() => {})
-    } catch { tip('Ã¢ÂÂ Ã¯Â¸Â Error enviando disparador de palabra clave') }
+    } catch { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error enviando disparador de palabra clave') }
   }
 
   async function autoReplyToMsg(lastClientMsg, targetChatId) {
     if (!hasAiKey || !active || autoReplyingRef.current) return
-    // Si el usuario cambiÃÂ³ de chat durante el delay del debounce Ã¢ÂÂ abortar.
+    // Si el usuario cambiÃÂÃÂ³ de chat durante el delay del debounce ÃÂ¢ÃÂÃÂ abortar.
     // targetChatId fue capturado al momento de programar el timeout (antes del delay).
     if (targetChatId && active.id !== targetChatId) return
     autoReplyingRef.current = true
     const chatId = targetChatId || active.id
-    const myGen = ++autoReplyGenRef.current  // capturar generaciÃÂ³n Ã¢ÂÂ si cambia, abortar
+    const myGen = ++autoReplyGenRef.current  // capturar generaciÃÂÃÂ³n ÃÂ¢ÃÂÃÂ si cambia, abortar
     setAiTyping(true)
     try {
       // Leer siempre de localStorage para evitar closures stale con el entrenamiento
@@ -1658,7 +1658,7 @@ export default function WhatsAppBot() {
       }))
       // Perfil del cliente si existe
       const profile = clientAnalysis[chatId]
-      const profileCtx = profile ? `\nPERFIL DEL CLIENTE ACTUAL:\nÃ¢ÂÂ¢ Estilo: ${profile.estilo} | Tono: ${profile.tono} | IntenciÃÂ³n de compra: ${profile.intencion}\nÃ¢ÂÂ¢ Intereses: ${(profile.intereses||[]).join(', ')}\nÃ¢ÂÂ¢ ÃÂngulo recomendado: ${profile.angulo || 'N/A'}\n` : ''
+      const profileCtx = profile ? `\nPERFIL DEL CLIENTE ACTUAL:\nÃÂ¢ÃÂÃÂ¢ Estilo: ${profile.estilo} | Tono: ${profile.tono} | IntenciÃÂÃÂ³n de compra: ${profile.intencion}\nÃÂ¢ÃÂÃÂ¢ Intereses: ${(profile.intereses||[]).join(', ')}\nÃÂ¢ÃÂÃÂ¢ ÃÂÃÂngulo recomendado: ${profile.angulo || 'N/A'}\n` : ''
 
       // Leer preferencias de estilo desde localStorage (evita stale closures)
       const lsMsgMode   = (function(){ try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })()
@@ -1667,90 +1667,90 @@ export default function WhatsAppBot() {
 
       // Bloque: formato de texto
       const stylesBlock = lsUseStyles
-        ? `Ã¢ÂÂ¢ FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ Ã¢ÂÂ ÃÂºsalos en precios, nombres de combos y beneficios clave\nÃ¢ÂÂ¢ Ejemplo: *Combo Detox* Ã¢ÂÂ *$66.000* | _envÃÂ­o gratis_ hoy\nÃ¢ÂÂ¢ NUNCA uses **doble asterisco** Ã¢ÂÂ solo *uno a cada lado*`
-        : `Ã¢ÂÂ¢ Texto plano ÃÂNICAMENTE Ã¢ÂÂ sin asteriscos, guiones bajos ni tildes de formato\nÃ¢ÂÂ¢ PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`
+        ? `ÃÂ¢ÃÂÃÂ¢ FORMATO WhatsApp: *negrita* (un asterisco cada lado), _cursiva_, ~tachado~ ÃÂ¢ÃÂÃÂ ÃÂÃÂºsalos en precios, nombres de combos y beneficios clave\nÃÂ¢ÃÂÃÂ¢ Ejemplo: *Combo Detox* ÃÂ¢ÃÂÃÂ *$66.000* | _envÃÂÃÂ­o gratis_ hoy\nÃÂ¢ÃÂÃÂ¢ NUNCA uses **doble asterisco** ÃÂ¢ÃÂÃÂ solo *uno a cada lado*`
+        : `ÃÂ¢ÃÂÃÂ¢ Texto plano ÃÂÃÂNICAMENTE ÃÂ¢ÃÂÃÂ sin asteriscos, guiones bajos ni tildes de formato\nÃÂ¢ÃÂÃÂ¢ PROHIBIDO usar *negritas*, _cursiva_ o ~tachado~`
 
       // Bloque: emojis
       const emojisBlock = lsUseEmojis
-        ? `Ã¢ÂÂ¢ Emojis: mÃÂ¡x 2 por mensaje, ÃÂºsalos como viÃÂ±etas o ÃÂ©nfasis estratÃÂ©gico`
-        : `Ã¢ÂÂ¢ PROHIBIDO usar emojis Ã¢ÂÂ responde solo con texto plano`
+        ? `ÃÂ¢ÃÂÃÂ¢ Emojis: mÃÂÃÂ¡x 2 por mensaje, ÃÂÃÂºsalos como viÃÂÃÂ±etas o ÃÂÃÂ©nfasis estratÃÂÃÂ©gico`
+        : `ÃÂ¢ÃÂÃÂ¢ PROHIBIDO usar emojis ÃÂ¢ÃÂÃÂ responde solo con texto plano`
 
-      // Bloque: envÃÂ­o por partes o completo
+      // Bloque: envÃÂÃÂ­o por partes o completo
       const multiMsgBlock = lsMsgMode === 'partes'
-        ? `ENVÃÂO POR PARTES (MUY IMPORTANTE):
+        ? `ENVÃÂÃÂO POR PARTES (MUY IMPORTANTE):
 Divide tu respuesta en 2 a 5 mensajes cortos separados por el separador EXACTO: ||||
 Reglas para cada parte:
-Ã¢ÂÂ¢ Parte 1 Ã¢ÂÂ gancho o contexto inicial Ã¢ÂÂ abre con intriga o dato interesante, NO reveles todo
-Ã¢ÂÂ¢ Partes intermedias Ã¢ÂÂ desarrolla punto por punto, cada una termina dejando curiosidad o una mini-pregunta
-Ã¢ÂÂ¢ ÃÂltima parte Ã¢ÂÂ pregunta de cierre de venta ("ÃÂ¿CuÃÂ¡l prefieres?" / "ÃÂ¿Te lo enviamos hoy?" / "ÃÂ¿Arrancamos?")
-Estructura inteligente por tipo de situaciÃÂ³n:
-  - Si el cliente pregunta por productos: parte 1 = beneficio + hook | parte 2 = opciÃÂ³n principal | parte 3 = opciÃÂ³n alternativa | ÃÂºltima = pregunta de decisiÃÂ³n
-  - Si el cliente muestra objeciÃÂ³n: parte 1 = empatÃÂ­a | parte 2 = reencuadre de valor | ÃÂºltima = cierre con urgencia o elecciÃÂ³n
-  - Si el cliente ya quiere comprar: mÃÂ¡x 2 partes Ã¢ÂÂ confirma + cierra directo
+ÃÂ¢ÃÂÃÂ¢ Parte 1 ÃÂ¢ÃÂÃÂ gancho o contexto inicial ÃÂ¢ÃÂÃÂ abre con intriga o dato interesante, NO reveles todo
+ÃÂ¢ÃÂÃÂ¢ Partes intermedias ÃÂ¢ÃÂÃÂ desarrolla punto por punto, cada una termina dejando curiosidad o una mini-pregunta
+ÃÂ¢ÃÂÃÂ¢ ÃÂÃÂltima parte ÃÂ¢ÃÂÃÂ pregunta de cierre de venta ("ÃÂÃÂ¿CuÃÂÃÂ¡l prefieres?" / "ÃÂÃÂ¿Te lo enviamos hoy?" / "ÃÂÃÂ¿Arrancamos?")
+Estructura inteligente por tipo de situaciÃÂÃÂ³n:
+  - Si el cliente pregunta por productos: parte 1 = beneficio + hook | parte 2 = opciÃÂÃÂ³n principal | parte 3 = opciÃÂÃÂ³n alternativa | ÃÂÃÂºltima = pregunta de decisiÃÂÃÂ³n
+  - Si el cliente muestra objeciÃÂÃÂ³n: parte 1 = empatÃÂÃÂ­a | parte 2 = reencuadre de valor | ÃÂÃÂºltima = cierre con urgencia o elecciÃÂÃÂ³n
+  - Si el cliente ya quiere comprar: mÃÂÃÂ¡x 2 partes ÃÂ¢ÃÂÃÂ confirma + cierra directo
 Ejemplo correcto:
-Tenemos varias opciones que te pueden funcionar${lsUseEmojis ? ' Ã°ÂÂÂ¿' : ''}
+Tenemos varias opciones que te pueden funcionar${lsUseEmojis ? ' ÃÂ°ÃÂÃÂÃÂ¿' : ''}
 ||||
-${lsUseStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} Ã¢ÂÂ ideal para piel sensible${lsUseEmojis ? ' Ã¢ÂÂ¨' : ''} Ã¢ÂÂ ${lsUseStyles ? '*$66.000*' : '$66.000'}
+${lsUseStyles ? '*Combo Avena y Arroz*' : 'Combo Avena y Arroz'} ÃÂ¢ÃÂÃÂ ideal para piel sensible${lsUseEmojis ? ' ÃÂ¢ÃÂÃÂ¨' : ''} ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$66.000*' : '$66.000'}
 ||||
-${lsUseStyles ? '*Combo CÃÂºrcuma*' : 'Combo CÃÂºrcuma'} Ã¢ÂÂ manchas y cicatrices${lsUseEmojis ? ' Ã°ÂÂÂ»' : ''} Ã¢ÂÂ ${lsUseStyles ? '*$66.000*' : '$66.000'}
+${lsUseStyles ? '*Combo CÃÂÃÂºrcuma*' : 'Combo CÃÂÃÂºrcuma'} ÃÂ¢ÃÂÃÂ manchas y cicatrices${lsUseEmojis ? ' ÃÂ°ÃÂÃÂÃÂ»' : ''} ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$66.000*' : '$66.000'}
 ||||
-ÃÂ¿CuÃÂ¡l va mÃÂ¡s con lo que necesitas${lsUseEmojis ? ' Ã°ÂÂÂ' : '?'}`
-        : `ENVÃÂO COMPLETO:
-Responde en UN SOLO MENSAJE bien estructurado (mÃÂ¡x 6 lÃÂ­neas).
-NO uses el separador |||| Ã¢ÂÂ todo en un bloque.
-Organiza bien el texto con saltos de lÃÂ­nea para que sea fÃÂ¡cil de leer.`
+ÃÂÃÂ¿CuÃÂÃÂ¡l va mÃÂÃÂ¡s con lo que necesitas${lsUseEmojis ? ' ÃÂ°ÃÂÃÂÃÂ' : '?'}`
+        : `ENVÃÂÃÂO COMPLETO:
+Responde en UN SOLO MENSAJE bien estructurado (mÃÂÃÂ¡x 6 lÃÂÃÂ­neas).
+NO uses el separador |||| ÃÂ¢ÃÂÃÂ todo en un bloque.
+Organiza bien el texto con saltos de lÃÂÃÂ­nea para que sea fÃÂÃÂ¡cil de leer.`
 
-      // Ã¢ÂÂÃ¢ÂÂ EMBUDO DE VENTAS PROBADO (extraÃÂ­do de cierres reales de SellerChat / SÃÂ¡nate)
-      const salesFunnelBlock = `EMBUDO DE VENTAS PROBADO Ã¢ÂÂ SIGUE ESTE ORDEN EXACTO:
-PASO 1 Ã¢ÂÂ BIENVENIDA: Recibe calurosamente. Si viene de anuncio, celebra su llegada con entusiasmo.
-PASO 2 Ã¢ÂÂ DIAGNÃÂSTICO (OBLIGATORIO antes de dar precios): Pregunta "ÃÂ¿Lo buscas para acnÃÂ©, manchas, piel seca o zonas ÃÂ­ntimas/axilas?" Ã¢ÂÂ adapta tu recomendaciÃÂ³n a su problema real.
-PASO 3 Ã¢ÂÂ PRESENTACIÃÂN: Recomienda el combo exacto para su problema. Muestra precio${lsUseStyles ? ' con *negrita*' : ''} ANTES / HOY. Menciona el obsequio ${lsUseEmojis ? 'Ã°ÂÂÂ' : 'especial'}.
-PASO 4 Ã¢ÂÂ MICRO-COMPROMISO (elecciÃÂ³n forzada Ã¢ÂÂ OBLIGATORIO): "ÃÂ¿CuÃÂ¡l te llevas hoy, el${lsUseStyles ? ' *Combo 1*' : ' Combo 1'} o el${lsUseStyles ? ' *Combo 5*' : ' Combo 5'}? Ã°ÂÂÂ" Ã¢ÂÂ NUNCA pregunta abierta al cierre.
-PASO 5 Ã¢ÂÂ DATOS + CONFIRMACIÃÂN: Cuando el cliente elija: "ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨ Para confirmar tu pedido envÃÂ­ame: 1Ã¯Â¸ÂÃ¢ÂÂ£ Nombre y Apellido / Ã°ÂÂÂ± TelÃÂ©fono / Ã°ÂÂÂ Ciudad y Departamento / Ã°ÂÂÂ  DirecciÃÂ³n exacta / Ã°ÂÂÂ¦ Barrio"
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ EMBUDO DE VENTAS PROBADO (extraÃÂÃÂ­do de cierres reales de SellerChat / SÃÂÃÂ¡nate)
+      const salesFunnelBlock = `EMBUDO DE VENTAS PROBADO ÃÂ¢ÃÂÃÂ SIGUE ESTE ORDEN EXACTO:
+PASO 1 ÃÂ¢ÃÂÃÂ BIENVENIDA: Recibe calurosamente. Si viene de anuncio, celebra su llegada con entusiasmo.
+PASO 2 ÃÂ¢ÃÂÃÂ DIAGNÃÂÃÂSTICO (OBLIGATORIO antes de dar precios): Pregunta "ÃÂÃÂ¿Lo buscas para acnÃÂÃÂ©, manchas, piel seca o zonas ÃÂÃÂ­ntimas/axilas?" ÃÂ¢ÃÂÃÂ adapta tu recomendaciÃÂÃÂ³n a su problema real.
+PASO 3 ÃÂ¢ÃÂÃÂ PRESENTACIÃÂÃÂN: Recomienda el combo exacto para su problema. Muestra precio${lsUseStyles ? ' con *negrita*' : ''} ANTES / HOY. Menciona el obsequio ${lsUseEmojis ? 'ÃÂ°ÃÂÃÂÃÂ' : 'especial'}.
+PASO 4 ÃÂ¢ÃÂÃÂ MICRO-COMPROMISO (elecciÃÂÃÂ³n forzada ÃÂ¢ÃÂÃÂ OBLIGATORIO): "ÃÂÃÂ¿CuÃÂÃÂ¡l te llevas hoy, el${lsUseStyles ? ' *Combo 1*' : ' Combo 1'} o el${lsUseStyles ? ' *Combo 5*' : ' Combo 5'}? ÃÂ°ÃÂÃÂÃÂ" ÃÂ¢ÃÂÃÂ NUNCA pregunta abierta al cierre.
+PASO 5 ÃÂ¢ÃÂÃÂ DATOS + CONFIRMACIÃÂÃÂN: Cuando el cliente elija: "ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨ Para confirmar tu pedido envÃÂÃÂ­ame: 1ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Nombre y Apellido / ÃÂ°ÃÂÃÂÃÂ± TelÃÂÃÂ©fono / ÃÂ°ÃÂÃÂÃÂ Ciudad y Departamento / ÃÂ°ÃÂÃÂÃÂ  DirecciÃÂÃÂ³n exacta / ÃÂ°ÃÂÃÂÃÂ¦ Barrio"
 
-CATÃÂLOGO SÃÂNATE${lsUseStyles ? ' (escribe precios y nombres de combos siempre en *negrita*)' : ''}:
-Ã¢ÂÂ¢ ${lsUseStyles ? '*Combo 1*' : 'Combo 1'} Ã¢ÂÂ Tripack Mixto (3 Jabones: CalÃÂ©ndula+CÃÂºrcuma+Avena&Arroz) Ã¢ÂÂ ${lsUseStyles ? '*$59.000*' : '$59.000'} (antes $105.000 Ã¢ÂÂ ahorras $46.000)
-Ã¢ÂÂ¢ ${lsUseStyles ? '*Combo 2*' : 'Combo 2'} Ã¢ÂÂ 3 Jabones a elecciÃÂ³n (CÃÂºrcuma, Avena&Arroz o CalÃÂ©ndula) Ã¢ÂÂ ${lsUseStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
-Ã¢ÂÂ¢ ${lsUseStyles ? '*Combo 3*' : 'Combo 3'} Ã¢ÂÂ 2 Jabones + Sebo de Res 10g Ã¢ÂÂ ${lsUseStyles ? '*$63.000*' : '$63.000'} (antes $79.000)
-Ã¢ÂÂ¢ ${lsUseStyles ? '*Combo 4*' : 'Combo 4'} Ã¢ÂÂ Secreto JaponÃÂ©s: Sebo grande + 2 Jabones (CÃÂºrcuma+Avena) + Exfoliante Ã¢ÂÂ ${lsUseStyles ? '*$99.000*' : '$99.000'} (antes $119.000)
-Ã¢ÂÂ¢ ${lsUseStyles ? '*Combo 5*' : 'Combo 5'} Ã¢ÂÂ ${lsUseEmojis ? 'Ã¢Â­Â ' : ''}MÃÂS VENDIDO: 4 Jabones + Sebo 10g + Exfoliante Ã¢ÂÂ ${lsUseStyles ? '*$119.000*' : '$119.000'} (antes $159.000)
-Ã¢ÂÂ¢ ${lsUseStyles ? '*Combo 6*' : 'Combo 6'} Ã¢ÂÂ Doble Sebo Grande: 2 Sebos + 2 Jabones a elecciÃÂ³n Ã¢ÂÂ ${lsUseStyles ? '*$136.900*' : '$136.900'} (antes $169.000)
-Ã¢ÂÂ¢ JabÃÂ³n individual: ${lsUseStyles ? '*$22.000*' : '$22.000'}
-Pago: contra entrega (efectivo) ÃÂ³ Nequi/Bancolombia (${lsUseStyles ? '*8% OFF*' : '8% OFF'} + envÃÂ­o mÃÂ¡s rÃÂ¡pido ${lsUseEmojis ? 'Ã°ÂÂÂÃ°ÂÂÂ¨' : ''})
-EnvÃÂ­o: GRATIS a toda Colombia ${lsUseEmojis ? 'Ã°ÂÂÂ' : ''} | Entrega 1-3 dÃÂ­as hÃÂ¡biles | Inter RapidÃÂ­simo
+CATÃÂÃÂLOGO SÃÂÃÂNATE${lsUseStyles ? ' (escribe precios y nombres de combos siempre en *negrita*)' : ''}:
+ÃÂ¢ÃÂÃÂ¢ ${lsUseStyles ? '*Combo 1*' : 'Combo 1'} ÃÂ¢ÃÂÃÂ Tripack Mixto (3 Jabones: CalÃÂÃÂ©ndula+CÃÂÃÂºrcuma+Avena&Arroz) ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$59.000*' : '$59.000'} (antes $105.000 ÃÂ¢ÃÂÃÂ ahorras $46.000)
+ÃÂ¢ÃÂÃÂ¢ ${lsUseStyles ? '*Combo 2*' : 'Combo 2'} ÃÂ¢ÃÂÃÂ 3 Jabones a elecciÃÂÃÂ³n (CÃÂÃÂºrcuma, Avena&Arroz o CalÃÂÃÂ©ndula) ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$59.000*' : '$59.000'} (antes $105.000)
+ÃÂ¢ÃÂÃÂ¢ ${lsUseStyles ? '*Combo 3*' : 'Combo 3'} ÃÂ¢ÃÂÃÂ 2 Jabones + Sebo de Res 10g ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$63.000*' : '$63.000'} (antes $79.000)
+ÃÂ¢ÃÂÃÂ¢ ${lsUseStyles ? '*Combo 4*' : 'Combo 4'} ÃÂ¢ÃÂÃÂ Secreto JaponÃÂÃÂ©s: Sebo grande + 2 Jabones (CÃÂÃÂºrcuma+Avena) + Exfoliante ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$99.000*' : '$99.000'} (antes $119.000)
+ÃÂ¢ÃÂÃÂ¢ ${lsUseStyles ? '*Combo 5*' : 'Combo 5'} ÃÂ¢ÃÂÃÂ ${lsUseEmojis ? 'ÃÂ¢ÃÂ­ÃÂ ' : ''}MÃÂÃÂS VENDIDO: 4 Jabones + Sebo 10g + Exfoliante ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$119.000*' : '$119.000'} (antes $159.000)
+ÃÂ¢ÃÂÃÂ¢ ${lsUseStyles ? '*Combo 6*' : 'Combo 6'} ÃÂ¢ÃÂÃÂ Doble Sebo Grande: 2 Sebos + 2 Jabones a elecciÃÂÃÂ³n ÃÂ¢ÃÂÃÂ ${lsUseStyles ? '*$136.900*' : '$136.900'} (antes $169.000)
+ÃÂ¢ÃÂÃÂ¢ JabÃÂÃÂ³n individual: ${lsUseStyles ? '*$22.000*' : '$22.000'}
+Pago: contra entrega (efectivo) ÃÂÃÂ³ Nequi/Bancolombia (${lsUseStyles ? '*8% OFF*' : '8% OFF'} + envÃÂÃÂ­o mÃÂÃÂ¡s rÃÂÃÂ¡pido ${lsUseEmojis ? 'ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ¨' : ''})
+EnvÃÂÃÂ­o: GRATIS a toda Colombia ${lsUseEmojis ? 'ÃÂ°ÃÂÃÂÃÂ' : ''} | Entrega 1-3 dÃÂÃÂ­as hÃÂÃÂ¡biles | Inter RapidÃÂÃÂ­simo
 
-FRASES DE CIERRE PROBADAS (ÃÂºsalas textualmente Ã¢ÂÂ son las que funcionan en ventas reales):
-Ã¢ÂÂ¢ ValidaciÃÂ³n inmediata: "ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨" / "ÃÂ¡Genial! Ã°ÂÂÂ" / "ÃÂ¡Perfecto! Ã¢ÂÂ"
-Ã¢ÂÂ¢ Urgencia real: "Los precios y el obsequio son de hoy solamente${lsUseEmojis ? ' Ã¢ÂÂ°' : ''}"
-Ã¢ÂÂ¢ Escasez: "Se estÃÂ¡n agotando rÃÂ¡pido Ã¢ÂÂ la reposiciÃÂ³n puede tardar hasta 15 dÃÂ­as"
-Ã¢ÂÂ¢ Sin riesgo: "${lsUseEmojis ? 'Ã°ÂÂÂ¦ ' : ''}EnvÃÂ­o GRATIS${lsUseEmojis ? ' Ã°ÂÂÂ³' : ''} Ã¢ÂÂ pagas al recibir, sin riesgo"
-Ã¢ÂÂ¢ Post-datos recibidos: "ÃÂ¡Todo listo! Ã¢ÂÂ Tu pedido estÃÂ¡ confirmado y en proceso${lsUseEmojis ? ' Ã°ÂÂÂ' : ''}"
-Ã¢ÂÂ¢ Post-confirmaciÃÂ³n: "Recuerda que tu pedido saldrÃÂ¡ el mismo dÃÂ­a y recibirÃÂ¡s la guÃÂ­a de seguimiento por WhatsApp Ã°ÂÂÂ"
-Ã¢ÂÂ¢ Reserve hook: "ÃÂ¿Te reservo el mÃÂ¡s vendido antes de que suba nuevamente? Ã°ÂÂÂ"
+FRASES DE CIERRE PROBADAS (ÃÂÃÂºsalas textualmente ÃÂ¢ÃÂÃÂ son las que funcionan en ventas reales):
+ÃÂ¢ÃÂÃÂ¢ ValidaciÃÂÃÂ³n inmediata: "ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨" / "ÃÂÃÂ¡Genial! ÃÂ°ÃÂÃÂÃÂ" / "ÃÂÃÂ¡Perfecto! ÃÂ¢ÃÂÃÂ"
+ÃÂ¢ÃÂÃÂ¢ Urgencia real: "Los precios y el obsequio son de hoy solamente${lsUseEmojis ? ' ÃÂ¢ÃÂÃÂ°' : ''}"
+ÃÂ¢ÃÂÃÂ¢ Escasez: "Se estÃÂÃÂ¡n agotando rÃÂÃÂ¡pido ÃÂ¢ÃÂÃÂ la reposiciÃÂÃÂ³n puede tardar hasta 15 dÃÂÃÂ­as"
+ÃÂ¢ÃÂÃÂ¢ Sin riesgo: "${lsUseEmojis ? 'ÃÂ°ÃÂÃÂÃÂ¦ ' : ''}EnvÃÂÃÂ­o GRATIS${lsUseEmojis ? ' ÃÂ°ÃÂÃÂÃÂ³' : ''} ÃÂ¢ÃÂÃÂ pagas al recibir, sin riesgo"
+ÃÂ¢ÃÂÃÂ¢ Post-datos recibidos: "ÃÂÃÂ¡Todo listo! ÃÂ¢ÃÂÃÂ Tu pedido estÃÂÃÂ¡ confirmado y en proceso${lsUseEmojis ? ' ÃÂ°ÃÂÃÂÃÂ' : ''}"
+ÃÂ¢ÃÂÃÂ¢ Post-confirmaciÃÂÃÂ³n: "Recuerda que tu pedido saldrÃÂÃÂ¡ el mismo dÃÂÃÂ­a y recibirÃÂÃÂ¡s la guÃÂÃÂ­a de seguimiento por WhatsApp ÃÂ°ÃÂÃÂÃÂ"
+ÃÂ¢ÃÂÃÂ¢ Reserve hook: "ÃÂÃÂ¿Te reservo el mÃÂÃÂ¡s vendido antes de que suba nuevamente? ÃÂ°ÃÂÃÂÃÂ"
 
 REGLAS DE ORO:
-Ã¢ÂÂ NUNCA des precio sin diagnosticar primero quÃÂ© problema tiene el cliente
-Ã¢ÂÂ NUNCA hagas preguntas abiertas al cierre Ã¢ÂÂ usa siempre elecciÃÂ³n forzada (A o B)
-Ã¢ÂÂ NUNCA repitas la misma frase de apertura dos veces seguidas
-Ã¢ÂÂ CELEBRA siempre cuando el cliente elige ("ÃÂ¡Excelente elecciÃÂ³n! Ã°ÂÂÂÃ¢ÂÂ¨") ANTES de pedir datos
-Ã¢ÂÂ Si preguntan envÃÂ­os a su ciudad Ã¢ÂÂ confirma que SÃÂ llega, luego pide los datos
-Ã¢ÂÂ Ofrece primero Nequi/transferencia (8% OFF), luego contra entrega como alternativa segura
-Ã¢ÂÂ Cuando recibas todos los datos Ã¢ÂÂ envÃÂ­a confirmaciÃÂ³n entusiasta y cierra con calidez`
+ÃÂ¢ÃÂÃÂ NUNCA des precio sin diagnosticar primero quÃÂÃÂ© problema tiene el cliente
+ÃÂ¢ÃÂÃÂ NUNCA hagas preguntas abiertas al cierre ÃÂ¢ÃÂÃÂ usa siempre elecciÃÂÃÂ³n forzada (A o B)
+ÃÂ¢ÃÂÃÂ NUNCA repitas la misma frase de apertura dos veces seguidas
+ÃÂ¢ÃÂÃÂ CELEBRA siempre cuando el cliente elige ("ÃÂÃÂ¡Excelente elecciÃÂÃÂ³n! ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂÃÂ¨") ANTES de pedir datos
+ÃÂ¢ÃÂÃÂ Si preguntan envÃÂÃÂ­os a su ciudad ÃÂ¢ÃÂÃÂ confirma que SÃÂÃÂ llega, luego pide los datos
+ÃÂ¢ÃÂÃÂ Ofrece primero Nequi/transferencia (8% OFF), luego contra entrega como alternativa segura
+ÃÂ¢ÃÂÃÂ Cuando recibas todos los datos ÃÂ¢ÃÂÃÂ envÃÂÃÂ­a confirmaciÃÂÃÂ³n entusiasta y cierra con calidez`
 
       const sysPrompt = ctx
-        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÃÂTICAS DE WHATSAPP:\nÃ¢ÂÂ¢ Mensajes CORTOS: mÃÂ¡ximo 3-4 lÃÂ­neas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\nÃ¢ÂÂ¢ VarÃÂ­a saludos y aperturas Ã¢ÂÂ nunca repitas el mismo\nÃ¢ÂÂ¢ Adapta el tono: si el cliente escribe informal, responde informal\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO SIEMPRE:\nÃ¢ÂÂ "ÃÂ¡Claro que sÃÂ­!" / "ÃÂ¡Excelente pregunta!"\nÃ¢ÂÂ MÃÂ¡s de 5 lÃÂ­neas en un solo segmento\nÃ¢ÂÂ Decir que eres IA o bot`
-        : `Eres una asesora de ventas de SÃÂ¡nate Colombia Ã¢ÂÂ jabones artesanales naturales 100% colombianos. Eres una persona real Ã¢ÂÂ NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES DE MENSAJE:\nÃ¢ÂÂ¢ Mensajes cortos: mÃÂ¡x 3-4 lÃÂ­neas\n${stylesBlock}\n${emojisBlock}\nÃ¢ÂÂ¢ VarÃÂ­a saludos y apertura\nÃ¢ÂÂ¢ Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\nÃ¢ÂÂ Frases genÃÂ©ricas | Ã¢ÂÂ Decir que eres IA | Ã¢ÂÂ Precios antes del diagnÃÂ³stico`
+        ? `${ctx}\n${profileCtx}\n---\nINSTRUCCIONES CRÃÂÃÂTICAS DE WHATSAPP:\nÃÂ¢ÃÂÃÂ¢ Mensajes CORTOS: mÃÂÃÂ¡ximo 3-4 lÃÂÃÂ­neas POR MENSAJE\n${stylesBlock}\n${emojisBlock}\nÃÂ¢ÃÂÃÂ¢ VarÃÂÃÂ­a saludos y aperturas ÃÂ¢ÃÂÃÂ nunca repitas el mismo\nÃÂ¢ÃÂÃÂ¢ Adapta el tono: si el cliente escribe informal, responde informal\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO SIEMPRE:\nÃÂ¢ÃÂÃÂ "ÃÂÃÂ¡Claro que sÃÂÃÂ­!" / "ÃÂÃÂ¡Excelente pregunta!"\nÃÂ¢ÃÂÃÂ MÃÂÃÂ¡s de 5 lÃÂÃÂ­neas en un solo segmento\nÃÂ¢ÃÂÃÂ Decir que eres IA o bot`
+        : `Eres una asesora de ventas de SÃÂÃÂ¡nate Colombia ÃÂ¢ÃÂÃÂ jabones artesanales naturales 100% colombianos. Eres una persona real ÃÂ¢ÃÂÃÂ NUNCA te presentes como IA.\n${profileCtx}\nINSTRUCCIONES DE MENSAJE:\nÃÂ¢ÃÂÃÂ¢ Mensajes cortos: mÃÂÃÂ¡x 3-4 lÃÂÃÂ­neas\n${stylesBlock}\n${emojisBlock}\nÃÂ¢ÃÂÃÂ¢ VarÃÂÃÂ­a saludos y apertura\nÃÂ¢ÃÂÃÂ¢ Adapta el tono al estilo del cliente\n\n${multiMsgBlock}\n\n${salesFunnelBlock}\n\nPROHIBIDO:\nÃÂ¢ÃÂÃÂ Frases genÃÂÃÂ©ricas | ÃÂ¢ÃÂÃÂ Decir que eres IA | ÃÂ¢ÃÂÃÂ Precios antes del diagnÃÂÃÂ³stico`
       // Mensaje actual del cliente para que la IA NO alucine sobre otros temas
       const currentMsgCtx = lastClientMsg.txt
-        ? `\n\nÃ¢ÂÂ¡ MENSAJE ACTUAL DEL CLIENTE AL QUE DEBES RESPONDER:\n"${lastClientMsg.txt}"\nResponde SOLO a esto. No inventes temas que el cliente no haya mencionado.`
+        ? `\n\nÃÂ¢ÃÂÃÂ¡ MENSAJE ACTUAL DEL CLIENTE AL QUE DEBES RESPONDER:\n"${lastClientMsg.txt}"\nResponde SOLO a esto. No inventes temas que el cliente no haya mencionado.`
         : ''
       const finalSysPrompt = sysPrompt + currentMsgCtx
 
-      // Ã¢ÂÂÃ¢ÂÂ Detectar tipo de mensaje entrante Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Detectar tipo de mensaje entrante ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
       const msgType = lastClientMsg.type || 'text'
       const isAudioMsg = (msgType === 'audio' || msgType === 'ptt') && lastClientMsg.mediaUrl
       const isImageMsg = (msgType === 'image' || msgType === 'sticker') && lastClientMsg.mediaUrl
-      // Resolver URL completa del media (relativa Ã¢ÂÂ absoluta)
+      // Resolver URL completa del media (relativa ÃÂ¢ÃÂÃÂ absoluta)
       const mediaFull = (url) => {
         if (!url) return ''
         if (url.startsWith('http')) return url
@@ -1760,7 +1760,7 @@ REGLAS DE ORO:
       const lsBackendUrl = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
       const lsSecret     = (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })()
 
-      // Ã¢ÂÂÃ¢ÂÂ n8n como procesador IA principal (texto + audio Whisper + imagen Vision) Ã¢ÂÂÃ¢ÂÂ
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ n8n como procesador IA principal (texto + audio Whisper + imagen Vision) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
       let reply = ''
       let n8nHandled = false
       try {
@@ -1785,23 +1785,23 @@ REGLAS DE ORO:
         })
         if (!n8nRes.ok) throw new Error(`n8n HTTP ${n8nRes.status}`)
         const n8nData = await n8nRes.json()
-        if (!n8nData?.ok || !n8nData?.reply) throw new Error('n8n sin respuesta vÃÂ¡lida')
+        if (!n8nData?.ok || !n8nData?.reply) throw new Error('n8n sin respuesta vÃÂÃÂ¡lida')
 
         reply = n8nData.reply
         n8nHandled = true
 
-        // Si n8n transcribiÃÂ³ audio, mostrar la transcripciÃÂ³n como nota en el chat
+        // Si n8n transcribiÃÂÃÂ³ audio, mostrar la transcripciÃÂÃÂ³n como nota en el chat
         if (n8nData.transcription && isAudioMsg) {
           const tMsg = {
             id: `tr_${Date.now()}`, dir: 'r',
-            txt: `Ã°ÂÂÂÃ¯Â¸Â TranscripciÃÂ³n: "${n8nData.transcription}"`,
+            txt: `ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ TranscripciÃÂÃÂ³n: "${n8nData.transcription}"`,
             time: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }),
             type: 'text', status: 'transcript',
           }
           if (active?.id === chatId) setMsgs(p => { const next = [...p, tMsg]; cachePut(chatId, next); return next })
         }
 
-        // Si n8n ya enviÃÂ³ los mensajes via backend pÃÂºblico Ã¢ÂÂ solo actualizar UI y salir
+        // Si n8n ya enviÃÂÃÂ³ los mensajes via backend pÃÂÃÂºblico ÃÂ¢ÃÂÃÂ solo actualizar UI y salir
         if (n8nData.sent) {
           const sentParts = (n8nData.parts || [reply]).filter(Boolean)
           const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
@@ -1818,9 +1818,9 @@ REGLAS DE ORO:
           setAiTyping(false); autoReplyingRef.current = false; return
         }
       } catch (n8nErr) {
-        // n8n no disponible o fallÃÂ³ Ã¢ÂÂ fallback para texto, error para audio/imagen
+        // n8n no disponible o fallÃÂÃÂ³ ÃÂ¢ÃÂÃÂ fallback para texto, error para audio/imagen
         if (isAudioMsg || isImageMsg) {
-          tip(`Ã¢ÂÂ Ã¯Â¸Â n8n no disponible Ã¢ÂÂ no se puede procesar ${isAudioMsg ? 'la nota de voz' : 'la imagen'}`)
+          tip(`ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ n8n no disponible ÃÂ¢ÃÂÃÂ no se puede procesar ${isAudioMsg ? 'la nota de voz' : 'la imagen'}`)
           setAiTyping(false); autoReplyingRef.current = false; return
         }
         // Texto: fallback a OpenAI directo
@@ -1830,22 +1830,22 @@ REGLAS DE ORO:
             maxTokens: 480,
           })
         } catch (aiErr) {
-          if (aiErr?.message !== 'no_key') tip('Ã¢ÂÂ Ã¯Â¸Â Error auto-respuesta IA')
+          if (aiErr?.message !== 'no_key') tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error auto-respuesta IA')
           setAiTyping(false); autoReplyingRef.current = false; return
         }
       }
 
-      // Verificar que no haya llegado un mensaje nuevo que invalide esta generaciÃÂ³n
+      // Verificar que no haya llegado un mensaje nuevo que invalide esta generaciÃÂÃÂ³n
       if (!reply || active?.id !== chatId || autoReplyGenRef.current !== myGen) {
         setAiTyping(false); autoReplyingRef.current = false; return
       }
 
-      // Ã¢ÂÂÃ¢ÂÂ Soporte multi-mensaje: separar por ||||
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Soporte multi-mensaje: separar por ||||
       const parts = reply.split('||||').map(s => s.trim()).filter(Boolean)
 
       for (let pi = 0; pi < parts.length; pi++) {
         const part = parts[pi]
-        // Verificar generaciÃÂ³n antes de cada segmento
+        // Verificar generaciÃÂÃÂ³n antes de cada segmento
         if (active?.id !== chatId || autoReplyGenRef.current !== myGen) break
 
         // Mostrar "escribiendo..." al cliente
@@ -1855,7 +1855,7 @@ REGLAS DE ORO:
           })
         } catch {}
 
-        // Delay de escritura: corto porque botDelay ya controlÃÂ³ la espera previa
+        // Delay de escritura: corto porque botDelay ya controlÃÂÃÂ³ la espera previa
         const baseDelay = parts.length > 1 ? 400 : 500
         const typingMs = Math.max(baseDelay, Math.min(part.length * 10, parts.length > 1 ? 1200 : 1800))
         await new Promise(r => setTimeout(r, typingMs))
@@ -1869,11 +1869,11 @@ REGLAS DE ORO:
         const d = await r.json()
         const t = new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
         const newMsg = { id: d.message?.providerMessageId || `${Date.now()}_${pi}`, dir: 's', txt: part, time: t, type: 'text', mediaUrl: '', status: 'sent' }
-        trackSentText(part)  // eco prevention Ã¢ÂÂ evita que el bot procese su propia respuesta
+        trackSentText(part)  // eco prevention ÃÂ¢ÃÂÃÂ evita que el bot procese su propia respuesta
         setMsgs(p => { const next = [...p, newMsg]; cachePut(chatId, next); return next })
         scroll()
 
-        // Pausa breve entre mensajes para que se vea natural (excepto el ÃÂºltimo)
+        // Pausa breve entre mensajes para que se vea natural (excepto el ÃÂÃÂºltimo)
         if (pi < parts.length - 1) await new Promise(r => setTimeout(r, 350))
       }
 
@@ -1884,36 +1884,36 @@ REGLAS DE ORO:
         })
       } catch {}
     } catch (e) {
-      if (e?.message !== 'no_key') tip('Ã¢ÂÂ Ã¯Â¸Â Error auto-respuesta IA')
+      if (e?.message !== 'no_key') tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error auto-respuesta IA')
     }
     setAiTyping(false)
     autoReplyingRef.current = false
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Analizar inteligencia del cliente con IA Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Analizar inteligencia del cliente con IA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   async function analyzeClientIntelligence(chatId, msgsToAnalyze) {
     if (!hasAiKey || analysisLoading) return
     setAnalysisLoading(true)
     try {
       const clientMsgs = msgsToAnalyze.filter(m => m.dir === 'r')
-      if (clientMsgs.length < 1) { tip('Ã°ÂÂÂ¬ No hay mensajes del cliente para analizar'); setAnalysisLoading(false); return }
+      if (clientMsgs.length < 1) { tip('ÃÂ°ÃÂÃÂÃÂ¬ No hay mensajes del cliente para analizar'); setAnalysisLoading(false); return }
       const conversation = msgsToAnalyze.slice(-25)
         .map(m => `[${m.dir === 'r' ? 'CLIENTE' : 'BOT'}]: ${m.txt || '[archivo/media]'}`)
         .join('\n')
-      const prompt = `Analiza esta conversaciÃÂ³n de WhatsApp de ventas y responde ÃÂNICAMENTE con un JSON vÃÂ¡lido (sin markdown, sin explicaciones extra):
+      const prompt = `Analiza esta conversaciÃÂÃÂ³n de WhatsApp de ventas y responde ÃÂÃÂNICAMENTE con un JSON vÃÂÃÂ¡lido (sin markdown, sin explicaciones extra):
 {
   "estilo": "formal|informal|muy informal",
   "tono": "ansioso|tranquilo|desconfiado|entusiasta|indiferente|impaciente",
   "intereses": ["lista de intereses detectados"],
   "intencion": "alta|media|baja",
-  "objeciones": ["objeciones detectadas si hay, sino array vacÃÂ­o"],
-  "angulo": "el mejor ÃÂ¡ngulo de venta personalizado para ESTE cliente (mÃÂ¡x 1 frase)",
-  "siguiente": "acciÃÂ³n concreta recomendada para el bot ahora mismo (mÃÂ¡x 1 frase)",
-  "resumen": "perfil del cliente en 1-2 lÃÂ­neas",
+  "objeciones": ["objeciones detectadas si hay, sino array vacÃÂÃÂ­o"],
+  "angulo": "el mejor ÃÂÃÂ¡ngulo de venta personalizado para ESTE cliente (mÃÂÃÂ¡x 1 frase)",
+  "siguiente": "acciÃÂÃÂ³n concreta recomendada para el bot ahora mismo (mÃÂÃÂ¡x 1 frase)",
+  "resumen": "perfil del cliente en 1-2 lÃÂÃÂ­neas",
   "es_cliente": true|false
 }
 
-CONVERSACIÃÂN:
+CONVERSACIÃÂÃÂN:
 ${conversation}`
       const result = await callAI({ messages: [{ role: 'user', content: prompt }], maxTokens: 500 })
       if (result) {
@@ -1925,14 +1925,14 @@ ${conversation}`
             try { localStorage.setItem('wa_client_analysis', JSON.stringify(updated)) } catch {}
             return updated
           })
-          tip('Ã°ÂÂ§Â  AnÃÂ¡lisis actualizado')
+          tip('ÃÂ°ÃÂÃÂ§ÃÂ  AnÃÂÃÂ¡lisis actualizado')
         }
       }
-    } catch (e) { tip('Ã¢ÂÂ Ã¯Â¸Â Error al analizar: ' + (e?.message || 'revisa tu API Key')) }
+    } catch (e) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error al analizar: ' + (e?.message || 'revisa tu API Key')) }
     setAnalysisLoading(false)
   }
 
-  // EnvÃÂ­a mensaje via n8n (mÃÂ©todo legacy Ã¢ÂÂ mantenido para compatibilidad)
+  // EnvÃÂÃÂ­a mensaje via n8n (mÃÂÃÂ©todo legacy ÃÂ¢ÃÂÃÂ mantenido para compatibilidad)
   async function sendAiReply(chatId, userMsg) {
     if (!openaiKey && !N8N_WH) return
     try {
@@ -1946,11 +1946,11 @@ ${conversation}`
     } catch {}
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Entrenamiento helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
-  // Ã¢ÂÂÃ¢ÂÂ Guardar URL del backend Baileys Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Entrenamiento helpers ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Guardar URL del backend Baileys ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function saveBackendUrl() {
     const base   = backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '')
-    if (!base) { tip('Ã¢ÂÂ Ã¯Â¸Â Ingresa una URL vÃÂ¡lida'); return }
+    if (!base) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Ingresa una URL vÃÂÃÂ¡lida'); return }
     const newBU  = base + '/api/whatsapp'
     const newSec = secretInput.trim() || DEFAULT_SECRET
     BU         = newBU
@@ -1959,7 +1959,7 @@ ${conversation}`
     HJ         = { ...H, 'Content-Type': 'application/json' }
     try { localStorage.setItem('wa_backend_url', newBU)   } catch {}
     try { localStorage.setItem('wa_secret',      newSec)  } catch {}
-    tip('Ã¢ÂÂ Backend URL guardada Ã¢ÂÂ reconectando...')
+    tip('ÃÂ¢ÃÂÃÂ Backend URL guardada ÃÂ¢ÃÂÃÂ reconectando...')
     setTimeout(() => {
       setServerOnline(null); ping()
       // Sincronizar settings al backend con la nueva URL
@@ -1967,14 +1967,14 @@ ${conversation}`
     }, 800)
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Sincronizar settings al backend (para operaciÃÂ³n con Chrome cerrado) Ã¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Sincronizar settings al backend (para operaciÃÂÃÂ³n con Chrome cerrado) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   // Lee desde localStorage para evitar stale closures en setTimeout
   function syncSettingsToBackend({ buOverride, secOverride, baseOverride, silent = false } = {}) {
     const curBU   = buOverride   || BU
     const curSec  = secOverride  || (H['x-secret'] || DEFAULT_SECRET)
     const curBase = baseOverride || MEDIA_BASE
     const isPublic = curBase && !curBase.includes('localhost') && !curBase.includes('127.0.0.1')
-    // Leer siempre de localStorage Ã¢ÂÂ evita problemas de stale closure
+    // Leer siempre de localStorage ÃÂ¢ÃÂÃÂ evita problemas de stale closure
     const lsKey      = (() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })()
     const lsTraining = (() => { try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
     const lsPrompt   = (() => { try { return localStorage.getItem('wa_ai_prompt') || '' } catch { return '' } })()
@@ -1995,7 +1995,7 @@ ${conversation}`
     const lsAiContactMap = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_contact_map') || '{}') } catch { return {} } })()
     const payload = {
       botEnabled:       lsAiOn,
-      n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pÃÂºblica
+      n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pÃÂÃÂºblica
       n8nWebhook:       N8N_WH,
       backendPublicUrl: isPublic ? curBase : '',
       openaiKey:        lsKey,
@@ -2011,7 +2011,7 @@ ${conversation}`
       nativeBotAskName:       lsNbAskName,
       nativeBotAskNameMsg:    lsNbAskNameMsg,
       nativeBotFallback:      lsNbFallback,
-      // Ã¢ÂÂÃ¢ÂÂ Estilo de mensajes IA Ã¢ÂÂÃ¢ÂÂ
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Estilo de mensajes IA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
       msgMode:   (() => { try { return localStorage.getItem('wa_msg_mode') || 'partes' } catch { return 'partes' } })(),
       useEmojis: (() => { try { return JSON.parse(localStorage.getItem('wa_use_emojis') ?? 'true') } catch { return true } })(),
       useStyles: (() => { try { return JSON.parse(localStorage.getItem('wa_use_styles') ?? 'true') } catch { return true } })(),
@@ -2022,7 +2022,7 @@ ${conversation}`
       headers: { 'Content-Type': 'application/json', 'x-secret': curSec },
       body: JSON.stringify(payload),
     }).then(r => r.json()).then(d => {
-      if (d?.ok && !silent) tip('Ã¢ÂÂÃ¯Â¸Â ConfiguraciÃÂ³n sincronizada al backend')
+      if (d?.ok && !silent) tip('ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ ConfiguraciÃÂÃÂ³n sincronizada al backend')
     }).catch(() => {
       if (!silent) console.warn('[syncSettings] Backend no alcanzable')
     })
@@ -2035,27 +2035,27 @@ ${conversation}`
     setTimeout(() => syncSettingsToBackend({ silent: true }), 600)
   }
   async function generateWinnerPrompt() {
-    if (!hasAiKey) { tip('Ã¢ÂÂ Ã¯Â¸Â Configura tu API Key (OpenAI o Gemini) en Ajustes Ã¢ÂÂ API'); return }
-    setGeneratingPrompt(true); tip('Ã°ÂÂ¤Â Generando prompt ganador con IA...')
+    if (!hasAiKey) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura tu API Key (OpenAI o Gemini) en Ajustes ÃÂ¢ÃÂÃÂ API'); return }
+    setGeneratingPrompt(true); tip('ÃÂ°ÃÂÃÂ¤ÃÂ Generando prompt ganador con IA...')
     try {
       const generated = await callAI({
         messages: [
-          { role: 'system', content: 'Eres el mejor experto en ventas conversacionales por WhatsApp del mundo. Genera prompts de sistema para bots de ventas que sean naturales, empÃÂ¡ticos y cierren ventas de forma efectiva.' },
-          { role: 'user', content: `BasÃÂ¡ndote en este contexto de negocio, genera un prompt de sistema completo y optimizado para un bot de WhatsApp que sea el mejor cerrador de ventas del mundo. Incluye personalidad, tono, tÃÂ©cnicas de cierre, manejo de objeciones y reglas de comportamiento.\n\nContexto actual:\n${trainingPrompt.substring(0, 2000)}` },
+          { role: 'system', content: 'Eres el mejor experto en ventas conversacionales por WhatsApp del mundo. Genera prompts de sistema para bots de ventas que sean naturales, empÃÂÃÂ¡ticos y cierren ventas de forma efectiva.' },
+          { role: 'user', content: `BasÃÂÃÂ¡ndote en este contexto de negocio, genera un prompt de sistema completo y optimizado para un bot de WhatsApp que sea el mejor cerrador de ventas del mundo. Incluye personalidad, tono, tÃÂÃÂ©cnicas de cierre, manejo de objeciones y reglas de comportamiento.\n\nContexto actual:\n${trainingPrompt.substring(0, 2000)}` },
         ],
         maxTokens: 1500,
       })
       if (generated) {
-        saveTraining(trainingPrompt + '\n\nÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ\nÃ°ÂÂÂ PROMPT GANADOR GENERADO POR IA\nÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ\n' + generated)
-        tip('Ã¢ÂÂ Prompt ganador generado y agregado')
+        saveTraining(trainingPrompt + '\n\nÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ\nÃÂ°ÃÂÃÂÃÂ PROMPT GANADOR GENERADO POR IA\nÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ\n' + generated)
+        tip('ÃÂ¢ÃÂÃÂ Prompt ganador generado y agregado')
       }
     } catch (e) {
-      tip(e?.message === 'no_key' ? 'Ã¢ÂÂ Ã¯Â¸Â Configura OpenAI o Gemini en Ajustes Ã¢ÂÂ API' : 'Ã¢ÂÂ Ã¯Â¸Â Error generando prompt')
+      tip(e?.message === 'no_key' ? 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura OpenAI o Gemini en Ajustes ÃÂ¢ÃÂÃÂ API' : 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error generando prompt')
     }
     setGeneratingPrompt(false)
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Clientes helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Clientes helpers ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function saveClienteFromChat(chat) {
     if (!chat?.id) return
     const existing = JSON.parse(localStorage.getItem('wa_clientes') || '[]')
@@ -2063,7 +2063,7 @@ ${conversation}`
     const geo = phoneToGeo(chat.phone || '')
     const newCliente = {
       id: chat.id, name: chat.name || '', phone: chat.phone || chat.id,
-      pais: geo?.label?.split('ÃÂ·')[0]?.trim() || '', ciudad: geo?.label || '',
+      pais: geo?.label?.split('ÃÂÃÂ·')[0]?.trim() || '', ciudad: geo?.label || '',
       flag: geo?.flag || '', totalPedidos: 0, noRecibidos: 0,
       etiqueta: 'Nuevo lead', primerMensaje: new Date().toLocaleDateString('es-CO'),
       ultimoMensaje: new Date().toLocaleDateString('es-CO'),
@@ -2073,7 +2073,7 @@ ${conversation}`
     try { localStorage.setItem('wa_clientes', JSON.stringify(updated)) } catch {}
     setClientes(updated)
   }
-  // Ã¢ÂÂÃ¢ÂÂ Guardar etiquetas persistentes por chat Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Guardar etiquetas persistentes por chat ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function saveContactTagsMap(chatId, tags) {
     setChatsTags(prev => {
       const updated = { ...prev, [chatId]: tags }
@@ -2082,7 +2082,7 @@ ${conversation}`
     })
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Auto-asignar etiqueta "Preparar" cuando se detecta pedido Ã¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Auto-asignar etiqueta "Preparar" cuando se detecta pedido ÃÂ¢ÃÂÃÂ
   function autoTagOrder(chatId, msgText) {
     if (!chatId || !msgText) return
     const text = msgText.toLowerCase()
@@ -2092,7 +2092,7 @@ ${conversation}`
     const newTags = [...current.filter(t => t !== 'Nuevo lead'), 'Preparar']
     saveContactTagsMap(chatId, newTags)
     if (active?.id === chatId) setContactTags(newTags)
-    tip('Ã°ÂÂÂ¦ IntenciÃÂ³n de pedido detectada Ã¢ÂÂ etiqueta "Preparar" asignada Ã°ÂÂÂµ')
+    tip('ÃÂ°ÃÂÃÂÃÂ¦ IntenciÃÂÃÂ³n de pedido detectada ÃÂ¢ÃÂÃÂ etiqueta "Preparar" asignada ÃÂ°ÃÂÃÂÃÂµ')
   }
 
   function updateCliente(id, fields) {
@@ -2111,13 +2111,13 @@ ${conversation}`
     if (clienteDetail?.id === id) setClienteDetail(null)
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Disparadores helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Disparadores helpers ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function saveTriggers(updated) {
     setTriggers(updated)
     try { localStorage.setItem('wa_triggers', JSON.stringify(updated)) } catch {}
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Plantillas helpers Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Plantillas helpers ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function savePlantillas(updated) {
     setPlantillas(updated)
     try { localStorage.setItem('wa_plantillas', JSON.stringify(updated)) } catch {}
@@ -2133,56 +2133,56 @@ ${conversation}`
     if (existing) { saveTriggers(triggers.map(t => t.id === trigger.id ? trigger : t)) }
     else { saveTriggers([...triggers, trigger]) }
     setEditTrigger(null)
-    tip('Ã¢ÂÂ Disparador guardado')
+    tip('ÃÂ¢ÃÂÃÂ Disparador guardado')
   }
   async function generateTriggerMsg(triggerName) {
-    if (!hasAiKey) { tip('Ã¢ÂÂ Ã¯Â¸Â Configura tu API Key (OpenAI o Gemini) primero'); return }
+    if (!hasAiKey) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura tu API Key (OpenAI o Gemini) primero'); return }
     const producto = editTrigger?.producto || 'General'
     const condition = editTrigger?.condition || 'no_reply'
     const delay = editTrigger?.delay || 60
     const unit = editTrigger?.unit || 'min'
-    setGeneratingTrigger(true); tip('Ã°ÂÂ¤Â Generando mensaje ganador con IA...')
+    setGeneratingTrigger(true); tip('ÃÂ°ÃÂÃÂ¤ÃÂ Generando mensaje ganador con IA...')
     try {
       const condLabel = { no_reply: 'sin respuesta', seen: 'visto sin responder', no_purchase: 'sin compra', keyword: 'por palabra clave', first_message: 'primer mensaje' }[condition] || condition
-      const timeLabel = `${delay} ${unit === 'min' ? 'minutos' : unit === 'h' ? 'horas' : 'dÃÂ­as'}`
+      const timeLabel = `${delay} ${unit === 'min' ? 'minutos' : unit === 'h' ? 'horas' : 'dÃÂÃÂ­as'}`
       const contextSnip = trainingPrompt ? trainingPrompt.substring(0, 600) : ''
       const msg = await callAI({
         messages: [
-          { role: 'system', content: `Eres el mejor cerrador de ventas del mundo por WhatsApp.${contextSnip ? ` Contexto del negocio: "${contextSnip}"` : ''}\n\nReglas de oro:\n1. Primero conecta emocionalmente (1 frase)\n2. Menciona el producto "${producto}" naturalmente\n3. Da 1 beneficio clave (no precio aÃÂºn)\n4. Cierra con UNA pregunta irresistible\n5. MÃÂ¡ximo 3-4 lÃÂ­neas, 1-2 emojis, tono humano y cÃÂ¡lido` },
-          { role: 'user', content: `Genera el mensaje perfecto de seguimiento para WhatsApp.\nTrigger: "${triggerName}"\nProducto/Plantilla: "${producto}"\nSituaciÃÂ³n: cliente ${condLabel} despuÃÂ©s de ${timeLabel}\nUsa {nombre} para personalizar. Responde SOLO el mensaje, sin explicaciones.` },
+          { role: 'system', content: `Eres el mejor cerrador de ventas del mundo por WhatsApp.${contextSnip ? ` Contexto del negocio: "${contextSnip}"` : ''}\n\nReglas de oro:\n1. Primero conecta emocionalmente (1 frase)\n2. Menciona el producto "${producto}" naturalmente\n3. Da 1 beneficio clave (no precio aÃÂÃÂºn)\n4. Cierra con UNA pregunta irresistible\n5. MÃÂÃÂ¡ximo 3-4 lÃÂÃÂ­neas, 1-2 emojis, tono humano y cÃÂÃÂ¡lido` },
+          { role: 'user', content: `Genera el mensaje perfecto de seguimiento para WhatsApp.\nTrigger: "${triggerName}"\nProducto/Plantilla: "${producto}"\nSituaciÃÂÃÂ³n: cliente ${condLabel} despuÃÂÃÂ©s de ${timeLabel}\nUsa {nombre} para personalizar. Responde SOLO el mensaje, sin explicaciones.` },
         ],
         maxTokens: 250,
       })
       if (msg && editTrigger) setEditTrigger(prev => ({ ...prev, message: msg }))
-      tip('Ã¢ÂÂ Mensaje ganador generado Ã¢ÂÂ¨')
+      tip('ÃÂ¢ÃÂÃÂ Mensaje ganador generado ÃÂ¢ÃÂÃÂ¨')
     } catch (e) {
-      tip(e?.message === 'no_key' ? 'Ã¢ÂÂ Ã¯Â¸Â Configura OpenAI o Gemini en Ajustes Ã¢ÂÂ API' : 'Ã¢ÂÂ Ã¯Â¸Â Error generando mensaje')
+      tip(e?.message === 'no_key' ? 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura OpenAI o Gemini en Ajustes ÃÂ¢ÃÂÃÂ API' : 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error generando mensaje')
     }
     setGeneratingTrigger(false)
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Generar respuesta IA + enviar con simulaciÃÂ³n de escritura Ã¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Generar respuesta IA + enviar con simulaciÃÂÃÂ³n de escritura ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   async function generateAiReply() {
-    if (!hasAiKey) { tip('Ã¢ÂÂ Ã¯Â¸Â Configura tu API Key (OpenAI o Gemini) en Ajustes Ã¢ÂÂ API'); return }
+    if (!hasAiKey) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura tu API Key (OpenAI o Gemini) en Ajustes ÃÂ¢ÃÂÃÂ API'); return }
     const lastClientMsg = [...msgs].reverse().find(m => m.dir === 'r')
-    if (!lastClientMsg) { tip('Ã¢ÂÂ Ã¯Â¸Â No hay mensajes del cliente para analizar'); return }
-    setGeneratingAiReply(true); setAiTyping(true); tip('Ã°ÂÂ¤Â Analizando ÃÂ¡ngulo de venta...')
+    if (!lastClientMsg) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ No hay mensajes del cliente para analizar'); return }
+    setGeneratingAiReply(true); setAiTyping(true); tip('ÃÂ°ÃÂÃÂ¤ÃÂ Analizando ÃÂÃÂ¡ngulo de venta...')
     try {
       const ctx = (trainingPrompt || aiPrompt || '').substring(0, 4000)
       const history = msgs.slice(-12).map(m => ({ role: m.dir === 'r' ? 'user' : 'assistant', content: m.txt || '[archivo]' }))
       const reply = await callAI({
         messages: [
-          { role: 'system', content: `Eres el mejor asesor de ventas por WhatsApp del mundo.\n\nContexto del negocio:\n${ctx}\n\nREGLAS ABSOLUTAS:\n1. Si el cliente hizo una PREGUNTA o pide informaciÃÂ³n Ã¢ÂÂ da info clara del producto + beneficios + modo de uso (NO des precio todavÃÂ­a).\n2. Si el cliente muestra INTERÃÂS DE COMPRA ("cuÃÂ¡nto cuesta", "lo quiero", "cÃÂ³mo pago") Ã¢ÂÂ da precio + oferta irresistible + pregunta de cierre.\n3. Primero CONECTA emocionalmente (1 frase cÃÂ¡lida), luego informa o vende.\n4. MÃÂ¡ximo 3-4 lÃÂ­neas. Tono humano y natural. 1-2 emojis estratÃÂ©gicos.\n5. Termina SIEMPRE con una pregunta que invite a seguir o a comprar.\n6. Nunca suenes a robot. SÃÂ© como una persona real escribiendo en WhatsApp.` },
+          { role: 'system', content: `Eres el mejor asesor de ventas por WhatsApp del mundo.\n\nContexto del negocio:\n${ctx}\n\nREGLAS ABSOLUTAS:\n1. Si el cliente hizo una PREGUNTA o pide informaciÃÂÃÂ³n ÃÂ¢ÃÂÃÂ da info clara del producto + beneficios + modo de uso (NO des precio todavÃÂÃÂ­a).\n2. Si el cliente muestra INTERÃÂÃÂS DE COMPRA ("cuÃÂÃÂ¡nto cuesta", "lo quiero", "cÃÂÃÂ³mo pago") ÃÂ¢ÃÂÃÂ da precio + oferta irresistible + pregunta de cierre.\n3. Primero CONECTA emocionalmente (1 frase cÃÂÃÂ¡lida), luego informa o vende.\n4. MÃÂÃÂ¡ximo 3-4 lÃÂÃÂ­neas. Tono humano y natural. 1-2 emojis estratÃÂÃÂ©gicos.\n5. Termina SIEMPRE con una pregunta que invite a seguir o a comprar.\n6. Nunca suenes a robot. SÃÂÃÂ© como una persona real escribiendo en WhatsApp.` },
           ...history,
-          { role: 'user', content: `El cliente acaba de escribir: "${lastClientMsg.txt}"\n\nAnaliza si es una pregunta informativa o si hay intenciÃÂ³n de compra, y genera LA MEJOR respuesta de ventas posible. Responde SOLO el mensaje para enviar al cliente, sin explicaciones adicionales.` },
+          { role: 'user', content: `El cliente acaba de escribir: "${lastClientMsg.txt}"\n\nAnaliza si es una pregunta informativa o si hay intenciÃÂÃÂ³n de compra, y genera LA MEJOR respuesta de ventas posible. Responde SOLO el mensaje para enviar al cliente, sin explicaciones adicionales.` },
         ],
         maxTokens: 350,
       })
-      if (!reply) { tip('Ã¢ÂÂ Ã¯Â¸Â No se generÃÂ³ respuesta'); setGeneratingAiReply(false); return }
+      if (!reply) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ No se generÃÂÃÂ³ respuesta'); setGeneratingAiReply(false); return }
 
-      // Ã¢ÂÂÃ¢ÂÂ Simular escritura + enviar automÃÂ¡ticamente Ã¢ÂÂÃ¢ÂÂ
+      // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Simular escritura + enviar automÃÂÃÂ¡ticamente ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
       if (active && status === 'connected') {
-        tip('Ã¢ÂÂÃ¯Â¸Â Enviando con efecto de escritura...')
+        tip('ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Enviando con efecto de escritura...')
         // 1. Enviar indicador "escribiendo..."
         try {
           await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/presence`, {
@@ -2190,7 +2190,7 @@ ${conversation}`
             body: JSON.stringify({ action: 'composing' }),
           })
         } catch { /* si falla presence, igual enviamos */ }
-        // 2. Esperar tiempo proporcional al largo del mensaje (mÃÂ­nimo 0.8s, mÃÂ¡ximo 2s)
+        // 2. Esperar tiempo proporcional al largo del mensaje (mÃÂÃÂ­nimo 0.8s, mÃÂÃÂ¡ximo 2s)
         const typingMs = Math.max(800, Math.min(reply.length * 18, 2000))
         await new Promise(r => setTimeout(r, typingMs))
         // 3. Enviar el mensaje real
@@ -2202,8 +2202,8 @@ ${conversation}`
           const newMsg = { id: d.message?.providerMessageId || Date.now().toString(), dir: 's', txt: reply, time: t, type: 'text', mediaUrl: '', status: 'sent' }
           setMsgs(p => { const next = [...p, newMsg]; cachePut(active.id, next); return next })
           scroll()
-          tip('Ã¢ÂÂ Respuesta enviada con ÃÂ©xito Ã°ÂÂÂ')
-        } catch { tip('Ã¢ÂÂ Ã¯Â¸Â Error al enviar la respuesta') }
+          tip('ÃÂ¢ÃÂÃÂ Respuesta enviada con ÃÂÃÂ©xito ÃÂ°ÃÂÃÂÃÂ')
+        } catch { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error al enviar la respuesta') }
         // 4. Desactivar indicador
         try {
           await fetch(`${BU}/chats/${encodeURIComponent(active.id)}/presence`, {
@@ -2211,49 +2211,49 @@ ${conversation}`
           })
         } catch { /* ignorar */ }
       } else {
-        // No conectado: poner en el input para envÃÂ­o manual
+        // No conectado: poner en el input para envÃÂÃÂ­o manual
         setInp(reply)
-        tip('Ã¢ÂÂ Respuesta IA lista Ã¢ÂÂ revÃÂ­sala y envÃÂ­a Ã°ÂÂÂ')
+        tip('ÃÂ¢ÃÂÃÂ Respuesta IA lista ÃÂ¢ÃÂÃÂ revÃÂÃÂ­sala y envÃÂÃÂ­a ÃÂ°ÃÂÃÂÃÂ')
       }
     } catch (e) {
-      const msg = e?.message === 'no_key' ? 'Ã¢ÂÂ Ã¯Â¸Â Configura OpenAI o Gemini en Ajustes Ã¢ÂÂ API' : 'Ã¢ÂÂ Ã¯Â¸Â Error al generar respuesta con IA'
+      const msg = e?.message === 'no_key' ? 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura OpenAI o Gemini en Ajustes ÃÂ¢ÃÂÃÂ API' : 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error al generar respuesta con IA'
       tip(msg)
     }
     setGeneratingAiReply(false)
     setAiTyping(false)
   }
 
-  // Ã¢ÂÂÃ¢ÂÂ Generar entrenamiento ganador desde el wizard Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Generar entrenamiento ganador desde el wizard ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   async function generateTrainingWizard() {
-    if (!hasAiKey) { tip('Ã¢ÂÂ Ã¯Â¸Â Configura tu API Key (OpenAI o Gemini) primero'); return }
+    if (!hasAiKey) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura tu API Key (OpenAI o Gemini) primero'); return }
     const { empresa, descripcion, productos, precios, combos, estilo, objeciones, envio, horario, extra } = wizardData
-    if (!empresa && !productos) { tip('Ã¢ÂÂ Ã¯Â¸Â Llena al menos el nombre de empresa y tus productos'); return }
-    setGeneratingWizard(true); tip('Ã°ÂÂ¤Â Generando entrenamiento ganador...')
+    if (!empresa && !productos) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Llena al menos el nombre de empresa y tus productos'); return }
+    setGeneratingWizard(true); tip('ÃÂ°ÃÂÃÂ¤ÃÂ Generando entrenamiento ganador...')
     try {
-      const estiloLabel = { amigable: 'amigable y cercano', profesional: 'profesional y formal', energico: 'energÃÂ©tico y motivador', suave: 'suave y empÃÂ¡tico' }[estilo] || estilo
+      const estiloLabel = { amigable: 'amigable y cercano', profesional: 'profesional y formal', energico: 'energÃÂÃÂ©tico y motivador', suave: 'suave y empÃÂÃÂ¡tico' }[estilo] || estilo
       const generated = await callAI({
         messages: [
-          { role: 'system', content: 'Eres el mejor experto del mundo en entrenar bots de ventas por WhatsApp. Generas prompts de sistema completos, naturales y altamente efectivos que convierten conversaciones en ventas. El bot PRIMERO debe conservar la conversaciÃÂ³n siendo amigable e informativo, y DESPUÃÂS buscar el cierre de ventas de forma natural y sin presiÃÂ³n.' },
-          { role: 'user', content: `Genera el entrenamiento completo para un bot de WhatsApp cerrador de ventas con esta informaciÃÂ³n del negocio:\n\nÃ°ÂÂÂ¢ NEGOCIO: ${empresa || 'Tienda online'}\nÃ°ÂÂÂ DESCRIPCIÃÂN: ${descripcion || 'Productos y servicios'}\nÃ°ÂÂÂÃ¯Â¸Â PRODUCTOS: ${productos || 'No especificado'}\nÃ°ÂÂÂ° PRECIOS: ${precios || 'No especificado'}\nÃ°ÂÂÂ COMBOS/OFERTAS: ${combos || 'Sin combos especiales'}\nÃ°ÂÂÂ¬ ESTILO: ${estiloLabel}\nÃ°ÂÂÂ OBJECIONES COMUNES: ${objeciones || '"EstÃÂ¡ muy caro", "Necesito pensarlo"'}\nÃ°ÂÂÂ ENVÃÂO/LOGÃÂSTICA: ${envio || 'No especificado'}\nÃ°ÂÂÂ HORARIO: ${horario || 'No especificado'}\nÃ¢ÂÂ¨ INFO ADICIONAL: ${extra || 'Ninguna'}\n\nEl entrenamiento DEBE incluir en formato claro con emojis:\n1. Ã°ÂÂÂ¯ Personalidad del asistente (primero conecta, luego vende)\n2. Ã°ÂÂÂÃ¯Â¸Â Productos y precios detallados\n3. Ã°ÂÂÂ¥ Combos y ofertas especiales\n4. Ã°ÂÂÂ¬ Estilo de conversaciÃÂ³n (conectar Ã¢ÂÂ informar Ã¢ÂÂ cerrar)\n5. Ã¢ÂÂ TÃÂ©cnicas de cierre natural\n6. Ã°ÂÂÂ Manejo de objeciones\n7. Ã°ÂÂÂ« Reglas de nunca hacer\n\nIMPORTANTE: El bot SIEMPRE conserva primero e intenta cierre de ventas despuÃÂ©s de forma natural y sin presiÃÂ³n.` },
+          { role: 'system', content: 'Eres el mejor experto del mundo en entrenar bots de ventas por WhatsApp. Generas prompts de sistema completos, naturales y altamente efectivos que convierten conversaciones en ventas. El bot PRIMERO debe conservar la conversaciÃÂÃÂ³n siendo amigable e informativo, y DESPUÃÂÃÂS buscar el cierre de ventas de forma natural y sin presiÃÂÃÂ³n.' },
+          { role: 'user', content: `Genera el entrenamiento completo para un bot de WhatsApp cerrador de ventas con esta informaciÃÂÃÂ³n del negocio:\n\nÃÂ°ÃÂÃÂÃÂ¢ NEGOCIO: ${empresa || 'Tienda online'}\nÃÂ°ÃÂÃÂÃÂ DESCRIPCIÃÂÃÂN: ${descripcion || 'Productos y servicios'}\nÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ PRODUCTOS: ${productos || 'No especificado'}\nÃÂ°ÃÂÃÂÃÂ° PRECIOS: ${precios || 'No especificado'}\nÃÂ°ÃÂÃÂÃÂ COMBOS/OFERTAS: ${combos || 'Sin combos especiales'}\nÃÂ°ÃÂÃÂÃÂ¬ ESTILO: ${estiloLabel}\nÃÂ°ÃÂÃÂÃÂ OBJECIONES COMUNES: ${objeciones || '"EstÃÂÃÂ¡ muy caro", "Necesito pensarlo"'}\nÃÂ°ÃÂÃÂÃÂ ENVÃÂÃÂO/LOGÃÂÃÂSTICA: ${envio || 'No especificado'}\nÃÂ°ÃÂÃÂÃÂ HORARIO: ${horario || 'No especificado'}\nÃÂ¢ÃÂÃÂ¨ INFO ADICIONAL: ${extra || 'Ninguna'}\n\nEl entrenamiento DEBE incluir en formato claro con emojis:\n1. ÃÂ°ÃÂÃÂÃÂ¯ Personalidad del asistente (primero conecta, luego vende)\n2. ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Productos y precios detallados\n3. ÃÂ°ÃÂÃÂÃÂ¥ Combos y ofertas especiales\n4. ÃÂ°ÃÂÃÂÃÂ¬ Estilo de conversaciÃÂÃÂ³n (conectar ÃÂ¢ÃÂÃÂ informar ÃÂ¢ÃÂÃÂ cerrar)\n5. ÃÂ¢ÃÂÃÂ TÃÂÃÂ©cnicas de cierre natural\n6. ÃÂ°ÃÂÃÂÃÂ Manejo de objeciones\n7. ÃÂ°ÃÂÃÂÃÂ« Reglas de nunca hacer\n\nIMPORTANTE: El bot SIEMPRE conserva primero e intenta cierre de ventas despuÃÂÃÂ©s de forma natural y sin presiÃÂÃÂ³n.` },
         ],
         maxTokens: 2500,
       })
       if (generated) {
         saveTraining(generated)
         setTrainingTab('contexto')
-        tip('Ã°ÂÂÂ Entrenamiento ganador generado y guardado Ã¢ÂÂ¨')
-      } else tip('Ã¢ÂÂ Ã¯Â¸Â No se generÃÂ³ contenido. Verifica tu API Key')
+        tip('ÃÂ°ÃÂÃÂÃÂ Entrenamiento ganador generado y guardado ÃÂ¢ÃÂÃÂ¨')
+      } else tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ No se generÃÂÃÂ³ contenido. Verifica tu API Key')
     } catch (e) {
-      tip(e?.message === 'no_key' ? 'Ã¢ÂÂ Ã¯Â¸Â Configura OpenAI o Gemini en Ajustes Ã¢ÂÂ API' : 'Ã¢ÂÂ Ã¯Â¸Â Error generando entrenamiento')
+      tip(e?.message === 'no_key' ? 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura OpenAI o Gemini en Ajustes ÃÂ¢ÃÂÃÂ API' : 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Error generando entrenamiento')
     }
     setGeneratingWizard(false)
   }
 
   function copyText(txt) {
-    navigator.clipboard?.writeText(txt).then(() => tip('Ã°ÂÂÂ Copiado!')).catch(() => tip('Ã°ÂÂÂ ' + txt.substring(0, 40)))
+    navigator.clipboard?.writeText(txt).then(() => tip('ÃÂ°ÃÂÃÂÃÂ Copiado!')).catch(() => tip('ÃÂ°ÃÂÃÂÃÂ ' + txt.substring(0, 40)))
   }
 
-  // Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ FLOW BUILDER Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ FLOW BUILDER ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
   function openBuilder(name) {
     setCurFlow(name)
     setNodes(JSON.parse(JSON.stringify(FLOW_NODES[name] || FLOW_NODES.bienvenida)))
@@ -2308,17 +2308,17 @@ ${conversation}`
 
   const leadFilteredChats = leadFilter === 'all' ? filteredChats : filteredChats.filter(c => (lifecycle[c.jid]?.stage||'nuevo')===leadFilter);
   const NAV = [
-    { id: 'overview',       label: 'Ã°ÂÂÂ Resumen',            section: 'Principal',       badge: 0 },
-    { id: 'chat',           label: 'Ã°ÂÂÂ¬ Chats',               section: 'Principal',       badge: unread },
-    { id: 'clientes',       label: 'Ã°ÂÂÂ¥ Clientes',            section: 'Principal',       badge: clientes.filter(c => c.etiqueta === 'Nuevo lead').length },
-    { id: 'flujos',         label: 'Ã°ÂÂÂ Flujos',              section: 'AutomatizaciÃÂ³n',  badge: 0 },
-    { id: 'templates',      label: 'Ã°ÂÂÂ Plantillas',          section: 'AutomatizaciÃÂ³n',  badge: 0 },
-    { id: 'disparadores',   label: 'Ã¢ÂÂ¡ Disparadores',        section: 'AutomatizaciÃÂ³n',  badge: triggers.filter(t => t.active).length },
-    { id: 'entrenamiento',  label: 'Ã°ÂÂ§Â  Entrenamiento IA',    section: 'AutomatizaciÃÂ³n',  badge: 0 },
-  { id: 'difusiones', label: 'Ã°ÂÂÂ£ Difusiones', section: 'AutomatizaciÃÂ³n', badge: 0 },
-    { id: 'conexion',       label: 'Ã°ÂÂÂ± ConexiÃÂ³n WhatsApp',   section: 'ConfiguraciÃÂ³n',   badge: 0 },
-    { id: 'config',         label: 'Ã¢ÂÂÃ¯Â¸Â Ajustes',             section: 'ConfiguraciÃÂ³n',   badge: 0 },
-  { id: 'dispositivos', label: 'Ã°ÂÂÂ± Dispositivos', section: 'ConfiguraciÃÂ³n', badge: 0 },
+    { id: 'overview',       label: 'ÃÂ°ÃÂÃÂÃÂ Resumen',            section: 'Principal',       badge: 0 },
+    { id: 'chat',           label: 'ÃÂ°ÃÂÃÂÃÂ¬ Chats',               section: 'Principal',       badge: unread },
+    { id: 'clientes',       label: 'ÃÂ°ÃÂÃÂÃÂ¥ Clientes',            section: 'Principal',       badge: clientes.filter(c => c.etiqueta === 'Nuevo lead').length },
+    { id: 'flujos',         label: 'ÃÂ°ÃÂÃÂÃÂ Flujos',              section: 'AutomatizaciÃÂÃÂ³n',  badge: 0 },
+    { id: 'templates',      label: 'ÃÂ°ÃÂÃÂÃÂ Plantillas',          section: 'AutomatizaciÃÂÃÂ³n',  badge: 0 },
+    { id: 'disparadores',   label: 'ÃÂ¢ÃÂÃÂ¡ Disparadores',        section: 'AutomatizaciÃÂÃÂ³n',  badge: triggers.filter(t => t.active).length },
+    { id: 'entrenamiento',  label: 'ÃÂ°ÃÂÃÂ§ÃÂ  Entrenamiento IA',    section: 'AutomatizaciÃÂÃÂ³n',  badge: 0 },
+  { id: 'difusiones', label: 'ÃÂ°ÃÂÃÂÃÂ£ Difusiones', section: 'AutomatizaciÃÂÃÂ³n', badge: 0 },
+    { id: 'conexion',       label: 'ÃÂ°ÃÂÃÂÃÂ± ConexiÃÂÃÂ³n WhatsApp',   section: 'ConfiguraciÃÂÃÂ³n',   badge: 0 },
+    { id: 'config',         label: 'ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Ajustes',             section: 'ConfiguraciÃÂÃÂ³n',   badge: 0 },
+  { id: 'dispositivos', label: 'ÃÂ°ÃÂÃÂÃÂ± Dispositivos', section: 'ConfiguraciÃÂÃÂ³n', badge: 0 },
     { id: 'instagram', label: 'Instagram', section: 'Apps Chat', badge: 0, brandColor: '#E1306C' },
     { id: 'facebook',  label: 'Messenger', section: 'Apps Chat', badge: 0, brandColor: '#0084FF' },
     { id: 'tiktok',    label: 'TikTok',    section: 'Apps Chat', badge: 0, brandColor: '#EE1D52' },
@@ -2338,7 +2338,7 @@ ${conversation}`
           const s = (d.ok === false) ? 'disconnected' : (d.status || 'disconnected')
           setStatus(s); setPhone(d.phone || '')
           if (s === 'connecting' || s === 'qr') { loadQR() }
-          else if (s === 'connected') { loadC(); loadIGChats().catch(() => {}); setTimeout(drawQRConnected, 150) }
+          else if (s === 'connected') { loadC(); setTimeout(drawQRConnected, 150) }
           else { regenerateQR() }
         }, 100)
       }
@@ -2373,10 +2373,10 @@ ${conversation}`
       <Header noFloat />
       <div className="wbv5-root">
 
-        {/* Ã¢ÂÂÃ¢ÂÂ SIDEBAR Ã¢ÂÂÃ¢ÂÂ */}
+        {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ SIDEBAR ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
         <div className="wbv5-sidebar">
           <div className="wbv5-sb-logo" style={{ display: 'none' }}>
-            <div className="wbv5-sb-icon">Ã°ÂÂÂ¿</div>
+            <div className="wbv5-sb-icon">ÃÂ°ÃÂÃÂÃÂ¿</div>
             <div>
               <div className="wbv5-sb-name">Sanate Bot</div>
               <div className="wbv5-sb-sub">WhatsApp Automation</div>
@@ -2386,7 +2386,7 @@ ${conversation}`
             <div className="wbv5-sb-ava">S</div>
             <div className="wbv5-sb-uname">sanate.store</div>
           </div>
-          {['Principal', 'AutomatizaciÃÂ³n', 'Apps Chat', 'ConfiguraciÃÂ³n'].map(section => (
+          {['Principal', 'AutomatizaciÃÂÃÂ³n', 'Apps Chat', 'ConfiguraciÃÂÃÂ³n'].map(section => (
             <React.Fragment key={section}>
               <div className="wbv5-nav-section">{section}</div>
               {NAV.filter(i => i.section === section).map(item => (
@@ -2414,7 +2414,7 @@ ${conversation}`
           ))}
           <div className="wbv5-sb-footer">
             <div className={`wbv5-status-badge ${status === 'connected' ? 'green' : status === 'connecting' ? 'amber' : 'gray'}`}>
-              {status === 'connected' ? 'Ã¢ÂÂ Conectado' : status === 'connecting' ? 'Ã¢ÂÂ³ Conectando...' : serverOnline === false ? 'Ã°ÂÂÂ Sin servidor' : 'Ã¢ÂÂ³ No conectado'}
+              {status === 'connected' ? 'ÃÂ¢ÃÂÃÂ Conectado' : status === 'connecting' ? 'ÃÂ¢ÃÂÃÂ³ Conectando...' : serverOnline === false ? 'ÃÂ°ÃÂÃÂÃÂ Sin servidor' : 'ÃÂ¢ÃÂÃÂ³ No conectado'}
             </div>
             <div style={{ marginTop: '.3rem', fontSize: '.62rem', color: '#9ca3af' }}>n8n + Baileys</div>
             <button
@@ -2423,7 +2423,7 @@ ${conversation}`
               onClick={toggleAiGlobal}
               title="Activar/desactivar IA global"
             >
-              Ã°ÂÂ¤Â IA {aiEnabled ? 'ON' : 'OFF'}
+              ÃÂ°ÃÂÃÂ¤ÃÂ IA {aiEnabled ? 'ON' : 'OFF'}
             </button>
             {/* Contador de contactos con triggers pausados */}
             {Object.values(triggerContactMap).filter(v => v === false).length > 0 && (
@@ -2432,13 +2432,13 @@ ${conversation}`
                 onClick={() => goPage('disparadores')}
                 title="Contactos con disparadores pausados"
               >
-                Ã¢ÂÂ¡ {Object.values(triggerContactMap).filter(v => v === false).length} pausado(s)
+                ÃÂ¢ÃÂÃÂ¡ {Object.values(triggerContactMap).filter(v => v === false).length} pausado(s)
               </div>
             )}
           </div>
         </div>
 
-        {/* Ã¢ÂÂÃ¢ÂÂ MAIN Ã¢ÂÂÃ¢ÂÂ */}
+        {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ MAIN ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
         <div className="wbv5-main">
           <div className="wbv5-topbar">
             <div className="wbv5-topbar-title">
@@ -2447,11 +2447,11 @@ ${conversation}`
                 : NAV.find(i => i.id === page)?.label || page}
             </div>
             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>
-              Ã°ÂÂÂ± Estado WA
+              ÃÂ°ÃÂÃÂÃÂ± Estado WA
             </button>
           </div>
 
-          {/* Ã¢ÂÂÃ¢ÂÂ OVERVIEW Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ OVERVIEW ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'overview' && (
             <div className="wbv5-content">
               <div className="wbv5-stats-row">
@@ -2462,42 +2462,42 @@ ${conversation}`
                 <div className="wbv5-stat-card">
                   <div className="wbv5-stat-val">{chats.reduce((s, c) => s + (c.messages?.length || 0), 0) || 0}</div>
                   <div className="wbv5-stat-lbl">Mensajes recibidos</div>
-                  <div className="wbv5-stat-chg">ÃÂºltimas 24h</div>
+                  <div className="wbv5-stat-chg">ÃÂÃÂºltimas 24h</div>
                 </div>
                 <div className="wbv5-stat-card">
                   <div className="wbv5-stat-val">3</div>
                   <div className="wbv5-stat-lbl">Flujos activos</div>
-                  <div className="wbv5-stat-chg">Ã¢ÂÂ Operativos</div>
+                  <div className="wbv5-stat-chg">ÃÂ¢ÃÂÃÂ Operativos</div>
                 </div>
                 <div className="wbv5-stat-card">
-                  <div className="wbv5-stat-val">Ã¢ÂÂ</div>
+                  <div className="wbv5-stat-val">ÃÂ¢ÃÂÃÂ</div>
                   <div className="wbv5-stat-lbl">CTR promedio</div>
                 </div>
               </div>
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂÂ± Estado WhatsApp</div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>Gestionar Ã¢ÂÂ</button>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ± Estado WhatsApp</div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>Gestionar ÃÂ¢ÃÂÃÂ</button>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div className={`wbv5-status-indicator ${statusCls[status]}`}>
                       <div className="wbv5-si-dot" />
-                      <span>{status === 'connected' ? `Ã¢ÂÂ Conectado Ã¢ÂÂ ${phone}` : status === 'connecting' ? 'Ã¢ÂÂ³ Esperando escaneo del QR...' : 'Desconectado Ã¢ÂÂ escanea el QR para conectar'}</span>
+                      <span>{status === 'connected' ? `ÃÂ¢ÃÂÃÂ Conectado ÃÂ¢ÃÂÃÂ ${phone}` : status === 'connecting' ? 'ÃÂ¢ÃÂÃÂ³ Esperando escaneo del QR...' : 'Desconectado ÃÂ¢ÃÂÃÂ escanea el QR para conectar'}</span>
                     </div>
-                    {phone && <div style={{ fontSize: '.72rem', color: '#6b7280' }}>Ã°ÂÂÂ± {phone}</div>}
+                    {phone && <div style={{ fontSize: '.72rem', color: '#6b7280' }}>ÃÂ°ÃÂÃÂÃÂ± {phone}</div>}
                   </div>
                 </div>
               </div>
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂÂ n8n Cloud</div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={checkN8N}>Ã°ÂÂÂ Verificar</button>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ n8n Cloud</div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={checkN8N}>ÃÂ°ÃÂÃÂÃÂ Verificar</button>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem', marginBottom: '.4rem' }}>
                     <span className={`wbv5-badge ${n8nOk === true ? 'badge-green' : n8nOk === false ? 'badge-red' : 'badge-amber'}`}>
-                      {n8nOk === true ? 'Ã¢ÂÂ Online' : n8nOk === false ? 'Ã¢ÂÂ Error' : 'Ã¢ÂÂ³ Pendiente'}
+                      {n8nOk === true ? 'ÃÂ¢ÃÂÃÂ Online' : n8nOk === false ? 'ÃÂ¢ÃÂÃÂ Error' : 'ÃÂ¢ÃÂÃÂ³ Pendiente'}
                     </span>
                     <span style={{ fontSize: '.72rem', color: '#6b7280' }}>https://oasiss.app.n8n.cloud</span>
                   </div>
@@ -2506,29 +2506,29 @@ ${conversation}`
                   </div>
                 </div>
               </div>
-              {/* Ã¢ÂÂÃ¢ÂÂ Bot Nativo Status Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Bot Nativo Status ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂ¤Â Bot IA</div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setCfgTab('nativebot'); goPage('config') }}>Configurar Ã¢ÂÂ</button>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂ¤ÃÂ Bot IA</div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setCfgTab('nativebot'); goPage('config') }}>Configurar ÃÂ¢ÃÂÃÂ</button>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '.6rem' }}>
                     <span className={`wbv5-badge ${nbEnabled ? 'badge-green' : 'badge-red'}`}>
-                      {nbEnabled ? 'Ã¢ÂÂ Activo' : 'Ã¢ÂÂ Inactivo'}
+                      {nbEnabled ? 'ÃÂ¢ÃÂÃÂ Activo' : 'ÃÂ¢ÃÂÃÂ Inactivo'}
                     </span>
                     <span style={{ fontSize: '.72rem', color: '#6b7280' }}>
                       {nbEnabled
-                        ? 'Flujo conversacional con menÃÂº, captura de leads y escalaciÃÂ³n'
-                        : 'Activa el bot para respuestas automÃÂ¡ticas con menÃÂº'}
+                        ? 'Flujo conversacional con menÃÂÃÂº, captura de leads y escalaciÃÂÃÂ³n'
+                        : 'Activa el bot para respuestas automÃÂÃÂ¡ticas con menÃÂÃÂº'}
                     </span>
                   </div>
                 </div>
               </div>
-              {/* Ã¢ÂÂÃ¢ÂÂ Panel de Inteligencia de Ventas Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Panel de Inteligencia de Ventas ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂÂ¡ Inteligencia de Ventas</div>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ¡ Inteligencia de Ventas</div>
                   <span className="wbv5-badge badge-amber" style={{ fontSize: '.65rem' }}>IA</span>
                 </div>
                 <div className="wbv5-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
@@ -2539,24 +2539,24 @@ ${conversation}`
                       const tags = chatsTags[c.id] || []
                       return tags.includes('Preparar') && !tags.includes('Facturado')
                     })
-                    if (pendingOrders.length > 0) insights.push({ type: 'warn', msg: `${pendingOrders.length} pedido(s) con etiqueta "Preparar" sin facturar Ã¢ÂÂ revÃÂ­salos antes de que se enfrÃÂ­en` })
+                    if (pendingOrders.length > 0) insights.push({ type: 'warn', msg: `${pendingOrders.length} pedido(s) con etiqueta "Preparar" sin facturar ÃÂ¢ÃÂÃÂ revÃÂÃÂ­salos antes de que se enfrÃÂÃÂ­en` })
                     // Chats con keywords de precio en preview
                     const priceChats = chats.filter(c => ORDER_KEYWORDS.some(k => (c.preview || '').toLowerCase().includes(k)))
-                    if (priceChats.length > 0) insights.push({ type: 'info', msg: `${priceChats.length} chat(s) con preguntas de precio/pedido recientes Ã¢ÂÂ abre y da seguimiento Ã°ÂÂÂ¦` })
+                    if (priceChats.length > 0) insights.push({ type: 'info', msg: `${priceChats.length} chat(s) con preguntas de precio/pedido recientes ÃÂ¢ÃÂÃÂ abre y da seguimiento ÃÂ°ÃÂÃÂÃÂ¦` })
                     // Contactos sin IA activa
                     const noAi = chats.filter(c => !c.isGroup && !isAiActive(c.id))
-                    if (noAi.length > 0) insights.push({ type: 'tip', msg: `${noAi.length} contacto(s) sin IA activa Ã¢ÂÂ actÃÂ­valos individualmente para respuesta automÃÂ¡tica` })
-                    // Training usando plantilla genÃÂ©rica
+                    if (noAi.length > 0) insights.push({ type: 'tip', msg: `${noAi.length} contacto(s) sin IA activa ÃÂ¢ÃÂÃÂ actÃÂÃÂ­valos individualmente para respuesta automÃÂÃÂ¡tica` })
+                    // Training usando plantilla genÃÂÃÂ©rica
                     const lsTraining = (() => { try { return localStorage.getItem('wa_training_prompt') || '' } catch { return '' } })()
-                    if (!lsTraining || lsTraining === TRAINING_TEMPLATE) insights.push({ type: 'alert', msg: 'El entrenamiento IA usa plantilla genÃÂ©rica Ã¢ÂÂ personaliza con tus productos reales para mejorar el cierre hasta un 60%' })
-                    // Sin anÃÂ¡lisis de clientes
+                    if (!lsTraining || lsTraining === TRAINING_TEMPLATE) insights.push({ type: 'alert', msg: 'El entrenamiento IA usa plantilla genÃÂÃÂ©rica ÃÂ¢ÃÂÃÂ personaliza con tus productos reales para mejorar el cierre hasta un 60%' })
+                    // Sin anÃÂÃÂ¡lisis de clientes
                     const noAnalysis = chats.filter(c => !clientAnalysis[c.id]).length
-                    if (noAnalysis > 3) insights.push({ type: 'tip', msg: `${noAnalysis} clientes sin perfil IA Ã¢ÂÂ abre el chat y pulsa "Ã°ÂÂ§Â  Analizar" para obtener ÃÂ¡ngulos de venta personalizados` })
+                    if (noAnalysis > 3) insights.push({ type: 'tip', msg: `${noAnalysis} clientes sin perfil IA ÃÂ¢ÃÂÃÂ abre el chat y pulsa "ÃÂ°ÃÂÃÂ§ÃÂ  Analizar" para obtener ÃÂÃÂ¡ngulos de venta personalizados` })
                     // Plantillas sin imagen
-                    insights.push({ type: 'tip', msg: 'AÃÂ±ade imÃÂ¡genes a tus plantillas de productos Ã¢ÂÂ los mensajes con imagen aumentan el cierre hasta un 40% Ã°ÂÂÂ¸' })
+                    insights.push({ type: 'tip', msg: 'AÃÂÃÂ±ade imÃÂÃÂ¡genes a tus plantillas de productos ÃÂ¢ÃÂÃÂ los mensajes con imagen aumentan el cierre hasta un 40% ÃÂ°ÃÂÃÂÃÂ¸' })
                     // Estado del sistema
-                    if (status === 'connected' && aiEnabled) insights.push({ type: 'ok', msg: `WhatsApp conectado y IA activa Ã¢ÂÂ Ã¢ÂÂ El bot estÃÂ¡ respondiendo automÃÂ¡ticamente` })
-                    else if (status !== 'connected') insights.push({ type: 'alert', msg: 'WhatsApp desconectado Ã¢ÂÂ los clientes no estÃÂ¡n recibiendo respuestas automÃÂ¡ticas Ã°ÂÂÂ¨' })
+                    if (status === 'connected' && aiEnabled) insights.push({ type: 'ok', msg: `WhatsApp conectado y IA activa ÃÂ¢ÃÂÃÂ ÃÂ¢ÃÂÃÂ El bot estÃÂÃÂ¡ respondiendo automÃÂÃÂ¡ticamente` })
+                    else if (status !== 'connected') insights.push({ type: 'alert', msg: 'WhatsApp desconectado ÃÂ¢ÃÂÃÂ los clientes no estÃÂÃÂ¡n recibiendo respuestas automÃÂÃÂ¡ticas ÃÂ°ÃÂÃÂÃÂ¨' })
                     return insights.slice(0, 5).map((ins, i) => (
                       <div key={i} style={{
                         display: 'flex', gap: '.45rem', alignItems: 'flex-start',
@@ -2564,7 +2564,7 @@ ${conversation}`
                         border: `1px solid ${ins.type === 'ok' ? '#bbf7d0' : ins.type === 'warn' ? '#fde047' : ins.type === 'alert' ? '#fca5a5' : '#e0e7ff'}`,
                         borderRadius: 7, padding: '.4rem .55rem', fontSize: '.72rem', lineHeight: 1.5
                       }}>
-                        <span style={{ flexShrink: 0 }}>{ins.type === 'ok' ? 'Ã¢ÂÂ' : ins.type === 'warn' ? 'Ã¢ÂÂ Ã¯Â¸Â' : ins.type === 'alert' ? 'Ã°ÂÂÂ¨' : 'Ã°ÂÂÂ¡'}</span>
+                        <span style={{ flexShrink: 0 }}>{ins.type === 'ok' ? 'ÃÂ¢ÃÂÃÂ' : ins.type === 'warn' ? 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ' : ins.type === 'alert' ? 'ÃÂ°ÃÂÃÂÃÂ¨' : 'ÃÂ°ÃÂÃÂÃÂ¡'}</span>
                         <span style={{ color: '#374151' }}>{ins.msg}</span>
                       </div>
                     ))
@@ -2574,8 +2574,8 @@ ${conversation}`
 
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã¢ÂÂ¡ Flujos recientes</div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('flujos')}>Ver todos Ã¢ÂÂ</button>
+                  <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂ¡ Flujos recientes</div>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('flujos')}>Ver todos ÃÂ¢ÃÂÃÂ</button>
                 </div>
                 <div style={{ padding: 0 }}>
                   <table className="wbv5-flows-table">
@@ -2586,7 +2586,7 @@ ${conversation}`
                           <td><span className="wbv5-flow-link" onClick={() => { goPage('flujos'); openBuilder(f.key) }}>{f.name}</span></td>
                           <td>{f.runs}</td>
                           <td>{f.ctr}</td>
-                          <td><span className="wbv5-badge badge-green">Ã¢ÂÂ Activo</span></td>
+                          <td><span className="wbv5-badge badge-green">ÃÂ¢ÃÂÃÂ Activo</span></td>
                         </tr>
                       ))}
                     </tbody>
@@ -2596,25 +2596,25 @@ ${conversation}`
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ CHAT Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CHAT ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'chat' && (
             <div className="wbv5-chat-wrap">
               <div className="wbv5-inbox-list">
                 <div className="wbv5-il-header">
                   <input className="wbv5-il-search" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} />
-                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => loadC(); loadIGChats().catch(() => {})}>Ã°ÂÂÂ</button>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => loadC()}>ÃÂ°ÃÂÃÂÃÂ</button>
                 </div>
                 <div className="wbv5-il-filters" style={{ flexWrap: 'wrap', gap: '.25rem' }}>
                   {[
                     { id: 'todos',    label: 'Todos' },
-                    { id: 'sin leer', label: 'Ã°ÂÂÂ´ Sin leer' },
-                    { id: 'pedidos',  label: 'Ã°ÂÂÂ¦ Pedidos' },
-                    { id: 'ventas',   label: 'Ã¢ÂÂ Ventas' },
-                    { id: 'soporte',  label: 'Ã°ÂÂÂ  Soporte' },
-                    { id: 'grupos',   label: 'Ã°ÂÂÂ¥ Grupos' },
-                    { id: 'instagram', label: 'Instagram',  icon: 'Ã°ÂÂÂ·', color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)' },
-                    { id: 'messenger', label: 'Messenger',  icon: 'Ã°ÂÂÂ¬', color: '#0084FF', grad: 'linear-gradient(135deg,#0084FF,#0052CC)' },
-                    { id: 'tiktok',    label: 'TikTok',     icon: 'Ã°ÂÂÂµ', color: '#00f2ea', grad: 'linear-gradient(135deg,#00f2ea,#ff0050)' },
+                    { id: 'sin leer', label: 'ÃÂ°ÃÂÃÂÃÂ´ Sin leer' },
+                    { id: 'pedidos',  label: 'ÃÂ°ÃÂÃÂÃÂ¦ Pedidos' },
+                    { id: 'ventas',   label: 'ÃÂ¢ÃÂÃÂ Ventas' },
+                    { id: 'soporte',  label: 'ÃÂ°ÃÂÃÂÃÂ  Soporte' },
+                    { id: 'grupos',   label: 'ÃÂ°ÃÂÃÂÃÂ¥ Grupos' },
+                    { id: 'instagram', label: 'Instagram',  icon: 'ÃÂ°ÃÂÃÂÃÂ·', color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)' },
+                    { id: 'messenger', label: 'Messenger',  icon: 'ÃÂ°ÃÂÃÂÃÂ¬', color: '#0084FF', grad: 'linear-gradient(135deg,#0084FF,#0052CC)' },
+                    { id: 'tiktok',    label: 'TikTok',     icon: 'ÃÂ°ÃÂÃÂÃÂµ', color: '#00f2ea', grad: 'linear-gradient(135deg,#00f2ea,#ff0050)' },
                    ].map(f => (
                     <button key={f.id} className={`wbv5-il-filter ${chatFilter === f.id ? 'active' : ''}`}
                       onClick={() => setChatFilter(f.id)}
@@ -2628,33 +2628,33 @@ ${conversation}`
                    ))}
                 </div>
                 <div style={{display:'flex',gap:'6px',padding:'8px 12px',borderBottom:'1px solid #2a2a2a',background:'#111',flexWrap:'wrap'}}>
-            {[['nuevo','Ã°ÂÂÂ Nuevo','#3b82f6'],['potencial','Ã°ÂÂÂ¥ Potencial','#f59e0b'],['cliente','Ã°ÂÂÂ Cliente','#22c55e'],['perdido','Ã¢ÂÂ Perdido','#ef4444']].map(([key,label,clr])=>(
+            {[['nuevo','ÃÂ°ÃÂÃÂÃÂ Nuevo','#3b82f6'],['potencial','ÃÂ°ÃÂÃÂÃÂ¥ Potencial','#f59e0b'],['cliente','ÃÂ°ÃÂÃÂÃÂ Cliente','#22c55e'],['perdido','ÃÂ¢ÃÂÃÂ Perdido','#ef4444']].map(([key,label,clr])=>(
               <button key={key} onClick={()=>setLeadFilter(p=>p===key?'all':key)} style={{border:'1px solid '+(leadFilter===key?(clr||'#25d366'):'#444'),borderRadius:'20px',padding:'3px 10px',background:leadFilter===key?(clr||'#25d366'):'transparent',color:leadFilter===key?'#fff':'#aaa',cursor:'pointer',fontSize:'11px',fontWeight:leadFilter===key?'600':'400'}}>{label}</button>
             ))}
           </div>
           <div className="wbv5-il-convs">
                   {status !== 'connected' ? (
                     <div className="wbv5-empty-state">
-                      <div style={{ fontSize: '1.5rem', marginBottom: '.4rem' }}>Ã°ÂÂÂ±</div>
+                      <div style={{ fontSize: '1.5rem', marginBottom: '.4rem' }}>ÃÂ°ÃÂÃÂÃÂ±</div>
                       <div>Conecta WhatsApp para ver chats</div>
                       <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.5rem' }} onClick={() => goPage('conexion')}>Conectar</button>
                     </div>
                   ) : leadFilteredChats.length === 0 ? (
                     <div className="wbv5-empty-state">
-                      <div style={{ fontSize: '1.5rem' }}>Ã°ÂÂÂ¬</div>
+                      <div style={{ fontSize: '1.5rem' }}>ÃÂ°ÃÂÃÂÃÂ¬</div>
                       <div>Sin convesaciones</div>
                     </div>
                   ) : leadFilteredChats.map((c, i) => (
                     <div key={c.id} className={`wbv5-conv-itm ${active?.id === c.id ? 'active' : ''}`} onClick={() => openChat(c)}>
                       <div className="wbv5-ci-ava" style={{ background: c.isGroup ? '#ede9fe' : COLORS_AV[i % 5], color: c.isGroup ? '#5b21b6' : COLORS_TXT[i % 5], position: 'relative', overflow: 'hidden' }}>
-                        {c.isGroup ? 'Ã°ÂÂÂ¥' : (c.name || c.phone || '?').substring(0, 2).toUpperCase()}
+                        {c.isGroup ? 'ÃÂ°ÃÂÃÂÃÂ¥' : (c.name || c.phone || '?').substring(0, 2).toUpperCase()}
                         {c.photoUrl ? <img src={c.photoUrl} alt="" className="wbv5-ci-ava-img wbv5-ci-ava-abs" onError={e => e.target.style.display='none'} /> : null}
                       </div>
                       <div className="wbv5-ci-body">
                         <div className="wbv5-ci-name">
                           {c.name || c.phone || c.id.split('@')[0]}
-                          {c.isGroup && <span style={{ marginLeft: 4, fontSize: '.62rem', color: '#7c3aed' }}>ÃÂ·grupo</span>}
-                          {!isTriggerActive(c.id) && <span className="wbv5-trigger-paused-badge" title="Disparadores pausados">Ã¢ÂÂ¡ pausa</span>}
+                          {c.isGroup && <span style={{ marginLeft: 4, fontSize: '.62rem', color: '#7c3aed' }}>ÃÂÃÂ·grupo</span>}
+                          {!isTriggerActive(c.id) && <span className="wbv5-trigger-paused-badge" title="Disparadores pausados">ÃÂ¢ÃÂÃÂ¡ pausa</span>}
                         </div>
                         <div className="wbv5-ci-prev">{c.preview || 'Sin mensajes'}</div>
                       </div>
@@ -2667,12 +2667,12 @@ ${conversation}`
                 </div>
               </div>
 
-              {/* Ã¢ÂÂÃ¢ÂÂ ventana de chat Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ ventana de chat ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               <div className="wbv5-chat-win">
                 {!active ? (
                   <div className="wbv5-chat-empty">
-                    <div style={{ fontSize: '1.8rem', marginBottom: '.5rem' }}>Ã°ÂÂÂ¬</div>
-                    <div>Selecciona una conversaciÃÂ³n</div>
+                    <div style={{ fontSize: '1.8rem', marginBottom: '.5rem' }}>ÃÂ°ÃÂÃÂÃÂ¬</div>
+                    <div>Selecciona una conversaciÃÂÃÂ³n</div>
                   </div>
                 ) : (
                   <>
@@ -2687,7 +2687,7 @@ ${conversation}`
                           {active.name || active.phone || active.id}
                         </div>
                         <div style={{padding:'4px 12px',background:'transparent',borderBottom:'1px solid rgba(0,0,0,0.06)',display:'flex',gap:'6px',flexWrap:'wrap'}}>
-                          {[{id:'nuevo',label:'Nuevo cliente',c:'#6c757d'},{id:'potencial',label:'Potencial Ã°ÂÂÂ¥',c:'#fd7e14'},{id:'cliente',label:'Cliente Ã°ÂÂÂ',c:'#0d6efd'},{id:'perdido',label:'Perdido Ã¢ÂÂ',c:'#dc3545'}].map(s=>(
+                          {[{id:'nuevo',label:'Nuevo cliente',c:'#6c757d'},{id:'potencial',label:'Potencial ÃÂ°ÃÂÃÂÃÂ¥',c:'#fd7e14'},{id:'cliente',label:'Cliente ÃÂ°ÃÂÃÂÃÂ',c:'#0d6efd'},{id:'perdido',label:'Perdido ÃÂ¢ÃÂÃÂ',c:'#dc3545'}].map(s=>(
                             <button key={s.id} onClick={()=>updateStage(active?.id,s.id)} style={{padding:'2px 10px',borderRadius:'20px',border:'none',cursor:'pointer',fontSize:'11px',fontWeight:600,background:lifecycle[active?.id]?.stage===s.id?s.c:'#e9ecef',color:lifecycle[active?.id]?.stage===s.id?'#fff':'#495057'}}>{s.label}</button>
                           ))}
                         </div>
@@ -2699,11 +2699,11 @@ ${conversation}`
                                   <span key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: '#7c3aed', display: 'inline-block', animation: `wbv5-pulse 0.9s ease-in-out ${i*0.22}s infinite` }} />
                                 ))}
                               </span>
-                              Ã°ÂÂ¤Â IA respondiendo...
+                              ÃÂ°ÃÂÃÂ¤ÃÂ IA respondiendo...
                             </div>
                           ) : (
                             <>
-                              <div className="wbv5-cw-sub">Ã°ÂÂÂ¢ {active.phone || cleanPhone('', active.id)}</div>
+                              <div className="wbv5-cw-sub">ÃÂ°ÃÂÃÂÃÂ¢ {active.phone || cleanPhone('', active.id)}</div>
                               {(() => { const geo = phoneToGeo(active.phone || cleanPhone('', active.id)); return geo ? <span className="wbv5-geo-badge">{geo.flag} {geo.label}</span> : null })()}
                             </>
                           )}
@@ -2721,7 +2721,7 @@ ${conversation}`
                               width: 8, height: 8, borderRadius: '50%',
                               background: contactStatus === 'Facturado' ? '#10b981' : contactStatus === 'Pendiente' ? '#f59e0b' : '#3b82f6'
                             }} />
-                            {contactStatus} Ã¢ÂÂ¾
+                            {contactStatus} ÃÂ¢ÃÂÃÂ¾
                           </button>
                           {showStatusDropdown && (
                             <div style={{
@@ -2749,45 +2749,45 @@ ${conversation}`
                             </div>
                           )}
                         </div>
-                        {/* BotÃÂ³n Disparadores por contacto */}
+                        {/* BotÃÂÃÂ³n Disparadores por contacto */}
                         <button
                           className={`wbv5-btn wbv5-btn-sm ${isTriggerActive(active?.id) ? 'wbv5-btn-trigger-on' : 'wbv5-btn-trigger-off'}`}
                           onClick={() => toggleTriggerContact(active?.id)}
-                          title={isTriggerActive(active?.id) ? 'Ã¢ÂÂ¡ Disparadores activos Ã¢ÂÂ clic para pausar' : 'Ã¢ÂÂ¡ Disparadores pausados Ã¢ÂÂ clic para reactivar'}
+                          title={isTriggerActive(active?.id) ? 'ÃÂ¢ÃÂÃÂ¡ Disparadores activos ÃÂ¢ÃÂÃÂ clic para pausar' : 'ÃÂ¢ÃÂÃÂ¡ Disparadores pausados ÃÂ¢ÃÂÃÂ clic para reactivar'}
                         >
-                          Ã¢ÂÂ¡ {isTriggerActive(active?.id) ? 'Auto ON' : 'Auto OFF'}
+                          ÃÂ¢ÃÂÃÂ¡ {isTriggerActive(active?.id) ? 'Auto ON' : 'Auto OFF'}
                         </button>
-                        {/* BotÃÂ³n IA por contacto */}
+                        {/* BotÃÂÃÂ³n IA por contacto */}
                         <button
                           className={`wbv5-btn wbv5-btn-sm ${isAiActive(active?.id) ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
                           onClick={() => toggleAiContact(active?.id)}
-                          title={isAiActive(active?.id) ? 'IA activa Ã¢ÂÂ clic para desactivar' : 'IA inactiva Ã¢ÂÂ clic para activar'}
+                          title={isAiActive(active?.id) ? 'IA activa ÃÂ¢ÃÂÃÂ clic para desactivar' : 'IA inactiva ÃÂ¢ÃÂÃÂ clic para activar'}
                         >
-                          Ã°ÂÂ¤Â {isAiActive(active?.id) ? 'IA ON' : 'IA OFF'}
+                          ÃÂ°ÃÂÃÂ¤ÃÂ {isAiActive(active?.id) ? 'IA ON' : 'IA OFF'}
                         </button>
-                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>Ã°ÂÂÂ Datos</button>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setShowContact(s => !s)}>ÃÂ°ÃÂÃÂÃÂ Datos</button>
                         <button
                           className={`wbv5-btn wbv5-btn-sm ${showAnalysisPanel ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
                           onClick={() => { setShowAnalysisPanel(s => !s); setShowContact(false) }}
-                          title="Ã°ÂÂ§Â  AnÃÂ¡lisis IA del cliente Ã¢ÂÂ estilo, intenciÃÂ³n de compra, ÃÂ¡ngulo de venta"
+                          title="ÃÂ°ÃÂÃÂ§ÃÂ  AnÃÂÃÂ¡lisis IA del cliente ÃÂ¢ÃÂÃÂ estilo, intenciÃÂÃÂ³n de compra, ÃÂÃÂ¡ngulo de venta"
                           style={{ fontSize: '.72rem' }}
                         >
-                          Ã°ÂÂ§Â  {clientAnalysis[active?.id] ? 'AnÃÂ¡lisis' : 'Analizar'}
+                          ÃÂ°ÃÂÃÂ§ÃÂ  {clientAnalysis[active?.id] ? 'AnÃÂÃÂ¡lisis' : 'Analizar'}
                         </button>
                       </div>
                     </div>
 
                     <div className="wbv5-cw-msgs" ref={msgsRef}>
                       {msgs.length === 0 ? (
-                        <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '.72rem', padding: '2rem 0' }}>Sin mensajes aÃÂºn</div>
+                        <div style={{ textAlign: 'center', color: '#9ca3af', fontSize: '.72rem', padding: '2rem 0' }}>Sin mensajes aÃÂÃÂºn</div>
                       ) : msgs.map((m) => {
                         const isMediaType = ['image', 'video', 'audio', 'document', 'sticker'].includes(m.type);
                         return (
                         <div key={m.id} className={`wbv5-msg ${m.dir}`}>
-                          {/* texto Ã¢ÂÂ mostrar tambiÃÂ©n en imagen/video/audio si tiene caption */}
+                          {/* texto ÃÂ¢ÃÂÃÂ mostrar tambiÃÂÃÂ©n en imagen/video/audio si tiene caption */}
                           {m.txt ? <div className="wbv5-msg-txt">{m.txt}</div> : null}
 
-                          {/* Ã¢ÂÂÃ¢ÂÂ imagen Ã¢ÂÂÃ¢ÂÂ */}
+                          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ imagen ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                           {m.type === 'image' ? (m.mediaUrl ? (() => {
                             const src = resolveMediaUrl(m.mediaUrl)
                             return (
@@ -2803,13 +2803,13 @@ ${conversation}`
                                 <a href={src} target="_blank" rel="noreferrer" download
                                   className="wbv5-media-dl"
                                   style={{ display: 'none', alignItems: 'center', gap: '.4rem', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '.5rem .75rem', fontSize: '.72rem', color: '#374151', textDecoration: 'none', cursor: 'pointer' }}>
-                                  Ã°ÂÂÂ¥ Ver / Descargar imagen
+                                  ÃÂ°ÃÂÃÂÃÂ¥ Ver / Descargar imagen
                                 </a>
                               </div>
                             )
-                          })() : <div className="wbv5-msg-media-ph">Ã°ÂÂÂ· Imagen</div>) : null}
+                          })() : <div className="wbv5-msg-media-ph">ÃÂ°ÃÂÃÂÃÂ· Imagen</div>) : null}
 
-                          {/* Ã¢ÂÂÃ¢ÂÂ video Ã¢ÂÂÃ¢ÂÂ */}
+                          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ video ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                           {m.type === 'video' ? (m.mediaUrl ? (() => {
                             const src = resolveMediaUrl(m.mediaUrl)
                             return (
@@ -2821,13 +2821,13 @@ ${conversation}`
                                   }} />
                                 <a href={src} target="_blank" rel="noreferrer" download
                                   style={{ display: 'none', fontSize: '.72rem', color: '#374151' }}>
-                                  Ã°ÂÂÂ¥ Descargar video
+                                  ÃÂ°ÃÂÃÂÃÂ¥ Descargar video
                                 </a>
                               </div>
                             )
-                          })() : <div className="wbv5-msg-media-ph">Ã°ÂÂÂ¥ Video</div>) : null}
+                          })() : <div className="wbv5-msg-media-ph">ÃÂ°ÃÂÃÂÃÂ¥ Video</div>) : null}
 
-                          {/* Ã¢ÂÂÃ¢ÂÂ audio / nota de voz Ã¢ÂÂÃ¢ÂÂ */}
+                          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ audio / nota de voz ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                           {m.type === 'audio' ? (m.mediaUrl ? (() => {
                             const src = resolveMediaUrl(m.mediaUrl)
                             return (
@@ -2839,22 +2839,22 @@ ${conversation}`
                                   }} />
                                 <a href={src} target="_blank" rel="noreferrer" download
                                   style={{ display: 'none', alignItems: 'center', gap: '.3rem', background: '#f3f4f6', border: '1px solid #e5e7eb', borderRadius: 8, padding: '.4rem .65rem', fontSize: '.71rem', color: '#374151', textDecoration: 'none' }}>
-                                  Ã°ÂÂÂµ Descargar audio
+                                  ÃÂ°ÃÂÃÂÃÂµ Descargar audio
                                 </a>
                               </div>
                             )
-                          })() : <div className="wbv5-msg-media-ph">Ã°ÂÂÂµ Audio</div>) : null}
+                          })() : <div className="wbv5-msg-media-ph">ÃÂ°ÃÂÃÂÃÂµ Audio</div>) : null}
 
-                          {/* Ã¢ÂÂÃ¢ÂÂ documento Ã¢ÂÂÃ¢ÂÂ */}
+                          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ documento ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                           {m.type === 'document' ? (m.mediaUrl ? (
                             <a href={resolveMediaUrl(m.mediaUrl)} target="_blank" rel="noreferrer" download className="wbv5-msg-doc">
-                              Ã°ÂÂÂ {m.fileName || 'Documento'}
+                              ÃÂ°ÃÂÃÂÃÂ {m.fileName || 'Documento'}
                             </a>
-                          ) : <div className="wbv5-msg-media-ph">Ã°ÂÂÂ {m.fileName || 'Documento'}</div>) : null}
+                          ) : <div className="wbv5-msg-media-ph">ÃÂ°ÃÂÃÂÃÂ {m.fileName || 'Documento'}</div>) : null}
 
-                          {/* Ã¢ÂÂÃ¢ÂÂ sticker Ã¢ÂÂÃ¢ÂÂ */}
-                          {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || 'Ã°ÂÂÂ¨'}</div> : null}
-                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' Ã¢ÂÂÃ¢ÂÂ' : ' Ã¢ÂÂ') : ''}</div>
+                          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ sticker ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
+                          {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || 'ÃÂ°ÃÂÃÂÃÂ¨'}</div> : null}
+                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ' : ' ÃÂ¢ÃÂÃÂ') : ''}</div>
                         </div>
                       )})}
                     </div>
@@ -2864,13 +2864,13 @@ ${conversation}`
                     <input ref={fileAudRef} type="file" accept="audio/*" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f,'audio'); e.target.value='' }} />
                     <input ref={fileDocRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" hidden onChange={e => { const f=e.target.files?.[0]; if(f) sendFile(f,'document'); e.target.value='' }} />
 
-                    {/* Modal de plantillas rÃÂ¡pidas */}
+                    {/* Modal de plantillas rÃÂÃÂ¡pidas */}
                     {showTemplatesModal && (
                       <div className="wbv5-tpl-overlay" onClick={() => setShowTemplatesModal(false)}>
                         <div className="wbv5-tpl-popup" onClick={e => e.stopPropagation()}>
                           <div className="wbv5-tpl-head">
                             <strong>Enviar plantilla</strong>
-                            <button onClick={() => setShowTemplatesModal(false)}>Ã¢ÂÂ</button>
+                            <button onClick={() => setShowTemplatesModal(false)}>ÃÂ¢ÃÂÃÂ</button>
                           </div>
                           <div className="wbv5-tpl-list">
                             {plantillas.map(tpl => (
@@ -2880,7 +2880,7 @@ ${conversation}`
                                 <small style={{ whiteSpace: 'pre-wrap', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{tpl.mensaje}</small>
                               </button>
                             ))}
-                            {plantillas.length === 0 && <div style={{ padding: '1rem', color: '#9ca3af', fontSize: '.75rem', textAlign: 'center' }}>Sin plantillas Ã¢ÂÂ crea una en la secciÃÂ³n Ã°ÂÂÂ Plantillas</div>}
+                            {plantillas.length === 0 && <div style={{ padding: '1rem', color: '#9ca3af', fontSize: '.75rem', textAlign: 'center' }}>Sin plantillas ÃÂ¢ÃÂÃÂ crea una en la secciÃÂÃÂ³n ÃÂ°ÃÂÃÂÃÂ Plantillas</div>}
                           </div>
                         </div>
                       </div>
@@ -2891,7 +2891,7 @@ ${conversation}`
                       {showEmojiPanel && (
                         <div className="wbv5-emoji-panel" ref={emojiPanelRef}>
                           <div className="wbv5-emoji-tabs">
-                            <button className={emojiTab === 'emojis' ? 'active' : ''} onClick={() => setEmojiTab('emojis')}>Ã°ÂÂÂ Emojis</button>
+                            <button className={emojiTab === 'emojis' ? 'active' : ''} onClick={() => setEmojiTab('emojis')}>ÃÂ°ÃÂÃÂÃÂ Emojis</button>
                             <button className={emojiTab === 'stickers' ? 'active' : ''} onClick={() => setEmojiTab('stickers')}>Stickers</button>
                           </div>
                           {emojiTab === 'emojis' ? (
@@ -2904,7 +2904,7 @@ ${conversation}`
                             />
                           ) : (
                             <div className="wbv5-sticker-grid">
-                              {['Ã°ÂÂÂÃ°ÂÂÂ¥','Ã¢ÂÂ¤Ã¯Â¸ÂÃ¢ÂÂ¨','Ã°ÂÂÂÃ°ÂÂÂ','Ã°ÂÂÂÃ°ÂÂÂ¯','Ã°ÂÂÂÃ°ÂÂÂ','Ã°ÂÂÂ­Ã°ÂÂ¤Â£','Ã°ÂÂÂªÃ°ÂÂÂ¯','Ã°ÂÂÂÃ¢Â­Â','Ã°ÂÂÂÃ°ÂÂÂ','Ã°ÂÂÂÃ°ÂÂÂ'].flatMap(pair =>
+                              {['ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ¥','ÃÂ¢ÃÂÃÂ¤ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ¨','ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ','ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ¯','ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ','ÃÂ°ÃÂÃÂÃÂ­ÃÂ°ÃÂÃÂ¤ÃÂ£','ÃÂ°ÃÂÃÂÃÂªÃÂ°ÃÂÃÂÃÂ¯','ÃÂ°ÃÂÃÂÃÂÃÂ¢ÃÂ­ÃÂ','ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ','ÃÂ°ÃÂÃÂÃÂÃÂ°ÃÂÃÂÃÂ'].flatMap(pair =>
                                 (pair.match(/./gu) || []).map((em, i) => (
                                   <button key={pair+i} className="wbv5-sticker-item" onClick={() => {
                                     const t = new Date().toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'})
@@ -2924,22 +2924,22 @@ ${conversation}`
                           <span className="wbv5-rec-dot" />
                           <span className="wbv5-rec-time">{formatRecTime(recordingSeconds)}</span>
                           <span className="wbv5-rec-label">Grabando audio...</span>
-                          <button className="wbv5-rec-stop" onClick={stopRecording}>Ã¢ÂÂ¹ Detener</button>
+                          <button className="wbv5-rec-stop" onClick={stopRecording}>ÃÂ¢ÃÂÃÂ¹ Detener</button>
                         </div>
                       ) : (
                         <>
                           {attachOpen && (
                             <div className="wbv5-attach-menu">
-                              <button onClick={() => { setAttachOpen(false); fileImgRef.current?.click() }}>Ã°ÂÂÂ¼Ã¯Â¸Â Imagen / Video</button>
-                              <button onClick={() => { setAttachOpen(false); fileAudRef.current?.click() }}>Ã°ÂÂÂµ Audio</button>
-                              <button onClick={() => { setAttachOpen(false); fileDocRef.current?.click() }}>Ã°ÂÂÂ Documento</button>
+                              <button onClick={() => { setAttachOpen(false); fileImgRef.current?.click() }}>ÃÂ°ÃÂÃÂÃÂ¼ÃÂ¯ÃÂ¸ÃÂ Imagen / Video</button>
+                              <button onClick={() => { setAttachOpen(false); fileAudRef.current?.click() }}>ÃÂ°ÃÂÃÂÃÂµ Audio</button>
+                              <button onClick={() => { setAttachOpen(false); fileDocRef.current?.click() }}>ÃÂ°ÃÂÃÂÃÂ Documento</button>
                             </div>
                           )}
                           <button className="wbv5-cw-emoji-btn" title="Emoji y stickers"
-                            onClick={() => setShowEmojiPanel(o => !o)}>Ã°ÂÂÂ</button>
-                          <button className="wbv5-cw-attach" title="Adjuntar" onClick={() => setAttachOpen(o => !o)}>Ã°ÂÂÂ</button>
-                          <button className="wbv5-cw-tpl-btn" title="Plantillas rÃÂ¡pidas"
-                            onClick={() => setShowTemplatesModal(true)}>Ã°ÂÂÂ</button>
+                            onClick={() => setShowEmojiPanel(o => !o)}>ÃÂ°ÃÂÃÂÃÂ</button>
+                          <button className="wbv5-cw-attach" title="Adjuntar" onClick={() => setAttachOpen(o => !o)}>ÃÂ°ÃÂÃÂÃÂ</button>
+                          <button className="wbv5-cw-tpl-btn" title="Plantillas rÃÂÃÂ¡pidas"
+                            onClick={() => setShowTemplatesModal(true)}>ÃÂ°ÃÂÃÂÃÂ</button>
                           <input
                             className="wbv5-cw-input" value={inp} disabled={sending}
                             onChange={e => setInp(e.target.value)}
@@ -2949,19 +2949,19 @@ ${conversation}`
                           {aiEnabled && (
                             <button
                               className={`wbv5-cw-ai-reply-btn${generatingAiReply ? ' loading' : ''}`}
-                              title="Ã°ÂÂ¤Â Generar respuesta IA Ã¢ÂÂ analiza el ÃÂºltimo mensaje y genera el mejor ÃÂ¡ngulo de venta"
+                              title="ÃÂ°ÃÂÃÂ¤ÃÂ Generar respuesta IA ÃÂ¢ÃÂÃÂ analiza el ÃÂÃÂºltimo mensaje y genera el mejor ÃÂÃÂ¡ngulo de venta"
                               onClick={generateAiReply}
                               disabled={generatingAiReply || !msgs.some(m => m.dir === 'r')}
                             >
-                              {generatingAiReply ? 'Ã¢ÂÂ³' : 'Ã°ÂÂ¤Â'}
+                              {generatingAiReply ? 'ÃÂ¢ÃÂÃÂ³' : 'ÃÂ°ÃÂÃÂ¤ÃÂ'}
                             </button>
                           )}
                           {inp.trim() ? (
                             <button className="wbv5-cw-send" onClick={send} disabled={sending}>
-                              {sending ? 'Ã¢ÂÂ³' : 'Ã¢ÂÂ¤'}
+                              {sending ? 'ÃÂ¢ÃÂÃÂ³' : 'ÃÂ¢ÃÂÃÂ¤'}
                             </button>
                           ) : (
-                            <button className="wbv5-cw-send wbv5-cw-mic" title="Grabar voz" onClick={startRecording}>Ã°ÂÂÂ¤</button>
+                            <button className="wbv5-cw-send wbv5-cw-mic" title="Grabar voz" onClick={startRecording}>ÃÂ°ÃÂÃÂÃÂ¤</button>
                           )}
                         </>
                       )}
@@ -2970,29 +2970,29 @@ ${conversation}`
                 )}
               </div>
 
-              {/* Ã¢ÂÂÃ¢ÂÂ Panel de AnÃÂ¡lisis IA del Cliente Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Panel de AnÃÂÃÂ¡lisis IA del Cliente ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               {showAnalysisPanel && active && (
                 <div className="wbv5-contact-pnl" style={{ minWidth: 250 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.6rem' }}>
-                    <div className="wbv5-cp-title">Ã°ÂÂ§Â  AnÃÂ¡lisis del Cliente</div>
+                    <div className="wbv5-cp-title">ÃÂ°ÃÂÃÂ§ÃÂ  AnÃÂÃÂ¡lisis del Cliente</div>
                     <button
                       style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '.7rem', color: '#7c3aed', fontWeight: 700, padding: '.1rem .3rem' }}
                       onClick={() => analyzeClientIntelligence(active.id, msgs)}
                       disabled={analysisLoading || !hasAiKey}
                     >
-                      {analysisLoading ? 'Ã¢ÂÂ³' : 'Ã°ÂÂÂ Actualizar'}
+                      {analysisLoading ? 'ÃÂ¢ÃÂÃÂ³' : 'ÃÂ°ÃÂÃÂÃÂ Actualizar'}
                     </button>
                   </div>
                   {!clientAnalysis[active.id] ? (
                     <div style={{ textAlign: 'center', padding: '1.2rem 0' }}>
-                      <div style={{ fontSize: '1.8rem', marginBottom: '.4rem' }}>Ã°ÂÂÂ</div>
-                      <div style={{ fontSize: '.73rem', color: '#6b7280', marginBottom: '.7rem' }}>Sin anÃÂ¡lisis todavÃÂ­a</div>
+                      <div style={{ fontSize: '1.8rem', marginBottom: '.4rem' }}>ÃÂ°ÃÂÃÂÃÂ</div>
+                      <div style={{ fontSize: '.73rem', color: '#6b7280', marginBottom: '.7rem' }}>Sin anÃÂÃÂ¡lisis todavÃÂÃÂ­a</div>
                       <button
                         className="wbv5-btn wbv5-btn-green wbv5-btn-sm"
                         onClick={() => analyzeClientIntelligence(active.id, msgs)}
                         disabled={analysisLoading || !hasAiKey}
                       >
-                        {analysisLoading ? 'Ã¢ÂÂ³ Analizando...' : 'Ã°ÂÂ§Â  Analizar ahora'}
+                        {analysisLoading ? 'ÃÂ¢ÃÂÃÂ³ Analizando...' : 'ÃÂ°ÃÂÃÂ§ÃÂ  Analizar ahora'}
                       </button>
                       {!hasAiKey && <div style={{ fontSize: '.67rem', color: '#ef4444', marginTop: '.4rem' }}>Requiere API Key IA</div>}
                     </div>
@@ -3002,15 +3002,15 @@ ${conversation}`
                     return (
                       <div style={{ fontSize: '.73rem', display: 'flex', flexDirection: 'column', gap: '.4rem' }}>
                         <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
-                          <span style={{ background: '#f0f4ff', color: '#3730a3', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>Ã¢ÂÂÃ¯Â¸Â {a.estilo}</span>
-                          <span style={{ background: '#fef9c3', color: '#78350f', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>Ã°ÂÂÂ­ {a.tono}</span>
+                          <span style={{ background: '#f0f4ff', color: '#3730a3', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ {a.estilo}</span>
+                          <span style={{ background: '#fef9c3', color: '#78350f', borderRadius: 4, padding: '.15rem .4rem', fontWeight: 600 }}>ÃÂ°ÃÂÃÂÃÂ­ {a.tono}</span>
                           <span style={{ background: a.intencion === 'alta' ? '#f0fdf4' : a.intencion === 'media' ? '#fef9c3' : '#fef2f2', color: intencionColor, borderRadius: 4, padding: '.15rem .4rem', fontWeight: 700 }}>
-                            Ã°ÂÂÂ¯ Compra {a.intencion}
+                            ÃÂ°ÃÂÃÂÃÂ¯ Compra {a.intencion}
                           </span>
                         </div>
                         {a.intereses?.length > 0 && (
                           <div>
-                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#374151', marginBottom: '.2rem' }}>Ã°ÂÂÂ¡ Intereses</div>
+                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#374151', marginBottom: '.2rem' }}>ÃÂ°ÃÂÃÂÃÂ¡ Intereses</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.2rem' }}>
                               {a.intereses.map((item, i) => (
                                 <span key={i} style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 4, padding: '.1rem .35rem', fontSize: '.67rem' }}>{item}</span>
@@ -3020,25 +3020,25 @@ ${conversation}`
                         )}
                         {a.objeciones?.length > 0 && (
                           <div>
-                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#dc2626', marginBottom: '.2rem' }}>Ã¢ÂÂ Ã¯Â¸Â Objeciones</div>
-                            {a.objeciones.map((o, i) => <div key={i} style={{ color: '#b91c1c', fontSize: '.68rem' }}>Ã¢ÂÂ¢ {o}</div>)}
+                            <div style={{ fontSize: '.67rem', fontWeight: 700, color: '#dc2626', marginBottom: '.2rem' }}>ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Objeciones</div>
+                            {a.objeciones.map((o, i) => <div key={i} style={{ color: '#b91c1c', fontSize: '.68rem' }}>ÃÂ¢ÃÂÃÂ¢ {o}</div>)}
                           </div>
                         )}
                         {a.angulo && (
                           <div style={{ background: '#faf5ff', border: '1px solid #ddd6fe', borderRadius: 6, padding: '.4rem .5rem' }}>
-                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#7c3aed', marginBottom: '.15rem' }}>Ã°ÂÂÂ ÃÂngulo de venta</div>
+                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#7c3aed', marginBottom: '.15rem' }}>ÃÂ°ÃÂÃÂÃÂ ÃÂÃÂngulo de venta</div>
                             <div style={{ color: '#5b21b6', fontWeight: 600, lineHeight: 1.4 }}>{a.angulo}</div>
                           </div>
                         )}
                         {a.siguiente && (
                           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '.4rem .5rem' }}>
-                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#15803d', marginBottom: '.15rem' }}>Ã¢ÂÂ PrÃÂ³ximo paso</div>
+                            <div style={{ fontSize: '.65rem', fontWeight: 700, color: '#15803d', marginBottom: '.15rem' }}>ÃÂ¢ÃÂÃÂ PrÃÂÃÂ³ximo paso</div>
                             <div style={{ color: '#16a34a', fontWeight: 600, lineHeight: 1.4 }}>{a.siguiente}</div>
                           </div>
                         )}
                         {a.resumen && <div style={{ fontSize: '.67rem', color: '#6b7280', fontStyle: 'italic', borderTop: '1px solid #f3f4f6', paddingTop: '.3rem' }}>{a.resumen}</div>}
                         <div style={{ fontSize: '.62rem', color: '#9ca3af', textAlign: 'right' }}>
-                          Actualizado: {a.ts ? new Date(a.ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : 'Ã¢ÂÂ'}
+                          Actualizado: {a.ts ? new Date(a.ts).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : 'ÃÂ¢ÃÂÃÂ'}
                         </div>
                       </div>
                     )
@@ -3048,16 +3048,16 @@ ${conversation}`
 
               {showContact && active && (
                 <div className="wbv5-contact-pnl">
-                  <div className="wbv5-cp-title">Ã°ÂÂÂ¤ Contacto</div>
+                  <div className="wbv5-cp-title">ÃÂ°ÃÂÃÂÃÂ¤ Contacto</div>
                   {active.photoUrl && active.photoUrl.startsWith('http') && (
                     <div style={{ textAlign: 'center', marginBottom: '.75rem' }}>
                       <img src={active.photoUrl} alt={active.name} style={{ width: 64, height: 64, borderRadius: '50%', objectFit: 'cover', border: '2px solid #e5e7eb' }} />
                     </div>
                   )}
-                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Nombre</div><div className="wbv5-cp-val">{active.name || 'Ã¢ÂÂ'}</div></div>
-                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">TelÃÂ©fono</div><div className="wbv5-cp-val">{active.phone || '+' + active.id}</div></div>
-                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">ÃÂltimo mensaje</div><div className="wbv5-cp-val">{active.preview || 'Ã¢ÂÂ'}</div></div>
-                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Estado bot</div><div className="wbv5-cp-val"><span className="wbv5-badge badge-green">Ã°ÂÂ¤Â Activo</span></div></div>
+                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Nombre</div><div className="wbv5-cp-val">{active.name || 'ÃÂ¢ÃÂÃÂ'}</div></div>
+                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">TelÃÂÃÂ©fono</div><div className="wbv5-cp-val">{active.phone || '+' + active.id}</div></div>
+                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">ÃÂÃÂltimo mensaje</div><div className="wbv5-cp-val">{active.preview || 'ÃÂ¢ÃÂÃÂ'}</div></div>
+                  <div className="wbv5-cp-row"><div className="wbv5-cp-lbl">Estado bot</div><div className="wbv5-cp-val"><span className="wbv5-badge badge-green">ÃÂ°ÃÂÃÂ¤ÃÂ Activo</span></div></div>
                   <div className="wbv5-cp-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div>
                       <div className="wbv5-cp-lbl">Respuesta IA</div>
@@ -3070,7 +3070,7 @@ ${conversation}`
                       style={{ fontSize: '.65rem', padding: '.22rem .55rem' }}
                       onClick={() => toggleAiContact(active?.id)}
                     >
-                      {isAiActive(active?.id) ? 'Ã°ÂÂ¤Â ON' : 'Ã¢ÂÂª OFF'}
+                      {isAiActive(active?.id) ? 'ÃÂ°ÃÂÃÂ¤ÃÂ ON' : 'ÃÂ¢ÃÂÃÂª OFF'}
                     </button>
                   </div>
                   {/* Etiquetas */}
@@ -3084,13 +3084,13 @@ ${conversation}`
                             style={{ '--tc': td?.color || '#3b82f6' }}
                             onClick={() => setContactTags(prev => prev.filter(t => t !== tag))}
                             title="Clic para quitar">
-                            {tag} Ã¢ÂÂ
+                            {tag} ÃÂ¢ÃÂÃÂ
                           </button>
                         )
                       })}
                       <div className="wbv5-tag-dd-wrap" ref={tagsDropdownRef}>
                         <button className="wbv5-tag-add" onClick={() => setShowTagsDropdown(o => !o)}>
-                          + Etiqueta Ã¢ÂÂ¾
+                          + Etiqueta ÃÂ¢ÃÂÃÂ¾
                         </button>
                         {showTagsDropdown && (
                           <div className="wbv5-tag-dropdown">
@@ -3115,15 +3115,15 @@ ${conversation}`
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ FLUJOS Ã¢ÂÂ LISTA Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ FLUJOS ÃÂ¢ÃÂÃÂ LISTA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'flujos' && !builderOpen && (
             <div className="wbv5-content">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.75rem' }}>
                 <div>
-                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>Flujos de conversaciÃÂ³n</div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>Flujos de conversaciÃÂÃÂ³n</div>
                   <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Automatiza respuestas y enrutamiento de mensajes</div>
                 </div>
-                <button className="wbv5-btn wbv5-btn-green" onClick={() => tip('Ã¢ÂÂ Selecciona una plantilla abajo para crear tu flujo')}>+ Crear flujo</button>
+                <button className="wbv5-btn wbv5-btn-green" onClick={() => tip('ÃÂ¢ÃÂÃÂ Selecciona una plantilla abajo para crear tu flujo')}>+ Crear flujo</button>
               </div>
               <div className="wbv5-card">
                 <div className="wbv5-card-hd"><div className="wbv5-card-title">Todos los flujos</div></div>
@@ -3140,7 +3140,7 @@ ${conversation}`
                           <td>{f.runs}</td>
                           <td>{f.ctr}</td>
                           <td style={{ fontSize: '.66rem', color: '#9ca3af' }}>{f.date}</td>
-                          <td><button className="wbv5-flow-3btn" onClick={() => tip('Ã¢ÂÂÃ¯Â¸Â PrÃÂ³ximamente: mÃÂ¡s opciones')}>Ã¢ÂÂ¯</button></td>
+                          <td><button className="wbv5-flow-3btn" onClick={() => tip('ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ PrÃÂÃÂ³ximamente: mÃÂÃÂ¡s opciones')}>ÃÂ¢ÃÂÃÂ¯</button></td>
                         </tr>
                       ))}
                     </tbody>
@@ -3149,15 +3149,15 @@ ${conversation}`
               </div>
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã¢ÂÂ¡ Plantillas rÃÂ¡pidas</div>
+                  <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂ¡ Plantillas rÃÂÃÂ¡pidas</div>
                   <span style={{ fontSize: '.68rem', color: '#6b7280' }}>Haz clic para abrir el constructor</span>
                 </div>
                 <div className="wbv5-card-bd">
                   <div className="wbv5-tmpl-grid">
                     {[
-                      { key: 'bienvenida', icon: 'Ã°ÂÂÂ', name: 'Bienvenida',   desc: 'Primer mensaje + menÃÂº', bg: '#d1fae5' },
-                      { key: 'carrito',    icon: 'Ã°ÂÂÂ', name: 'Carrito',      desc: 'Recuperar abandono',    bg: '#dbeafe' },
-                      { key: 'soporte',    icon: 'Ã°ÂÂÂ', name: 'Soporte',      desc: 'AtenciÃÂ³n al cliente',   bg: '#ede9fe' },
+                      { key: 'bienvenida', icon: 'ÃÂ°ÃÂÃÂÃÂ', name: 'Bienvenida',   desc: 'Primer mensaje + menÃÂÃÂº', bg: '#d1fae5' },
+                      { key: 'carrito',    icon: 'ÃÂ°ÃÂÃÂÃÂ', name: 'Carrito',      desc: 'Recuperar abandono',    bg: '#dbeafe' },
+                      { key: 'soporte',    icon: 'ÃÂ°ÃÂÃÂÃÂ', name: 'Soporte',      desc: 'AtenciÃÂÃÂ³n al cliente',   bg: '#ede9fe' },
                     ].map(t => (
                       <div key={t.key} className="wbv5-tmpl-card" onClick={() => openBuilder(t.key)}>
                         <div className="wbv5-tmpl-thumb" style={{ background: t.bg }}>{t.icon}</div>
@@ -3173,18 +3173,18 @@ ${conversation}`
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ FLUJOS Ã¢ÂÂ BUILDER Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ FLUJOS ÃÂ¢ÃÂÃÂ BUILDER ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'flujos' && builderOpen && (
             <div className="wbv5-builder">
               <div className="wbv5-builder-header">
-                <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBuilderOpen(false); setSelNode(null) }}>Ã¢ÂÂ Flujos</button>
+                <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBuilderOpen(false); setSelNode(null) }}>ÃÂ¢ÃÂÃÂ Flujos</button>
                 <span style={{ fontSize: '.8rem', fontWeight: 700, marginLeft: '.5rem' }}>
                   {FLOWS_LIST.find(f => f.key === curFlow)?.name || curFlow}
                 </span>
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => tip('Ã¢ÂÂÃ¯Â¸Â ConfiguraciÃÂ³n avanzada prÃÂ³ximamente')}>Ã¢ÂÂÃ¯Â¸Â Avanzado</button>
-                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('Ã¢ÂÂ Flujo guardado en n8n')}>Ã°ÂÂÂ¾ Guardar</button>
-                  <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => tip('Ã°ÂÂÂ Flujo publicado y activo')}>Publicar Ã¢ÂÂ¶</button>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => tip('ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ ConfiguraciÃÂÃÂ³n avanzada prÃÂÃÂ³ximamente')}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Avanzado</button>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('ÃÂ¢ÃÂÃÂ Flujo guardado en n8n')}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar</button>
+                  <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => tip('ÃÂ°ÃÂÃÂÃÂ Flujo publicado y activo')}>Publicar ÃÂ¢ÃÂÃÂ¶</button>
                 </div>
               </div>
               <div className="wbv5-builder-area">
@@ -3221,39 +3221,39 @@ ${conversation}`
                   </div>
                   <div className="wbv5-zoom-btns">
                     <button className="wbv5-zoom-btn" onClick={() => setZoom(z => Math.min(z + .12, 2.5))}>+</button>
-                    <button className="wbv5-zoom-btn" onClick={() => { setZoom(0.88); setPan({ x: 30, y: 18 }) }}>Ã¢ÂÂ¡</button>
-                    <button className="wbv5-zoom-btn" onClick={() => setZoom(z => Math.max(z - .12, .22))}>Ã¢ÂÂ</button>
+                    <button className="wbv5-zoom-btn" onClick={() => { setZoom(0.88); setPan({ x: 30, y: 18 }) }}>ÃÂ¢ÃÂÃÂ¡</button>
+                    <button className="wbv5-zoom-btn" onClick={() => setZoom(z => Math.max(z - .12, .22))}>ÃÂ¢ÃÂÃÂ</button>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ PLANTILLAS Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ PLANTILLAS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'templates' && (
             <div className="wbv5-content">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.2rem' }}>
                 <div>
-                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>Ã°ÂÂÂ Plantillas de mensajes</div>
-                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes rÃÂ¡pidos para el chat y disparadores de palabras clave</div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>ÃÂ°ÃÂÃÂÃÂ Plantillas de mensajes</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes rÃÂÃÂ¡pidos para el chat y disparadores de palabras clave</div>
                 </div>
                 <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditPlantilla({ isNew: true, nombre: '', categoria: 'Ventas', mensaje: '' })}>+ Nueva plantilla</button>
               </div>
 
-              {/* Ã¢ÂÂÃ¢ÂÂ Formulario crear/editar Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Formulario crear/editar ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               {editPlantilla && (
                 <div className="wbv5-card" style={{ border: '2px solid #2563eb', marginTop: '.75rem', marginBottom: '.75rem' }}>
                   <div className="wbv5-card-hd">
-                    <div className="wbv5-card-title">Ã¢ÂÂÃ¯Â¸Â {editPlantilla.isNew ? 'Nueva' : 'Editar'} plantilla</div>
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditPlantilla(null)}>Ã¢ÂÂ Cancelar</button>
+                    <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ {editPlantilla.isNew ? 'Nueva' : 'Editar'} plantilla</div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditPlantilla(null)}>ÃÂ¢ÃÂÃÂ Cancelar</button>
                   </div>
                   <div className="wbv5-card-bd" style={{ display: 'flex', flexDirection: 'column', gap: '.6rem' }}>
                     <div className="wbv5-form-row">
                       <div className="wbv5-form-lbl">Nombre de la plantilla</div>
-                      <input className="wbv5-form-input" value={editPlantilla.nombre} onChange={e => setEditPlantilla(p => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Bienvenida, ConfirmaciÃÂ³n de pedido..." />
+                      <input className="wbv5-form-input" value={editPlantilla.nombre} onChange={e => setEditPlantilla(p => ({ ...p, nombre: e.target.value }))} placeholder="Ej: Bienvenida, ConfirmaciÃÂÃÂ³n de pedido..." />
                     </div>
                     <div className="wbv5-form-row">
-                      <div className="wbv5-form-lbl">CategorÃÂ­a</div>
+                      <div className="wbv5-form-lbl">CategorÃÂÃÂ­a</div>
                       <select className="wbv5-form-input" value={editPlantilla.categoria} onChange={e => setEditPlantilla(p => ({ ...p, categoria: e.target.value }))}>
                         <option>Inicio</option><option>Ventas</option><option>Pedidos</option><option>Seguimiento</option><option>Soporte</option><option>General</option>
                       </select>
@@ -3267,24 +3267,24 @@ ${conversation}`
                     </div>
                     <div style={{ display: 'flex', gap: '.5rem' }}>
                       <button className="wbv5-btn wbv5-btn-green" onClick={() => {
-                        if (!editPlantilla.nombre.trim() || !editPlantilla.mensaje.trim()) { tip('Ã¢ÂÂ Ã¯Â¸Â Completa nombre y mensaje'); return }
+                        if (!editPlantilla.nombre.trim() || !editPlantilla.mensaje.trim()) { tip('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Completa nombre y mensaje'); return }
                         const list = editPlantilla.isNew
                           ? [...plantillas, { id: `tpl_${Date.now()}`, nombre: editPlantilla.nombre, categoria: editPlantilla.categoria, mensaje: editPlantilla.mensaje }]
                           : plantillas.map(p => p.id === editPlantilla.id ? { id: p.id, nombre: editPlantilla.nombre, categoria: editPlantilla.categoria, mensaje: editPlantilla.mensaje } : p)
-                        savePlantillas(list); setEditPlantilla(null); tip('Ã¢ÂÂ Plantilla guardada')
-                      }}>Ã°ÂÂÂ¾ Guardar plantilla</button>
+                        savePlantillas(list); setEditPlantilla(null); tip('ÃÂ¢ÃÂÃÂ Plantilla guardada')
+                      }}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar plantilla</button>
                       <button className="wbv5-btn wbv5-btn-outline" onClick={() => setEditPlantilla(null)}>Cancelar</button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Ã¢ÂÂÃ¢ÂÂ Lista de plantillas Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Lista de plantillas ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               <div className="wbv5-card" style={{ marginTop: '.75rem' }}>
                 <div className="wbv5-card-hd">
                   <div className="wbv5-card-title">Mis plantillas ({plantillas.length})</div>
                   {plantillas.length === 0 && (
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('Ã¢ÂÂ Plantillas de ejemplo cargadas') }}>Ã°ÂÂÂ¥ Cargar ejemplos</button>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('ÃÂ¢ÃÂÃÂ Plantillas de ejemplo cargadas') }}>ÃÂ°ÃÂÃÂÃÂ¥ Cargar ejemplos</button>
                   )}
                 </div>
                 <div style={{ padding: 0 }}>
@@ -3298,61 +3298,61 @@ ${conversation}`
                         <div style={{ fontSize: '.68rem', color: '#6b7280', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', whiteSpace: 'pre-wrap' }}>{pl.mensaje}</div>
                       </div>
                       <div style={{ display: 'flex', gap: '.3rem', flexShrink: 0 }}>
-                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" title="Editar" onClick={() => setEditPlantilla({ ...pl, isNew: false })}>Ã¢ÂÂÃ¯Â¸Â</button>
-                        <button className="wbv5-btn wbv5-btn-sm" title="Duplicar" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} onClick={() => { const copy = { ...pl, id: `tpl_${Date.now()}`, nombre: pl.nombre + ' (copia)' }; savePlantillas([...plantillas, copy]); tip('Ã¢ÂÂ Plantilla duplicada') }}>Ã°ÂÂÂ</button>
-                        <button className="wbv5-btn wbv5-btn-sm" title="Eliminar" style={{ background: '#fee2e2', color: '#dc2626', border: 'none' }} onClick={() => { if (window.confirm(`ÃÂ¿Eliminar "${pl.nombre}"?`)) { savePlantillas(plantillas.filter(p => p.id !== pl.id)); tip('Ã°ÂÂÂÃ¯Â¸Â Plantilla eliminada') } }}>Ã°ÂÂÂÃ¯Â¸Â</button>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" title="Editar" onClick={() => setEditPlantilla({ ...pl, isNew: false })}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
+                        <button className="wbv5-btn wbv5-btn-sm" title="Duplicar" style={{ background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0' }} onClick={() => { const copy = { ...pl, id: `tpl_${Date.now()}`, nombre: pl.nombre + ' (copia)' }; savePlantillas([...plantillas, copy]); tip('ÃÂ¢ÃÂÃÂ Plantilla duplicada') }}>ÃÂ°ÃÂÃÂÃÂ</button>
+                        <button className="wbv5-btn wbv5-btn-sm" title="Eliminar" style={{ background: '#fee2e2', color: '#dc2626', border: 'none' }} onClick={() => { if (window.confirm(`ÃÂÃÂ¿Eliminar "${pl.nombre}"?`)) { savePlantillas(plantillas.filter(p => p.id !== pl.id)); tip('ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Plantilla eliminada') } }}>ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
                       </div>
                     </div>
                   ))}
                   {plantillas.length === 0 && (
                     <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
-                      <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>Ã°ÂÂÂ</div>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>ÃÂ°ÃÂÃÂÃÂ</div>
                       <div style={{ fontSize: '.8rem', fontWeight: 700, color: '#6b7280', marginBottom: '.3rem' }}>Sin plantillas</div>
-                      <div style={{ fontSize: '.72rem', color: '#9ca3af', marginBottom: '.75rem' }}>Crea mensajes rÃÂ¡pidos para enviar desde el chat o en disparadores de palabras clave</div>
-                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('Ã¢ÂÂ Plantillas de SÃÂ¡nate cargadas') }}>Ã°ÂÂÂ¥ Cargar plantillas de SÃÂ¡nate</button>
+                      <div style={{ fontSize: '.72rem', color: '#9ca3af', marginBottom: '.75rem' }}>Crea mensajes rÃÂÃÂ¡pidos para enviar desde el chat o en disparadores de palabras clave</div>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { savePlantillas(DEFAULT_PLANTILLAS); tip('ÃÂ¢ÃÂÃÂ Plantillas de SÃÂÃÂ¡nate cargadas') }}>ÃÂ°ÃÂÃÂÃÂ¥ Cargar plantillas de SÃÂÃÂ¡nate</button>
                     </div>
                   )}
                 </div>
               </div>
 
               <div style={{ fontSize: '.68rem', color: '#9ca3af', marginTop: '.75rem', lineHeight: 1.5 }}>
-                Ã°ÂÂÂ¡ <strong>CÃÂ³mo usarlas:</strong> En el chat, usa el botÃÂ³n Ã°ÂÂÂ del input. En Ã¢ÂÂ¡ Disparadores, selecciona una plantilla al configurar un trigger de palabra clave.
+                ÃÂ°ÃÂÃÂÃÂ¡ <strong>CÃÂÃÂ³mo usarlas:</strong> En el chat, usa el botÃÂÃÂ³n ÃÂ°ÃÂÃÂÃÂ del input. En ÃÂ¢ÃÂÃÂ¡ Disparadores, selecciona una plantilla al configurar un trigger de palabra clave.
               </div>
             <BtnMsgEditor BU={BU} sec={DEFAULT_SECRET}/>
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ CLIENTES Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CLIENTES ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'clientes' && (
             <div className="wbv5-content">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
                 <div>
-                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>Ã°ÂÂÂ¥ Clientes</div>
-                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Clientes que han escrito al WhatsApp Ã¢ÂÂ guardados automÃÂ¡ticamente</div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>ÃÂ°ÃÂÃÂÃÂ¥ Clientes</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Clientes que han escrito al WhatsApp ÃÂ¢ÃÂÃÂ guardados automÃÂÃÂ¡ticamente</div>
                 </div>
                 <div style={{ display: 'flex', gap: '.4rem' }}>
                   <input className="wbv5-il-search" placeholder="Buscar cliente..." value={clienteSearch} onChange={e => setClienteSearch(e.target.value)} style={{ width: 180 }} />
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(clientes.map(c => `${c.name}\t${c.phone}\t${c.pais}\t${c.etiqueta}\t${c.primerMensaje}`).join('\n')); tip('Ã°ÂÂÂ Tabla copiada') }}>Ã°ÂÂÂ Exportar</button>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(clientes.map(c => `${c.name}\t${c.phone}\t${c.pais}\t${c.etiqueta}\t${c.primerMensaje}`).join('\n')); tip('ÃÂ°ÃÂÃÂÃÂ Tabla copiada') }}>ÃÂ°ÃÂÃÂÃÂ Exportar</button>
                 </div>
               </div>
               {clienteDetail ? (
                 <div className="wbv5-card">
                   <div className="wbv5-card-hd">
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setClienteDetail(null)}>Ã¢ÂÂ Volver</button>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setClienteDetail(null)}>ÃÂ¢ÃÂÃÂ Volver</button>
                     <div className="wbv5-card-title" style={{ marginLeft: '.5rem' }}>{clienteDetail.name || clienteDetail.phone}</div>
                     <div style={{ marginLeft: 'auto', display: 'flex', gap: '.4rem' }}>
-                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { updateCliente(clienteDetail.id, clienteDetail); tip('Ã¢ÂÂ Guardado'); setClienteDetail(null) }}>Ã°ÂÂÂ¾ Guardar</button>
-                      <button className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={() => { if(window.confirm('ÃÂ¿Eliminar cliente?')) deleteCliente(clienteDetail.id) }}>Ã°ÂÂÂÃ¯Â¸Â</button>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { updateCliente(clienteDetail.id, clienteDetail); tip('ÃÂ¢ÃÂÃÂ Guardado'); setClienteDetail(null) }}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar</button>
+                      <button className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={() => { if(window.confirm('ÃÂÃÂ¿Eliminar cliente?')) deleteCliente(clienteDetail.id) }}>ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
                     </div>
                   </div>
                   <div className="wbv5-card-bd">
                     <div className="wbv5-cli-form-grid">
                       {[
-                        { lbl: 'Nombre', key: 'name' }, { lbl: 'TelÃÂ©fono', key: 'phone' },
-                        { lbl: 'PaÃÂ­s / RegiÃÂ³n', key: 'ciudad' }, { lbl: 'DirecciÃÂ³n', key: 'direccion' },
+                        { lbl: 'Nombre', key: 'name' }, { lbl: 'TelÃÂÃÂ©fono', key: 'phone' },
+                        { lbl: 'PaÃÂÃÂ­s / RegiÃÂÃÂ³n', key: 'ciudad' }, { lbl: 'DirecciÃÂÃÂ³n', key: 'direccion' },
                         { lbl: 'Etiqueta', key: 'etiqueta' }, { lbl: 'Total Pedidos', key: 'totalPedidos', type: 'number' },
                         { lbl: 'No recibidos', key: 'noRecibidos', type: 'number' }, { lbl: 'Primer mensaje', key: 'primerMensaje' },
-                        { lbl: 'ÃÂltimo mensaje', key: 'ultimoMensaje' },
+                        { lbl: 'ÃÂÃÂltimo mensaje', key: 'ultimoMensaje' },
                       ].map(f => (
                         <div key={f.key} className="wbv5-form-row">
                           <div className="wbv5-form-lbl">{f.lbl}</div>
@@ -3364,7 +3364,7 @@ ${conversation}`
                         <textarea className="wbv5-form-input" rows={3} value={clienteDetail.notas || ''} onChange={e => setClienteDetail(prev => ({ ...prev, notas: e.target.value }))} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
                       </div>
                     </div>
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ marginTop: '.4rem' }} onClick={() => { const t = `Nombre: ${clienteDetail.name}\nTelÃÂ©fono: ${clienteDetail.phone}\nPaÃÂ­s: ${clienteDetail.ciudad}\nDirecciÃÂ³n: ${clienteDetail.direccion}\nPedidos: ${clienteDetail.totalPedidos}\nEtiqueta: ${clienteDetail.etiqueta}`; navigator.clipboard?.writeText(t); tip('Ã°ÂÂÂ Datos copiados') }}>Ã°ÂÂÂ Copiar datos</button>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ marginTop: '.4rem' }} onClick={() => { const t = `Nombre: ${clienteDetail.name}\nTelÃÂÃÂ©fono: ${clienteDetail.phone}\nPaÃÂÃÂ­s: ${clienteDetail.ciudad}\nDirecciÃÂÃÂ³n: ${clienteDetail.direccion}\nPedidos: ${clienteDetail.totalPedidos}\nEtiqueta: ${clienteDetail.etiqueta}`; navigator.clipboard?.writeText(t); tip('ÃÂ°ÃÂÃÂÃÂ Datos copiados') }}>ÃÂ°ÃÂÃÂÃÂ Copiar datos</button>
                   </div>
                 </div>
               ) : (
@@ -3372,28 +3372,28 @@ ${conversation}`
                   <div style={{ padding: 0 }}>
                     {clientes.filter(c => !clienteSearch || (c.name+c.phone+c.ciudad).toLowerCase().includes(clienteSearch.toLowerCase())).length === 0 ? (
                       <div className="wbv5-empty-state" style={{ padding: '2.5rem 1rem' }}>
-                        <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>Ã°ÂÂÂ¥</div>
-                        <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#6b7280' }}>Sin clientes aÃÂºn</div>
-                        <div style={{ fontSize: '.72rem', color: '#9ca3af' }}>Los clientes se guardan automÃÂ¡ticamente cuando escriben al WhatsApp</div>
+                        <div style={{ fontSize: '2.5rem', marginBottom: '.5rem' }}>ÃÂ°ÃÂÃÂÃÂ¥</div>
+                        <div style={{ fontSize: '.85rem', fontWeight: 700, color: '#6b7280' }}>Sin clientes aÃÂÃÂºn</div>
+                        <div style={{ fontSize: '.72rem', color: '#9ca3af' }}>Los clientes se guardan automÃÂÃÂ¡ticamente cuando escriben al WhatsApp</div>
                       </div>
                     ) : (
                       <table className="wbv5-flows-table">
-                        <thead><tr><th>Cliente</th><th>TelÃÂ©fono</th><th>RegiÃÂ³n</th><th>Etiqueta</th><th>Pedidos</th><th>Primer msg</th><th></th></tr></thead>
+                        <thead><tr><th>Cliente</th><th>TelÃÂÃÂ©fono</th><th>RegiÃÂÃÂ³n</th><th>Etiqueta</th><th>Pedidos</th><th>Primer msg</th><th></th></tr></thead>
                         <tbody>
                           {clientes.filter(c => !clienteSearch || (c.name+c.phone+c.ciudad).toLowerCase().includes(clienteSearch.toLowerCase())).map(c => (
                             <tr key={c.id}>
                               <td style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                                 {c.fotoUrl ? <img src={c.fotoUrl} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} /> : <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#dbeafe', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.65rem', fontWeight: 800, flexShrink: 0 }}>{(c.name || c.phone).substring(0,2).toUpperCase()}</div>}
-                                <span style={{ fontWeight: 600 }}>{c.name || 'Ã¢ÂÂ'}</span>
+                                <span style={{ fontWeight: 600 }}>{c.name || 'ÃÂ¢ÃÂÃÂ'}</span>
                               </td>
                               <td style={{ fontSize: '.72rem', color: '#6b7280' }}>{c.phone}</td>
-                              <td style={{ fontSize: '.7rem' }}>{c.flag} {c.ciudad || 'Ã¢ÂÂ'}</td>
+                              <td style={{ fontSize: '.7rem' }}>{c.flag} {c.ciudad || 'ÃÂ¢ÃÂÃÂ'}</td>
                               <td><span style={{ background: c.etiqueta === 'Nuevo lead' ? '#dbeafe' : c.etiqueta === 'Cliente VIP' ? '#ede9fe' : '#dcfce7', color: c.etiqueta === 'Nuevo lead' ? '#1d4ed8' : c.etiqueta === 'Cliente VIP' ? '#5b21b6' : '#166534', borderRadius: 20, padding: '.15rem .55rem', fontSize: '.65rem', fontWeight: 700 }}>{c.etiqueta}</span></td>
                               <td style={{ textAlign: 'center' }}>{c.totalPedidos}</td>
                               <td style={{ fontSize: '.65rem', color: '#9ca3af' }}>{c.primerMensaje}</td>
                               <td>
-                                <button className="wbv5-flow-3btn" onClick={() => setClienteDetail({...c})}>Ã¢ÂÂÃ¯Â¸Â</button>
-                                <button className="wbv5-flow-3btn" onClick={() => { navigator.clipboard?.writeText(`${c.name} | ${c.phone} | ${c.ciudad}`); tip('Ã°ÂÂÂ Copiado') }}>Ã°ÂÂÂ</button>
+                                <button className="wbv5-flow-3btn" onClick={() => setClienteDetail({...c})}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
+                                <button className="wbv5-flow-3btn" onClick={() => { navigator.clipboard?.writeText(`${c.name} | ${c.phone} | ${c.ciudad}`); tip('ÃÂ°ÃÂÃÂÃÂ Copiado') }}>ÃÂ°ÃÂÃÂÃÂ</button>
                               </td>
                             </tr>
                           ))}
@@ -3406,27 +3406,27 @@ ${conversation}`
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ DISPARADORES Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ DISPARADORES ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'disparadores' && (
             <div className="wbv5-content">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.2rem' }}>
                 <div>
-                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>Ã¢ÂÂ¡ Disparadores</div>
-                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes automÃÂ¡ticos basados en tiempo e interacciÃÂ³n del cliente</div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>ÃÂ¢ÃÂÃÂ¡ Disparadores</div>
+                  <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Mensajes automÃÂÃÂ¡ticos basados en tiempo e interacciÃÂÃÂ³n del cliente</div>
                 </div>
                 <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => setEditTrigger({ id: `tr${Date.now()}`, name: '', condition: 'no_reply', delay: 60, unit: 'min', producto: '', message: '', active: true, mediaType: null, mediaUrl: '' })}>+ Nuevo disparador</button>
               </div>
 
-              {/* Ã¢ÂÂÃ¢ÂÂ Banner: contactos con disparadores pausados Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Banner: contactos con disparadores pausados ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               {Object.values(triggerContactMap).filter(v => v === false).length > 0 && (
                 <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '.65rem 1rem', marginBottom: '.75rem', display: 'flex', alignItems: 'center', gap: '.75rem' }}>
-                  <span style={{ fontSize: '1.1rem' }}>Ã¢ÂÂ¡</span>
+                  <span style={{ fontSize: '1.1rem' }}>ÃÂ¢ÃÂÃÂ¡</span>
                   <div style={{ flex: 1 }}>
                     <span style={{ fontSize: '.76rem', fontWeight: 700, color: '#92400e' }}>
                       {Object.values(triggerContactMap).filter(v => v === false).length} contacto(s) con disparadores pausados
                     </span>
                     <span style={{ fontSize: '.66rem', color: '#b45309', marginLeft: '.4rem' }}>
-                      Ã¢ÂÂ ActÃÂ­valo en cada chat desde el botÃÂ³n Ã¢ÂÂ¡ Auto OFF del header
+                      ÃÂ¢ÃÂÃÂ ActÃÂÃÂ­valo en cada chat desde el botÃÂÃÂ³n ÃÂ¢ÃÂÃÂ¡ Auto OFF del header
                     </span>
                   </div>
                   <button
@@ -3435,20 +3435,20 @@ ${conversation}`
                     onClick={() => {
                       setTriggerContactMap({})
                       try { localStorage.setItem('wa_trigger_contact_map', '{}') } catch {}
-                      tip('Ã¢ÂÂ¡ Disparadores reactivados para todos los contactos')
+                      tip('ÃÂ¢ÃÂÃÂ¡ Disparadores reactivados para todos los contactos')
                     }}
                   >
-                    Ã°ÂÂÂ Reactivar todos
+                    ÃÂ°ÃÂÃÂÃÂ Reactivar todos
                   </button>
                 </div>
               )}
 
-              {/* Panel de ediciÃÂ³n de disparador */}
+              {/* Panel de ediciÃÂÃÂ³n de disparador */}
               {editTrigger && (
                 <div className="wbv5-card" style={{ border: '2px solid #2563eb' }}>
                   <div className="wbv5-card-hd">
-                    <div className="wbv5-card-title">Ã¢ÂÂÃ¯Â¸Â {editTrigger.id.startsWith('tr') && triggers.find(t => t.id === editTrigger.id) ? 'Editar' : 'Nuevo'} Disparador</div>
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>Ã¢ÂÂ</button>
+                    <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ {editTrigger.id.startsWith('tr') && triggers.find(t => t.id === editTrigger.id) ? 'Editar' : 'Nuevo'} Disparador</div>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>ÃÂ¢ÃÂÃÂ</button>
                   </div>
                   <div className="wbv5-card-bd">
                     <div className="wbv5-cli-form-grid">
@@ -3457,42 +3457,42 @@ ${conversation}`
                         <input className="wbv5-form-input" value={editTrigger.name} onChange={e => setEditTrigger(p => ({ ...p, name: e.target.value }))} placeholder="Ej: Sin respuesta 1 hora" />
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ¦ Producto / Plantilla <span style={{ fontWeight: 400, color: '#9ca3af' }}>(nombre del producto a promover)</span></div>
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ¦ Producto / Plantilla <span style={{ fontWeight: 400, color: '#9ca3af' }}>(nombre del producto a promover)</span></div>
                         <input
                           className="wbv5-form-input"
                           value={editTrigger.producto || ''}
                           onChange={e => setEditTrigger(p => ({ ...p, producto: e.target.value }))}
-                          placeholder="Ej: Combo Detox 30 dÃÂ­as, Pack EnergÃÂ­a Total..."
+                          placeholder="Ej: Combo Detox 30 dÃÂÃÂ­as, Pack EnergÃÂÃÂ­a Total..."
                           list="productos-list"
                         />
                         <datalist id="productos-list">
-                          {trainingPrompt.match(/^[-Ã¢ÂÂ¢ÃÂ·]\s*(.+?):/gm)?.slice(0, 12).map((m, i) => (
-                            <option key={i} value={m.replace(/^[-Ã¢ÂÂ¢ÃÂ·]\s*/, '').replace(/:.*/, '').trim()} />
+                          {trainingPrompt.match(/^[-ÃÂ¢ÃÂÃÂ¢ÃÂÃÂ·]\s*(.+?):/gm)?.slice(0, 12).map((m, i) => (
+                            <option key={i} value={m.replace(/^[-ÃÂ¢ÃÂÃÂ¢ÃÂÃÂ·]\s*/, '').replace(/:.*/, '').trim()} />
                           ))}
                         </datalist>
-                        <div style={{ fontSize: '.6rem', color: '#9ca3af', marginTop: '.15rem' }}>Ã°ÂÂÂ¡ La IA genera el mensaje especÃÂ­fico para este producto cuando presionas Ã°ÂÂ¤Â Generar</div>
+                        <div style={{ fontSize: '.6rem', color: '#9ca3af', marginTop: '.15rem' }}>ÃÂ°ÃÂÃÂÃÂ¡ La IA genera el mensaje especÃÂÃÂ­fico para este producto cuando presionas ÃÂ°ÃÂÃÂ¤ÃÂ Generar</div>
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">CondiciÃÂ³n</div>
+                        <div className="wbv5-form-lbl">CondiciÃÂÃÂ³n</div>
                         <select className="wbv5-form-input" value={editTrigger.condition} onChange={e => setEditTrigger(p => ({ ...p, condition: e.target.value }))}>
-                          <option value="no_reply">Sin respuesta despuÃÂ©s de X tiempo</option>
+                          <option value="no_reply">Sin respuesta despuÃÂÃÂ©s de X tiempo</option>
                           <option value="seen">Mensaje visto pero sin responder</option>
-                          <option value="no_purchase">Sin compra despuÃÂ©s de X tiempo</option>
-                          <option value="keyword">Ã°ÂÂÂ Palabra clave detectada (instantÃÂ¡neo)</option>
+                          <option value="no_purchase">Sin compra despuÃÂÃÂ©s de X tiempo</option>
+                          <option value="keyword">ÃÂ°ÃÂÃÂÃÂ Palabra clave detectada (instantÃÂÃÂ¡neo)</option>
                           <option value="first_message">Primer mensaje recibido</option>
                         </select>
                       </div>
                       {editTrigger.condition === 'keyword' ? (
                         <div className="wbv5-form-row">
-                          <div className="wbv5-form-lbl">Ã°ÂÂÂ Palabras clave <span style={{ fontWeight: 400, color: '#9ca3af' }}>(separa con coma)</span></div>
+                          <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ Palabras clave <span style={{ fontWeight: 400, color: '#9ca3af' }}>(separa con coma)</span></div>
                           <input
                             className="wbv5-form-input"
                             value={editTrigger.keyword || ''}
                             onChange={e => setEditTrigger(p => ({ ...p, keyword: e.target.value }))}
-                            placeholder="Ej: precio, cuÃÂ¡nto vale, cuanto cuesta, envÃÂ­o"
+                            placeholder="Ej: precio, cuÃÂÃÂ¡nto vale, cuanto cuesta, envÃÂÃÂ­o"
                           />
                           <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.15rem' }}>
-                            Ã°ÂÂÂ¡ Cuando el cliente escriba alguna de estas palabras, se enviarÃÂ¡ automÃÂ¡ticamente el mensaje de abajo
+                            ÃÂ°ÃÂÃÂÃÂ¡ Cuando el cliente escriba alguna de estas palabras, se enviarÃÂÃÂ¡ automÃÂÃÂ¡ticamente el mensaje de abajo
                           </div>
                         </div>
                       ) : (
@@ -3503,7 +3503,7 @@ ${conversation}`
                             <select className="wbv5-form-input" value={editTrigger.unit} onChange={e => setEditTrigger(p => ({ ...p, unit: e.target.value }))}>
                               <option value="min">Minutos</option>
                               <option value="h">Horas</option>
-                              <option value="d">DÃÂ­as</option>
+                              <option value="d">DÃÂÃÂ­as</option>
                             </select>
                           </div>
                         </div>
@@ -3512,10 +3512,10 @@ ${conversation}`
                         <div className="wbv5-form-lbl">Tipo de media (opcional)</div>
                         <select className="wbv5-form-input" value={editTrigger.mediaType || ''} onChange={e => setEditTrigger(p => ({ ...p, mediaType: e.target.value || null }))}>
                           <option value="">Solo texto</option>
-                          <option value="image">Ã°ÂÂÂ¼Ã¯Â¸Â Imagen</option>
-                          <option value="video">Ã°ÂÂÂ¥ Video</option>
-                          <option value="audio">Ã°ÂÂÂµ Audio</option>
-                          <option value="document">Ã°ÂÂÂ Documento</option>
+                          <option value="image">ÃÂ°ÃÂÃÂÃÂ¼ÃÂ¯ÃÂ¸ÃÂ Imagen</option>
+                          <option value="video">ÃÂ°ÃÂÃÂÃÂ¥ Video</option>
+                          <option value="audio">ÃÂ°ÃÂÃÂÃÂµ Audio</option>
+                          <option value="document">ÃÂ°ÃÂÃÂÃÂ Documento</option>
                         </select>
                       </div>
                     </div>
@@ -3528,7 +3528,7 @@ ${conversation}`
                     {/* Selector de plantilla para triggers de palabra clave */}
                     {editTrigger.condition === 'keyword' && plantillas.length > 0 && (
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ Cargar desde plantilla guardada</div>
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ Cargar desde plantilla guardada</div>
                         <select
                           className="wbv5-form-input"
                           defaultValue=""
@@ -3539,30 +3539,30 @@ ${conversation}`
                             e.target.value = ''
                           }}
                         >
-                          <option value="">Ã¢ÂÂ Seleccionar plantilla Ã¢ÂÂ</option>
+                          <option value="">ÃÂ¢ÃÂÃÂ Seleccionar plantilla ÃÂ¢ÃÂÃÂ</option>
                           {plantillas.map(pl => (
                             <option key={pl.id} value={pl.id}>{pl.nombre} ({pl.categoria})</option>
                           ))}
                         </select>
                         <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.15rem' }}>
-                          Ã°ÂÂÂ¡ Al seleccionar se carga el texto en el campo de abajo Ã°ÂÂÂ
+                          ÃÂ°ÃÂÃÂÃÂ¡ Al seleccionar se carga el texto en el campo de abajo ÃÂ°ÃÂÃÂÃÂ
                         </div>
                       </div>
                     )}
                     <div className="wbv5-form-row">
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.28rem' }}>
                         <div className="wbv5-form-lbl" style={{ margin: 0 }}>
-                          {editTrigger.condition === 'keyword' ? 'Ã°ÂÂÂ Mensaje a enviar' : 'Mensaje'} ({(editTrigger.message || '').length}/1000 chars)
+                          {editTrigger.condition === 'keyword' ? 'ÃÂ°ÃÂÃÂÃÂ Mensaje a enviar' : 'Mensaje'} ({(editTrigger.message || '').length}/1000 chars)
                         </div>
                         <button className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`} style={{ fontSize: '.65rem' }} onClick={() => generateTriggerMsg(editTrigger.name || 'seguimiento')} disabled={generatingTrigger}>
-                          {generatingTrigger ? 'Ã¢ÂÂ³ Generando...' : 'Ã°ÂÂ¤Â Generar con IA'}
+                          {generatingTrigger ? 'ÃÂ¢ÃÂÃÂ³ Generando...' : 'ÃÂ°ÃÂÃÂ¤ÃÂ Generar con IA'}
                         </button>
                       </div>
                       <textarea className="wbv5-form-input" rows={4} value={editTrigger.message} onChange={e => setEditTrigger(p => ({ ...p, message: e.target.value }))} placeholder="Escribe el mensaje o genera con IA. Usa {nombre} para personalizar." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6 }} />
                       <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.18rem' }}>Variables: {'{nombre}'} {'{telefono}'} {'{tienda}'}</div>
                     </div>
                     <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => saveTriggerEdit(editTrigger)}>Ã°ÂÂÂ¾ Guardar disparador</button>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => saveTriggerEdit(editTrigger)}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar disparador</button>
                       <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger(null)}>Cancelar</button>
                     </div>
                   </div>
@@ -3578,7 +3578,7 @@ ${conversation}`
                 <div style={{ padding: 0 }}>
                   {triggers.length === 0 ? (
                     <div className="wbv5-empty-state" style={{ padding: '2rem' }}>
-                      <div style={{ fontSize: '2rem' }}>Ã¢ÂÂ¡</div>
+                      <div style={{ fontSize: '2rem' }}>ÃÂ¢ÃÂÃÂ¡</div>
                       <div>Sin disparadores. Crea uno para automatizar seguimientos.</div>
                     </div>
                   ) : triggers.map(t => (
@@ -3586,23 +3586,23 @@ ${conversation}`
                       <div className="wbv5-tr-left">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', marginBottom: '.18rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '.78rem', fontWeight: 700, color: '#111827' }}>{t.name || 'Sin nombre'}</span>
-                          <span className={`wbv5-badge ${t.active ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '.6rem' }}>{t.active ? 'Ã¢ÂÂ Activo' : 'Ã¢ÂÂ¸ Pausado'}</span>
-                          {t.producto && <span style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 20, padding: '.1rem .5rem', fontSize: '.62rem', fontWeight: 700 }}>Ã°ÂÂÂ¦ {t.producto}</span>}
+                          <span className={`wbv5-badge ${t.active ? 'badge-green' : 'badge-red'}`} style={{ fontSize: '.6rem' }}>{t.active ? 'ÃÂ¢ÃÂÃÂ Activo' : 'ÃÂ¢ÃÂÃÂ¸ Pausado'}</span>
+                          {t.producto && <span style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: 20, padding: '.1rem .5rem', fontSize: '.62rem', fontWeight: 700 }}>ÃÂ°ÃÂÃÂÃÂ¦ {t.producto}</span>}
                         </div>
                         <div style={{ fontSize: '.68rem', color: '#6b7280', display: 'flex', gap: '.8rem', flexWrap: 'wrap' }}>
                           {t.condition === 'keyword'
-                            ? <span>Ã°ÂÂÂ Palabras: <strong style={{ color: '#5b21b6' }}>{(t.keyword || '').split(',').slice(0,3).map(k=>k.trim()).join(', ')}{(t.keyword||'').split(',').length > 3 ? 'Ã¢ÂÂ¦' : ''}</strong></span>
-                            : <span>Ã¢ÂÂ± {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'dÃÂ­as'}</span>
+                            ? <span>ÃÂ°ÃÂÃÂÃÂ Palabras: <strong style={{ color: '#5b21b6' }}>{(t.keyword || '').split(',').slice(0,3).map(k=>k.trim()).join(', ')}{(t.keyword||'').split(',').length > 3 ? 'ÃÂ¢ÃÂÃÂ¦' : ''}</strong></span>
+                            : <span>ÃÂ¢ÃÂÃÂ± {t.delay} {t.unit === 'min' ? 'minutos' : t.unit === 'h' ? 'horas' : 'dÃÂÃÂ­as'}</span>
                           }
-                          <span>Ã°ÂÂÂ¯ {t.condition === 'no_reply' ? 'Sin respuesta' : t.condition === 'seen' ? 'Visto sin responder' : t.condition === 'no_purchase' ? 'Sin compra' : t.condition === 'keyword' ? 'Ã¢ÂÂ¡ InstantÃÂ¡neo' : 'Primer mensaje'}</span>
-                          {t.mediaType && <span>Ã°ÂÂÂ {t.mediaType}</span>}
+                          <span>ÃÂ°ÃÂÃÂÃÂ¯ {t.condition === 'no_reply' ? 'Sin respuesta' : t.condition === 'seen' ? 'Visto sin responder' : t.condition === 'no_purchase' ? 'Sin compra' : t.condition === 'keyword' ? 'ÃÂ¢ÃÂÃÂ¡ InstantÃÂÃÂ¡neo' : 'Primer mensaje'}</span>
+                          {t.mediaType && <span>ÃÂ°ÃÂÃÂÃÂ {t.mediaType}</span>}
                         </div>
-                        <div style={{ fontSize: '.7rem', color: '#374151', marginTop: '.2rem', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Ã°ÂÂÂ¬ {t.message}</div>
+                        <div style={{ fontSize: '.7rem', color: '#374151', marginTop: '.2rem', maxWidth: 420, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>ÃÂ°ÃÂÃÂÃÂ¬ {t.message}</div>
                       </div>
                       <div style={{ display: 'flex', gap: '.3rem', flexShrink: 0, alignItems: 'center' }}>
-                        <button className={`wbv5-btn wbv5-btn-sm ${t.active ? 'wbv5-btn-outline' : 'wbv5-btn-green'}`} onClick={() => toggleTrigger(t.id)}>{t.active ? 'Ã¢ÂÂ¸' : 'Ã¢ÂÂ¶'}</button>
-                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger({...t})}>Ã¢ÂÂÃ¯Â¸Â</button>
-                        <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#fee2e2', color: '#991b1b' }} onClick={() => deleteTrigger(t.id)}>Ã°ÂÂÂÃ¯Â¸Â</button>
+                        <button className={`wbv5-btn wbv5-btn-sm ${t.active ? 'wbv5-btn-outline' : 'wbv5-btn-green'}`} onClick={() => toggleTrigger(t.id)}>{t.active ? 'ÃÂ¢ÃÂÃÂ¸' : 'ÃÂ¢ÃÂÃÂ¶'}</button>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => setEditTrigger({...t})}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
+                        <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#fee2e2', color: '#991b1b' }} onClick={() => deleteTrigger(t.id)}>ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
                       </div>
                     </div>
                   ))}
@@ -3612,17 +3612,17 @@ ${conversation}`
               {/* Flujos de seguimiento recomendados */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂÂ Secuencias de seguimiento recomendadas</div>
-                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTriggers([...triggers, ...DEFAULT_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))]); tip('Ã¢ÂÂ Secuencias agregadas') }}>+ Agregar todas</button>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Secuencias de seguimiento recomendadas</div>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTriggers([...triggers, ...DEFAULT_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))]); tip('ÃÂ¢ÃÂÃÂ Secuencias agregadas') }}>+ Agregar todas</button>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
                     Las 3 mejores secuencias de cierre de ventas optimizadas con IA para WhatsApp
                   </div>
                   {[
-                    { icon: 'Ã¢ÂÂ¡', title: '1h sin respuesta', desc: 'ReactivaciÃÂ³n amable Ã¢ÂÂ pregunta de interÃÂ©s', time: '1 hora', color: '#dbeafe', tc: '#1d4ed8' },
-                    { icon: 'Ã°ÂÂÂÃ¯Â¸Â', title: 'Visto sin responder 3h', desc: 'Oferta personalizada Ã¢ÂÂ urgencia suave', time: '3 horas', color: '#fef3c7', tc: '#92400e' },
-                    { icon: 'Ã°ÂÂÂ¥', title: 'Cierre 24h', desc: 'ÃÂltima oportunidad Ã¢ÂÂ descuento + CTA directo', time: '24 horas', color: '#dcfce7', tc: '#166534' },
+                    { icon: 'ÃÂ¢ÃÂÃÂ¡', title: '1h sin respuesta', desc: 'ReactivaciÃÂÃÂ³n amable ÃÂ¢ÃÂÃÂ pregunta de interÃÂÃÂ©s', time: '1 hora', color: '#dbeafe', tc: '#1d4ed8' },
+                    { icon: 'ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ', title: 'Visto sin responder 3h', desc: 'Oferta personalizada ÃÂ¢ÃÂÃÂ urgencia suave', time: '3 horas', color: '#fef3c7', tc: '#92400e' },
+                    { icon: 'ÃÂ°ÃÂÃÂÃÂ¥', title: 'Cierre 24h', desc: 'ÃÂÃÂltima oportunidad ÃÂ¢ÃÂÃÂ descuento + CTA directo', time: '24 horas', color: '#dcfce7', tc: '#166534' },
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.75rem', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>{s.icon}</div>
@@ -3636,23 +3636,23 @@ ${conversation}`
                 </div>
               </div>
 
-              {/* Ã¢ÂÂÃ¢ÂÂ Palabras Clave recomendadas Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Palabras Clave recomendadas ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
                   <div>
-                    <div className="wbv5-card-title">Ã°ÂÂÂ Disparadores de palabras clave</div>
+                    <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Disparadores de palabras clave</div>
                     <div style={{ fontSize: '.65rem', color: '#6b7280' }}>Se disparan al instante cuando el cliente escribe esa palabra</div>
                   </div>
                   <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => {
                     const toAdd = DEFAULT_KW_TRIGGERS.filter(d => !triggers.find(t => t.name === d.name))
                     if (!toAdd.length) { tip('Ya tienes todos los disparadores de palabras clave'); return }
                     saveTriggers([...triggers, ...toAdd])
-                    tip(`Ã¢ÂÂ ${toAdd.length} disparadores de palabras clave agregados`)
+                    tip(`ÃÂ¢ÃÂÃÂ ${toAdd.length} disparadores de palabras clave agregados`)
                   }}>+ Agregar todos</button>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                    Respuestas automÃÂ¡ticas <strong>instantÃÂ¡neas</strong> cuando el cliente menciona una palabra clave. Funciona con IA ON y OFF.
+                    Respuestas automÃÂÃÂ¡ticas <strong>instantÃÂÃÂ¡neas</strong> cuando el cliente menciona una palabra clave. Funciona con IA ON y OFF.
                   </div>
                   {DEFAULT_KW_TRIGGERS.map((kw, i) => {
                     const alreadyAdded = triggers.find(t => t.name === kw.name)
@@ -3661,22 +3661,22 @@ ${conversation}`
                     const tcs    = ['#166534','#854d0e','#1d4ed8','#7e22ce']
                     return (
                       <div key={kw.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '.75rem', padding: '.6rem 0', borderBottom: i < DEFAULT_KW_TRIGGERS.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
-                        <div style={{ width: 36, height: 36, borderRadius: 8, background: colors[i], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>Ã°ÂÂÂ</div>
+                        <div style={{ width: 36, height: 36, borderRadius: 8, background: colors[i], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>ÃÂ°ÃÂÃÂÃÂ</div>
                         <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827', marginBottom: '.12rem' }}>{kw.name.replace('Ã°ÂÂÂ ', '')}</div>
-                          <div style={{ fontSize: '.63rem', color: '#6b7280' }}>Palabras: <span style={{ color: tcs[i], fontWeight: 600 }}>{kwPreview}Ã¢ÂÂ¦</span></div>
+                          <div style={{ fontSize: '.76rem', fontWeight: 700, color: '#111827', marginBottom: '.12rem' }}>{kw.name.replace('ÃÂ°ÃÂÃÂÃÂ ', '')}</div>
+                          <div style={{ fontSize: '.63rem', color: '#6b7280' }}>Palabras: <span style={{ color: tcs[i], fontWeight: 600 }}>{kwPreview}ÃÂ¢ÃÂÃÂ¦</span></div>
                           <div style={{ fontSize: '.63rem', color: '#374151', marginTop: '.1rem', maxWidth: 340, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            Ã°ÂÂÂ¬ {kw.message.substring(0, 70)}Ã¢ÂÂ¦
+                            ÃÂ°ÃÂÃÂÃÂ¬ {kw.message.substring(0, 70)}ÃÂ¢ÃÂÃÂ¦
                           </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', alignItems: 'flex-end', flexShrink: 0 }}>
-                          <span style={{ background: colors[i], color: tcs[i], borderRadius: 20, padding: '.18rem .55rem', fontSize: '.6rem', fontWeight: 700 }}>Ã¢ÂÂ¡ InstantÃÂ¡neo</span>
+                          <span style={{ background: colors[i], color: tcs[i], borderRadius: 20, padding: '.18rem .55rem', fontSize: '.6rem', fontWeight: 700 }}>ÃÂ¢ÃÂÃÂ¡ InstantÃÂÃÂ¡neo</span>
                           {alreadyAdded ? (
-                            <span style={{ fontSize: '.6rem', color: '#16a34a', fontWeight: 600 }}>Ã¢ÂÂ Ya agregado</span>
+                            <span style={{ fontSize: '.6rem', color: '#16a34a', fontWeight: 600 }}>ÃÂ¢ÃÂÃÂ Ya agregado</span>
                           ) : (
                             <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ fontSize: '.62rem', padding: '.2rem .5rem' }} onClick={() => {
                               saveTriggers([...triggers, { ...kw, id: `kw_${Date.now()}` }])
-                              tip(`Ã¢ÂÂ Disparador "${kw.name.replace('Ã°ÂÂÂ ', '')}" agregado`)
+                              tip(`ÃÂ¢ÃÂÃÂ Disparador "${kw.name.replace('ÃÂ°ÃÂÃÂÃÂ ', '')}" agregado`)
                             }}>+ Agregar</button>
                           )}
                         </div>
@@ -3684,104 +3684,104 @@ ${conversation}`
                     )
                   })}
                   <div style={{ marginTop: '.75rem', padding: '.6rem', background: '#f0fdf4', borderRadius: 8, fontSize: '.65rem', color: '#166534', lineHeight: 1.5 }}>
-                    Ã°ÂÂÂ¡ <strong>CÃÂ³mo funciona:</strong> Cuando el cliente escriba cualquiera de las palabras clave, el bot responde automÃÂ¡ticamente con el mensaje configurado Ã¢ÂÂ sin importar si la IA estÃÂ¡ ON u OFF. TambiÃÂ©n puedes crear tus propios disparadores con <strong>+ Nuevo disparador Ã¢ÂÂ Ã°ÂÂÂ Palabra clave</strong>.
+                    ÃÂ°ÃÂÃÂÃÂ¡ <strong>CÃÂÃÂ³mo funciona:</strong> Cuando el cliente escriba cualquiera de las palabras clave, el bot responde automÃÂÃÂ¡ticamente con el mensaje configurado ÃÂ¢ÃÂÃÂ sin importar si la IA estÃÂÃÂ¡ ON u OFF. TambiÃÂÃÂ©n puedes crear tus propios disparadores con <strong>+ Nuevo disparador ÃÂ¢ÃÂÃÂ ÃÂ°ÃÂÃÂÃÂ Palabra clave</strong>.
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ ENTRENAMIENTO IA Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ ENTRENAMIENTO IA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'entrenamiento' && (
             <div className="wbv5-content">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '.85rem' }}>
                 <div>
-                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>Ã°ÂÂ§Â  Entrenamiento IA</div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 800 }}>ÃÂ°ÃÂÃÂ§ÃÂ  Entrenamiento IA</div>
                   <div style={{ fontSize: '.68rem', color: '#6b7280' }}>Dale contexto completo a tu bot para que sea el mejor cerrador de ventas del mundo</div>
                 </div>
                 <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
                   <button className={`wbv5-btn wbv5-btn-sm ${generatingPrompt ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`} onClick={generateWinnerPrompt} disabled={generatingPrompt}>
-                    {generatingPrompt ? 'Ã¢ÂÂ³ Generando...' : 'Ã°ÂÂ¤Â Generar prompt ganador'}
+                    {generatingPrompt ? 'ÃÂ¢ÃÂÃÂ³ Generando...' : 'ÃÂ°ÃÂÃÂ¤ÃÂ Generar prompt ganador'}
                   </button>
-                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTraining(trainingPrompt); tip('Ã¢ÂÂ Entrenamiento guardado') }}>Ã°ÂÂÂ¾ Guardar</button>
+                  <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => { saveTraining(trainingPrompt); tip('ÃÂ¢ÃÂÃÂ Entrenamiento guardado') }}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar</button>
                 </div>
               </div>
 
               {/* Tabs */}
               <div style={{ display: 'flex', gap: '.3rem', marginBottom: '.75rem', flexWrap: 'wrap' }}>
                 {[
-                  { id: 'asistente',  label: 'Ã°ÂÂÂ Asistente IA' },
-                  { id: 'contexto',   label: 'Ã°ÂÂÂ¢ Contexto empresa' },
-                  { id: 'memoria',    label: 'Ã°ÂÂ§Â  Memoria n8n' },
-                  { id: 'prueba',     label: 'Ã°ÂÂ§Âª Probar bot' },
+                  { id: 'asistente',  label: 'ÃÂ°ÃÂÃÂÃÂ Asistente IA' },
+                  { id: 'contexto',   label: 'ÃÂ°ÃÂÃÂÃÂ¢ Contexto empresa' },
+                  { id: 'memoria',    label: 'ÃÂ°ÃÂÃÂ§ÃÂ  Memoria n8n' },
+                  { id: 'prueba',     label: 'ÃÂ°ÃÂÃÂ§ÃÂª Probar bot' },
                 ].map(tab => (
                   <button key={tab.id} className={`wbv5-btn wbv5-btn-sm ${trainingTab === tab.id ? 'wbv5-btn-blue' : 'wbv5-btn-outline'}`} onClick={() => setTrainingTab(tab.id)}>{tab.label}</button>
                 ))}
               </div>
 
-              {/* Tab: Asistente IA Ã¢ÂÂ Wizard */}
+              {/* Tab: Asistente IA ÃÂ¢ÃÂÃÂ Wizard */}
               {trainingTab === 'asistente' && (
                 <div className="wbv5-card">
                   <div className="wbv5-card-hd">
-                    <div className="wbv5-card-title">Ã°ÂÂÂ Asistente de entrenamiento IA</div>
-                    <span className="wbv5-badge" style={{ background: '#ede9fe', color: '#5b21b6' }}>Ã¢ÂÂ¨ Wizard</span>
+                    <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Asistente de entrenamiento IA</div>
+                    <span className="wbv5-badge" style={{ background: '#ede9fe', color: '#5b21b6' }}>ÃÂ¢ÃÂÃÂ¨ Wizard</span>
                   </div>
                   <div className="wbv5-card-bd">
                     <div style={{ fontSize: '.73rem', color: '#374151', marginBottom: '.85rem', lineHeight: 1.6, background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 8, padding: '.65rem .9rem' }}>
-                      Ã°ÂÂÂ¯ <strong>ÃÂ¿CÃÂ³mo funciona?</strong> Llena los datos de tu negocio y la IA genera automÃÂ¡ticamente el entrenamiento ganador. El bot primero <strong>conserva la conversaciÃÂ³n siendo amigable</strong>, y despuÃÂ©s busca el <strong>cierre de ventas de forma natural</strong>.
+                      ÃÂ°ÃÂÃÂÃÂ¯ <strong>ÃÂÃÂ¿CÃÂÃÂ³mo funciona?</strong> Llena los datos de tu negocio y la IA genera automÃÂÃÂ¡ticamente el entrenamiento ganador. El bot primero <strong>conserva la conversaciÃÂÃÂ³n siendo amigable</strong>, y despuÃÂÃÂ©s busca el <strong>cierre de ventas de forma natural</strong>.
                     </div>
                     <div style={{ display: 'grid', gap: '.6rem' }}>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ¢ Nombre de tu empresa / negocio *</div>
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ¢ Nombre de tu empresa / negocio *</div>
                         <input className="wbv5-form-input" value={wizardData.empresa} onChange={e => setWizardData(p => ({ ...p, empresa: e.target.value }))} placeholder="Ej: Sanate Colombia" />
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ ÃÂ¿QuÃÂ© vendes? DescripciÃÂ³n breve</div>
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ ÃÂÃÂ¿QuÃÂÃÂ© vendes? DescripciÃÂÃÂ³n breve</div>
                         <input className="wbv5-form-input" value={wizardData.descripcion} onChange={e => setWizardData(p => ({ ...p, descripcion: e.target.value }))} placeholder="Ej: Suplementos naturales para salud y bienestar" />
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂÃ¯Â¸Â Productos principales *</div>
-                        <textarea className="wbv5-form-input" rows={3} value={wizardData.productos} onChange={e => setWizardData(p => ({ ...p, productos: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 dÃÂ­as\n- Pack EnergÃÂ­a Total\n- Kit Bienestar Premium'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Productos principales *</div>
+                        <textarea className="wbv5-form-input" rows={3} value={wizardData.productos} onChange={e => setWizardData(p => ({ ...p, productos: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 dÃÂÃÂ­as\n- Pack EnergÃÂÃÂ­a Total\n- Kit Bienestar Premium'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ° Precios de tus productos *</div>
-                        <textarea className="wbv5-form-input" rows={3} value={wizardData.precios} onChange={e => setWizardData(p => ({ ...p, precios: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 dÃÂ­as: $150.000\n- Pack EnergÃÂ­a Total: $89.000\n- Kit Bienestar Premium: $220.000'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ° Precios de tus productos *</div>
+                        <textarea className="wbv5-form-input" rows={3} value={wizardData.precios} onChange={e => setWizardData(p => ({ ...p, precios: e.target.value }))} placeholder={'Ej:\n- Combo Detox 30 dÃÂÃÂ­as: $150.000\n- Pack EnergÃÂÃÂ­a Total: $89.000\n- Kit Bienestar Premium: $220.000'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ Combos y ofertas especiales</div>
-                        <textarea className="wbv5-form-input" rows={2} value={wizardData.combos} onChange={e => setWizardData(p => ({ ...p, combos: e.target.value }))} placeholder="Ej: 2x1 en Detox, envÃÂ­o gratis por compras +$200.000" style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ Combos y ofertas especiales</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.combos} onChange={e => setWizardData(p => ({ ...p, combos: e.target.value }))} placeholder="Ej: 2x1 en Detox, envÃÂÃÂ­o gratis por compras +$200.000" style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ¬ Estilo de comunicaciÃÂ³n del bot</div>
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ¬ Estilo de comunicaciÃÂÃÂ³n del bot</div>
                         <select className="wbv5-form-input" value={wizardData.estilo} onChange={e => setWizardData(p => ({ ...p, estilo: e.target.value }))}>
-                          <option value="amigable">Ã°ÂÂÂ Amigable y cercano</option>
-                          <option value="profesional">Ã°ÂÂÂ Profesional y formal</option>
-                          <option value="energico">Ã¢ÂÂ¡ EnergÃÂ©tico y motivador</option>
-                          <option value="suave">Ã°ÂÂÂ¸ Suave y empÃÂ¡tico</option>
+                          <option value="amigable">ÃÂ°ÃÂÃÂÃÂ Amigable y cercano</option>
+                          <option value="profesional">ÃÂ°ÃÂÃÂÃÂ Profesional y formal</option>
+                          <option value="energico">ÃÂ¢ÃÂÃÂ¡ EnergÃÂÃÂ©tico y motivador</option>
+                          <option value="suave">ÃÂ°ÃÂÃÂÃÂ¸ Suave y empÃÂÃÂ¡tico</option>
                         </select>
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã°ÂÂÂ Objeciones comunes (cÃÂ³mo las manejas)</div>
-                        <textarea className="wbv5-form-input" rows={2} value={wizardData.objeciones} onChange={e => setWizardData(p => ({ ...p, objeciones: e.target.value }))} placeholder={'Ej: "EstÃÂ¡ muy caro" Ã¢ÂÂ Ofrezco plan de pago o combo mÃÂ¡s econÃÂ³mico'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
+                        <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ Objeciones comunes (cÃÂÃÂ³mo las manejas)</div>
+                        <textarea className="wbv5-form-input" rows={2} value={wizardData.objeciones} onChange={e => setWizardData(p => ({ ...p, objeciones: e.target.value }))} placeholder={'Ej: "EstÃÂÃÂ¡ muy caro" ÃÂ¢ÃÂÃÂ Ofrezco plan de pago o combo mÃÂÃÂ¡s econÃÂÃÂ³mico'} style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.6rem' }}>
                         <div className="wbv5-form-row">
-                          <div className="wbv5-form-lbl">Ã°ÂÂÂ EnvÃÂ­o y logÃÂ­stica</div>
-                          <input className="wbv5-form-input" value={wizardData.envio} onChange={e => setWizardData(p => ({ ...p, envio: e.target.value }))} placeholder="Ej: Todo Colombia, 2-3 dÃÂ­as, $12.000" />
+                          <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ EnvÃÂÃÂ­o y logÃÂÃÂ­stica</div>
+                          <input className="wbv5-form-input" value={wizardData.envio} onChange={e => setWizardData(p => ({ ...p, envio: e.target.value }))} placeholder="Ej: Todo Colombia, 2-3 dÃÂÃÂ­as, $12.000" />
                         </div>
                         <div className="wbv5-form-row">
-                          <div className="wbv5-form-lbl">Ã°ÂÂÂ Horario de atenciÃÂ³n</div>
-                          <input className="wbv5-form-input" value={wizardData.horario} onChange={e => setWizardData(p => ({ ...p, horario: e.target.value }))} placeholder="Ej: Lun-SÃÂ¡b 8am-6pm" />
+                          <div className="wbv5-form-lbl">ÃÂ°ÃÂÃÂÃÂ Horario de atenciÃÂÃÂ³n</div>
+                          <input className="wbv5-form-input" value={wizardData.horario} onChange={e => setWizardData(p => ({ ...p, horario: e.target.value }))} placeholder="Ej: Lun-SÃÂÃÂ¡b 8am-6pm" />
                         </div>
                       </div>
                       <div className="wbv5-form-row">
-                        <div className="wbv5-form-lbl">Ã¢ÂÂ¨ Info adicional (mÃÂ©todos de pago, certificaciones, testimonios...)</div>
+                        <div className="wbv5-form-lbl">ÃÂ¢ÃÂÃÂ¨ Info adicional (mÃÂÃÂ©todos de pago, certificaciones, testimonios...)</div>
                         <textarea className="wbv5-form-input" rows={2} value={wizardData.extra} onChange={e => setWizardData(p => ({ ...p, extra: e.target.value }))} placeholder="Nequi, Bancolombia, contraentrega, 500+ clientes satisfechos..." style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }} />
                       </div>
                     </div>
                     {!hasAiKey && (
                       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.6rem .9rem', fontSize: '.73rem', color: '#713f12', marginTop: '.75rem' }}>
-                        Ã¢ÂÂ Ã¯Â¸Â Necesitas una <strong>API Key</strong> configurada en <strong>Ajustes Ã¢ÂÂ API & Tokens</strong>. Puedes usar OpenAI (de pago) o <strong>Google Gemini gratis</strong> (aistudio.google.com/apikey).
+                        ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Necesitas una <strong>API Key</strong> configurada en <strong>Ajustes ÃÂ¢ÃÂÃÂ API & Tokens</strong>. Puedes usar OpenAI (de pago) o <strong>Google Gemini gratis</strong> (aistudio.google.com/apikey).
                       </div>
                     )}
                     <div style={{ display: 'flex', gap: '.5rem', marginTop: '.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -3791,17 +3791,17 @@ ${conversation}`
                         disabled={generatingWizard || !hasAiKey}
                         style={{ flex: 1, minWidth: 200, fontSize: '.78rem', padding: '.55rem 1rem' }}
                       >
-                        {generatingWizard ? 'Ã¢ÂÂ³ Generando entrenamiento ganador...' : 'Ã°ÂÂÂ¯ Generar entrenamiento ganador'}
+                        {generatingWizard ? 'ÃÂ¢ÃÂÃÂ³ Generando entrenamiento ganador...' : 'ÃÂ°ÃÂÃÂÃÂ¯ Generar entrenamiento ganador'}
                       </button>
                       <button
                         className="wbv5-btn wbv5-btn-outline wbv5-btn-sm"
                         onClick={() => setWizardData({ empresa: '', descripcion: '', productos: '', precios: '', combos: '', estilo: 'amigable', objeciones: '', envio: '', horario: '', extra: '' })}
                       >
-                        Ã°ÂÂÂÃ¯Â¸Â Limpiar
+                        ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Limpiar
                       </button>
                     </div>
                     <div style={{ fontSize: '.65rem', color: '#9ca3af', marginTop: '.4rem', lineHeight: 1.5 }}>
-                      Ã°ÂÂÂ¡ El resultado se guardarÃÂ¡ automÃÂ¡ticamente en <strong>Contexto empresa</strong>. Puedes editarlo despuÃÂ©s.
+                      ÃÂ°ÃÂÃÂÃÂ¡ El resultado se guardarÃÂÃÂ¡ automÃÂÃÂ¡ticamente en <strong>Contexto empresa</strong>. Puedes editarlo despuÃÂÃÂ©s.
                     </div>
                   </div>
                 </div>
@@ -3811,31 +3811,31 @@ ${conversation}`
               {trainingTab === 'contexto' && (
                 <div className="wbv5-card">
                   <div className="wbv5-card-hd">
-                    <div className="wbv5-card-title">Ã°ÂÂÂ¢ Contexto del negocio</div>
+                    <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ¢ Contexto del negocio</div>
                     <div style={{ display: 'flex', gap: '.4rem', alignItems: 'center' }}>
                       <span style={{ fontSize: '.68rem', color: trainingPrompt.length > 70000 ? '#dc2626' : trainingPrompt.length > 50000 ? '#f59e0b' : '#16a34a', fontWeight: 700 }}>
                         {trainingPrompt.length.toLocaleString()} / 80,000 chars
                       </span>
-                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => saveTraining(TRAINING_TEMPLATE)}>Ã°ÂÂÂ Plantilla</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => saveTraining(TRAINING_TEMPLATE)}>ÃÂ°ÃÂÃÂÃÂ Plantilla</button>
                     </div>
                   </div>
                   <div className="wbv5-card-bd">
                     <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
-                      Ã°ÂÂÂ Escribe aquÃÂ­ TODO sobre tu negocio: productos, precios, combos, forma de hablar, objeciones comunes, polÃÂ­tica de envÃÂ­o, historia... <strong>Entre mÃÂ¡s contexto, mejor vende la IA.</strong>
+                      ÃÂ°ÃÂÃÂÃÂ Escribe aquÃÂÃÂ­ TODO sobre tu negocio: productos, precios, combos, forma de hablar, objeciones comunes, polÃÂÃÂ­tica de envÃÂÃÂ­o, historia... <strong>Entre mÃÂÃÂ¡s contexto, mejor vende la IA.</strong>
                     </div>
                     <textarea
                       className="wbv5-training-area"
                       value={trainingPrompt}
                       onChange={e => saveTraining(e.target.value)}
                       maxLength={80000}
-                      placeholder="Pega aquÃÂ­ el contexto completo de tu empresa...&#10;&#10;Incluye:&#10;- Nombre y descripciÃÂ³n del negocio&#10;- Todos los productos con precios&#10;- Combos y ofertas especiales&#10;- Forma de hablar (formal/informal)&#10;- TÃÂ©cnicas de cierre de venta&#10;- Manejo de objeciones&#10;- Datos de contacto y envÃÂ­o"
+                      placeholder="Pega aquÃÂÃÂ­ el contexto completo de tu empresa...&#10;&#10;Incluye:&#10;- Nombre y descripciÃÂÃÂ³n del negocio&#10;- Todos los productos con precios&#10;- Combos y ofertas especiales&#10;- Forma de hablar (formal/informal)&#10;- TÃÂÃÂ©cnicas de cierre de venta&#10;- Manejo de objeciones&#10;- Datos de contacto y envÃÂÃÂ­o"
                     />
                     <div style={{ display: 'flex', gap: '.5rem', marginTop: '.5rem', flexWrap: 'wrap' }}>
                       <button className={`wbv5-btn wbv5-btn-sm ${generatingPrompt ? 'wbv5-btn-outline' : 'wbv5-btn-ai-on'}`} onClick={generateWinnerPrompt} disabled={generatingPrompt}>
-                        {generatingPrompt ? 'Ã¢ÂÂ³ Generando con IA...' : 'Ã¢ÂÂ¨ Generar prompt ganador con IA'}
+                        {generatingPrompt ? 'ÃÂ¢ÃÂÃÂ³ Generando con IA...' : 'ÃÂ¢ÃÂÃÂ¨ Generar prompt ganador con IA'}
                       </button>
-                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(trainingPrompt); tip('Ã°ÂÂÂ Contexto copiado') }}>Ã°ÂÂÂ Copiar todo</button>
-                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { if(window.confirm('ÃÂ¿Limpiar todo el contexto?')) saveTraining('') }}>Ã°ÂÂÂÃ¯Â¸Â Limpiar</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { navigator.clipboard?.writeText(trainingPrompt); tip('ÃÂ°ÃÂÃÂÃÂ Contexto copiado') }}>ÃÂ°ÃÂÃÂÃÂ Copiar todo</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { if(window.confirm('ÃÂÃÂ¿Limpiar todo el contexto?')) saveTraining('') }}>ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Limpiar</button>
                     </div>
                   </div>
                 </div>
@@ -3845,16 +3845,16 @@ ${conversation}`
               {trainingTab === 'memoria' && (
                 <div className="wbv5-content" style={{ padding: 0, gap: '.75rem' }}>
                   <div className="wbv5-card">
-                    <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã°ÂÂ§Â  Memoria de clientes (n8n)</div><span className="wbv5-badge badge-blue">Via n8n</span></div>
+                    <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ°ÃÂÃÂ§ÃÂ  Memoria de clientes (n8n)</div><span className="wbv5-badge badge-blue">Via n8n</span></div>
                     <div className="wbv5-card-bd">
                       <div style={{ fontSize: '.76rem', color: '#374151', lineHeight: 1.6, marginBottom: '.75rem' }}>
-                        La memoria del cliente se guarda en n8n usando <strong>nodos de memoria</strong>. Cada nÃÂºmero de WhatsApp tiene su propio historial.
+                        La memoria del cliente se guarda en n8n usando <strong>nodos de memoria</strong>. Cada nÃÂÃÂºmero de WhatsApp tiene su propio historial.
                       </div>
                       {[
-                        { icon: 'Ã°ÂÂÂ±', title: 'IdentificaciÃÂ³n por nÃÂºmero', desc: 'Cada cliente se identifica por su nÃÂºmero de WhatsApp (chatId). La IA siempre sabe con quiÃÂ©n habla.' },
-                        { icon: 'Ã°ÂÂÂ', title: 'Historial de pedidos', desc: 'n8n guarda quÃÂ© productos pidiÃÂ³, cuÃÂ¡ndo y cuÃÂ¡nto pagÃÂ³. La IA lo usa para personalizar respuestas.' },
-                        { icon: 'Ã°ÂÂÂ¬', title: 'Contexto de conversaciÃÂ³n', desc: 'Los ÃÂºltimos 20 mensajes se incluyen en cada llamada a ChatGPT para mantener coherencia.' },
-                        { icon: 'Ã°ÂÂÂ', title: 'Reconocimiento automÃÂ¡tico', desc: 'Cuando el cliente vuelve a escribir, la IA lo reconoce y saluda por su nombre con su historial.' },
+                        { icon: 'ÃÂ°ÃÂÃÂÃÂ±', title: 'IdentificaciÃÂÃÂ³n por nÃÂÃÂºmero', desc: 'Cada cliente se identifica por su nÃÂÃÂºmero de WhatsApp (chatId). La IA siempre sabe con quiÃÂÃÂ©n habla.' },
+                        { icon: 'ÃÂ°ÃÂÃÂÃÂ', title: 'Historial de pedidos', desc: 'n8n guarda quÃÂÃÂ© productos pidiÃÂÃÂ³, cuÃÂÃÂ¡ndo y cuÃÂÃÂ¡nto pagÃÂÃÂ³. La IA lo usa para personalizar respuestas.' },
+                        { icon: 'ÃÂ°ÃÂÃÂÃÂ¬', title: 'Contexto de conversaciÃÂÃÂ³n', desc: 'Los ÃÂÃÂºltimos 20 mensajes se incluyen en cada llamada a ChatGPT para mantener coherencia.' },
+                        { icon: 'ÃÂ°ÃÂÃÂÃÂ', title: 'Reconocimiento automÃÂÃÂ¡tico', desc: 'Cuando el cliente vuelve a escribir, la IA lo reconoce y saluda por su nombre con su historial.' },
                       ].map((item, i) => (
                         <div key={i} style={{ display: 'flex', gap: '.75rem', padding: '.55rem 0', borderBottom: i < 3 ? '1px solid #f3f4f6' : 'none' }}>
                           <div style={{ width: 32, height: 32, borderRadius: 8, background: '#dbeafe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', flexShrink: 0 }}>{item.icon}</div>
@@ -3865,9 +3865,9 @@ ${conversation}`
                         </div>
                       ))}
                       <div style={{ marginTop: '.75rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.72rem', color: '#166534' }}>
-                        Ã°ÂÂÂ¡ <strong>Configurar en n8n:</strong> Agrega un nodo "Window Buffer Memory" o "Postgres Chat Memory" en tu flujo de WhatsApp. El webhook ya recibe el <code style={{ background: 'rgba(0,0,0,.07)', padding: '1px 4px', borderRadius: 3 }}>chatId</code> para identificar al cliente.
+                        ÃÂ°ÃÂÃÂÃÂ¡ <strong>Configurar en n8n:</strong> Agrega un nodo "Window Buffer Memory" o "Postgres Chat Memory" en tu flujo de WhatsApp. El webhook ya recibe el <code style={{ background: 'rgba(0,0,0,.07)', padding: '1px 4px', borderRadius: 3 }}>chatId</code> para identificar al cliente.
                       </div>
-                      <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" style={{ marginTop: '.6rem' }} onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n para configurar Ã¢ÂÂ</button>
+                      <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" style={{ marginTop: '.6rem' }} onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n para configurar ÃÂ¢ÃÂÃÂ</button>
                     </div>
                   </div>
                 </div>
@@ -3876,14 +3876,14 @@ ${conversation}`
               {/* Tab: Probar bot */}
               {trainingTab === 'prueba' && (
                 <div className="wbv5-card">
-                  <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã°ÂÂ§Âª Probar bot IA</div></div>
+                  <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ°ÃÂÃÂ§ÃÂª Probar bot IA</div></div>
                   <div className="wbv5-card-bd">
                     <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.6rem', lineHeight: 1.5 }}>
-                      Prueba cÃÂ³mo responderÃÂ¡ tu bot antes de activarlo. Requiere API Key de OpenAI configurada.
+                      Prueba cÃÂÃÂ³mo responderÃÂÃÂ¡ tu bot antes de activarlo. Requiere API Key de OpenAI configurada.
                     </div>
                     {!hasAiKey ? (
                       <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12' }}>
-                        Ã¢ÂÂ Ã¯Â¸Â Configura tu API Key (OpenAI o Gemini gratis) en <strong>Ajustes Ã¢ÂÂ API & Tokens</strong> para probar el bot.
+                        ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Configura tu API Key (OpenAI o Gemini gratis) en <strong>Ajustes ÃÂ¢ÃÂÃÂ API & Tokens</strong> para probar el bot.
                       </div>
                     ) : (
                       <BotTestChat trainingPrompt={trainingPrompt} aiPrompt={aiPrompt} openaiKey={openaiKey} geminiKey={geminiKey} aiModel={aiModel} tip={tip} msgMode={msgMode} useEmojis={useEmojis} useStyles={useStyles} />
@@ -3896,37 +3896,37 @@ ${conversation}`
           {page === 'difusiones' && <DifusionesMasivas BU={BU} sec={DEFAULT_SECRET}/>}
           {page === 'dispositivos' && <DispositivosPage BU={BU} sec={DEFAULT_SECRET}/>}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ CONEXIÃÂN Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CONEXIÃÂÃÂN ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {page === 'conexion' && (
             <div className="wbv5-content">
-              <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>Ã°ÂÂÂ± ConexiÃÂ³n WhatsApp</div>
-              <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Vincula tu WhatsApp al bot para recibir y enviar mensajes automÃÂ¡ticamente</div>
+              <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.2rem' }}>ÃÂ°ÃÂÃÂÃÂ± ConexiÃÂÃÂ³n WhatsApp</div>
+              <div style={{ fontSize: '.68rem', color: '#6b7280', marginBottom: '.85rem' }}>Vincula tu WhatsApp al bot para recibir y enviar mensajes automÃÂÃÂ¡ticamente</div>
 
-              {/* Ã¢ÂÂÃ¢ÂÂ Banner: servidor Baileys offline Ã¢ÂÂÃ¢ÂÂ */}
+              {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Banner: servidor Baileys offline ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
               {serverOnline === false && (
                 <div className="wbv5-server-offline-banner">
-                  <div className="wbv5-sob-icon">Ã¢ÂÂ Ã¯Â¸Â</div>
+                  <div className="wbv5-sob-icon">ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ</div>
                   <div className="wbv5-sob-body">
                     <div className="wbv5-sob-title">Servidor Baileys no disponible</div>
                     <div className="wbv5-sob-desc">
                       El backend no responde en <code>{BU.replace('/api/whatsapp','')}</code>.
                       Si accedes desde <strong>sanate.store (HTTPS)</strong>, el navegador bloquea conexiones HTTP a localhost.
-                      Despliega el servidor en Railway/Render y configura la URL en <strong>Ajustes Ã¢ÂÂ ConexiÃÂ³n WA</strong>.
+                      Despliega el servidor en Railway/Render y configura la URL en <strong>Ajustes ÃÂ¢ÃÂÃÂ ConexiÃÂÃÂ³n WA</strong>.
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>Ã°ÂÂÂ Reintentar</button>
-                    <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#7c3aed', color: '#fff' }} onClick={() => { goPage('config'); setCfgTab('conn') }}>Ã¢ÂÂÃ¯Â¸Â Configurar URL</button>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>ÃÂ°ÃÂÃÂÃÂ Reintentar</button>
+                    <button className="wbv5-btn wbv5-btn-sm" style={{ background: '#7c3aed', color: '#fff' }} onClick={() => { goPage('config'); setCfgTab('conn') }}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Configurar URL</button>
                   </div>
                 </div>
               )}
 
               <div className="wbv5-qr-card">
-                {/* Canvas QR Ã¢ÂÂ siempre visible; muestra skeleton, QR real o checkmark verde */}
+                {/* Canvas QR ÃÂ¢ÃÂÃÂ siempre visible; muestra skeleton, QR real o checkmark verde */}
                 <div className="wbv5-qr-box" style={{ position: 'relative' }}>
                   {serverOnline === false && status !== 'connected' ? (
                     <div className="wbv5-qr-offline">
-                      <div style={{ fontSize: '2.2rem' }}>Ã°ÂÂÂ</div>
+                      <div style={{ fontSize: '2.2rem' }}>ÃÂ°ÃÂÃÂÃÂ</div>
                       <div style={{ fontSize: '.72rem', color: '#6b7280', textAlign: 'center', marginTop: '.3rem', lineHeight: 1.4 }}>Servidor<br/>no disponible</div>
                     </div>
                   ) : (
@@ -3940,7 +3940,7 @@ ${conversation}`
                       )}
                       {status === 'connected' && (
                         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(22,163,74,.9)', borderBottomLeftRadius: 10, borderBottomRightRadius: 10, textAlign: 'center', padding: '.28rem 0', fontSize: '.67rem', color: '#fff', fontWeight: 700 }}>
-                          Ã¢ÂÂ WhatsApp vinculado
+                          ÃÂ¢ÃÂÃÂ WhatsApp vinculado
                         </div>
                       )}
                     </>
@@ -3949,50 +3949,50 @@ ${conversation}`
                 <div className="wbv5-qr-info">
                   {status === 'connected' ? (
                     <>
-                      <div style={{ fontSize: '2.5rem', marginBottom: '.4rem' }}>Ã¢ÂÂ</div>
+                      <div style={{ fontSize: '2.5rem', marginBottom: '.4rem' }}>ÃÂ¢ÃÂÃÂ</div>
                       <h3 style={{ color: '#16a34a', margin: '0 0 .3rem' }}>WhatsApp Conectado</h3>
                       <p style={{ color: '#374151', margin: '0 0 .6rem' }}>
-                        Tu WhatsApp estÃÂ¡ vinculado. Los mensajes se procesan automÃÂ¡ticamente.
+                        Tu WhatsApp estÃÂÃÂ¡ vinculado. Los mensajes se procesan automÃÂÃÂ¡ticamente.
                       </p>
                       {phone && (
                         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.6rem 1rem', marginBottom: '.8rem', fontSize: '.82rem', color: '#166534' }}>
-                          Ã°ÂÂÂ± <strong>{phone}</strong>
+                          ÃÂ°ÃÂÃÂÃÂ± <strong>{phone}</strong>
                         </div>
                       )}
                       <button className="wbv5-btn wbv5-btn-red" onClick={disconnectWA} style={{ width: '100%' }}>
-                        Ã°ÂÂÂ Desvincular WhatsApp
+                        ÃÂ°ÃÂÃÂÃÂ Desvincular WhatsApp
                       </button>
                     </>
                   ) : serverOnline === false ? (
                     <>
-                      <h3 style={{ color: '#dc2626', margin: '0 0 .35rem' }}>Ã°ÂÂÂ Servidor no disponible</h3>
+                      <h3 style={{ color: '#dc2626', margin: '0 0 .35rem' }}>ÃÂ°ÃÂÃÂÃÂ Servidor no disponible</h3>
                       <p style={{ opacity: .9, margin: '0 0 .6rem' }}>
-                        El servidor Baileys no responde. InÃÂ­cialo localmente o despliÃÂ©galo en Railway para generar el cÃÂ³digo QR.
+                        El servidor Baileys no responde. InÃÂÃÂ­cialo localmente o despliÃÂÃÂ©galo en Railway para generar el cÃÂÃÂ³digo QR.
                       </p>
                       <div className="wbv5-qr-steps">
-                        <span>Ã°ÂÂÂ» Local: <code style={{ background: 'rgba(255,255,255,.2)', padding: '1px 5px', borderRadius: 4, fontSize: '.68rem' }}>node server.js</code></span>
-                        <span>Ã¢ÂÂÃ¯Â¸Â Railway: verifica que el servicio estÃÂ© activo</span>
-                        <span>Ã°ÂÂÂ Puerto por defecto: <strong>5055</strong></span>
+                        <span>ÃÂ°ÃÂÃÂÃÂ» Local: <code style={{ background: 'rgba(255,255,255,.2)', padding: '1px 5px', borderRadius: 4, fontSize: '.68rem' }}>node server.js</code></span>
+                        <span>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Railway: verifica que el servicio estÃÂÃÂ© activo</span>
+                        <span>ÃÂ°ÃÂÃÂÃÂ Puerto por defecto: <strong>5055</strong></span>
                       </div>
                       <button className="wbv5-btn" style={{ marginTop: '1rem', width: '100%', background: '#fff', color: '#075e54', fontSize: '.85rem', padding: '.55rem 1rem', fontWeight: 700 }} onClick={ping}>
-                        Ã°ÂÂÂ Verificar conexiÃÂ³n
+                        ÃÂ°ÃÂÃÂÃÂ Verificar conexiÃÂÃÂ³n
                       </button>
                     </>
                   ) : (
                     <>
-                      <h3>{qrDataUrl ? 'Ã°ÂÂÂ± Escanea con WhatsApp' : status === 'connecting' ? 'Ã¢ÂÂ³ Generando QR...' : 'Ã°ÂÂÂ± Vincula tu WhatsApp'}</h3>
+                      <h3>{qrDataUrl ? 'ÃÂ°ÃÂÃÂÃÂ± Escanea con WhatsApp' : status === 'connecting' ? 'ÃÂ¢ÃÂÃÂ³ Generando QR...' : 'ÃÂ°ÃÂÃÂÃÂ± Vincula tu WhatsApp'}</h3>
                       <p>
                         {qrDataUrl
-                          ? 'Escanea el cÃÂ³digo QR con tu WhatsApp para conectar el bot.'
+                          ? 'Escanea el cÃÂÃÂ³digo QR con tu WhatsApp para conectar el bot.'
                           : status === 'connecting'
-                          ? 'El servidor estÃÂ¡ generando el cÃÂ³digo QR, espera un momento...'
-                          : 'Genera un cÃÂ³digo QR y escanÃÂ©alo con WhatsApp para conectar el bot.'}
+                          ? 'El servidor estÃÂÃÂ¡ generando el cÃÂÃÂ³digo QR, espera un momento...'
+                          : 'Genera un cÃÂÃÂ³digo QR y escanÃÂÃÂ©alo con WhatsApp para conectar el bot.'}
                       </p>
                       <div className="wbv5-qr-steps">
-                        <span>1Ã¯Â¸ÂÃ¢ÂÂ£ Abre WhatsApp en tu telÃÂ©fono</span>
-                        <span>2Ã¯Â¸ÂÃ¢ÂÂ£ Ve a Dispositivos vinculados</span>
-                        <span>3Ã¯Â¸ÂÃ¢ÂÂ£ Toca "Vincular un dispositivo"</span>
-                        <span>4Ã¯Â¸ÂÃ¢ÂÂ£ Escanea el cÃÂ³digo QR</span>
+                        <span>1ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Abre WhatsApp en tu telÃÂÃÂ©fono</span>
+                        <span>2ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Ve a Dispositivos vinculados</span>
+                        <span>3ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Toca "Vincular un dispositivo"</span>
+                        <span>4ÃÂ¯ÃÂ¸ÃÂÃÂ¢ÃÂÃÂ£ Escanea el cÃÂÃÂ³digo QR</span>
                       </div>
                       {!qrDataUrl && status === 'disconnected' && (
                         <button
@@ -4000,7 +4000,7 @@ ${conversation}`
                           style={{ marginTop: '1rem', width: '100%', fontSize: '.9rem', padding: '.6rem 1rem' }}
                           onClick={regenerateQR}
                         >
-                          Ã°ÂÂÂ Generar cÃÂ³digo QR
+                          ÃÂ°ÃÂÃÂÃÂ Generar cÃÂÃÂ³digo QR
                         </button>
                       )}
                     </>
@@ -4008,22 +4008,22 @@ ${conversation}`
                 </div>
               </div>
               <div className="wbv5-card">
-                <div className="wbv5-card-hd"><div className="wbv5-card-title">Estado de conexiÃÂ³n</div></div>
+                <div className="wbv5-card-hd"><div className="wbv5-card-title">Estado de conexiÃÂÃÂ³n</div></div>
                 <div className="wbv5-card-bd">
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '.6rem', flexWrap: 'wrap' }}>
                     <div className={`wbv5-status-indicator ${statusCls[status]}`}>
                       <div className="wbv5-si-dot" />
                       <span>
                         {status === 'connected'
-                          ? `Ã¢ÂÂ Conectado Ã¢ÂÂ ${phone}`
+                          ? `ÃÂ¢ÃÂÃÂ Conectado ÃÂ¢ÃÂÃÂ ${phone}`
                           : status === 'connecting'
-                          ? 'Ã¢ÂÂ³ Esperando escaneo...'
-                          : 'Desconectado Ã¢ÂÂ escanea el QR para conectar'}
+                          ? 'ÃÂ¢ÃÂÃÂ³ Esperando escaneo...'
+                          : 'Desconectado ÃÂ¢ÃÂÃÂ escanea el QR para conectar'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap' }}>
-                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>Ã°ÂÂÂ Verificar</button>
-                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={regenerateQR}>Ã°ÂÂÂ Nuevo QR</button>
+                      <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>ÃÂ°ÃÂÃÂÃÂ Verificar</button>
+                      <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={regenerateQR}>ÃÂ°ÃÂÃÂÃÂ Nuevo QR</button>
                       {status === 'connected' && (
                         <button className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={disconnectWA}>Desconectar</button>
                       )}
@@ -4033,10 +4033,10 @@ ${conversation}`
               </div>
               <div className="wbv5-conn-grid">
                 {[
-                  { num: '1', title: 'Escanea el QR',         desc: 'Usa WhatsApp en tu telÃÂ©fono Ã¢ÂÂ Dispositivos vinculados Ã¢ÂÂ Vincular dispositivo' },
-                  { num: '2', title: 'Confirma conexiÃÂ³n',     desc: 'El indicador cambiarÃÂ¡ a verde. Los mensajes comenzarÃÂ¡n a llegar al chat.' },
-                  { num: '3', title: 'Los flujos se activan', desc: 'n8n procesa los mensajes y ejecuta los flujos automÃÂ¡ticamente.' },
-                  { num: '4', title: 'Chats disponibles',     desc: 'Los chats del dispositivo se cargan en la secciÃÂ³n Chat en tiempo real.' },
+                  { num: '1', title: 'Escanea el QR',         desc: 'Usa WhatsApp en tu telÃÂÃÂ©fono ÃÂ¢ÃÂÃÂ Dispositivos vinculados ÃÂ¢ÃÂÃÂ Vincular dispositivo' },
+                  { num: '2', title: 'Confirma conexiÃÂÃÂ³n',     desc: 'El indicador cambiarÃÂÃÂ¡ a verde. Los mensajes comenzarÃÂÃÂ¡n a llegar al chat.' },
+                  { num: '3', title: 'Los flujos se activan', desc: 'n8n procesa los mensajes y ejecuta los flujos automÃÂÃÂ¡ticamente.' },
+                  { num: '4', title: 'Chats disponibles',     desc: 'Los chats del dispositivo se cargan en la secciÃÂÃÂ³n Chat en tiempo real.' },
                 ].map(s => (
                   <div key={s.num} className="wbv5-conn-step">
                     <div className="wbv5-conn-step-num">{s.num}</div>
@@ -4049,53 +4049,53 @@ ${conversation}`
               </div>
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂÂ ConfiguraciÃÂ³n n8n</div>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ ConfiguraciÃÂÃÂ³n n8n</div>
                   <span className={`wbv5-badge ${n8nOk === true ? 'badge-green' : 'badge-amber'}`}>
-                    {n8nOk === true ? 'Ã¢ÂÂ Conectado' : 'Ã¢ÂÂ³ Pendiente'}
+                    {n8nOk === true ? 'ÃÂ¢ÃÂÃÂ Conectado' : 'ÃÂ¢ÃÂÃÂ³ Pendiente'}
                   </span>
                 </div>
                 <div className="wbv5-card-bd">
                   <div className="wbv5-form-row">
                     <div className="wbv5-form-lbl">N8N Cloud URL</div>
                     <div className="wbv5-code-box" onClick={() => copyText('https://oasiss.app.n8n.cloud')}>
-                      https://oasiss.app.n8n.cloud <span style={{ marginLeft: 'auto', fontSize: '.65rem' }}>Ã°ÂÂÂ</span>
+                      https://oasiss.app.n8n.cloud <span style={{ marginLeft: 'auto', fontSize: '.65rem' }}>ÃÂ°ÃÂÃÂÃÂ</span>
                     </div>
                   </div>
                   <div className="wbv5-form-row">
-                    <div className="wbv5-form-lbl">Webhook WhatsApp (producciÃÂ³n)</div>
+                    <div className="wbv5-form-lbl">Webhook WhatsApp (producciÃÂÃÂ³n)</div>
                     <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>
-                      {N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.65rem' }}>Ã°ÂÂÂ</span>
+                      {N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.65rem' }}>ÃÂ°ÃÂÃÂÃÂ</span>
                     </div>
                   </div>
                   <div className="wbv5-form-row">
                     <div className="wbv5-form-lbl">Flujo activo en n8n</div>
                     <div className="wbv5-code-box">
-                      Ã°ÂÂÂ¢ Sanate - WhatsApp Bot <span style={{ marginLeft: 'auto' }}><span className="wbv5-badge badge-green">Activo</span></span>
+                      ÃÂ°ÃÂÃÂÃÂ¢ Sanate - WhatsApp Bot <span style={{ marginLeft: 'auto' }}><span className="wbv5-badge badge-green">Activo</span></span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '.5rem', marginTop: '.3rem' }}>
-                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={checkN8N}>Ã°ÂÂÂ Verificar conexiÃÂ³n</button>
-                    <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n Ã¢ÂÂ</button>
+                    <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={checkN8N}>ÃÂ°ÃÂÃÂÃÂ Verificar conexiÃÂÃÂ³n</button>
+                    <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ÃÂ¢ÃÂÃÂ</button>
                   </div>
                 </div>
               </div>
               <div className="wbv5-card">
                 <div className="wbv5-card-hd">
-                  <div className="wbv5-card-title">Ã°ÂÂÂ Facebook & Instagram</div>
-                  <span className="wbv5-badge badge-amber">Ã¢ÂÂ³ Pendiente</span>
+                  <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Facebook & Instagram</div>
+                  <span className="wbv5-badge badge-amber">ÃÂ¢ÃÂÃÂ³ Pendiente</span>
                 </div>
                 <div className="wbv5-card-bd">
                   <div style={{ fontSize: '.72rem', color: '#6b7280', lineHeight: 1.6 }}>
-                    La integraciÃÂ³n estarÃÂ¡ disponible despuÃÂ©s de confirmar que el QR de WhatsApp conecta correctamente.
-                    <br /><br /><strong>Paso siguiente:</strong> Conecta WhatsApp Ã¢ÂÂ verifica mensajes en Chat Ã¢ÂÂ luego habilita Facebook/Instagram.
+                    La integraciÃÂÃÂ³n estarÃÂÃÂ¡ disponible despuÃÂÃÂ©s de confirmar que el QR de WhatsApp conecta correctamente.
+                    <br /><br /><strong>Paso siguiente:</strong> Conecta WhatsApp ÃÂ¢ÃÂÃÂ verifica mensajes en Chat ÃÂ¢ÃÂÃÂ luego habilita Facebook/Instagram.
                   </div>
-                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ marginTop: '.6rem' }} onClick={() => tip('Ã°ÂÂÂ PrÃÂ³ximamente: Facebook e Instagram')}>Configurar despuÃÂ©s Ã¢ÂÂ</button>
+                  <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ marginTop: '.6rem' }} onClick={() => tip('ÃÂ°ÃÂÃÂÃÂ PrÃÂÃÂ³ximamente: Facebook e Instagram')}>Configurar despuÃÂÃÂ©s ÃÂ¢ÃÂÃÂ</button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Ã¢ÂÂÃ¢ÂÂ CONFIG Ã¢ÂÂÃ¢ÂÂ */}
+          {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CONFIG ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
           {(page==='instagram'||page==='facebook'||page==='tiktok')&&(<div style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',gap:24,padding:40}}>
 {page==='instagram'&&<SocialConnector platform="instagram" />}
 {page==='facebook'&&<SocialConnector platform="messenger" />}
@@ -4103,55 +4103,55 @@ ${conversation}`
 </div>)}
 {page === 'config' && (
             <div className="wbv5-content">
-              <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.85rem' }}>Ã¢ÂÂÃ¯Â¸Â Ajustes</div>
+              <div style={{ fontSize: '.85rem', fontWeight: 800, marginBottom: '.85rem' }}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Ajustes</div>
               <div className="wbv5-cfg-layout">
                 <div className="wbv5-cfg-sidebar">
                   <div className="wbv5-cfg-section-title" style={{ borderTop: 'none' }}>General</div>
                   {[
-                    { id: 'conn',    label: 'Ã°ÂÂÂ± ConexiÃÂ³n WA' },
-                    { id: 'rapidas', label: 'Ã¢ÂÂ¡ Respuestas rÃÂ¡pidas' },
-                    { id: 'horario', label: 'Ã°ÂÂÂ Horario atenciÃÂ³n' },
-                    { id: 'equipo',  label: 'Ã°ÂÂÂ¥ Equipo' },
+                    { id: 'conn',    label: 'ÃÂ°ÃÂÃÂÃÂ± ConexiÃÂÃÂ³n WA' },
+                    { id: 'rapidas', label: 'ÃÂ¢ÃÂÃÂ¡ Respuestas rÃÂÃÂ¡pidas' },
+                    { id: 'horario', label: 'ÃÂ°ÃÂÃÂÃÂ Horario atenciÃÂÃÂ³n' },
+                    { id: 'equipo',  label: 'ÃÂ°ÃÂÃÂÃÂ¥ Equipo' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
                   ))}
                   <div className="wbv5-cfg-section-title">Bot & IA</div>
                   {[
-                    { id: 'nativebot',  label: 'Ã°ÂÂ¤Â Bot IA' },
-                    { id: 'bot',      label: 'Ã¢ÂÂÃ¯Â¸Â Comportamiento bot' },
+                    { id: 'nativebot',  label: 'ÃÂ°ÃÂÃÂ¤ÃÂ Bot IA' },
+                    { id: 'bot',      label: 'ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Comportamiento bot' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
                   ))}
-                  <div className="wbv5-cfg-section-title">TÃÂ©cnico</div>
+                  <div className="wbv5-cfg-section-title">TÃÂÃÂ©cnico</div>
                   {[
-                    { id: 'api',      label: 'Ã°ÂÂÂ Tokens & APIs' },
-                    { id: 'empresa',  label: 'Ã°ÂÂÂ¢ Empresa' },
+                    { id: 'api',      label: 'ÃÂ°ÃÂÃÂÃÂ Tokens & APIs' },
+                    { id: 'empresa',  label: 'ÃÂ°ÃÂÃÂÃÂ¢ Empresa' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
                   ))}
                 </div>
                 <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '.75rem' }}>
 
-                  {/* ConexiÃÂ³n WA */}
+                  {/* ConexiÃÂÃÂ³n WA */}
                   {cfgTab === 'conn' && (
                     <>
-                    {/* Ã¢ÂÂÃ¢ÂÂ Backend URL Ã¢ÂÂÃ¢ÂÂ */}
+                    {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Backend URL ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
-                        <div className="wbv5-card-title">Ã°ÂÂÂ Servidor Baileys</div>
+                        <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Servidor Baileys</div>
                         <span className={`wbv5-badge ${serverOnline === true ? 'badge-green' : serverOnline === false ? 'badge-red' : 'badge-amber'}`}>
-                          {serverOnline === true ? 'Ã¢ÂÂ Online' : serverOnline === false ? 'Ã¢ÂÂ Offline' : 'Ã¢ÂÂ³ Verificando'}
+                          {serverOnline === true ? 'ÃÂ¢ÃÂÃÂ Online' : serverOnline === false ? 'ÃÂ¢ÃÂÃÂ Offline' : 'ÃÂ¢ÃÂÃÂ³ Verificando'}
                         </span>
                       </div>
                       <div className="wbv5-card-bd">
                         <div style={{ fontSize: '.7rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
                           El bot necesita un servidor Baileys corriendo. Puede ser en local, Railway, Render o cualquier servicio cloud.<br />
                           {backendUrlInput.includes('localhost') && window.location.protocol === 'https:' ? (
-                            <span style={{ color: '#dc2626', fontWeight: 600 }}>Ã¢ÂÂ Ã¯Â¸Â Problema actual: desde <code>{window.location.origin}</code> los navegadores bloquean <code>http://localhost</code>. Usa Railway, Render o ngrok (URL pÃÂºblica HTTPS).</span>
+                            <span style={{ color: '#dc2626', fontWeight: 600 }}>ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Problema actual: desde <code>{window.location.origin}</code> los navegadores bloquean <code>http://localhost</code>. Usa Railway, Render o ngrok (URL pÃÂÃÂºblica HTTPS).</span>
                           ) : backendUrlInput.includes('localhost') ? (
-                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>Ã°ÂÂÂ¡ Usando localhost Ã¢ÂÂ funciona en desarrollo local. Para producciÃÂ³n usa Railway o Render.</span>
+                            <span style={{ color: '#f59e0b', fontWeight: 600 }}>ÃÂ°ÃÂÃÂÃÂ¡ Usando localhost ÃÂ¢ÃÂÃÂ funciona en desarrollo local. Para producciÃÂÃÂ³n usa Railway o Render.</span>
                           ) : (
-                            <span style={{ color: '#16a34a', fontWeight: 600 }}>Ã¢ÂÂ URL correcta Ã¢ÂÂ usando servidor HTTPS externo.</span>
+                            <span style={{ color: '#16a34a', fontWeight: 600 }}>ÃÂ¢ÃÂÃÂ URL correcta ÃÂ¢ÃÂÃÂ usando servidor HTTPS externo.</span>
                           )}
                         </div>
                         <div className="wbv5-form-row">
@@ -4160,10 +4160,10 @@ ${conversation}`
                             className="wbv5-form-input"
                             value={backendUrlInput}
                             onChange={e => setBackendUrlInput(e.target.value)}
-                            placeholder="https://tu-app.railway.app  ÃÂ³  http://localhost:5055"
+                            placeholder="https://tu-app.railway.app  ÃÂÃÂ³  http://localhost:5055"
                           />
                           <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                            Se usarÃÂ¡: <code>{backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '') || 'http://localhost:5055'}/api/whatsapp</code>
+                            Se usarÃÂÃÂ¡: <code>{backendUrlInput.trim().replace(/\/+$/, '').replace('/api/whatsapp', '') || 'http://localhost:5055'}/api/whatsapp</code>
                           </div>
                         </div>
                         <div className="wbv5-form-row">
@@ -4178,26 +4178,26 @@ ${conversation}`
                         </div>
                         {/* Opciones de deploy */}
                         <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '.65rem .9rem', marginBottom: '.75rem' }}>
-                          <div style={{ fontSize: '.72rem', fontWeight: 700, color: '#166534', marginBottom: '.4rem' }}>Ã°ÂÂÂ Opciones de deploy del servidor</div>
+                          <div style={{ fontSize: '.72rem', fontWeight: 700, color: '#166534', marginBottom: '.4rem' }}>ÃÂ°ÃÂÃÂÃÂ Opciones de deploy del servidor</div>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '.3rem' }}>
                             {[
-                              { icon: 'Ã°ÂÂÂ', name: 'Railway (recomendado)', url: 'https://railway.app', desc: 'Gratis hasta 500h/mes, siempre HTTPS' },
-                              { icon: 'Ã°ÂÂÂ', name: 'Render', url: 'https://render.com', desc: 'Free tier disponible, HTTPS automÃÂ¡tico' },
-                              { icon: 'Ã°ÂÂÂ§', name: 'ngrok (local HTTPS)', url: 'https://ngrok.com', desc: 'Expone localhost:5055 con URL pÃÂºblica temporal' },
+                              { icon: 'ÃÂ°ÃÂÃÂÃÂ', name: 'Railway (recomendado)', url: 'https://railway.app', desc: 'Gratis hasta 500h/mes, siempre HTTPS' },
+                              { icon: 'ÃÂ°ÃÂÃÂÃÂ', name: 'Render', url: 'https://render.com', desc: 'Free tier disponible, HTTPS automÃÂÃÂ¡tico' },
+                              { icon: 'ÃÂ°ÃÂÃÂÃÂ§', name: 'ngrok (local HTTPS)', url: 'https://ngrok.com', desc: 'Expone localhost:5055 con URL pÃÂÃÂºblica temporal' },
                             ].map((opt, i) => (
                               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '.7rem' }}>
                                 <span>{opt.icon}</span>
                                 <span style={{ fontWeight: 600, color: '#166534', minWidth: '150px' }}>{opt.name}</span>
                                 <span style={{ color: '#6b7280', flex: 1 }}>{opt.desc}</span>
-                                <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.15rem .45rem' }} onClick={() => window.open(opt.url, '_blank')}>Abrir Ã¢ÂÂ</button>
+                                <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.15rem .45rem' }} onClick={() => window.open(opt.url, '_blank')}>Abrir ÃÂ¢ÃÂÃÂ</button>
                               </div>
                             ))}
                           </div>
                         </div>
                         <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={saveBackendUrl}>Ã°ÂÂÂ¾ Guardar y reconectar</button>
-                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp','')); setSecretInput(DEFAULT_SECRET) }}>Ã¢ÂÂ©Ã¯Â¸Â Restaurar defaults</button>
-                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>Ã°ÂÂÂ± Ir a ConexiÃÂ³n Ã¢ÂÂ</button>
+                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={saveBackendUrl}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar y reconectar</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => { setBackendUrlInput(DEFAULT_BU.replace('/api/whatsapp','')); setSecretInput(DEFAULT_SECRET) }}>ÃÂ¢ÃÂÃÂ©ÃÂ¯ÃÂ¸ÃÂ Restaurar defaults</button>
+                          <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>ÃÂ°ÃÂÃÂÃÂ± Ir a ConexiÃÂÃÂ³n ÃÂ¢ÃÂÃÂ</button>
                           <button
                   onClick={async () => {
                     try { await fetch(BU+'/sync',{method:'POST',headers:H}); } catch(e){}
@@ -4205,54 +4205,54 @@ ${conversation}`
                   }}
                   className="wbv5-btn wbv5-btn-sm"
                   title="Sincronizar chats y contactos"
-                >Ã°ÂÂÂ Sincronizar</button>
+                >ÃÂ°ÃÂÃÂÃÂ Sincronizar</button>
                         </div>
                       </div>
                     </div>
-                    {/* Ã¢ÂÂÃ¢ÂÂ WhatsApp Status Ã¢ÂÂÃ¢ÂÂ */}
+                    {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ WhatsApp Status ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
-                        <div className="wbv5-card-title">Ã°ÂÂÂ± WhatsApp</div>
+                        <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ± WhatsApp</div>
                         <span className={`wbv5-badge ${status === 'connected' ? 'badge-green' : status === 'connecting' ? 'badge-amber' : 'badge-red'}`}>
-                          {status === 'connected' ? 'Ã¢ÂÂ Conectado' : status === 'connecting' ? 'Ã¢ÂÂ³ Conectando' : 'Ã¢ÂÂ Desconectado'}
+                          {status === 'connected' ? 'ÃÂ¢ÃÂÃÂ Conectado' : status === 'connecting' ? 'ÃÂ¢ÃÂÃÂ³ Conectando' : 'ÃÂ¢ÃÂÃÂ Desconectado'}
                         </span>
                       </div>
                       <div className="wbv5-card-bd">
-                        {phone && <div style={{ fontSize: '.76rem', color: '#166534', background: '#f0fdf4', borderRadius: 8, padding: '.5rem .75rem', marginBottom: '.6rem' }}>Ã°ÂÂÂ± <strong>{phone}</strong></div>}
+                        {phone && <div style={{ fontSize: '.76rem', color: '#166534', background: '#f0fdf4', borderRadius: 8, padding: '.5rem .75rem', marginBottom: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ± <strong>{phone}</strong></div>}
                         <div className="wbv5-form-row">
-                          <div className="wbv5-form-lbl">Webhook n8n (producciÃÂ³n)</div>
-                          <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto' }}>Ã°ÂÂÂ</span></div>
+                          <div className="wbv5-form-lbl">Webhook n8n (producciÃÂÃÂ³n)</div>
+                          <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                         </div>
-                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>Ã°ÂÂÂ± Ver QR / ConexiÃÂ³n Ã¢ÂÂ</button>
+                        <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => goPage('conexion')}>ÃÂ°ÃÂÃÂÃÂ± Ver QR / ConexiÃÂÃÂ³n ÃÂ¢ÃÂÃÂ</button>
                       </div>
                     </div>
                     </>
                   )}
 
-                  {/* Respuestas rÃÂ¡pidas */}
+                  {/* Respuestas rÃÂÃÂ¡pidas */}
                   {cfgTab === 'rapidas' && (
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
-                        <div className="wbv5-card-title">Ã¢ÂÂ¡ Respuestas rÃÂ¡pidas</div>
-                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('Ã¢ÂÂ Respuesta aÃÂ±adida')}>+ AÃÂ±adir</button>
+                        <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂ¡ Respuestas rÃÂÃÂ¡pidas</div>
+                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('ÃÂ¢ÃÂÃÂ Respuesta aÃÂÃÂ±adida')}>+ AÃÂÃÂ±adir</button>
                       </div>
                       <div className="wbv5-card-bd">
                         <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>
-                          Palabras clave que el bot detecta y responde automÃÂ¡ticamente.
+                          Palabras clave que el bot detecta y responde automÃÂÃÂ¡ticamente.
                         </div>
                         {[
-                          { key: 'hola',     resp: 'ÃÂ¡Hola! Ã°ÂÂÂ Bienvenido a Sanate. ÃÂ¿En quÃÂ© te ayudo?' },
-                          { key: 'precio',   resp: 'Nuestros precios estÃÂ¡n en sanate.store Ã°ÂÂÂÃ¯Â¸Â' },
-                          { key: 'horario',  resp: 'Atendemos L-V 8am-6pm y SÃÂ¡b 9am-2pm Ã°ÂÂÂ' },
-                          { key: 'soporte',  resp: 'Conectando con un agente... Ã°ÂÂÂ Un momento.' },
-                          { key: 'pedido',   resp: 'Para rastrear tu pedido envÃÂ­anos tu nÃÂºmero de orden Ã°ÂÂÂ¦' },
+                          { key: 'hola',     resp: 'ÃÂÃÂ¡Hola! ÃÂ°ÃÂÃÂÃÂ Bienvenido a Sanate. ÃÂÃÂ¿En quÃÂÃÂ© te ayudo?' },
+                          { key: 'precio',   resp: 'Nuestros precios estÃÂÃÂ¡n en sanate.store ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ' },
+                          { key: 'horario',  resp: 'Atendemos L-V 8am-6pm y SÃÂÃÂ¡b 9am-2pm ÃÂ°ÃÂÃÂÃÂ' },
+                          { key: 'soporte',  resp: 'Conectando con un agente... ÃÂ°ÃÂÃÂÃÂ Un momento.' },
+                          { key: 'pedido',   resp: 'Para rastrear tu pedido envÃÂÃÂ­anos tu nÃÂÃÂºmero de orden ÃÂ°ÃÂÃÂÃÂ¦' },
                         ].map((r, i) => (
                           <div key={i} style={{ display: 'flex', gap: '.5rem', alignItems: 'center', padding: '.45rem 0', borderBottom: '1px solid #f3f4f6' }}>
                             <span style={{ background: '#dbeafe', color: '#1d4ed8', borderRadius: '6px', padding: '.15rem .5rem', fontSize: '.65rem', fontWeight: 700, flexShrink: 0, minWidth: '60px', textAlign: 'center' }}>
                               {r.key}
                             </span>
                             <span style={{ flex: 1, fontSize: '.72rem', color: '#374151' }}>{r.resp}</span>
-                            <button className="wbv5-flow-3btn" onClick={() => tip('Ã¢ÂÂÃ¯Â¸Â Editar respuesta Ã¢ÂÂ prÃÂ³ximamente')}>Ã¢ÂÂÃ¯Â¸Â</button>
+                            <button className="wbv5-flow-3btn" onClick={() => tip('ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Editar respuesta ÃÂ¢ÃÂÃÂ prÃÂÃÂ³ximamente')}>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ</button>
                           </div>
                         ))}
                       </div>
@@ -4262,14 +4262,14 @@ ${conversation}`
                   {/* Horario */}
                   {cfgTab === 'horario' && (
                     <div className="wbv5-card">
-                      <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã°ÂÂÂ Horario de atenciÃÂ³n</div></div>
+                      <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Horario de atenciÃÂÃÂ³n</div></div>
                       <div className="wbv5-card-bd">
                         <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>
-                          Fuera de horario el bot responde automÃÂ¡ticamente con un mensaje de ausencia.
+                          Fuera de horario el bot responde automÃÂÃÂ¡ticamente con un mensaje de ausencia.
                         </div>
                         {[
-                          { dia: 'Lunes Ã¢ÂÂ Viernes', desde: '08:00', hasta: '18:00', activo: true },
-                          { dia: 'SÃÂ¡bado',           desde: '09:00', hasta: '14:00', activo: true },
+                          { dia: 'Lunes ÃÂ¢ÃÂÃÂ Viernes', desde: '08:00', hasta: '18:00', activo: true },
+                          { dia: 'SÃÂÃÂ¡bado',           desde: '09:00', hasta: '14:00', activo: true },
                           { dia: 'Domingo',          desde: '',      hasta: '',      activo: false },
                         ].map((h, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '.5rem 0', borderBottom: '1px solid #f3f4f6' }}>
@@ -4277,7 +4277,7 @@ ${conversation}`
                             {h.activo ? (
                               <>
                                 <input className="wbv5-form-input" defaultValue={h.desde} style={{ width: '75px' }} />
-                                <span style={{ fontSize: '.7rem', color: '#9ca3af' }}>Ã¢ÂÂ</span>
+                                <span style={{ fontSize: '.7rem', color: '#9ca3af' }}>ÃÂ¢ÃÂÃÂ</span>
                                 <input className="wbv5-form-input" defaultValue={h.hasta} style={{ width: '75px' }} />
                                 <span className="wbv5-badge badge-green" style={{ marginLeft: 'auto' }}>Activo</span>
                               </>
@@ -4288,9 +4288,9 @@ ${conversation}`
                         ))}
                         <div className="wbv5-form-row" style={{ marginTop: '.85rem' }}>
                           <div className="wbv5-form-lbl">Mensaje fuera de horario</div>
-                          <textarea className="wbv5-form-input" rows={2} defaultValue="ÃÂ¡Hola! Estamos fuera de horario. Te respondemos el prÃÂ³ximo dÃÂ­a hÃÂ¡bil. Ã°ÂÂÂ" style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+                          <textarea className="wbv5-form-input" rows={2} defaultValue="ÃÂÃÂ¡Hola! Estamos fuera de horario. Te respondemos el prÃÂÃÂ³ximo dÃÂÃÂ­a hÃÂÃÂ¡bil. ÃÂ°ÃÂÃÂÃÂ" style={{ resize: 'vertical', fontFamily: 'inherit' }} />
                         </div>
-                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('Ã¢ÂÂ Horario guardado')}>Ã°ÂÂÂ¾ Guardar horario</button>
+                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('ÃÂ¢ÃÂÃÂ Horario guardado')}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar horario</button>
                       </div>
                     </div>
                   )}
@@ -4299,8 +4299,8 @@ ${conversation}`
                   {cfgTab === 'equipo' && (
                     <div className="wbv5-card">
                       <div className="wbv5-card-hd">
-                        <div className="wbv5-card-title">Ã°ÂÂÂ¥ Agentes del equipo</div>
-                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('Ã¢ÂÂ Invitar agente Ã¢ÂÂ prÃÂ³ximamente')}>+ Invitar</button>
+                        <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ¥ Agentes del equipo</div>
+                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('ÃÂ¢ÃÂÃÂ Invitar agente ÃÂ¢ÃÂÃÂ prÃÂÃÂ³ximamente')}>+ Invitar</button>
                       </div>
                       <div className="wbv5-card-bd">
                         {[
@@ -4326,12 +4326,12 @@ ${conversation}`
                   {/* Bot Nativo */}
                   {cfgTab === 'nativebot' && (
                     <>
-                      {/* Ã¢ÂÂÃ¢ÂÂ API Key de IA (OpenAI / Gemini) Ã¢ÂÂÃ¢ÂÂ */}
+                      {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ API Key de IA (OpenAI / Gemini) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã°ÂÂ§Â  IA Ã¢ÂÂ API Key</div>
+                          <div className="wbv5-card-title">ÃÂ°ÃÂÃÂ§ÃÂ  IA ÃÂ¢ÃÂÃÂ API Key</div>
                           <span className={`wbv5-badge ${hasAiKey ? 'badge-green' : 'badge-amber'}`}>
-                            {hasAiKey ? 'Ã¢ÂÂ Configurada' : 'Ã¢ÂÂ Ã¯Â¸Â Sin key'}
+                            {hasAiKey ? 'ÃÂ¢ÃÂÃÂ Configurada' : 'ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Sin key'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
@@ -4352,15 +4352,15 @@ ${conversation}`
                               value={openaiKey}
                               onChange={e => saveAiKey(e.target.value)}
                             />
-                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>Ã¢ÂÂ API Key guardada</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>ObtÃÂ©n tu key en platform.openai.com/api-keys</div>}
+                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>ÃÂ¢ÃÂÃÂ API Key guardada</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>ObtÃÂÃÂ©n tu key en platform.openai.com/api-keys</div>}
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Modelo IA</div>
                             <select className="wbv5-form-input" value={aiModel} onChange={e => setAiModel(e.target.value)}>
                               <option value="gpt-4o">GPT-4o (Recomendado)</option>
-                              <option value="gpt-4o-mini">GPT-4o mini (RÃÂ¡pido y econÃÂ³mico)</option>
+                              <option value="gpt-4o-mini">GPT-4o mini (RÃÂÃÂ¡pido y econÃÂÃÂ³mico)</option>
                               <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (MÃÂ¡s econÃÂ³mico)</option>
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (MÃÂÃÂ¡s econÃÂÃÂ³mico)</option>
                             </select>
                           </div>
                           <div className="wbv5-form-row">
@@ -4371,27 +4371,27 @@ ${conversation}`
                               value={geminiKey}
                               onChange={e => saveGeminiKey(e.target.value)}
                             />
-                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>Ã¢ÂÂ Gemini Key guardada</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Gratis en aistudio.google.com/apikey Ã¢ÂÂ se usa como respaldo si OpenAI falla</div>}
+                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>ÃÂ¢ÃÂÃÂ Gemini Key guardada</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>Gratis en aistudio.google.com/apikey ÃÂ¢ÃÂÃÂ se usa como respaldo si OpenAI falla</div>}
                           </div>
                           <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             <button
                               className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-green'}`}
                               onClick={toggleAiGlobal}
                             >
-                              {aiEnabled ? 'Ã¢ÂÂ¸ Desactivar IA global' : 'Ã°ÂÂÂ Activar IA global'}
+                              {aiEnabled ? 'ÃÂ¢ÃÂÃÂ¸ Desactivar IA global' : 'ÃÂ°ÃÂÃÂÃÂ Activar IA global'}
                             </button>
-                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>OpenAI Key Ã¢ÂÂ</button>
-                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Gemini Key Ã¢ÂÂ</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>OpenAI Key ÃÂ¢ÃÂÃÂ</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Gemini Key ÃÂ¢ÃÂÃÂ</button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Ã¢ÂÂÃ¢ÂÂ Bot IA - ConfiguraciÃÂ³n Ã¢ÂÂÃ¢ÂÂ */}
+                      {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Bot IA - ConfiguraciÃÂÃÂ³n ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã°ÂÂ¤Â Bot IA - Respuestas inteligentes</div>
+                          <div className="wbv5-card-title">ÃÂ°ÃÂÃÂ¤ÃÂ Bot IA - Respuestas inteligentes</div>
                           <span className={`wbv5-badge ${nbEnabled ? 'badge-green' : 'badge-red'}`}>
-                            {nbEnabled ? 'Ã¢ÂÂ Activo' : 'Ã¢ÂÂ Inactivo'}
+                            {nbEnabled ? 'ÃÂ¢ÃÂÃÂ Activo' : 'ÃÂ¢ÃÂÃÂ Inactivo'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
@@ -4409,7 +4409,7 @@ ${conversation}`
                                 try { localStorage.setItem('wa_nb_enabled', JSON.stringify(v)) } catch {}
                                 setTimeout(() => syncSettingsToBackend({ silent: true }), 300)
                               }} />
-                              <span style={{ fontSize: '.72rem' }}>{nbEnabled ? 'Bot IA activo Ã¢ÂÂ responde todos los mensajes' : 'Bot desactivado'}</span>
+                              <span style={{ fontSize: '.72rem' }}>{nbEnabled ? 'Bot IA activo ÃÂ¢ÃÂÃÂ responde todos los mensajes' : 'Bot desactivado'}</span>
                             </label>
                           </div>
 
@@ -4457,14 +4457,14 @@ ${conversation}`
                         </div>
                       </div>
 
-                      {/* Ã¢ÂÂÃ¢ÂÂ Ajustes avanzados Ã¢ÂÂÃ¢ÂÂ */}
+                      {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Ajustes avanzados ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã¢ÂÂÃ¯Â¸Â Ajustes avanzados</div>
+                          <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Ajustes avanzados</div>
                         </div>
                         <div className="wbv5-card-bd">
                           <div className="wbv5-form-row">
-                            <div className="wbv5-form-lbl">DuraciÃÂ³n de sesiÃÂ³n (horas)</div>
+                            <div className="wbv5-form-lbl">DuraciÃÂÃÂ³n de sesiÃÂÃÂ³n (horas)</div>
                             <input
                               className="wbv5-form-input"
                               type="number" min="1" max="72"
@@ -4473,7 +4473,7 @@ ${conversation}`
                               style={{ maxWidth: '120px' }}
                             />
                             <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              DespuÃÂ©s de este tiempo la sesiÃÂ³n expira y el cliente vuelve al inicio. Recomendado: 24h.
+                              DespuÃÂÃÂ©s de este tiempo la sesiÃÂÃÂ³n expira y el cliente vuelve al inicio. Recomendado: 24h.
                             </div>
                           </div>
                           <div className="wbv5-form-row">
@@ -4486,7 +4486,7 @@ ${conversation}`
                               style={{ maxWidth: '120px' }}
                             />
                             <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              El bot muestra "escribiendo..." durante este tiempo antes de responder. MÃÂ¡s natural.
+                              El bot muestra "escribiendo..." durante este tiempo antes de responder. MÃÂÃÂ¡s natural.
                             </div>
                           </div>
                           <div className="wbv5-form-row">
@@ -4498,17 +4498,17 @@ ${conversation}`
                               placeholder="agente,humano,persona,asesor,hablar con alguien"
                             />
                             <div style={{ fontSize: '.62rem', color: '#9ca3af', marginTop: '.2rem' }}>
-                              Si el cliente escribe alguna de estas palabras, el bot se detiene y avisa que un humano lo atenderÃÂ¡. Separar con comas.
+                              Si el cliente escribe alguna de estas palabras, el bot se detiene y avisa que un humano lo atenderÃÂÃÂ¡. Separar con comas.
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Ã¢ÂÂÃ¢ÂÂ Sesiones activas Ã¢ÂÂÃ¢ÂÂ */}
+                      {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Sesiones activas ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                       {nbSessions.length > 0 && (
                         <div className="wbv5-card">
                           <div className="wbv5-card-hd">
-                            <div className="wbv5-card-title">Ã°ÂÂÂ Sesiones activas ({nbSessions.length})</div>
+                            <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Sesiones activas ({nbSessions.length})</div>
                           </div>
                           <div className="wbv5-card-bd">
                             <div style={{ maxHeight: '200px', overflow: 'auto' }}>
@@ -4524,7 +4524,7 @@ ${conversation}`
                                   <button className="wbv5-btn wbv5-btn-sm wbv5-btn-outline" style={{ fontSize: '.6rem', padding: '.1rem .3rem', color: '#dc2626' }} onClick={() => {
                                     fetch(`${BU}/bot/sessions/${encodeURIComponent(s.jid)}`, { method: 'DELETE', headers: H })
                                       .then(r => r.json())
-                                      .then(d => { if (d.ok) { setNbSessions(prev => prev.filter(x => x.jid !== s.jid)); tip('Ã°ÂÂÂÃ¯Â¸Â Eliminada') } })
+                                      .then(d => { if (d.ok) { setNbSessions(prev => prev.filter(x => x.jid !== s.jid)); tip('ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Eliminada') } })
                                       .catch(() => {})
                                   }}>X</button>
                                 </div>
@@ -4534,18 +4534,18 @@ ${conversation}`
                         </div>
                       )}
 
-                      {/* Ã¢ÂÂÃ¢ÂÂ Leads capturados Ã¢ÂÂÃ¢ÂÂ */}
+                      {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Leads capturados ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                       {nbLeads.length > 0 && (
                         <div className="wbv5-card">
                           <div className="wbv5-card-hd">
-                            <div className="wbv5-card-title">Ã°ÂÂÂ Leads capturados ({nbLeads.length})</div>
+                            <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Leads capturados ({nbLeads.length})</div>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" style={{ color: '#dc2626', fontSize: '.6rem' }} onClick={() => {
-                              if (!window.confirm('ÃÂ¿Borrar todos los leads?')) return
+                              if (!window.confirm('ÃÂÃÂ¿Borrar todos los leads?')) return
                               fetch(BU + '/bot/leads', { method: 'DELETE', headers: H })
                                 .then(r => r.json())
-                                .then(d => { if (d.ok) { setNbLeads([]); tip(`Ã°ÂÂÂÃ¯Â¸Â ${d.cleared} leads borrados`) } })
+                                .then(d => { if (d.ok) { setNbLeads([]); tip(`ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ ${d.cleared} leads borrados`) } })
                                 .catch(() => {})
-                            }}>Ã°ÂÂÂÃ¯Â¸Â Borrar todos</button>
+                            }}>ÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Borrar todos</button>
                           </div>
                           <div className="wbv5-card-bd">
                             <div style={{ maxHeight: '250px', overflow: 'auto' }}>
@@ -4554,7 +4554,7 @@ ${conversation}`
                                   <tr style={{ background: '#f9fafb', textAlign: 'left' }}>
                                     <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Tel</th>
                                     <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Nombre</th>
-                                    <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>InterÃÂ©s</th>
+                                    <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>InterÃÂÃÂ©s</th>
                                     <th style={{ padding: '.3rem .4rem', borderBottom: '1px solid #e5e7eb' }}>Fecha</th>
                                   </tr>
                                 </thead>
@@ -4574,7 +4574,7 @@ ${conversation}`
                         </div>
                       )}
 
-                      {/* Ã¢ÂÂÃ¢ÂÂ CÃÂ³mo funciona Ã¢ÂÂÃ¢ÂÂ */}
+                      {/* ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CÃÂÃÂ³mo funciona ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
                           <div className="wbv5-card-title">Como funciona el Bot IA</div>
@@ -4604,20 +4604,20 @@ ${conversation}`
                       {/* Estado IA Key */}
                       {!openaiKey && !geminiKey && (
                         <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12', marginBottom: '.75rem' }}>
-                          Ã¢ÂÂ Ã¯Â¸Â <strong>Sin API Key configurada.</strong> Agrega una de las dos opciones abajo para activar la IA. El botÃÂ³n Ã°ÂÂ¤Â en el chat necesita al menos una key para funcionar.
+                          ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ <strong>Sin API Key configurada.</strong> Agrega una de las dos opciones abajo para activar la IA. El botÃÂÃÂ³n ÃÂ°ÃÂÃÂ¤ÃÂ en el chat necesita al menos una key para funcionar.
                         </div>
                       )}
                       {/* ChatGPT / OpenAI */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã°ÂÂ¤Â ChatGPT / OpenAI</div>
+                          <div className="wbv5-card-title">ÃÂ°ÃÂÃÂ¤ÃÂ ChatGPT / OpenAI</div>
                           <span className={`wbv5-badge ${openaiKey ? 'badge-green' : 'badge-amber'}`}>
-                            {openaiKey ? 'Ã¢ÂÂ Conectado' : 'Ã¢ÂÂ³ Sin configurar'}
+                            {openaiKey ? 'ÃÂ¢ÃÂÃÂ Conectado' : 'ÃÂ¢ÃÂÃÂ³ Sin configurar'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Conecta tu API de OpenAI para respuestas automÃÂ¡ticas con IA. El botÃÂ³n Ã°ÂÂ¤Â en el chat usarÃÂ¡ esta key para generar respuestas perfectas.
+                            Conecta tu API de OpenAI para respuestas automÃÂÃÂ¡ticas con IA. El botÃÂÃÂ³n ÃÂ°ÃÂÃÂ¤ÃÂ en el chat usarÃÂÃÂ¡ esta key para generar respuestas perfectas.
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">OpenAI API Key</div>
@@ -4627,46 +4627,46 @@ ${conversation}`
                               value={openaiKey}
                               onChange={e => saveAiKey(e.target.value)}
                             />
-                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>Ã¢ÂÂ API Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>ObtÃÂ©n tu key en platform.openai.com/api-keys</div>}
+                            {openaiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>ÃÂ¢ÃÂÃÂ API Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>ObtÃÂÃÂ©n tu key en platform.openai.com/api-keys</div>}
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Modelo</div>
                             <select className="wbv5-form-input" value={aiModel} onChange={e => setAiModel(e.target.value)}>
                               <option value="gpt-4o">GPT-4o (Recomendado)</option>
-                              <option value="gpt-4o-mini">GPT-4o mini (RÃÂ¡pido y econÃÂ³mico)</option>
+                              <option value="gpt-4o-mini">GPT-4o mini (RÃÂÃÂ¡pido y econÃÂÃÂ³mico)</option>
                               <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (MÃÂ¡s econÃÂ³mico)</option>
+                              <option value="gpt-3.5-turbo">GPT-3.5 Turbo (MÃÂÃÂ¡s econÃÂÃÂ³mico)</option>
                             </select>
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Webhook n8n (procesamiento IA)</div>
-                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
-                            <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>El webhook recibe el mensaje, llama a ChatGPT y responde automÃÂ¡ticamente.</div>
+                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
+                            <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>El webhook recibe el mensaje, llama a ChatGPT y responde automÃÂÃÂ¡ticamente.</div>
                           </div>
                           <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                             <button
                               className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-green'}`}
                               onClick={toggleAiGlobal}
                             >
-                              {aiEnabled ? 'Ã¢ÂÂ¸ Desactivar IA' : 'Ã°ÂÂÂ Activar IA'}
+                              {aiEnabled ? 'ÃÂ¢ÃÂÃÂ¸ Desactivar IA' : 'ÃÂ°ÃÂÃÂÃÂ Activar IA'}
                             </button>
-                            <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n Ã¢ÂÂ</button>
-                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>Obtener API Key Ã¢ÂÂ</button>
+                            <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ÃÂ¢ÃÂÃÂ</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://platform.openai.com/api-keys', '_blank')}>Obtener API Key ÃÂ¢ÃÂÃÂ</button>
                           </div>
                         </div>
                       </div>
 
-                      {/* Google Gemini Ã¢ÂÂ alternativa gratuita */}
+                      {/* Google Gemini ÃÂ¢ÃÂÃÂ alternativa gratuita */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã¢ÂÂ¨ Google Gemini (alternativa gratuita)</div>
+                          <div className="wbv5-card-title">ÃÂ¢ÃÂÃÂ¨ Google Gemini (alternativa gratuita)</div>
                           <span className={`wbv5-badge ${geminiKey ? 'badge-green' : 'badge-amber'}`}>
-                            {geminiKey ? 'Ã¢ÂÂ Conectado' : 'Ã¢ÂÂ³ Sin configurar'}
+                            {geminiKey ? 'ÃÂ¢ÃÂÃÂ Conectado' : 'ÃÂ¢ÃÂÃÂ³ Sin configurar'}
                           </span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Gemini 1.5 Flash es <strong>gratis hasta 60 req/min</strong>. ÃÂsalo si no tienes OpenAI. El bot usa OpenAI primero y Gemini como respaldo automÃÂ¡tico.
+                            Gemini 1.5 Flash es <strong>gratis hasta 60 req/min</strong>. ÃÂÃÂsalo si no tienes OpenAI. El bot usa OpenAI primero y Gemini como respaldo automÃÂÃÂ¡tico.
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Google Gemini API Key</div>
@@ -4676,53 +4676,53 @@ ${conversation}`
                               value={geminiKey}
                               onChange={e => saveGeminiKey(e.target.value)}
                             />
-                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>Ã¢ÂÂ Gemini Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>ObtÃÂ©n tu key gratis en aistudio.google.com/apikey</div>}
+                            {geminiKey ? <div style={{ fontSize: '.64rem', color: '#16a34a', marginTop: '.2rem' }}>ÃÂ¢ÃÂÃÂ Gemini Key guardada en navegador</div> : <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.2rem' }}>ObtÃÂÃÂ©n tu key gratis en aistudio.google.com/apikey</div>}
                           </div>
                           <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Obtener Gemini Key gratis Ã¢ÂÂ</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Obtener Gemini Key gratis ÃÂ¢ÃÂÃÂ</button>
                           </div>
                         </div>
                       </div>
 
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã°ÂÂÂ Baileys (Railway)</div>
-                          <span className={`wbv5-badge ${status === 'connected' ? 'badge-green' : 'badge-amber'}`}>{status === 'connected' ? 'Ã¢ÂÂ Activo' : 'Ã¢ÂÂ³ Conectando'}</span>
+                          <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ Baileys (Railway)</div>
+                          <span className={`wbv5-badge ${status === 'connected' ? 'badge-green' : 'badge-amber'}`}>{status === 'connected' ? 'ÃÂ¢ÃÂÃÂ Activo' : 'ÃÂ¢ÃÂÃÂ³ Conectando'}</span>
                         </div>
                         <div className="wbv5-card-bd">
-                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>Backend principal WhatsApp vÃÂ­a Baileys (Railway)</div>
+                          <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>Backend principal WhatsApp vÃÂÃÂ­a Baileys (Railway)</div>
                           <div className="wbv5-form-row"><div className="wbv5-form-lbl">BAILEYS_SECRET</div>
-                            <div className="wbv5-code-box" onClick={() => copyText('sanate_secret_2025')}>sanate_secret_2025 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
+                            <div className="wbv5-code-box" onClick={() => copyText('sanate_secret_2025')}>sanate_secret_2025 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                           </div>
                           <div className="wbv5-form-row"><div className="wbv5-form-lbl">N8N_WEBHOOK</div>
-                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
+                            <div className="wbv5-code-box" onClick={() => copyText(N8N_WH)}>{N8N_WH} <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                           </div>
-                          <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n Ã¢ÂÂ</button>
+                          <button className="wbv5-btn wbv5-btn-blue wbv5-btn-sm" onClick={() => window.open('https://oasiss.app.n8n.cloud', '_blank')}>Abrir n8n ÃÂ¢ÃÂÃÂ</button>
                         </div>
                       </div>
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã°ÂÂÂ WASP API (ascendentinc.studio)</div>
-                          <span className="wbv5-badge badge-amber">Ã¢ÂÂ Ã¯Â¸Â Secundario</span>
+                          <div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ WASP API (ascendentinc.studio)</div>
+                          <span className="wbv5-badge badge-amber">ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ Secundario</span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.71rem', color: '#6b7280', marginBottom: '.75rem' }}>
-                            Servicio externo WhatsApp. <strong>Nota:</strong> No conectar al mismo nÃÂºmero que Baileys Ã¢ÂÂ causarÃÂ­a conflicto de sesiÃÂ³n.
+                            Servicio externo WhatsApp. <strong>Nota:</strong> No conectar al mismo nÃÂÃÂºmero que Baileys ÃÂ¢ÃÂÃÂ causarÃÂÃÂ­a conflicto de sesiÃÂÃÂ³n.
                           </div>
                           <div className="wbv5-form-row"><div className="wbv5-form-lbl">Base URL</div>
-                            <div className="wbv5-code-box" onClick={() => copyText('https://ascendentinc.studio/wasp/api/v1')}>https://ascendentinc.studio/wasp/api/v1 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
+                            <div className="wbv5-code-box" onClick={() => copyText('https://ascendentinc.studio/wasp/api/v1')}>https://ascendentinc.studio/wasp/api/v1 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                           </div>
                           <div className="wbv5-form-row"><div className="wbv5-form-lbl">API Key</div>
-                            <div className="wbv5-code-box" onClick={() => copyText('wasp_d8b3da5d3c823924505e5afa974b1999')}>wasp_d8b3da5d3c823924505e5afa974b1999 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
+                            <div className="wbv5-code-box" onClick={() => copyText('wasp_d8b3da5d3c823924505e5afa974b1999')}>wasp_d8b3da5d3c823924505e5afa974b1999 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                           </div>
                           <div className="wbv5-form-row"><div className="wbv5-form-lbl">Edit Token</div>
-                            <div className="wbv5-code-box" onClick={() => copyText('edt_bc6fc6f2517e1541')}>edt_bc6fc6f2517e1541 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
+                            <div className="wbv5-code-box" onClick={() => copyText('edt_bc6fc6f2517e1541')}>edt_bc6fc6f2517e1541 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                           </div>
                           <div className="wbv5-form-row"><div className="wbv5-form-lbl">Auth Header</div>
-                            <div className="wbv5-code-box" onClick={() => copyText('Authorization: Bearer wasp_d8b3da5d3c823924505e5afa974b1999')}>Authorization: Bearer wasp_d8b3da5d3c823924505e5afa974b1999 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>Ã°ÂÂÂ</span></div>
+                            <div className="wbv5-code-box" onClick={() => copyText('Authorization: Bearer wasp_d8b3da5d3c823924505e5afa974b1999')}>Authorization: Bearer wasp_d8b3da5d3c823924505e5afa974b1999 <span style={{ marginLeft: 'auto', fontSize: '.6rem' }}>ÃÂ°ÃÂÃÂÃÂ</span></div>
                           </div>
                           <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://ascendentinc.studio/wasp/', '_blank')}>Abrir panel WASP Ã¢ÂÂ</button>
+                            <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://ascendentinc.studio/wasp/', '_blank')}>Abrir panel WASP ÃÂ¢ÃÂÃÂ</button>
                           </div>
                         </div>
                       </div>
@@ -4734,10 +4734,10 @@ ${conversation}`
                     <>
                       {/* Timing del bot */}
                       <div className="wbv5-card">
-                        <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã¢ÂÂ±Ã¯Â¸Â Tiempos de respuesta</div></div>
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ¢ÃÂÃÂ±ÃÂ¯ÃÂ¸ÃÂ Tiempos de respuesta</div></div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Simula un comportamiento humano Ã¢ÂÂ la IA esperarÃÂ¡ antes de responder para que no parezca robot.
+                            Simula un comportamiento humano ÃÂ¢ÃÂÃÂ la IA esperarÃÂÃÂ¡ antes de responder para que no parezca robot.
                           </div>
                           <div className="wbv5-form-row">
                             <div className="wbv5-form-lbl">Pausa antes de responder (segundos): <strong>{botDelay}s</strong></div>
@@ -4749,21 +4749,21 @@ ${conversation}`
                               <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Simular "escribiendo..."</div>
                               <div style={{ fontSize: '.64rem', color: '#9ca3af' }}>Muestra el indicador de escritura antes de cada respuesta</div>
                             </div>
-                            <button className={`wbv5-btn wbv5-btn-sm ${simulateTyping ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`} onClick={() => setSimulateTyping(s => !s)}>{simulateTyping ? 'Ã¢ÂÂ ON' : 'Ã¢ÂÂª OFF'}</button>
+                            <button className={`wbv5-btn wbv5-btn-sm ${simulateTyping ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`} onClick={() => setSimulateTyping(s => !s)}>{simulateTyping ? 'ÃÂ¢ÃÂÃÂ ON' : 'ÃÂ¢ÃÂÃÂª OFF'}</button>
                           </div>
                         </div>
                       </div>
                       {/* Estilo de mensajes */}
                       <div className="wbv5-card">
-                        <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã°ÂÂÂ¨ Estilo de mensajes</div></div>
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ¨ Estilo de mensajes</div></div>
                         <div className="wbv5-card-bd">
                           <div style={{ fontSize: '.72rem', color: '#6b7280', marginBottom: '.75rem', lineHeight: 1.5 }}>
-                            Controla cÃÂ³mo el bot estructura y formatea sus respuestas en WhatsApp.
+                            Controla cÃÂÃÂ³mo el bot estructura y formatea sus respuestas en WhatsApp.
                           </div>
-                          {/* EnvÃÂ­o Por Partes / Completo */}
+                          {/* EnvÃÂÃÂ­o Por Partes / Completo */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
                             <div>
-                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>EnvÃÂ­o de mensajes</div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>EnvÃÂÃÂ­o de mensajes</div>
                               <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>
                                 {msgMode === 'partes' ? 'Por partes: varios mensajes con gancho e intriga' : 'Completo: un solo bloque de texto'}
                               </div>
@@ -4783,52 +4783,52 @@ ${conversation}`
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
                             <div>
                               <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Uso de Emojis</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useEmojis ? 'El bot usa emojis estratÃÂ©gicos en sus respuestas' : 'Sin emojis Ã¢ÂÂ respuestas mÃÂ¡s formales y textuales'}</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useEmojis ? 'El bot usa emojis estratÃÂÃÂ©gicos en sus respuestas' : 'Sin emojis ÃÂ¢ÃÂÃÂ respuestas mÃÂÃÂ¡s formales y textuales'}</div>
                             </div>
                             <button
                               className={`wbv5-btn wbv5-btn-sm ${useEmojis ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
                               style={{ flexShrink: 0, marginLeft: '1rem' }}
                               onClick={() => { const nv = !useEmojis; setUseEmojis(nv); try { localStorage.setItem('wa_use_emojis', String(nv)) } catch {} }}
-                            >{useEmojis ? 'Ã¢ÂÂ Activo' : 'Ã¢ÂÂª Inactivo'}</button>
+                            >{useEmojis ? 'ÃÂ¢ÃÂÃÂ Activo' : 'ÃÂ¢ÃÂÃÂª Inactivo'}</button>
                           </div>
                           {/* Uso de Estilos */}
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0' }}>
                             <div>
                               <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Uso de estilos</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useStyles ? 'Usa *negrita*, _cursiva_, ~tachado~ en WhatsApp' : 'Sin formato Ã¢ÂÂ texto plano ÃÂºnicamente'}</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>{useStyles ? 'Usa *negrita*, _cursiva_, ~tachado~ en WhatsApp' : 'Sin formato ÃÂ¢ÃÂÃÂ texto plano ÃÂÃÂºnicamente'}</div>
                             </div>
                             <button
                               className={`wbv5-btn wbv5-btn-sm ${useStyles ? 'wbv5-btn-green' : 'wbv5-btn-outline'}`}
                               style={{ flexShrink: 0, marginLeft: '1rem' }}
                               onClick={() => { const nv = !useStyles; setUseStyles(nv); try { localStorage.setItem('wa_use_styles', String(nv)) } catch {} }}
-                            >{useStyles ? 'Ã¢ÂÂ Activo' : 'Ã¢ÂÂª Inactivo'}</button>
+                            >{useStyles ? 'ÃÂ¢ÃÂÃÂ Activo' : 'ÃÂ¢ÃÂÃÂª Inactivo'}</button>
                           </div>
                         </div>
                       </div>
                       {/* IA global */}
                       <div className="wbv5-card">
                         <div className="wbv5-card-hd">
-                          <div className="wbv5-card-title">Ã°ÂÂ¤Â Inteligencia Artificial</div>
-                          <span className={`wbv5-badge ${aiEnabled ? 'badge-green' : 'badge-amber'}`}>{aiEnabled ? 'Ã¢ÂÂ Activa' : 'Ã¢ÂÂ³ Desactivada'}</span>
+                          <div className="wbv5-card-title">ÃÂ°ÃÂÃÂ¤ÃÂ Inteligencia Artificial</div>
+                          <span className={`wbv5-badge ${aiEnabled ? 'badge-green' : 'badge-amber'}`}>{aiEnabled ? 'ÃÂ¢ÃÂÃÂ Activa' : 'ÃÂ¢ÃÂÃÂ³ Desactivada'}</span>
                         </div>
                         <div className="wbv5-card-bd">
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
                             <div>
-                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Respuestas automÃÂ¡ticas con ChatGPT</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>Todos los mensajes entrantes son respondidos automÃÂ¡ticamente por IA via n8n</div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>Respuestas automÃÂÃÂ¡ticas con ChatGPT</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>Todos los mensajes entrantes son respondidos automÃÂÃÂ¡ticamente por IA via n8n</div>
                             </div>
                             <button
                               className={`wbv5-btn wbv5-btn-sm ${aiEnabled ? 'wbv5-btn-ai-on' : 'wbv5-btn-outline'}`}
                               style={{ flexShrink: 0, marginLeft: '1rem' }}
                               onClick={toggleAiGlobal}
                             >
-                              {aiEnabled ? 'Ã°ÂÂ¤Â ON' : 'Ã¢ÂÂª OFF'}
+                              {aiEnabled ? 'ÃÂ°ÃÂÃÂ¤ÃÂ ON' : 'ÃÂ¢ÃÂÃÂª OFF'}
                             </button>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderTop: '1px solid #f3f4f6' }}>
                             <div>
-                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>ActivaciÃÂ³n por contacto</div>
-                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>La IA solo responde en chats donde se activÃÂ³ manualmente con el botÃÂ³n <strong>Ã°ÂÂ¤Â IA OFF Ã¢ÂÂ ON</strong> del chat</div>
+                              <div style={{ fontSize: '.76rem', fontWeight: 600, color: '#111827' }}>ActivaciÃÂÃÂ³n por contacto</div>
+                              <div style={{ fontSize: '.64rem', color: '#9ca3af', marginTop: '.05rem' }}>La IA solo responde en chats donde se activÃÂÃÂ³ manualmente con el botÃÂÃÂ³n <strong>ÃÂ°ÃÂÃÂ¤ÃÂ IA OFF ÃÂ¢ÃÂÃÂ ON</strong> del chat</div>
                             </div>
                             <span className="wbv5-badge badge-green" style={{ flexShrink: 0, marginLeft: '1rem' }}>Auto</span>
                           </div>
@@ -4840,22 +4840,22 @@ ${conversation}`
                               </div>
                             </div>
                             <button className="wbv5-btn wbv5-btn-sm" style={{ flexShrink: 0, marginLeft: '1rem', background: '#fee2e2', color: '#dc2626', border: '1px solid #fca5a5' }} onClick={resetAllAiContacts}>
-                              Ã°ÂÂÂ« Desactivar todos
+                              ÃÂ°ÃÂÃÂÃÂ« Desactivar todos
                             </button>
                           </div>
                           <div style={{ marginTop: '.4rem', fontSize: '.7rem', color: '#6b7280' }}>
-                            Ã°ÂÂÂ¡ Para configurar la API Key de ChatGPT ve a <strong>Ã¢ÂÂÃ¯Â¸Â Ajustes Ã¢ÂÂ API & Tokens Ã¢ÂÂ Ã°ÂÂ¤Â ChatGPT</strong>
+                            ÃÂ°ÃÂÃÂÃÂ¡ Para configurar la API Key de ChatGPT ve a <strong>ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Ajustes ÃÂ¢ÃÂÃÂ API & Tokens ÃÂ¢ÃÂÃÂ ÃÂ°ÃÂÃÂ¤ÃÂ ChatGPT</strong>
                           </div>
                         </div>
                       </div>
                       <div className="wbv5-card">
-                        <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã¢ÂÂÃ¯Â¸Â Comportamiento del bot</div></div>
+                        <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Comportamiento del bot</div></div>
                         <div className="wbv5-card-bd">
                           {[
-                            { label: 'Activar bot automÃÂ¡ticamente', desc: 'El bot responde a todos los mensajes entrantes', on: true },
-                            { label: 'Guardar contactos en CRM', desc: 'Guarda nombre y telÃÂ©fono de cada nuevo contacto', on: true },
+                            { label: 'Activar bot automÃÂÃÂ¡ticamente', desc: 'El bot responde a todos los mensajes entrantes', on: true },
+                            { label: 'Guardar contactos en CRM', desc: 'Guarda nombre y telÃÂÃÂ©fono de cada nuevo contacto', on: true },
                             { label: 'Notificaciones en tiempo real', desc: 'Recibe notificaciones al llegar mensajes nuevos', on: true },
-                            { label: 'Modo silencioso fuera de horario', desc: 'El bot envÃÂ­a mensaje de ausencia y no notifica', on: false },
+                            { label: 'Modo silencioso fuera de horario', desc: 'El bot envÃÂÃÂ­a mensaje de ausencia y no notifica', on: false },
                             { label: 'Transferir a humano cuando lo pide', desc: 'Desactiva el bot si el usuario escribe "agente"', on: true },
                           ].map((opt, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '.55rem 0', borderBottom: '1px solid #f3f4f6' }}>
@@ -4866,13 +4866,13 @@ ${conversation}`
                               <span
                                 className={`wbv5-badge ${opt.on ? 'badge-green' : 'badge-red'}`}
                                 style={{ cursor: 'pointer', flexShrink: 0, marginLeft: '1rem' }}
-                                onClick={() => tip(`Ã¢ÂÂÃ¯Â¸Â ${opt.label} Ã¢ÂÂ ${opt.on ? 'desactivado' : 'activado'}`)}
+                                onClick={() => tip(`ÃÂ¢ÃÂÃÂÃÂ¯ÃÂ¸ÃÂ ${opt.label} ÃÂ¢ÃÂÃÂ ${opt.on ? 'desactivado' : 'activado'}`)}
                               >
-                                {opt.on ? 'Ã¢ÂÂ ON' : 'Ã¢ÂÂ OFF'}
+                                {opt.on ? 'ÃÂ¢ÃÂÃÂ ON' : 'ÃÂ¢ÃÂÃÂ OFF'}
                               </span>
                             </div>
                           ))}
-                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.75rem' }} onClick={() => tip('Ã¢ÂÂ ConfiguraciÃÂ³n guardada')}>Ã°ÂÂÂ¾ Guardar</button>
+                          <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" style={{ marginTop: '.75rem' }} onClick={() => tip('ÃÂ¢ÃÂÃÂ ConfiguraciÃÂÃÂ³n guardada')}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar</button>
                         </div>
                       </div>
                     </>
@@ -4881,7 +4881,7 @@ ${conversation}`
                   {/* Empresa */}
                   {cfgTab === 'empresa' && (
                     <div className="wbv5-card">
-                      <div className="wbv5-card-hd"><div className="wbv5-card-title">Ã°ÂÂÂ¢ Datos de empresa</div></div>
+                      <div className="wbv5-card-hd"><div className="wbv5-card-title">ÃÂ°ÃÂÃÂÃÂ¢ Datos de empresa</div></div>
                       <div className="wbv5-card-bd">
                         <div className="wbv5-form-row"><div className="wbv5-form-lbl">Nombre de la empresa</div><input className="wbv5-form-input" defaultValue="Sanate" /></div>
                         <div className="wbv5-form-row"><div className="wbv5-form-lbl">Sitio web</div><input className="wbv5-form-input" defaultValue="sanate.store" /></div>
@@ -4889,9 +4889,9 @@ ${conversation}`
                         <div className="wbv5-form-row"><div className="wbv5-form-lbl">Email de soporte</div><input className="wbv5-form-input" defaultValue="soporte@sanate.store" /></div>
                         <div className="wbv5-form-row">
                           <div className="wbv5-form-lbl">Mensaje de bienvenida (plantilla)</div>
-                          <textarea className="wbv5-form-input" rows={3} defaultValue="ÃÂ¡Hola {nombre}! Ã°ÂÂÂ Bienvenido a Sanate. Puedo ayudarte con:\nÃ°ÂÂÂÃ¯Â¸Â Productos y precios\nÃ°ÂÂÂ¦ Estado de pedidos\nÃ°ÂÂÂ Soporte tÃÂ©cnico\n\nÃÂ¿QuÃÂ© necesitas?" style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+                          <textarea className="wbv5-form-input" rows={3} defaultValue="ÃÂÃÂ¡Hola {nombre}! ÃÂ°ÃÂÃÂÃÂ Bienvenido a Sanate. Puedo ayudarte con:\nÃÂ°ÃÂÃÂÃÂÃÂ¯ÃÂ¸ÃÂ Productos y precios\nÃÂ°ÃÂÃÂÃÂ¦ Estado de pedidos\nÃÂ°ÃÂÃÂÃÂ Soporte tÃÂÃÂ©cnico\n\nÃÂÃÂ¿QuÃÂÃÂ© necesitas?" style={{ resize: 'vertical', fontFamily: 'inherit' }} />
                         </div>
-                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('Ã¢ÂÂ Datos guardados')}>Ã°ÂÂÂ¾ Guardar datos</button>
+                        <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={() => tip('ÃÂ¢ÃÂÃÂ Datos guardados')}>ÃÂ°ÃÂÃÂÃÂ¾ Guardar datos</button>
                       </div>
                     </div>
                   )}
