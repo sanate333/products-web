@@ -2640,7 +2640,7 @@ ${conversation}`
           <div className="wbv5-il-convs">
                   {chatFilter === 'instagram' && filteredChats.length === 0 && (
                     <div style={{textAlign:'center',padding:'40px 20px',color:'#888'}}>
-                      <div style={{fontSize:'48px',marginBottom:'16px'}}>\u{1F4F8}</div>
+                      <div style={{fontSize:'48px',marginBottom:'16px'}}>📸</div>
                       {igNeedsReconnect ? (
                         <div>
                           <p style={{fontSize:'16px',fontWeight:'600',color:'#e74c3c',marginBottom:'8px'}}>Token de Instagram expirado</p>
