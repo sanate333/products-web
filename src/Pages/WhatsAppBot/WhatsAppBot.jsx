@@ -6,7 +6,7 @@ import Header from '../Header/Header'
 const DEFAULT_BU     = 'https://sanate.store/api/whatsapp'
 const DEFAULT_SECRET = 'sanate_secret_2025'
 // ── Backend URL y Secret — configurables en Ajustes ─────────────
-let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
+let BU         = (function(){ try { return lhocalStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
 let MEDIA_BASE = BU.replace('/api/whatsapp', '')
 let H          = { 'x-secret': (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })() }
 let HJ         = { ...H, 'Content-Type': 'application/json' }
@@ -667,7 +667,7 @@ function SocialConnector({ platform }) {
       if (platform === 'instagram') {
                   authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
                     + '&redirect_uri=' + encodeURIComponent(redirectUri)
-                    + '&scope=' + encodeURIComponent('instagram_basic,instagram_manage_messages,pages_show_list')
+                    + '&scope=' + encodeURIComponent(cfg.scope)
                     + '&response_type=code';
       } else {
         authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
