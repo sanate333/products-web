@@ -2236,7 +2236,9 @@ ${conversation}`
     }
     let matchFilter = true
     if (chatFilter === 'sin leer')  matchFilter = c.unread > 0
-    else if (chatFilter === 'bot')  matchFilter = isAiActive(c.id)
+    else if (chatFilter === 'instagram') matchFilter = (c.platform === 'instagram')
+    else if (chatFilter === 'messenger') matchFilter = (c.platform === 'messenger')
+    else if (chatFilter === 'tiktok')    matchFilter = (c.platform === 'tiktok')
     else if (chatFilter === 'grupos') matchFilter = c.isGroup === true
     else if (chatFilter === 'pedidos') {
       const tags = chatsTags[c.id] || []
@@ -2561,12 +2563,20 @@ ${conversation}`
                     { id: 'ventas',   label: '✅ Ventas' },
                     { id: 'soporte',  label: '🛠 Soporte' },
                     { id: 'grupos',   label: '👥 Grupos' },
-                    { id: 'bot',      label: '🤖 Bot' },
-                  ].map(f => (
-                    <button key={f.id} className={`wbv5-il-filter ${chatFilter === f.id ? 'active' : ''}`} onClick={() => setChatFilter(f.id)} style={{ fontSize: '.67rem', padding: '.2rem .45rem' }}>
-                      {f.label}
+                    { id: 'instagram', label: 'Instagram',  icon: '📷', color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)' },
+                    { id: 'messenger', label: 'Messenger',  icon: '💬', color: '#0084FF', grad: 'linear-gradient(135deg,#0084FF,#0052CC)' },
+                    { id: 'tiktok',    label: 'TikTok',     icon: '🎵', color: '#00f2ea', grad: 'linear-gradient(135deg,#00f2ea,#ff0050)' },
+                   ].map(f => (
+                    <button key={f.id} className={`wbv5-il-filter ${chatFilter === f.id ? 'active' : ''}`}
+                      onClick={() => setChatFilter(f.id)}
+                      style={{
+                        fontSize: '.67rem', padding: '.2rem .45rem',
+                        ...(f.color && chatFilter === f.id ? { background: f.grad || f.color, color: '#fff', borderColor: f.color } : {}),
+                        ...(f.color && chatFilter !== f.id ? { borderColor: f.color, color: f.color } : {})
+                      }}>
+                      {f.icon ? f.icon + ' ' : ''}{f.label}
                     </button>
-                  ))}
+                   ))}
                 </div>
                 <div style={{display:'flex',gap:'6px',padding:'8px 12px',borderBottom:'1px solid #2a2a2a',background:'#111',flexWrap:'wrap'}}>
             {[['nuevo','🆕 Nuevo','#3b82f6'],['potencial','🔥 Potencial','#f59e0b'],['cliente','😊 Cliente','#22c55e'],['perdido','❌ Perdido','#ef4444']].map(([key,label,clr])=>(
