@@ -637,7 +637,7 @@ function SocialConnector({ platform }) {
   var CFGS = {
     instagram: {
       lbl: 'Instagram', icon: '📸',
-      scope: 'pages_show_list,instagram_manage_comments,pages_manage_metadata,business_management',
+      scope: 'pages_show_list,instagram_business_manage_comments,pages_manage_metadata,business_management',
       color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)',
       note: 'Requiere Instagram Business vinculado a una Página de Facebook'
     },
@@ -669,7 +669,7 @@ function SocialConnector({ platform }) {
           + '&redirect_uri=' + encodeURIComponent(redirectUri)
           + '&scope=' + encodeURIComponent(cfg.scope)
           + '&response_type=code'
-          + '&enable_fb_login=1&force_authentication=0'
+          + '&force_reauth=true'
           + '&state=' + stateStr;
       } else {
         authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
