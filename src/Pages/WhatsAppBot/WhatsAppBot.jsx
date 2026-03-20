@@ -665,10 +665,10 @@ function SocialConnector({ platform }) {
     var stateStr = encodeURIComponent(JSON.stringify({platform: platform, storeId: STORE_ID}));
       var authUrl;
       if (platform === 'instagram') {
-                  authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
+                  authUrl = 'https://www.instagram.com/oauth/authorize?client_id=2337348940109240'
                     + '&redirect_uri=' + encodeURIComponent(redirectUri)
                     + '&scope=' + encodeURIComponent(cfg.scope)
-                    + '&response_type=code';
+                    + '&response_type=code&enable_fb_login=1&force_authentication=0';
       } else {
         authUrl = 'https://www.facebook.com/dialog/oauth?client_id=' + META_APP_ID
           + '&redirect_uri=' + encodeURIComponent(redirectUri)
