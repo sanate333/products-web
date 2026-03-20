@@ -6,7 +6,7 @@ import Header from '../Header/Header'
 const DEFAULT_BU     = 'https://sanate.store/api/whatsapp'
 const DEFAULT_SECRET = 'sanate_secret_2025'
 // ── Backend URL y Secret — configurables en Ajustes ─────────────
-let BU         = (function(){ try { return lhocalStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
+let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
 let MEDIA_BASE = BU.replace('/api/whatsapp', '')
 let H          = { 'x-secret': (function(){ try { return localStorage.getItem('wa_secret') || DEFAULT_SECRET } catch { return DEFAULT_SECRET } })() }
 let HJ         = { ...H, 'Content-Type': 'application/json' }
