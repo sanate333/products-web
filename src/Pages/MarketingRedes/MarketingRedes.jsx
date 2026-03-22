@@ -388,6 +388,7 @@ export default function MarketingRedes() {
     </div>
   )}
 
+      </div>
       </section>
     </div>
   );
