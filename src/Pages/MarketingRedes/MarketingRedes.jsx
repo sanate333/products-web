@@ -289,8 +289,9 @@ export default function MarketingRedes() {
   const limits = POSTING_LIMITS[accountAge]
 
   return (
-    <>
+    <div className="containerGrid">
       <Header />
+      <section className="containerSection">
       <div className="marketing-redes">
         <div className="mr-page-header">
           <div>
@@ -597,6 +598,7 @@ export default function MarketingRedes() {
           </div>
         )}
       </div>
-    </>
+      </section>
+    </div>
   )
   }
