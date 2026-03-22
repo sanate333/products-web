@@ -370,7 +370,7 @@ export default function MarketingRedes() {
               </div>
               <div className="mr-rule-stat">
                 <span className="mr-rule-label">Espaciado minimo:</span>
-                <span className="mr-rule-value">{rule.minSpacingMinutes} minutos</span>
+                <span className="mr-rule-value">{rule.minSpacingMin} minutos</span>
               </div>
               <p className="mr-rule-desc">{rule.description}</p>
               <div className="mr-rule-tips">
