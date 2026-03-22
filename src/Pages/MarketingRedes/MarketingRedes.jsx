@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import './MarketingRedes.css'
 import Header from '../Header/Header'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faInstagram, faFacebookF, faFacebookMessenger, faTiktok } from '@fortawesome/free-brands-svg-icons'
 import {
   faPlug, faSync, faTrash, faCommentDots, faRocket, faClock,
   faShieldAlt, faChartLine, faPause, faPlay, faPlus, faEdit,
   faTrashAlt, faExclamationTriangle, faCheckCircle, faInfoCircle,
-  faStore, faCalendarAlt, faEye, faBan, faHistory
+  faStore, faCalendarAlt, faEye, faBan, faHistory, faCamera, faThumbsUp, faMusic
 } from '@fortawesome/free-solid-svg-icons'
 
 const SUPABASE_URL = 'https://lvmeswlvszsmvgaasazs.supabase.co'
@@ -261,10 +260,10 @@ export default function MarketingRedes() {
   }
 
   const platforms = [
-    { key: 'instagram', label: 'Instagram', icon: faInstagram, colorClass: 'instagram', connection: connections.find(c => c.platform === 'instagram') },
-    { key: 'facebook', label: 'Facebook', icon: faFacebookF, colorClass: 'facebook', connection: connections.find(c => c.platform === 'facebook') },
-    { key: 'messenger', label: 'Messenger', icon: faFacebookMessenger, colorClass: 'messenger', connection: connections.find(c => c.platform === 'messenger') },
-    { key: 'tiktok', label: 'TikTok', icon: faTiktok, colorClass: 'tiktok', connection: null },
+    { key: 'instagram', label: 'Instagram', icon: faCamera, colorClass: 'instagram', connection: connections.find(c => c.platform === 'instagram') },
+    { key: 'facebook', label: 'Facebook', icon: faThumbsUp, colorClass: 'facebook', connection: connections.find(c => c.platform === 'facebook') },
+    { key: 'messenger', label: 'Messenger', icon: faCommentDots, colorClass: 'messenger', connection: connections.find(c => c.platform === 'messenger') },
+    { key: 'tiktok', label: 'TikTok', icon: faMusic, colorClass: 'tiktok', connection: null },
   ]
 
   async function connectInstagram() {
@@ -578,7 +577,7 @@ export default function MarketingRedes() {
 
             {Object.entries(PLATFORM_RULES).map(([key, rule]) => (
               <div className="mr-platform-rules" key={key}>
-                <h4 className="mr-section-title"><FontAwesomeIcon icon={key === 'instagram' ? faInstagram : faFacebookF} /> {rule.name}</h4>
+                <h4 className="mr-section-title"><FontAwesomeIcon icon={key === 'instagram' ? faCamera : faThumbsUp} /> {rule.name}</h4>
                 <div className="mr-rules-columns">
                   <div className="mr-rules-col mr-rules-safe">
                     <h5><FontAwesomeIcon icon={faCheckCircle} style={{ color: '#22c55e' }} /> Practicas seguras</h5>
