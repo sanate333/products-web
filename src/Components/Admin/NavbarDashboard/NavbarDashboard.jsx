@@ -1,4 +1,4 @@
-// v3 – Oasis IA Chat sidebar fix
+// v3 â Oasis IA Chat sidebar fix
 import React from 'react'
 import './NavbarDashboard.css'
 import { Link as Anchor, useLocation } from "react-router-dom";
@@ -8,7 +8,7 @@ import {
   faTags, faTag, faClipboardList, faBell, faUsers,
   faMagic, faComments, faStore, faGlobe, faBrain,
   faWallet, faTruck, faCalendarAlt, faPlayCircle,
-  faSlidersH, faUserShield, faEnvelope, faRobot,
+  faSlidersH, faUserShield, faEnvelope, faRobot, faShareAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import logo from '../../../images/logo.png'
 import Logout from '../Logout/Logout';
@@ -25,25 +25,26 @@ const SECTIONS = [
     ],
   },
   {
-    label: 'CATÁLOGO',
+    label: 'CATÃLOGO',
     items: [
-      { to: '/dashboard/categorias', icon: faTags, text: 'Categorías' },
+      { to: '/dashboard/categorias', icon: faTags, text: 'CategorÃ­as' },
       { to: '/dashboard/sub-banners', icon: faImages, text: 'Sub-Banners' },
-      { to: '/dashboard/codigos', icon: faTag, text: 'Códigos' },
+      { to: '/dashboard/codigos', icon: faTag, text: 'CÃ³digos' },
       { to: '/dashboard/contacto', icon: faEnvelope, text: 'Contacto' },
     ],
   },
   {
     label: 'MARKETING',
     items: [
-      { to: '/dashboard/imagenes-ia', icon: faMagic, text: 'Imágenes IA' },
+      { to: '/dashboard/imagenes-ia', icon: faMagic, text: 'ImÃ¡genes IA' },
       { to: '/dashboard/landing-pages', icon: faGlobe, text: 'Landing Pages' },
       { to: '/dashboard/whatsapp-bot', icon: faComments, text: 'WhatsApp Bot' },
       { to: '/dashboard/oasis-chat', icon: faRobot, text: 'Chat IA' },
+      { to: '/dashboard/marketing-redes', icon: faShareAlt, text: 'Marketing Redes' },
     ],
   },
   {
-    label: 'OPERACIÓN',
+    label: 'OPERACIÃN',
     items: [
       { to: '/dashboard/notificaciones', icon: faBell, text: 'Notificaciones' },
       { to: '/dashboard/monitor', icon: faBrain, text: 'Monitor Global IA' },
