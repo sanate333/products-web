@@ -244,9 +244,9 @@ export default function MarketingRedes() {
           <div className="mr-posts-grid">
             {scheduledPosts.map(post => (
               <div key={post.id} className={`mr-post-card mr-status-${post.status}`}>
-                {post.image_url && (
+                {post.images && (
                   <div className="mr-post-thumb">
-                    <img src={post.image_url} alt={post.title} />
+                    <img src={post.images} alt={post.title} />
                   </div>
                 )}
                 <div className="mr-post-info">
@@ -324,7 +324,7 @@ export default function MarketingRedes() {
                     } />
                     {' '}{log.platform?.replace('_', ' ')}
                   </td>
-                  <td>{log.title || 'Sin titulo'}</td>
+                  <td>{log.post_title || 'Sin titulo'}</td>
                   <td>
                     <span className={`mr-badge mr-badge-${log.status}`}>{
                       log.status === 'success' ? 'Exitoso' :
@@ -332,7 +332,7 @@ export default function MarketingRedes() {
                       log.status === 'pending' ? 'Pendiente' : log.status
                     }</span>
                   </td>
-                  <td>{log.error_message || log.response_data || '-'}</td>
+                  <td>{log.error_message || '-'}</td>
                 </tr>
               ))}
             </tbody>
@@ -394,4 +394,3 @@ export default function MarketingRedes() {
   );
 }
 
-export default MarketingRedes;
