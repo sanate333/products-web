@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import Header from "../../componentes/Header";
+import Header from "../Header/Header";
 import "./MarketingRedes.css";
 
 const SUPABASE_URL = "https://lvmeswlvszsmvgaasazs.supabase.co";
