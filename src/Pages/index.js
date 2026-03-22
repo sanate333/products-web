@@ -32,6 +32,7 @@ import MonitorGlobalAI from './MonitorGlobalAI/MonitorGlobalAI';
 import OasisChat from './OasisChat/OasisChat';
 import Co from './Co/Co';
 import CoRegistrationsAdmin from './CoRegistrationsAdmin/CoRegistrationsAdmin';
+import MarketingRedes from './MarketingRedes/MarketingRedes';
 
 const dashboardChildren = [
     { path: '', element: <Main /> },
@@ -46,8 +47,7 @@ const dashboardChildren = [
     { path: 'pedidos', element: <Pedidos /> },
     { path: 'notificaciones', element: <Notificaciones /> },
     { path: 'imagenes-ia', element: <ImagenesIA /> },
-    { path: 'clientes', element: <Clientes /> },
-    { path: 'clientes/co-registrations', element: <CoRegistrationsAdmin /> },
+    { path: 'clientes', element: <Clientes /> },    { path: 'clientes/co-registrations', element: <CoRegistrationsAdmin /> },
     { path: 'clientes/co-registros', element: <CoRegistrationsAdmin /> },
     { path: 'tiendas', element: <Tiendas /> },
     { path: 'ofertas-carrito', element: <OfertasCarrito /> },
@@ -67,8 +67,8 @@ const dashboardChildren = [
     { path: 'tutoriales', element: <Tutoriales /> },
     { path: 'ajustes', element: <Ajustes /> },
     { path: 'ajustes/logo', element: <AjustesLogo /> },
+    { path: 'marketing-redes', element: <MarketingRedes /> },
 ];
-
 const storeDashboardChildren = [
     { path: '', element: <Main /> },
     { path: 'inicio', element: <Main /> },
