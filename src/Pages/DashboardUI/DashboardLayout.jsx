@@ -8,6 +8,7 @@ import {
     faComments,
     faFileCode,
     faGear,
+    faShareNodes,
     faImage,    faLayerGroup,
     faList,
     faRectangleList,
@@ -19,7 +20,6 @@ import {
     faGraduationCap,
     faGift,
 } from '@fortawesome/free-solid-svg-icons';
-import { buildDashboardPath, getTiendaSlug } from '../../utils/tienda';
 import './DashboardLayout.css';
 
 const MAIN_MENU = [
@@ -39,6 +39,7 @@ const MAIN_MENU = [
     { label: 'Códigos', segment: 'codigos', icon: faFileCode },
     { label: 'Tutoriales', segment: 'tutoriales', icon: faGraduationCap },
     { label: 'Ajustes', segment: 'ajustes', icon: faGear },
+    { label: 'Marketing Redes', segment: 'marketing-redes', icon: faShareNodes },
 ];
 
 const getDashboardSubpath = (pathname) => {
@@ -53,6 +54,16 @@ const isActiveSegment = (subpath, segment) => {
     return subpath === `/${segment}` || subpath.startsWith(`/${segment}/`);
 };
 
+const getTiendaSlug = () => {
+    const m = window.location.pathname.match(/^\/dashboard\/s\/([^/]+)/);
+    return m ? m[1] : null;
+};
+
+const buildDashboardPath = (slug, path) => {
+    if (slug) return `/dashboard/s/${slug}${path.replace('/dashboard', '')}`;
+    return path;
+};
+
 export default function DashboardLayout() {
     const location = useLocation();
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -63,7 +74,6 @@ export default function DashboardLayout() {
 
     const tiendaSlug = getTiendaSlug();
     const subpath = getDashboardSubpath(location.pathname);
-
     const currentSection = useMemo(
         () => MAIN_MENU.find((item) => isActiveSegment(subpath, item.segment)) || MAIN_MENU[0],
         [subpath]
@@ -89,17 +99,13 @@ export default function DashboardLayout() {
 
                 <nav className="oasis-main-menu">
                     {MAIN_MENU.map((item) => {
-                        const fullPath = item.segment
-                            ? `/dashboard/${item.segment}`
-                            : '/dashboard';
+                        const fullPath = item.segment ? `/dashboard/${item.segment}` : '/dashboard';
                         return (
                             <Link
                                 key={item.label}
                                 to={buildDashboardPath(tiendaSlug, fullPath)}
                                 className={`oasis-main-menu-link ${
-                                    isActiveSegment(subpath, item.segment)
-                                        ? 'oasis-main-menu-link-active'
-                                        : ''
+                                    isActiveSegment(subpath, item.segment) ? 'oasis-main-menu-link-active' : ''
                                 }`}
                             >
                                 <FontAwesomeIcon icon={item.icon} />
@@ -120,7 +126,6 @@ export default function DashboardLayout() {
                     >
                         <FontAwesomeIcon icon={faBars} />
                     </button>
-
                     <div>
                         <h1>{currentSection.label}</h1>
                         <p>Panel visual profesional de Oasis IA</p>
@@ -134,4 +139,3 @@ export default function DashboardLayout() {
         </div>
     );
 }
-
