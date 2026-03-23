@@ -272,6 +272,26 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
       if (data.error) throw new Error(data.error.message || 'Gemini error')
       return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
     }
+    if (claudeKey) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: maxTokens,
+          system: messages.find(m => m.role === 'system')?.content || '',
+          messages: messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content })),
+        }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Claude error')
+      return data.content?.[0]?.text?.trim() || ''
+    }
     throw new Error('no_key')
   }
 
@@ -796,6 +816,7 @@ export default function WhatsAppBot() {
   const [triggerContactMap,  setTriggerContactMap]  = useState(() => { try { return JSON.parse(localStorage.getItem('wa_trigger_contact_map') || '{}') } catch { return {} } })
   const [openaiKey,          setOpenaiKey]          = useState(() => { try { return localStorage.getItem('wa_openai_key') || '' } catch { return '' } })
   const [geminiKey,          setGeminiKey]          = useState(() => { try { return localStorage.getItem('wa_gemini_key') || '' } catch { return '' } })
+  const [claudeKey,       setClaudeKey]       = useState(() => { try { return localStorage.getItem('wa_claude_key') || '' } catch { return '' } })
   const [aiModel,        setAiModel]        = useState('gpt-4o')
   const [aiPrompt,       setAiPrompt]       = useState(() => { try { return localStorage.getItem('wa_ai_prompt') || 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } catch { return 'Eres el asistente virtual de Sanate, una tienda de salud natural. Responde de forma amable, breve y clara en español.' } })
 
@@ -1523,6 +1544,7 @@ export default function WhatsAppBot() {
     setTimeout(() => syncSettingsToBackend({ silent: true }), 500)
   }
   function saveGeminiKey(v) { setGeminiKey(v);   try { localStorage.setItem('wa_gemini_key', v) } catch {} }
+  function saveClaudeKey(v) { setClaudeKey(v); try { localStorage.setItem('wa_claude_key', v) } catch {} }
   function saveAiPrompt(v)  { setAiPrompt(v);    try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
 
   // ── Llamada IA universal (OpenAI o Gemini) ─────────────────────
@@ -1562,7 +1584,7 @@ export default function WhatsAppBot() {
     }
     throw new Error('no_key')
   }
-  const hasAiKey = !!(openaiKey || geminiKey)
+  const hasAiKey = !!(openaiKey || geminiKey || claudeKey)
   function toggleAiGlobal() {
     setAiEnabled(prev => {
       const next = !prev
@@ -4375,7 +4397,7 @@ ${conversation}`
                             La API Key permite que el Bot IA responda de forma inteligente y humanizada a cada mensaje del cliente.
                             <br /><strong>Sin API Key:</strong> el bot no puede responder. <strong>Con API Key:</strong> respuestas conversacionales naturales en varios mensajes.
                           </div>
-                          {!openaiKey && !geminiKey && (
+                          {!openaiKey && !geminiKey && !claudeKey && (
                             <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.5rem .75rem', fontSize: '.72rem', color: '#713f12', marginBottom: '.75rem' }}>
                               Configura una API Key para que el bot pueda responder mensajes.
                             </div>
@@ -4640,7 +4662,7 @@ ${conversation}`
                       {/* Estado IA Key */}
                       {!openaiKey && !geminiKey && (
                         <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12', marginBottom: '.75rem' }}>
-                          ⚠️ <strong>Sin API Key configurada.</strong> Agrega una de las dos opciones abajo para activar la IA. El botón 🤖 en el chat necesita al menos una key para funcionar.
+                          ⚠️ <strong>Sin API Key configurada.</strong> Agrega una de las opciones abajo para activar la IA. El botón 🤖 en el chat necesita al menos una key para funcionar.
                         </div>
                       )}
                       {/* ChatGPT / OpenAI */}
@@ -4716,6 +4738,41 @@ ${conversation}`
                           </div>
                           <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
                             <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={() => window.open('https://aistudio.google.com/apikey', '_blank')}>Obtener Gemini Key gratis ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Claude (Anthropic) ── */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🟣 Claude / Anthropic</div>
+                          <span className={`wbv5-badge ${claudeKey ? 'badge-green' : 'badge-amber'}`}>
+                            {claudeKey ? '✅ Conectado' : '⏳ Sin configurar'}
+                          </span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <p style={{fontSize:13,color:'#666',marginBottom:8}}>Conecta tu API de Anthropic (Claude) para respuestas IA avanzadas. Claude se usa como tercera opcion si OpenAI y Gemini no estan disponibles.</p>
+                          <label className="wbv5-label">CLAUDE API KEY</label>
+                          <input className="wbv5-input" type="password" placeholder="sk-ant-api03-..." value={claudeKey} onChange={e => saveClaudeKey(e.target.value)} />
+                          <small style={{color:'#999'}}>Obten tu key en console.anthropic.com</small>
+                          <div style={{marginTop:8}}>
+                            <button className="wbv5-btn btn-outline" onClick={() => window.open('https://console.anthropic.com/settings/keys','_blank')}>Obtener Claude Key ↗</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── Pollinations (IA Imagen gratuita) ── */}
+                      <div className="wbv5-card">
+                        <div className="wbv5-card-hd">
+                          <div className="wbv5-card-title">🎨 Pollinations (Imagen IA)</div>
+                          <span className="wbv5-badge badge-green">✅ Gratis</span>
+                        </div>
+                        <div className="wbv5-card-bd">
+                          <p style={{fontSize:13,color:'#666',marginBottom:8}}>Pollinations es un servicio <b>100% gratuito</b> para generar imagenes con IA. No necesita API key. Se usa automaticamente en la seccion de Imagen IA del dashboard.</p>
+                          <p style={{fontSize:13,color:'#444'}}><b>URL base:</b> https://image.pollinations.ai/prompt/</p>
+                          <p style={{fontSize:13,color:'#444'}}><b>Estado:</b> ✅ Activo y listo para usar</p>
+                          <div style={{marginTop:8}}>
+                            <button className="wbv5-btn btn-outline" onClick={() => window.open('https://pollinations.ai','_blank')}>Abrir Pollinations ↗</button>
                           </div>
                         </div>
                       </div>
