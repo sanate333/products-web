@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react'import EmojiPicker from 'emoji-picker-react'
+import React, { useState, useEffect, useRef } from 'react'
+import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
@@ -1416,7 +1417,7 @@ export default function WhatsAppBot() {
     try {
       const d = await (await fetch(`${BU}/chats/${encodeURIComponent(chatId)}/messages`, { headers: H })).json()
       if (d.ok && Array.isArray(d.messages)) {
-        const norm = d.messages.map(normMsg)
+        const norm = d.messages.map(normMsg).filter(m => m.txt || m.mediaUrl)
         cachePut(chatId, norm)
         setMsgs(norm)
         if (sc) scroll()
