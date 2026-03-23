@@ -272,26 +272,6 @@ function BotTestChat({ trainingPrompt, aiPrompt, openaiKey, geminiKey, aiModel, 
       if (data.error) throw new Error(data.error.message || 'Gemini error')
       return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
     }
-    if (claudeKey) {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': claudeKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: maxTokens,
-          system: messages.find(m => m.role === 'system')?.content || '',
-          messages: messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content })),
-        }),
-      })
-      const data = await res.json()
-      if (data.error) throw new Error(data.error.message || 'Claude error')
-      return data.content?.[0]?.text?.trim() || ''
-    }
     throw new Error('no_key')
   }
 
@@ -1581,6 +1561,26 @@ export default function WhatsAppBot() {
       const data = await res.json()
       if (data.error) throw new Error(data.error.message || 'Gemini error')
       return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || ''
+    }
+    if (claudeKey) {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': claudeKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: maxTokens,
+          system: messages.find(m => m.role === 'system')?.content || '',
+          messages: messages.filter(m => m.role !== 'system').map(m => ({ role: m.role, content: m.content })),
+        }),
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error.message || 'Claude error')
+      return data.content?.[0]?.text?.trim() || ''
     }
     throw new Error('no_key')
   }
@@ -4660,7 +4660,7 @@ ${conversation}`
                   {cfgTab === 'api' && (
                     <>
                       {/* Estado IA Key */}
-                      {!openaiKey && !geminiKey && (
+                      {!openaiKey && !geminiKey && !claudeKey && (
                         <div style={{ background: '#fef9c3', border: '1px solid #fde047', borderRadius: 8, padding: '.65rem .9rem', fontSize: '.76rem', color: '#713f12', marginBottom: '.75rem' }}>
                           ⚠️ <strong>Sin API Key configurada.</strong> Agrega una de las opciones abajo para activar la IA. El botón 🤖 en el chat necesita al menos una key para funcionar.
                         </div>
