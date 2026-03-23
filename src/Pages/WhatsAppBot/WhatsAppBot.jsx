@@ -45,9 +45,20 @@ function normMsg(m) {
 function cleanPhone(phone, id) {
   if (phone && phone.startsWith('+')) return phone
   if (phone && /^\d{7,}$/.test(phone)) return '+' + phone
-  const raw = String(id || '').replace(/@s\.whatsapp\.net|@g\.us|@c\.us/g, '')
+  const raw = String(id || '').replace(/@s\.whatsapp\.net|@g\.us|@c\.us|@lid/g, '')
   if (/^\d{7,}$/.test(raw)) return '+' + raw
-  return phone || id || ''
+  return phone || ''
+}
+
+// ── detectar plataforma desde chatId o campo platform ─────────
+function detectPlatform(chatId, srcPlatform) {
+  if (srcPlatform) return srcPlatform.toLowerCase()
+  const cid = String(chatId || '')
+  if (cid.includes('@s.whatsapp.net') || cid.includes('@g.us') || cid.includes('@c.us') || cid.includes('@lid')) return 'whatsapp'
+  if (cid.includes('instagram') || cid.startsWith('ig_')) return 'instagram'
+  if (cid.includes('messenger') || cid.startsWith('fb_')) return 'messenger'
+  if (cid.includes('tiktok') || cid.startsWith('tt_')) return 'tiktok'
+  return 'whatsapp'
 }
 
 // ── campo: normalizar chats del backend ────────────────────────
@@ -57,14 +68,16 @@ function normChat(c) {
   const chatId = c.chatId || c.id || ''
   const phone  = cleanPhone(c.phone, chatId)
   const isGroup = chatId.includes('@g.us')
+  const platform = detectPlatform(chatId, c.platform)
   // Limpia nombres que son JIDs (ej: "1234567890@s.whatsapp.net" → usa el teléfono)
   const rawName = String(c.pushName || c.notify || c.name || '').trim()
-  const name = (rawName && !rawName.includes('@')) ? rawName : (isGroup ? 'Grupo' : phone)
+  const name = (rawName && !rawName.includes('@')) ? rawName : (isGroup ? 'Grupo' : (phone || chatId.split('@')[0]))
   return {
     id:       chatId,
     name,
     phone,
     isGroup,
+    platform,
     photoUrl: c.photoUrl || c.avatar || '',
     preview:  c.lastMessagePreview || c.preview || '',
     time:     hhmm,
