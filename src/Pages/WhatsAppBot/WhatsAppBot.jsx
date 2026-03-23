@@ -1,5 +1,4 @@
-X import React, { useState, useEffect, useRef } from 'react'
-import EmojiPicker from 'emoji-picker-react'
+import React, { useState, useEffect, useRef } from 'react'import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
