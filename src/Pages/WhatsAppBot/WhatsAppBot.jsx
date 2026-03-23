@@ -3,7 +3,7 @@ import EmojiPicker from 'emoji-picker-react'
 import './WhatsAppBot.css'
 import Header from '../Header/Header'
 
-const DEFAULT_BU     = 'https://sanate.store/api/whatsapp'
+const DEFAULT_BU     = 'https://sanate-wa-bot.onrender.com/api/whatsapp'
 const DEFAULT_SECRET = 'sanate_secret_2025'
 // ── Backend URL y Secret — configurables en Ajustes ─────────────
 let BU         = (function(){ try { return localStorage.getItem('wa_backend_url') || DEFAULT_BU } catch { return DEFAULT_BU } })()
