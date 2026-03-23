@@ -1053,3 +1053,163 @@
   .mr-select { min-width: unset; width: 100%; }
   .mr-scheduled-item { flex-wrap: wrap; }
   }
+
+/* ======= DARK THEME OVERRIDES ======= */
+/* The JSX uses dark backgrounds via inline styles.
+   These overrides ensure text is visible on dark bg. */
+.marketing-redes h2,
+.marketing-redes h3,
+.marketing-redes h4,
+.marketing-redes strong,
+.marketing-redes label,
+.marketing-redes p,
+.marketing-redes span,
+.marketing-redes li,
+.marketing-redes div {
+  color: inherit;
+}
+
+.marketing-redes {
+  color: #e0e0e0;
+}
+
+.marketing-redes h2 {
+  color: #fff;
+}
+
+.mr-card-title,
+.mr-section-title,
+.mr-ap-new-post h4,
+.mr-scheduled-title,
+.mr-log-title,
+.mr-rules-intro h3,
+.mr-ap-safety-banner strong {
+  color: #fff;
+}
+
+.mr-card,
+.mr-ap-stat-card,
+.mr-msg-item,
+.mr-scheduled-item,
+.mr-log-item,
+.mr-ap-new-post,
+.mr-rules-col {
+  background: #1e1e2e;
+  color: #e0e0e0;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+}
+
+.mr-tabs {
+  background: #2a2a3e;
+}
+
+.mr-tab {
+  color: #aaa;
+}
+
+.mr-tab:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+
+.mr-tab.active {
+  background: #6c63ff;
+  color: #fff;
+  box-shadow: none;
+}
+
+.mr-input,
+.mr-textarea,
+.mr-select {
+  background: #1a1a2e;
+  color: #fff;
+  border-color: #444;
+}
+
+.mr-input:focus,
+.mr-textarea:focus,
+.mr-select:focus {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 3px rgba(108,99,255,0.2);
+}
+
+.mr-ap-stat-value {
+  color: #fff;
+}
+
+.mr-rules-intro {
+  background: linear-gradient(135deg, #1a1a2e, #2a2a3e);
+}
+
+.mr-rules-intro h3 {
+  color: #fff;
+}
+
+.mr-rules-intro p {
+  color: #aaa;
+}
+
+.mr-rules-table {
+  background: #1e1e2e;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.mr-rules-table-header {
+  background: #2a2a3e;
+  color: #aaa;
+}
+
+.mr-rules-table-row {
+  color: #e0e0e0;
+  border-top-color: #333;
+}
+
+.mr-rules-table-row:hover {
+  background: #2a2a3e;
+}
+
+.mr-btn-secondary {
+  background: #2a2a3e;
+  color: #aaa;
+}
+
+.mr-connect-section {
+  background: #1a1a2e;
+}
+
+.mr-connect-section p {
+  color: #aaa;
+}
+
+.mr-ap-form-hint {
+  background: #2a2a3e;
+  color: #aaa;
+}
+
+.mr-rules-source {
+  background: #2a2a3e;
+  color: #aaa;
+}
+
+.mr-scheduled-number {
+  background: #2a2a3e;
+  color: #aaa;
+}
+
+.mr-card-stats {
+  border-top-color: #333;
+  color: #aaa;
+}
+
+.mr-card-stats span strong {
+  color: #fff;
+}
+
+.mr-rules-col ul li {
+  color: #bbb;
+}
+
+.mr-messages-empty {
+  background: #1a1a2e;
+  color: #888;
+}
