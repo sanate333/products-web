@@ -658,4 +658,3 @@ export default function MarketingRedes() {
     </div>
   );
 }
-import { useState, useEffect, useCallback } from "react";
