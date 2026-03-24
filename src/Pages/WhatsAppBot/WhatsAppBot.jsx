@@ -2922,7 +2922,7 @@ ${conversation}`
 
                           {/* ── sticker ── */}
                           {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
-                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (() => { const st = m.status || 'sent'; if (st === 'read' || st === 'played') return <span style={{color:'#53bdeb'}}> ✓✓</span>; if (st === 'delivered') return ' ✓✓'; return ' ✓'; })() : ''}</div>
+                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' && <span style={{color: (m.status === 'read' || m.status === 'played') ? '#53bdeb' : 'inherit'}}>{m.status === 'delivered' || m.status === 'read' || m.status === 'played' ? ' ✓✓' : ' ✓'}</span>}</div>
                         </div>
                       )})}
                     </div>
