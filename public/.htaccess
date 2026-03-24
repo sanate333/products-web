@@ -1,80 +1,24 @@
-# ── Disable LiteSpeed Cache GLOBALLY ──
-<IfModule LiteSpeed>
-CacheLookup off
+# ── Force UTF-8 charset for JS/CSS/HTML ──
+AddDefaultCharset utf-8
+<IfModule mod_mime.c>
+AddCharset utf-8 .js .jsx .css .html .json .svg
 </IfModule>
 
-# ── No-cache headers for HTML, JS, CSS, JSON ──
-<IfModule mod_headers.c>
-<FilesMatch "\.(html|js|css|json)$">
-Header set Cache-Control "no-cache, no-store, must-revalidate"
-Header set Pragma "no-cache"
-Header set Expires "0"
-</FilesMatch>
-</IfModule>
-
-DirectoryIndex home.html index.html index.php
-RewriteEngine On
-RewriteBase /
-
-# ── API Routes ──
-RewriteRule ^api/ops/notifications/campaigns/?$ apiOpsNotificationsCampaigns.php [L,QSA]
-RewriteRule ^api/ops/notifications/campaigns/([0-9]+)/send/?$ apiOpsNotificationsCampaignSend.php?id=$1 [L,QSA]
-RewriteRule ^api/ops/notifications/campaigns/([0-9]+)/deliveries/?$ apiOpsNotificationsCampaignDeliveries.php?id=$1 [L,QSA]
-RewriteRule ^api/ops/notifications/run-automations/?$ apiOpsNotificationsRunAutomations.php [L,QSA]
-RewriteRule ^api/store/notifications/?$ apiStoreNotifications.php [L,QSA]
-RewriteRule ^api/store/notifications/unread-count/?$ apiStoreNotificationsUnreadCount.php [L,QSA]
-RewriteRule ^api/store/notifications/([0-9]+)/read/?$ apiStoreNotificationRead.php?deliveryId=$1 [L,QSA]
-RewriteRule ^api/ops/dropshipping/templates/?$ apiOpsDropshippingTemplates.php [L,QSA]
-RewriteRule ^api/ops/dropshipping/catalog/?$ apiOpsDropshippingCatalog.php [L,QSA]
-RewriteRule ^api/ops/dropshipping/stores/?$ apiOpsDropshippingStores.php [L,QSA]
-RewriteRule ^api/ops/dropshipping/store-products/?$ apiOpsDropshippingStoreProducts.php [L,QSA]
-RewriteRule ^api/ops/dropshipping/sync-store-products/?$ apiOpsDropshippingSyncStoreProducts.php [L,QSA]
-RewriteRule ^api/ops/dropshipping/notify/?$ apiOpsDropshippingNotify.php [L,QSA]
-RewriteRule ^api/ops/dropshipping/activity/?$ apiOpsDropshippingActivity.php [L,QSA]
-RewriteRule ^api/store/dropshipping/catalog/?$ apiStoreDropshippingCatalog.php [L,QSA]
-RewriteRule ^api/store/dropshipping/my-products/?$ apiStoreDropshippingMyProducts.php [L,QSA]
-RewriteRule ^api/store/dropshipping/add/?$ apiStoreDropshippingAdd.php [L,QSA]
-RewriteRule ^api/store/dropshipping/remove/?$ apiStoreDropshippingRemove.php [L,QSA]
-RewriteRule ^api/store/dropshipping/update-margin/?$ apiStoreDropshippingUpdateMargin.php [L,QSA]
-RewriteRule ^api/ops/wallet/overview/?$ apiOpsWalletOverview.php [L,QSA]
-RewriteRule ^api/ops/wallet/ledger/?$ apiOpsWalletLedger.php [L,QSA]
-RewriteRule ^api/ops/orders/?$ apiOpsOrders.php [L,QSA]
-RewriteRule ^api/ops/orders/([0-9]+)/?$ apiOpsOrdersPatch.php?id=$1 [L,QSA]
-RewriteRule ^api/ops/orders/([0-9]+)/release/?$ apiOpsOrdersRelease.php?id=$1 [L,QSA]
-RewriteRule ^api/ops/withdrawals/?$ apiOpsWithdrawals.php [L,QSA]
-RewriteRule ^api/ops/withdrawals/([0-9]+)/?$ apiOpsWithdrawalsPatch.php?id=$1 [L,QSA]
-RewriteRule ^api/store/wallet/overview/?$ apiStoreWalletOverview.php [L,QSA]
-RewriteRule ^api/store/wallet/ledger/?$ apiStoreWalletLedger.php [L,QSA]
-RewriteRule ^api/store/wallet/withdrawals/?$ apiStoreWalletWithdrawals.php [L,QSA]
-RewriteRule ^api/ai-images/analyze/?$ aiImagesAnalyze.php [L,QSA]
-RewriteRule ^api/ai-images/generate/?$ aiImagesGenerate.php [L,QSA]
-RewriteRule ^api/ai-images/list/?$ aiImagesList.php [L,QSA]
-RewriteRule ^api/ai-images/status/?$ aiImagesStatus.php [L,QSA]
-RewriteRule ^api/ai-images/delete/?$ aiImagesDelete.php [L,QSA]
-RewriteRule ^api/ai-images/health/?$ aiImagesHealth.php [L,QSA]
-RewriteRule ^api/whatsapp/(.*)$ whatsapp-proxy.php?path=$1 [L,QSA]
-RewriteRule ^waBackendUrl\.php$ waBackendUrl.php [L,QSA]
-RewriteRule ^api/co/register/?$ api/co/register/index.php [L,QSA]
-RewriteRule ^api/co/leads/?$ api/co/leads/index.php [L,QSA]
-RewriteRule ^co/?$ /index.html [L]
-
-# ── Static files: serve directly, DO NOT pass to SPA ──
-RewriteRule ^home\.html$ - [L]
-RewriteRule ^proveedores\.html$ - [L]
-
-# Home Plus V5 FINAL
-RewriteRule ^$ /home.html [L]
-# Home Free React
-RewriteRule ^home-free/?$ /index.html [L]
-# Portal proveedores
-RewriteRule ^proveedores/?$ /proveedores.html [L]
-
-# SPA catch-all — only if file does NOT exist
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ /index.html [L]
-
-php_value upload_max_filesize 20M
-php_value post_max_size 20M
-php_value max_file_uploads 50
-php_value max_execution_time 120
+{
+  "name": ".htaccess",
+  "path": "public/.htaccess",
+  "sha": "b69bb2543faeddc7d361c05e7f4454c9ab6408f1",
+  "size": 4239,
+  "url": "https://api.github.com/repos/sanate333/products-web/contents/public/.htaccess?ref=main",
+  "html_url": "https://github.com/sanate333/products-web/blob/main/public/.htaccess",
+  "git_url": "https://api.github.com/repos/sanate333/products-web/git/blobs/b69bb2543faeddc7d361c05e7f4454c9ab6408f1",
+  "download_url": "https://raw.githubusercontent.com/sanate333/products-web/main/public/.htaccess",
+  "type": "file",
+  "content": "IyDilIDilIAgRGlzYWJsZSBMaXRlU3BlZWQgQ2FjaGUgR0xPQkFMTFkg4pSA\n4pSACjxJZk1vZHVsZSBMaXRlU3BlZWQ+CkNhY2hlTG9va3VwIG9mZgo8L0lm\nTW9kdWxlPgoKIyDilIDilIAgTm8tY2FjaGUgaGVhZGVycyBmb3IgSFRNTCwg\nSlMsIENTUywgSlNPTiDilIDilIAKPElmTW9kdWxlIG1vZF9oZWFkZXJzLmM+\nCjxGaWxlc01hdGNoICJcLihodG1sfGpzfGNzc3xqc29uKSQiPgpIZWFkZXIg\nc2V0IENhY2hlLUNvbnRyb2wgIm5vLWNhY2hlLCBuby1zdG9yZSwgbXVzdC1y\nZXZhbGlkYXRlIgpIZWFkZXIgc2V0IFByYWdtYSAibm8tY2FjaGUiCkhlYWRl\nciBzZXQgRXhwaXJlcyAiMCIKPC9GaWxlc01hdGNoPgo8L0lmTW9kdWxlPgoK\nRGlyZWN0b3J5SW5kZXggaG9tZS5odG1sIGluZGV4Lmh0bWwgaW5kZXgucGhw\nClJld3JpdGVFbmdpbmUgT24KUmV3cml0ZUJhc2UgLwoKIyDilIDilIAgQVBJ\nIFJvdXRlcyDilIDilIAKUmV3cml0ZVJ1bGUgXmFwaS9vcHMvbm90aWZpY2F0\naW9ucy9jYW1wYWlnbnMvPyQgYXBpT3BzTm90aWZpY2F0aW9uc0NhbXBhaWdu\ncy5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy9ub3RpZmljYXRp\nb25zL2NhbXBhaWducy8oWzAtOV0rKS9zZW5kLz8kIGFwaU9wc05vdGlmaWNh\ndGlvbnNDYW1wYWlnblNlbmQucGhwP2lkPSQxIFtMLFFTQV0KUmV3cml0ZVJ1\nbGUgXmFwaS9vcHMvbm90aWZpY2F0aW9ucy9jYW1wYWlnbnMvKFswLTldKykv\nZGVsaXZlcmllcy8/JCBhcGlPcHNOb3RpZmljYXRpb25zQ2FtcGFpZ25EZWxp\ndmVyaWVzLnBocD9pZD0kMSBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvb3Bz\nL25vdGlmaWNhdGlvbnMvcnVuLWF1dG9tYXRpb25zLz8kIGFwaU9wc05vdGlm\naWNhdGlvbnNSdW5BdXRvbWF0aW9ucy5waHAgW0wsUVNBXQpSZXdyaXRlUnVs\nZSBeYXBpL3N0b3JlL25vdGlmaWNhdGlvbnMvPyQgYXBpU3RvcmVOb3RpZmlj\nYXRpb25zLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvc3RvcmUvbm90\naWZpY2F0aW9ucy91bnJlYWQtY291bnQvPyQgYXBpU3RvcmVOb3RpZmljYXRp\nb25zVW5yZWFkQ291bnQucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9z\ndG9yZS9ub3RpZmljYXRpb25zLyhbMC05XSspL3JlYWQvPyQgYXBpU3RvcmVO\nb3RpZmljYXRpb25SZWFkLnBocD9kZWxpdmVyeUlkPSQxIFtMLFFTQV0KUmV3\ncml0ZVJ1bGUgXmFwaS9vcHMvZHJvcHNoaXBwaW5nL3RlbXBsYXRlcy8/JCBh\ncGlPcHNEcm9wc2hpcHBpbmdUZW1wbGF0ZXMucGhwIFtMLFFTQV0KUmV3cml0\nZVJ1bGUgXmFwaS9vcHMvZHJvcHNoaXBwaW5nL2NhdGFsb2cvPyQgYXBpT3Bz\nRHJvcHNoaXBwaW5nQ2F0YWxvZy5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBe\nYXBpL29wcy9kcm9wc2hpcHBpbmcvc3RvcmVzLz8kIGFwaU9wc0Ryb3BzaGlw\ncGluZ1N0b3Jlcy5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy9k\ncm9wc2hpcHBpbmcvc3RvcmUtcHJvZHVjdHMvPyQgYXBpT3BzRHJvcHNoaXBw\naW5nU3RvcmVQcm9kdWN0cy5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBp\nL29wcy9kcm9wc2hpcHBpbmcvc3luYy1zdG9yZS1wcm9kdWN0cy8/JCBhcGlP\ncHNEcm9wc2hpcHBpbmdTeW5jU3RvcmVQcm9kdWN0cy5waHAgW0wsUVNBXQpS\nZXdyaXRlUnVsZSBeYXBpL29wcy9kcm9wc2hpcHBpbmcvbm90aWZ5Lz8kIGFw\naU9wc0Ryb3BzaGlwcGluZ05vdGlmeS5waHAgW0wsUVNBXQpSZXdyaXRlUnVs\nZSBeYXBpL29wcy9kcm9wc2hpcHBpbmcvYWN0aXZpdHkvPyQgYXBpT3BzRHJv\ncHNoaXBwaW5nQWN0aXZpdHkucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFw\naS9zdG9yZS9kcm9wc2hpcHBpbmcvY2F0YWxvZy8/JCBhcGlTdG9yZURyb3Bz\naGlwcGluZ0NhdGFsb2cucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9z\ndG9yZS9kcm9wc2hpcHBpbmcvbXktcHJvZHVjdHMvPyQgYXBpU3RvcmVEcm9w\nc2hpcHBpbmdNeVByb2R1Y3RzLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5h\ncGkvc3RvcmUvZHJvcHNoaXBwaW5nL2FkZC8/JCBhcGlTdG9yZURyb3BzaGlw\ncGluZ0FkZC5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL3N0b3JlL2Ry\nb3BzaGlwcGluZy9yZW1vdmUvPyQgYXBpU3RvcmVEcm9wc2hpcHBpbmdSZW1v\ndmUucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9zdG9yZS9kcm9wc2hp\ncHBpbmcvdXBkYXRlLW1hcmdpbi8/JCBhcGlTdG9yZURyb3BzaGlwcGluZ1Vw\nZGF0ZU1hcmdpbi5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy93\nYWxsZXQvb3ZlcnZpZXcvPyQgYXBpT3BzV2FsbGV0T3ZlcnZpZXcucGhwIFtM\nLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9vcHMvd2FsbGV0L2xlZGdlci8/JCBh\ncGlPcHNXYWxsZXRMZWRnZXIucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFw\naS9vcHMvb3JkZXJzLz8kIGFwaU9wc09yZGVycy5waHAgW0wsUVNBXQpSZXdy\naXRlUnVsZSBeYXBpL29wcy9vcmRlcnMvKFswLTldKykvPyQgYXBpT3BzT3Jk\nZXJzUGF0Y2gucGhwP2lkPSQxIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9v\ncHMvb3JkZXJzLyhbMC05XSspL3JlbGVhc2UvPyQgYXBpT3BzT3JkZXJzUmVs\nZWFzZS5waHA/aWQ9JDEgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy93\naXRoZHJhd2Fscy8/JCBhcGlPcHNXaXRoZHJhd2Fscy5waHAgW0wsUVNBXQpS\nZXdyaXRlUnVsZSBeYXBpL29wcy93aXRoZHJhd2Fscy8oWzAtOV0rKS8/JCBh\ncGlPcHNXaXRoZHJhd2Fsc1BhdGNoLnBocD9pZD0kMSBbTCxRU0FdClJld3Jp\ndGVSdWxlIF5hcGkvc3RvcmUvd2FsbGV0L292ZXJ2aWV3Lz8kIGFwaVN0b3Jl\nV2FsbGV0T3ZlcnZpZXcucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9z\ndG9yZS93YWxsZXQvbGVkZ2VyLz8kIGFwaVN0b3JlV2FsbGV0TGVkZ2VyLnBo\ncCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvc3RvcmUvd2FsbGV0L3dpdGhk\ncmF3YWxzLz8kIGFwaVN0b3JlV2FsbGV0V2l0aGRyYXdhbHMucGhwIFtMLFFT\nQV0KUmV3cml0ZVJ1bGUgXmFwaS9haS1pbWFnZXMvYW5hbHl6ZS8/JCBhaUlt\nYWdlc0FuYWx5emUucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9haS1p\nbWFnZXMvZ2VuZXJhdGUvPyQgYWlJbWFnZXNHZW5lcmF0ZS5waHAgW0wsUVNB\nXQpSZXdyaXRlUnVsZSBeYXBpL2FpLWltYWdlcy9saXN0Lz8kIGFpSW1hZ2Vz\nTGlzdC5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL2FpLWltYWdlcy9z\ndGF0dXMvPyQgYWlJbWFnZXNTdGF0dXMucGhwIFtMLFFTQV0KUmV3cml0ZVJ1\nbGUgXmFwaS9haS1pbWFnZXMvZGVsZXRlLz8kIGFpSW1hZ2VzRGVsZXRlLnBo\ncCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvYWktaW1hZ2VzL2hlYWx0aC8/\nJCBhaUltYWdlc0hlYWx0aC5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBp\nL3doYXRzYXBwLyguKikkIHdoYXRzYXBwLXByb3h5LnBocD9wYXRoPSQxIFtM\nLFFTQV0KUmV3cml0ZVJ1bGUgXndhQmFja2VuZFVybFwucGhwJCB3YUJhY2tl\nbmRVcmwucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9jby9yZWdpc3Rl\nci8/JCBhcGkvY28vcmVnaXN0ZXIvaW5kZXgucGhwIFtMLFFTQV0KUmV3cml0\nZVJ1bGUgXmFwaS9jby9sZWFkcy8/JCBhcGkvY28vbGVhZHMvaW5kZXgucGhw\nIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmNvLz8kIC9pbmRleC5odG1sIFtMXQoK\nIyDilIDilIAgU3RhdGljIGZpbGVzOiBzZXJ2ZSBkaXJlY3RseSwgRE8gTk9U\nIHBhc3MgdG8gU1BBIOKUgOKUgApSZXdyaXRlUnVsZSBeaG9tZVwuaHRtbCQg\nLSBbTF0KUmV3cml0ZVJ1bGUgXnByb3ZlZWRvcmVzXC5odG1sJCAtIFtMXQoK\nIyBIb21lIFBsdXMgVjUgRklOQUwKUmV3cml0ZVJ1bGUgXiQgL2hvbWUuaHRt\nbCBbTF0KIyBIb21lIEZyZWUgUmVhY3QKUmV3cml0ZVJ1bGUgXmhvbWUtZnJl\nZS8/JCAvaW5kZXguaHRtbCBbTF0KIyBQb3J0YWwgcHJvdmVlZG9yZXMKUmV3\ncml0ZVJ1bGUgXnByb3ZlZWRvcmVzLz8kIC9wcm92ZWVkb3Jlcy5odG1sIFtM\nXQoKIyBTUEEgY2F0Y2gtYWxsIOKAlCBvbmx5IGlmIGZpbGUgZG9lcyBOT1Qg\nZXhpc3QKUmV3cml0ZUNvbmQgJXtSRVFVRVNUX0ZJTEVOQU1FfSAhLWYKUmV3\ncml0ZUNvbmQgJXtSRVFVRVNUX0ZJTEVOQU1FfSAhLWQKUmV3cml0ZVJ1bGUg\nXiAvaW5kZXguaHRtbCBbTF0KCnBocF92YWx1ZSB1cGxvYWRfbWF4X2ZpbGVz\naXplIDIwTQpwaHBfdmFsdWUgcG9zdF9tYXhfc2l6ZSAyME0KcGhwX3ZhbHVl\nIG1heF9maWxlX3VwbG9hZHMgNTAKcGhwX3ZhbHVlIG1heF9leGVjdXRpb25f\ndGltZSAxMjAK\n",
+  "encoding": "base64",
+  "_links": {
+    "self": "https://api.github.com/repos/sanate333/products-web/contents/public/.htaccess?ref=main",
+    "git": "https://api.github.com/repos/sanate333/products-web/git/blobs/b69bb2543faeddc7d361c05e7f4454c9ab6408f1",
+    "html": "https://github.com/sanate333/products-web/blob/main/public/.htaccess"
+  }
+}
