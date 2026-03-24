@@ -2324,7 +2324,10 @@ ${conversation}`
       matchSearch = nameMatch || phoneMatch || idMatch
     }
     let matchFilter = true
-    if (chatFilter === 'sin leer')  matchFilter = c.unread > 0
+    const isWhatsApp = !c.platform || c.platform === 'whatsapp'
+    if (chatFilter === 'todos') matchFilter = isWhatsApp
+    else if (chatFilter === 'whatsapp') matchFilter = isWhatsApp
+    else if (chatFilter === 'sin leer')  matchFilter = c.unread > 0 && isWhatsApp
     else if (chatFilter === 'instagram') matchFilter = (c.platform === 'instagram')
     else if (chatFilter === 'messenger') matchFilter = (c.platform === 'messenger')
     else if (chatFilter === 'tiktok')    matchFilter = (c.platform === 'tiktok')
@@ -2655,7 +2658,8 @@ ${conversation}`
                     { id: 'instagram', label: 'Instagram',  icon: '📷', color: '#E1306C', grad: 'linear-gradient(135deg,#E1306C,#833AB4)' },
                     { id: 'messenger', label: 'Messenger',  icon: '💬', color: '#0084FF', grad: 'linear-gradient(135deg,#0084FF,#0052CC)' },
                     { id: 'tiktok',    label: 'TikTok',     icon: '🎵', color: '#00f2ea', grad: 'linear-gradient(135deg,#00f2ea,#ff0050)' },
-                   ].map(f => (
+                      { id: 'whatsapp',  label: 'WhatsApp',   icon: '📱', color: '#25D366', grad: 'linear-gradient(135deg,#25D366,#128C7E)' },
+                 ].map(f => (
                     <button key={f.id} className={`wbv5-il-filter ${chatFilter === f.id ? 'active' : ''}`}
                       onClick={() => setChatFilter(f.id)}
                       style={{
@@ -2912,7 +2916,7 @@ ${conversation}`
 
                           {/* ── sticker ── */}
                           {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
-                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (m.status === 'sent' ? ' ✓✓' : ' ✓') : ''}</div>
+                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? ' ✓✓' : ''}</div>
                         </div>
                       )})}
                     </div>
