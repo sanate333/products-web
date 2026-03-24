@@ -5045,7 +5045,7 @@ ${conversation}`
         </div>
         <div style={{padding:"10px 14px",borderBottom:"1px solid #333"}}>
           <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
-            <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:isConnected?"#27ae60":"#c0392b"}}>{isConnected?"WA Conectado":"WA Desconectado"}</span>
+            <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:(status==="connected")?"#27ae60":"#c0392b"}}>{(status==="connected")?"WA Conectado":"WA Desconectado"}</span>
             <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:active&&isAiActive(active.id)?"#27ae60":"#c0392b"}}>{active&&isAiActive(active.id)?"IA ON":"IA OFF"}</span>
             <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:hasAiKey?"#27ae60":"#c0392b"}}>{hasAiKey?"API Key OK":"Sin API Key"}</span>
             <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:"#2c3e50"}}>{active?active.name||active.id:"Sin chat activo"}</span>
@@ -5053,7 +5053,7 @@ ${conversation}`
         </div>
         <div style={{padding:"10px 14px",borderBottom:"1px solid #333"}}>
           <div><b>Checklist:</b></div>
-          <div>{isConnected?"\u2705":"\u274C"} WhatsApp conectado</div>
+          <div>{(status==="connected")?"\u2705":"\u274C"} WhatsApp conectado</div>
           <div>{active?"\u2705":"\u274C"} Chat seleccionado</div>
           <div>{active&&isAiActive(active.id)?"\u2705":"\u274C"} IA activada para este chat</div>
           <div>{hasAiKey?"\u2705":"\u274C"} API Key configurada</div>
