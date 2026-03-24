@@ -1846,17 +1846,17 @@ REGLAS DE ORO:
           backendUrl:   lsBackendUrl,
           backendSecret: lsSecret,
         }
-        diagLog('ia', 'Enviando a N8N webhook...')
-        const n8nRes = await fetch(N8N_WH, {
+        diagLog('ia', 'Enviando a backend /ai-reply...')
+        const n8nRes = await fetch(BU.replace('/api/whatsapp', '') + '/api/whatsapp/ai-reply', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { ...HJ },
           body: JSON.stringify(n8nPayload),
-          signal: AbortSignal.timeout(35000),
+          signal: AbortSignal.timeout(45000),
         })
-        diagLog('ia', 'N8N respondio: status=' + n8nRes.status)
-        if (!n8nRes.ok) throw new Error(`n8n HTTP ${n8nRes.status}`)
+        diagLog('ia', 'Backend respondio: status=' + n8nRes.status)
+        if (!n8nRes.ok) throw new Error(`Backend AI HTTP ${n8nRes.status}`)
         const n8nData = await n8nRes.json()
-        if (!n8nData?.ok || !n8nData?.reply) throw new Error('n8n sin respuesta válida')
+        if (!n8nData?.reply) throw new Error('Backend sin respuesta válida')
 
         reply = n8nData.reply
         n8nHandled = true
@@ -1889,7 +1889,7 @@ REGLAS DE ORO:
           setAiTyping(false); autoReplyingRef.current = false; return
         }
       } catch (n8nErr) {
-        diagLog('error', 'N8N fallo: ' + (n8nErr.message || n8nErr))
+        diagLog('error', 'Backend AI fallo: ' + (n8nErr.message || n8nErr))
         // n8n no disponible o falló — fallback para texto, error para audio/imagen
         if (isAudioMsg || isImageMsg) {
           tip(`⚠️ n8n no disponible — no se puede procesar ${isAudioMsg ? 'la nota de voz' : 'la imagen'}`)
