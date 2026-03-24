@@ -1,24 +1,64 @@
-# ── Force UTF-8 charset for JS/CSS/HTML ──
-AddDefaultCharset utf-8
-<IfModule mod_mime.c>
-AddCharset utf-8 .js .jsx .css .html .json .svg
-</IfModule>
+DirectoryIndex home.html index.html index.php
+RewriteEngine On
+RewriteBase /
+RewriteRule ^api/ops/notifications/campaigns/?$ apiOpsNotificationsCampaigns.php [L,QSA]
+RewriteRule ^api/ops/notifications/campaigns/([0-9]+)/send/?$ apiOpsNotificationsCampaignSend.php?id=$1 [L,QSA]
+RewriteRule ^api/ops/notifications/campaigns/([0-9]+)/deliveries/?$ apiOpsNotificationsCampaignDeliveries.php?id=$1 [L,QSA]
+RewriteRule ^api/ops/notifications/run-automations/?$ apiOpsNotificationsRunAutomations.php [L,QSA]
+RewriteRule ^api/store/notifications/?$ apiStoreNotifications.php [L,QSA]
+RewriteRule ^api/store/notifications/unread-count/?$ apiStoreNotificationsUnreadCount.php [L,QSA]
+RewriteRule ^api/store/notifications/([0-9]+)/read/?$ apiStoreNotificationRead.php?deliveryId=$1 [L,QSA]
+RewriteRule ^api/ops/dropshipping/templates/?$ apiOpsDropshippingTemplates.php [L,QSA]
+RewriteRule ^api/ops/dropshipping/catalog/?$ apiOpsDropshippingCatalog.php [L,QSA]
+RewriteRule ^api/ops/dropshipping/stores/?$ apiOpsDropshippingStores.php [L,QSA]
+RewriteRule ^api/ops/dropshipping/store-products/?$ apiOpsDropshippingStoreProducts.php [L,QSA]
+RewriteRule ^api/ops/dropshipping/sync-store-products/?$ apiOpsDropshippingSyncStoreProducts.php [L,QSA]
+RewriteRule ^api/ops/dropshipping/notify/?$ apiOpsDropshippingNotify.php [L,QSA]
+RewriteRule ^api/ops/dropshipping/activity/?$ apiOpsDropshippingActivity.php [L,QSA]
+RewriteRule ^api/store/dropshipping/catalog/?$ apiStoreDropshippingCatalog.php [L,QSA]
+RewriteRule ^api/store/dropshipping/my-products/?$ apiStoreDropshippingMyProducts.php [L,QSA]
+RewriteRule ^api/store/dropshipping/add/?$ apiStoreDropshippingAdd.php [L,QSA]
+RewriteRule ^api/store/dropshipping/remove/?$ apiStoreDropshippingRemove.php [L,QSA]
+RewriteRule ^api/store/dropshipping/update-margin/?$ apiStoreDropshippingUpdateMargin.php [L,QSA]
+RewriteRule ^api/ops/wallet/overview/?$ apiOpsWalletOverview.php [L,QSA]
+RewriteRule ^api/ops/wallet/ledger/?$ apiOpsWalletLedger.php [L,QSA]
+RewriteRule ^api/ops/orders/?$ apiOpsOrders.php [L,QSA]
+RewriteRule ^api/ops/orders/([0-9]+)/?$ apiOpsOrdersPatch.php?id=$1 [L,QSA]
+RewriteRule ^api/ops/orders/([0-9]+)/release/?$ apiOpsOrdersRelease.php?id=$1 [L,QSA]
+RewriteRule ^api/ops/withdrawals/?$ apiOpsWithdrawals.php [L,QSA]
+RewriteRule ^api/ops/withdrawals/([0-9]+)/?$ apiOpsWithdrawalsPatch.php?id=$1 [L,QSA]
+RewriteRule ^api/store/wallet/overview/?$ apiStoreWalletOverview.php [L,QSA]
+RewriteRule ^api/store/wallet/ledger/?$ apiStoreWalletLedger.php [L,QSA]
+RewriteRule ^api/store/wallet/withdrawals/?$ apiStoreWalletWithdrawals.php [L,QSA]
+RewriteRule ^api/ai-images/analyze/?$ aiImagesAnalyze.php [L,QSA]
+RewriteRule ^api/ai-images/generate/?$ aiImagesGenerate.php [L,QSA]
+RewriteRule ^api/ai-images/list/?$ aiImagesList.php [L,QSA]
+RewriteRule ^api/ai-images/status/?$ aiImagesStatus.php [L,QSA]
+RewriteRule ^api/ai-images/delete/?$ aiImagesDelete.php [L,QSA]
+RewriteRule ^api/ai-images/health/?$ aiImagesHealth.php [L,QSA]
+RewriteRule ^api/whatsapp/(.*)$ whatsapp-proxy.php?path=$1 [L,QSA]
+RewriteRule ^waBackendUrl\.php$ waBackendUrl.php [L,QSA]
+RewriteRule ^api/co/register/?$ api/co/register/index.php [L,QSA]
+RewriteRule ^api/co/leads/?$ api/co/leads/index.php [L,QSA]
+RewriteRule ^co/?$ /index.html [L]
 
-{
-  "name": ".htaccess",
-  "path": "public_html/.htaccess",
-  "sha": "728984c080bb70a031dc45917c641e147530c4ed",
-  "size": 3900,
-  "url": "https://api.github.com/repos/sanate333/products-web/contents/public_html/.htaccess?ref=main",
-  "html_url": "https://github.com/sanate333/products-web/blob/main/public_html/.htaccess",
-  "git_url": "https://api.github.com/repos/sanate333/products-web/git/blobs/728984c080bb70a031dc45917c641e147530c4ed",
-  "download_url": "https://raw.githubusercontent.com/sanate333/products-web/main/public_html/.htaccess",
-  "type": "file",
-  "content": "RGlyZWN0b3J5SW5kZXggaG9tZS5odG1sIGluZGV4Lmh0bWwgaW5kZXgucGhw\nClJld3JpdGVFbmdpbmUgT24KUmV3cml0ZUJhc2UgLwpSZXdyaXRlUnVsZSBe\nYXBpL29wcy9ub3RpZmljYXRpb25zL2NhbXBhaWducy8/JCBhcGlPcHNOb3Rp\nZmljYXRpb25zQ2FtcGFpZ25zLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5h\ncGkvb3BzL25vdGlmaWNhdGlvbnMvY2FtcGFpZ25zLyhbMC05XSspL3NlbmQv\nPyQgYXBpT3BzTm90aWZpY2F0aW9uc0NhbXBhaWduU2VuZC5waHA/aWQ9JDEg\nW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy9ub3RpZmljYXRpb25zL2Nh\nbXBhaWducy8oWzAtOV0rKS9kZWxpdmVyaWVzLz8kIGFwaU9wc05vdGlmaWNh\ndGlvbnNDYW1wYWlnbkRlbGl2ZXJpZXMucGhwP2lkPSQxIFtMLFFTQV0KUmV3\ncml0ZVJ1bGUgXmFwaS9vcHMvbm90aWZpY2F0aW9ucy9ydW4tYXV0b21hdGlv\nbnMvPyQgYXBpT3BzTm90aWZpY2F0aW9uc1J1bkF1dG9tYXRpb25zLnBocCBb\nTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvc3RvcmUvbm90aWZpY2F0aW9ucy8/\nJCBhcGlTdG9yZU5vdGlmaWNhdGlvbnMucGhwIFtMLFFTQV0KUmV3cml0ZVJ1\nbGUgXmFwaS9zdG9yZS9ub3RpZmljYXRpb25zL3VucmVhZC1jb3VudC8/JCBh\ncGlTdG9yZU5vdGlmaWNhdGlvbnNVbnJlYWRDb3VudC5waHAgW0wsUVNBXQpS\nZXdyaXRlUnVsZSBeYXBpL3N0b3JlL25vdGlmaWNhdGlvbnMvKFswLTldKykv\ncmVhZC8/JCBhcGlTdG9yZU5vdGlmaWNhdGlvblJlYWQucGhwP2RlbGl2ZXJ5\nSWQ9JDEgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy9kcm9wc2hpcHBp\nbmcvdGVtcGxhdGVzLz8kIGFwaU9wc0Ryb3BzaGlwcGluZ1RlbXBsYXRlcy5w\naHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy9kcm9wc2hpcHBpbmcv\nY2F0YWxvZy8/JCBhcGlPcHNEcm9wc2hpcHBpbmdDYXRhbG9nLnBocCBbTCxR\nU0FdClJld3JpdGVSdWxlIF5hcGkvb3BzL2Ryb3BzaGlwcGluZy9zdG9yZXMv\nPyQgYXBpT3BzRHJvcHNoaXBwaW5nU3RvcmVzLnBocCBbTCxRU0FdClJld3Jp\ndGVSdWxlIF5hcGkvb3BzL2Ryb3BzaGlwcGluZy9zdG9yZS1wcm9kdWN0cy8/\nJCBhcGlPcHNEcm9wc2hpcHBpbmdTdG9yZVByb2R1Y3RzLnBocCBbTCxRU0Fd\nClJld3JpdGVSdWxlIF5hcGkvb3BzL2Ryb3BzaGlwcGluZy9zeW5jLXN0b3Jl\nLXByb2R1Y3RzLz8kIGFwaU9wc0Ryb3BzaGlwcGluZ1N5bmNTdG9yZVByb2R1\nY3RzLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvb3BzL2Ryb3BzaGlw\ncGluZy9ub3RpZnkvPyQgYXBpT3BzRHJvcHNoaXBwaW5nTm90aWZ5LnBocCBb\nTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvb3BzL2Ryb3BzaGlwcGluZy9hY3Rp\ndml0eS8/JCBhcGlPcHNEcm9wc2hpcHBpbmdBY3Rpdml0eS5waHAgW0wsUVNB\nXQpSZXdyaXRlUnVsZSBeYXBpL3N0b3JlL2Ryb3BzaGlwcGluZy9jYXRhbG9n\nLz8kIGFwaVN0b3JlRHJvcHNoaXBwaW5nQ2F0YWxvZy5waHAgW0wsUVNBXQpS\nZXdyaXRlUnVsZSBeYXBpL3N0b3JlL2Ryb3BzaGlwcGluZy9teS1wcm9kdWN0\ncy8/JCBhcGlTdG9yZURyb3BzaGlwcGluZ015UHJvZHVjdHMucGhwIFtMLFFT\nQV0KUmV3cml0ZVJ1bGUgXmFwaS9zdG9yZS9kcm9wc2hpcHBpbmcvYWRkLz8k\nIGFwaVN0b3JlRHJvcHNoaXBwaW5nQWRkLnBocCBbTCxRU0FdClJld3JpdGVS\ndWxlIF5hcGkvc3RvcmUvZHJvcHNoaXBwaW5nL3JlbW92ZS8/JCBhcGlTdG9y\nZURyb3BzaGlwcGluZ1JlbW92ZS5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBe\nYXBpL3N0b3JlL2Ryb3BzaGlwcGluZy91cGRhdGUtbWFyZ2luLz8kIGFwaVN0\nb3JlRHJvcHNoaXBwaW5nVXBkYXRlTWFyZ2luLnBocCBbTCxRU0FdClJld3Jp\ndGVSdWxlIF5hcGkvb3BzL3dhbGxldC9vdmVydmlldy8/JCBhcGlPcHNXYWxs\nZXRPdmVydmlldy5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL29wcy93\nYWxsZXQvbGVkZ2VyLz8kIGFwaU9wc1dhbGxldExlZGdlci5waHAgW0wsUVNB\nXQpSZXdyaXRlUnVsZSBeYXBpL29wcy9vcmRlcnMvPyQgYXBpT3BzT3JkZXJz\nLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvb3BzL29yZGVycy8oWzAt\nOV0rKS8/JCBhcGlPcHNPcmRlcnNQYXRjaC5waHA/aWQ9JDEgW0wsUVNBXQpS\nZXdyaXRlUnVsZSBeYXBpL29wcy9vcmRlcnMvKFswLTldKykvcmVsZWFzZS8/\nJCBhcGlPcHNPcmRlcnNSZWxlYXNlLnBocD9pZD0kMSBbTCxRU0FdClJld3Jp\ndGVSdWxlIF5hcGkvb3BzL3dpdGhkcmF3YWxzLz8kIGFwaU9wc1dpdGhkcmF3\nYWxzLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvb3BzL3dpdGhkcmF3\nYWxzLyhbMC05XSspLz8kIGFwaU9wc1dpdGhkcmF3YWxzUGF0Y2gucGhwP2lk\nPSQxIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9zdG9yZS93YWxsZXQvb3Zl\ncnZpZXcvPyQgYXBpU3RvcmVXYWxsZXRPdmVydmlldy5waHAgW0wsUVNBXQpS\nZXdyaXRlUnVsZSBeYXBpL3N0b3JlL3dhbGxldC9sZWRnZXIvPyQgYXBpU3Rv\ncmVXYWxsZXRMZWRnZXIucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9z\ndG9yZS93YWxsZXQvd2l0aGRyYXdhbHMvPyQgYXBpU3RvcmVXYWxsZXRXaXRo\nZHJhd2Fscy5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL2FpLWltYWdl\ncy9hbmFseXplLz8kIGFpSW1hZ2VzQW5hbHl6ZS5waHAgW0wsUVNBXQpSZXdy\naXRlUnVsZSBeYXBpL2FpLWltYWdlcy9nZW5lcmF0ZS8/JCBhaUltYWdlc0dl\nbmVyYXRlLnBocCBbTCxRU0FdClJld3JpdGVSdWxlIF5hcGkvYWktaW1hZ2Vz\nL2xpc3QvPyQgYWlJbWFnZXNMaXN0LnBocCBbTCxRU0FdClJld3JpdGVSdWxl\nIF5hcGkvYWktaW1hZ2VzL3N0YXR1cy8/JCBhaUltYWdlc1N0YXR1cy5waHAg\nW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL2FpLWltYWdlcy9kZWxldGUvPyQg\nYWlJbWFnZXNEZWxldGUucGhwIFtMLFFTQV0KUmV3cml0ZVJ1bGUgXmFwaS9h\naS1pbWFnZXMvaGVhbHRoLz8kIGFpSW1hZ2VzSGVhbHRoLnBocCBbTCxRU0Fd\nClJld3JpdGVSdWxlIF5hcGkvd2hhdHNhcHAvKC4qKSQgd2hhdHNhcHAtcHJv\neHkucGhwP3BhdGg9JDEgW0wsUVNBXQpSZXdyaXRlUnVsZSBed2FCYWNrZW5k\nVXJsXC5waHAkIHdhQmFja2VuZFVybC5waHAgW0wsUVNBXQpSZXdyaXRlUnVs\nZSBeYXBpL2NvL3JlZ2lzdGVyLz8kIGFwaS9jby9yZWdpc3Rlci9pbmRleC5w\naHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeYXBpL2NvL2xlYWRzLz8kIGFwaS9j\nby9sZWFkcy9pbmRleC5waHAgW0wsUVNBXQpSZXdyaXRlUnVsZSBeY28vPyQg\nL2luZGV4Lmh0bWwgW0xdCgojIOKUgOKUgCBBcmNoaXZvcyBlc3TDoXRpY29z\nOiBzZXJ2aXIgZGlyZWN0bywgTk8gcGFzYXIgYWwgU1BBIOKUgOKUgApSZXdy\naXRlUnVsZSBeaG9tZVwuaHRtbCQgLSBbTF0KUmV3cml0ZVJ1bGUgXnByb3Zl\nZWRvcmVzXC5odG1sJCAtIFtMXQoKIyBIb21lIFBsdXMgVjUgRklOQUwg4oCU\nIGFjdGl2YSBlbiAvClJld3JpdGVSdWxlIF4kIC9ob21lLmh0bWwgW0xdCiMg\nSG9tZSBGcmVlIFJlYWN0IOKAlCBhY2Nlc2libGUgZW4gL2hvbWUtZnJlZQpS\nZXdyaXRlUnVsZSBeaG9tZS1mcmVlLz8kIC9pbmRleC5odG1sIFtMXQojIFBv\ncnRhbCBwcm92ZWVkb3JlcwpSZXdyaXRlUnVsZSBecHJvdmVlZG9yZXMvPyQg\nL3Byb3ZlZWRvcmVzLmh0bWwgW0xdCgojIFNQQSBjYXRjaC1hbGwg4oCUIHNv\nbG8gc2kgZWwgYXJjaGl2byBOTyBleGlzdGUKUmV3cml0ZUNvbmQgJXtSRVFV\nRVNUX0ZJTEVOQU1FfSAhLWYKUmV3cml0ZUNvbmQgJXtSRVFVRVNUX0ZJTEVO\nQU1FfSAhLWQKUmV3cml0ZVJ1bGUgXiAvaW5kZXguaHRtbCBbTF0KCnBocF92\nYWx1ZSB1cGxvYWRfbWF4X2ZpbGVzaXplIDIwTQpwaHBfdmFsdWUgcG9zdF9t\nYXhfc2l6ZSAyME0KcGhwX3ZhbHVlIG1heF9maWxlX3VwbG9hZHMgNTAKcGhw\nX3ZhbHVlIG1heF9leGVjdXRpb25fdGltZSAxMjAK\n",
-  "encoding": "base64",
-  "_links": {
-    "self": "https://api.github.com/repos/sanate333/products-web/contents/public_html/.htaccess?ref=main",
-    "git": "https://api.github.com/repos/sanate333/products-web/git/blobs/728984c080bb70a031dc45917c641e147530c4ed",
-    "html": "https://github.com/sanate333/products-web/blob/main/public_html/.htaccess"
-  }
-}
+# ââ Archivos estÃ¡ticos: servir directo, NO pasar al SPA ââ
+RewriteRule ^home\.html$ - [L]
+RewriteRule ^proveedores\.html$ - [L]
+
+# Home Plus V5 FINAL â activa en /
+RewriteRule ^$ /home.html [L]
+# Home Free React â accesible en /home-free
+RewriteRule ^home-free/?$ /index.html [L]
+# Portal proveedores
+RewriteRule ^proveedores/?$ /proveedores.html [L]
+
+# SPA catch-all â solo si el archivo NO existe
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ /index.html [L]
+
+php_value upload_max_filesize 20M
+php_value post_max_size 20M
+php_value max_file_uploads 50
+php_value max_execution_time 120
