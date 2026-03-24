@@ -2420,7 +2420,7 @@ ${conversation}`
   return (
     <div className="containerGrid">
       <Header noFloat />
-      <div className="wbv5-root">
+      <div className="wbv5-root" translate="no">
 
         {/* ── SIDEBAR ── */}
         <div className="wbv5-sidebar">
