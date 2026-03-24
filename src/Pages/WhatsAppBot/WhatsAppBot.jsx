@@ -860,6 +860,18 @@ export default function WhatsAppBot() {
   // Auto-reply deduplication: IDs ya procesados por el bot automático
   const aiProcessedRef      = useRef(new Set())
   const autoReplyingRef     = useRef(false)
+
+  // ── PANEL DE DIAGNÓSTICO ──────────────────────────────────────
+  const diagLogRef = useRef([])
+  const [showDiagPanel, setShowDiagPanel] = useState(false)
+  const [diagLogs, setDiagLogs] = useState([])
+  const diagLog = (type, msg, data) => {
+    const entry = { ts: new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" }), type, msg, data: data ? JSON.stringify(data).substring(0, 200) : null }
+    diagLogRef.current = [...diagLogRef.current.slice(-149), entry]
+    setDiagLogs([...diagLogRef.current])
+    if (type === "error") console.error("[DIAG] " + msg, data || "")
+    else console.log("[DIAG][" + type + "] " + msg, data || "")
+  }
   const autoReplyTimerRef   = useRef(null)  // debounce timer
   const autoReplyGenRef     = useRef(0)     // generación: se incrementa para cancelar respuesta en curso
   const chatOpenedAtRef     = useRef(0)     // timestamp al abrir chat — evita responder historial
@@ -930,10 +942,13 @@ export default function WhatsAppBot() {
     function connectSSE() {
       try {
         es = new EventSource(BU + '/events')
+        diagLog('info', 'SSE conectado a ' + BU + '/events')
         es.onmessage = (e) => {
           try {
             const d = JSON.parse(e.data)
             if (d.type === 'chat_update') {
+            diagLog('msg', 'SSE chat_update recibido', { chatId: d.chatId && d.chatId.substring(0,15) })
+
               setChats(prev => {
                 const idx = prev.findIndex(c => c.id === d.chatId)
                 if (idx === -1) { loadC().catch(() => {}); return prev }
@@ -955,7 +970,9 @@ export default function WhatsAppBot() {
             }
             } catch {}
         }
-        es.onerror = () => { es.close(); es = null; retryTimer = setTimeout(connectSSE, 5000) }
+        es.onerror = () => {
+          diagLog('error', 'SSE desconectado, reconectando...')
+ es.close(); es = null; retryTimer = setTimeout(connectSSE, 5000) }
       } catch {}
     }
     connectSSE()
@@ -988,6 +1005,7 @@ export default function WhatsAppBot() {
     if (!active || !msgs.length) return
     const incoming = msgs.filter(m => m.dir === 'r')
     if (!incoming.length) return
+    diagLog('msg', 'Mensaje entrante detectado: ' + incoming.length + ' msgs')
     const lastIn = incoming[incoming.length - 1]
 
     // Dedup por ID
@@ -1004,6 +1022,7 @@ export default function WhatsAppBot() {
       const incomingText = lastIn.txt.trim().toLowerCase()
       const isEcho = sentTextsRef.current.some(s => s.txt === incomingText)
       if (isEcho) {
+        diagLog('skip', 'Echo detectado, ignorando')
         // Marcar como procesado para no revisarlo de nuevo
         aiProcessedRef.current.add(lastIn.id)
         aiProcessedRef.current.add(contentKey)
@@ -1015,7 +1034,7 @@ export default function WhatsAppBot() {
     aiProcessedRef.current.add(contentKey)
 
     // Grace period de 4s al abrir el chat para no responder el historial
-    if (Date.now() - chatOpenedAtRef.current < 4000) return
+    if (Date.now() - chatOpenedAtRef.current < 4000) { diagLog('skip', 'Grace period 4s activo'); return }
 
     // ── Disparadores de Palabra Clave (independientes de IA ON/OFF) ──────────
     if (lastIn.txt && isTriggerActive(active.id)) {
@@ -1036,8 +1055,9 @@ export default function WhatsAppBot() {
     }
 
     // Verificar que IA esté ON para este chat y haya API key
-    if (!isAiActive(active.id)) return
-    if (!hasAiKey) return
+    if (!isAiActive(active.id)) { diagLog('skip', 'IA desactivada para este chat'); return }
+    if (!hasAiKey) { diagLog('error', 'Sin API Key configurada'); return }
+    diagLog('ia', 'IA activa y con API key, preparando auto-respuesta...')
     // Si la IA ya estaba generando una respuesta → cancelarla (el cliente mandó algo nuevo)
     if (autoReplyingRef.current) {
       autoReplyGenRef.current += 1
@@ -1685,7 +1705,10 @@ export default function WhatsAppBot() {
   }
 
   async function autoReplyToMsg(lastClientMsg, targetChatId) {
-    if (!hasAiKey || !active || autoReplyingRef.current) return
+    if (!hasAiKey) { diagLog('error', 'autoReplyToMsg: sin API key'); return }
+    if (!active) { diagLog('error', 'autoReplyToMsg: sin chat activo'); return }
+    if (autoReplyingRef.current) { diagLog('skip', 'autoReplyToMsg: ya respondiendo, skip'); return }
+    diagLog('ia', 'autoReplyToMsg iniciando para: ' + targetChatId)
     // Si el usuario cambió de chat durante el delay del debounce → abortar.
     // targetChatId fue capturado al momento de programar el timeout (antes del delay).
     if (targetChatId && active.id !== targetChatId) return
@@ -1823,12 +1846,14 @@ REGLAS DE ORO:
           backendUrl:   lsBackendUrl,
           backendSecret: lsSecret,
         }
+        diagLog('ia', 'Enviando a N8N webhook...')
         const n8nRes = await fetch(N8N_WH, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(n8nPayload),
           signal: AbortSignal.timeout(35000),
         })
+        diagLog('ia', 'N8N respondio: status=' + n8nRes.status)
         if (!n8nRes.ok) throw new Error(`n8n HTTP ${n8nRes.status}`)
         const n8nData = await n8nRes.json()
         if (!n8nData?.ok || !n8nData?.reply) throw new Error('n8n sin respuesta válida')
@@ -1864,6 +1889,7 @@ REGLAS DE ORO:
           setAiTyping(false); autoReplyingRef.current = false; return
         }
       } catch (n8nErr) {
+        diagLog('error', 'N8N fallo: ' + (n8nErr.message || n8nErr))
         // n8n no disponible o falló — fallback para texto, error para audio/imagen
         if (isAudioMsg || isImageMsg) {
           tip(`⚠️ n8n no disponible — no se puede procesar ${isAudioMsg ? 'la nota de voz' : 'la imagen'}`)
@@ -4185,7 +4211,7 @@ ${conversation}`
                   ))}
                   <div className="wbv5-cfg-section-title">Bot & IA</div>
                   {[
-                    { id: 'nativebot',  label: '🤖 Bot IA' },
+                    // { id: 'nativebot',  label: '🤖 Bot IA' },  // REMOVED - integrated into IA panel
                     { id: 'bot',      label: '⚙️ Comportamiento bot' },
                   ].map(t => (
                     <div key={t.id} className={`wbv5-cfg-nav ${cfgTab === t.id ? 'active' : ''}`} onClick={() => setCfgTab(t.id)}>{t.label}</div>
@@ -5006,6 +5032,54 @@ ${conversation}`
         </div>
       </div>
       {toast && <div className="wbv5-toast">{toast}</div>}
+
+
+      {/* DIAGNOSTIC PANEL */}
+      <div style={{position:"fixed",bottom:"20px",right:"20px",zIndex:99999}}>
+        <button onClick={()=>setShowDiagPanel(!showDiagPanel)} style={{width:"48px",height:"48px",borderRadius:"50%",border:"none",background:"#128c7e",color:"white",fontSize:"20px",cursor:"pointer",boxShadow:"0 2px 8px rgba(0,0,0,.3)"}}>&#x1F527;</button>
+      </div>
+      {showDiagPanel && <div style={{position:"fixed",bottom:"80px",right:"20px",width:"420px",maxHeight:"70vh",background:"#1a1a2e",color:"#eee",borderRadius:"12px",boxShadow:"0 4px 20px rgba(0,0,0,.5)",zIndex:99999,overflow:"hidden",display:"flex",flexDirection:"column",fontFamily:"monospace",fontSize:"12px"}}>
+        <div style={{padding:"10px 14px",background:"#16213e",borderBottom:"1px solid #333",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <b>Panel Diagnostico IA</b>
+          <button onClick={()=>setShowDiagPanel(false)} style={{background:"none",border:"none",color:"#aaa",fontSize:"16px",cursor:"pointer"}}>X</button>
+        </div>
+        <div style={{padding:"10px 14px",borderBottom:"1px solid #333"}}>
+          <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
+            <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:isConnected?"#27ae60":"#c0392b"}}>{isConnected?"WA Conectado":"WA Desconectado"}</span>
+            <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:active&&isAiActive(active.id)?"#27ae60":"#c0392b"}}>{active&&isAiActive(active.id)?"IA ON":"IA OFF"}</span>
+            <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:hasAiKey?"#27ae60":"#c0392b"}}>{hasAiKey?"API Key OK":"Sin API Key"}</span>
+            <span style={{padding:"2px 8px",borderRadius:"10px",fontSize:"11px",background:"#2c3e50"}}>{active?active.name||active.id:"Sin chat activo"}</span>
+          </div>
+        </div>
+        <div style={{padding:"10px 14px",borderBottom:"1px solid #333"}}>
+          <div><b>Checklist:</b></div>
+          <div>{isConnected?"\u2705":"\u274C"} WhatsApp conectado</div>
+          <div>{active?"\u2705":"\u274C"} Chat seleccionado</div>
+          <div>{active&&isAiActive(active.id)?"\u2705":"\u274C"} IA activada para este chat</div>
+          <div>{hasAiKey?"\u2705":"\u274C"} API Key configurada</div>
+          <div>{!autoReplyingRef.current?"\u2705":"\u26A0\uFE0F"} IA disponible (no procesando)</div>
+        </div>
+        <div style={{padding:"10px 14px",borderBottom:"1px solid #333",display:"flex",gap:"6px",flexWrap:"wrap"}}>
+          <button onClick={()=>{autoReplyingRef.current=false;diagLog("info","Lock de IA reseteado manualmente")}} style={{padding:"4px 10px",borderRadius:"6px",border:"1px solid #555",background:"#2c3e50",color:"#eee",cursor:"pointer",fontSize:"11px"}}>Reset IA Lock</button>
+          <button onClick={()=>{aiProcessedRef.current=new Set();diagLog("info","Dedup limpiado")}} style={{padding:"4px 10px",borderRadius:"6px",border:"1px solid #555",background:"#2c3e50",color:"#eee",cursor:"pointer",fontSize:"11px"}}>Limpiar Dedup</button>
+          <button onClick={()=>{diagLogRef.current=[];setDiagLogs([])}} style={{padding:"4px 10px",borderRadius:"6px",border:"1px solid #555",background:"#2c3e50",color:"#eee",cursor:"pointer",fontSize:"11px"}}>Limpiar Logs</button>
+        </div>
+        <div style={{flex:1,overflow:"auto",padding:"8px 14px"}}>
+          <div><b>Event Log ({diagLogs.length}):</b></div>
+          {diagLogs.slice().reverse().map((e,i)=>(
+            <div key={i} style={{padding:"3px 0",borderBottom:"1px solid #222",color:
+              e.type==="error"?"#e74c3c":
+              e.type==="skip"?"#f39c12":
+              e.type==="ia"?"#2ecc71":
+              e.type==="msg"?"#3498db":"#bbb"
+            }}>
+              <span style={{opacity:.6}}>[{e.ts}]</span> <span style={{fontWeight:"bold"}}>[{e.type}]</span> {e.msg}
+              {e.data && <div style={{fontSize:"10px",opacity:.5,wordBreak:"break-all"}}>{e.data}</div>}
+            </div>
+          ))}
+        </div>
+      </div>}
+
     </div>
   )
 }
