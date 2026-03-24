@@ -947,7 +947,13 @@ export default function WhatsAppBot() {
               setStatus(s)
               if (s === 'connected') loadC().catch(() => {})
             }
-          } catch {}
+          
+ if (d.type === 'message_status') {
+              setMsgs(prev => prev.map(msg =>
+                msg.id === d.data.messageId ? { ...msg, status: d.data.status } : msg
+              ))
+            }
+            } catch {}
         }
         es.onerror = () => { es.close(); es = null; retryTimer = setTimeout(connectSSE, 5000) }
       } catch {}
@@ -2916,7 +2922,7 @@ ${conversation}`
 
                           {/* ── sticker ── */}
                           {m.type === 'sticker' ? <div style={{ fontSize: '2rem' }}>{m.txt || '🎨'}</div> : null}
-                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? ' ✓✓' : ''}</div>
+                          <div className="wbv5-msg-time">{m.time}{m.dir === 's' ? (() => { const st = m.status || 'sent'; if (st === 'read' || st === 'played') return <span style={{color:'#53bdeb'}}> ✓✓</span>; if (st === 'delivered') return ' ✓✓'; return ' ✓'; })() : ''}</div>
                         </div>
                       )})}
                     </div>
