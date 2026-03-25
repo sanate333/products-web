@@ -4709,7 +4709,35 @@ ${conversation}`
                   )}
 
                   {/* API & Tokens */}
-                  {cfgTab === 'api' && (<ApiKeysPanel />)}
+                  {cfgTab === 'api' && (<><ApiKeysPanel />
+
+              {/* === SYSTEM PROMPT === */}
+              <div style={{ background: '#1a1a2e', borderRadius: 16, padding: 24, marginTop: 20 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                  <div>
+                    <div style={{ color: '#fff', fontWeight: 700, fontSize: 15 }}>SYSTEM PROMPT</div>
+                    <div style={{ color: '#94a3b8', fontSize: 12, marginTop: 2 }}>Instrucciones de comportamiento para la IA. Define el tono, personalidad y reglas del bot.</div>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const payload = { systemPrompt: trainingPrompt }
+                        const r = await fetch(BU + '/settings', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-secret': SECRET }, body: JSON.stringify(payload) })
+                        if (r.ok) { tip('System prompt guardado y sincronizado') } else { tip('Error al guardar prompt') }
+                      } catch { tip('Error de conexion') }
+                    }}
+                    style={{ background: '#10b981', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 20px', fontWeight: 600, cursor: 'pointer', fontSize: 13 }}
+                  >Guardar</button>
+                </div>
+                <textarea
+                  value={trainingPrompt}
+                  onChange={e => setTrainingPrompt(e.target.value)}
+                  placeholder="Ej: Eres un asistente de ventas de Sanate. Responde amablemente, ofrece productos y cierra ventas..."
+                  style={{ width: '100%', minHeight: 160, background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 10, padding: 14, fontSize: 13, fontFamily: 'inherit', resize: 'vertical', outline: 'none', lineHeight: 1.5 }}
+                />
+                <div style={{ color: '#64748b', fontSize: 11, marginTop: 6 }}>{(trainingPrompt || '').length} caracteres</div>
+              </div>
+              </>)}
 
                   {/* Comportamiento bot */}
                   {cfgTab === 'bot' && (
