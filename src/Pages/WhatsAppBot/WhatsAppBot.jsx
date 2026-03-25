@@ -1233,12 +1233,30 @@ export default function WhatsAppBot() {
   // ║  ping · loadQR · drawQR · drawQRWaiting · regenerateQR     ║
   // ║  Cualquier cambio en estas 5 funciones puede romper el QR  ║
   // ╚══════════════════════════════════════════════════════════════╝
+  // -- Cargar config de IA DESDE el servidor (fuente de verdad en la nube) --
+  async function loadConfigFromServer() {
+    try {
+      const r = await fetch(BU + '/ai-config', { headers: H })
+      const cfg = await r.json()
+      if (cfg.enabled !== undefined) { setAiEnabled(cfg.enabled); try { localStorage.setItem('wa_ai_enabled', JSON.stringify(cfg.enabled)) } catch {} }
+      if (cfg.geminiKey) { setGeminiKey(cfg.geminiKey); try { localStorage.setItem('wa_gemini_key', cfg.geminiKey) } catch {} }
+      if (cfg.claudeKey) { setClaudeKey(cfg.claudeKey); try { localStorage.setItem('wa_claude_key', cfg.claudeKey) } catch {} }
+      if (cfg.openaiKey) { setOpenaiKey(cfg.openaiKey); try { localStorage.setItem('wa_openai_key', cfg.openaiKey) } catch {} }
+      if (cfg.systemPrompt) { setTrainingPrompt(cfg.systemPrompt); setTrainingChars(cfg.systemPrompt.length); try { localStorage.setItem('wa_training_prompt', cfg.systemPrompt) } catch {} }
+      if (cfg.contactMap && Object.keys(cfg.contactMap).length > 0) { setAiContactMap(cfg.contactMap); try { localStorage.setItem('wa_ai_contact_map', JSON.stringify(cfg.contactMap)) } catch {} }
+      if (cfg.botDelay !== undefined) { try { localStorage.setItem('wa_bot_delay', String(cfg.botDelay)) } catch {} }
+      if (cfg.msgMode) { try { localStorage.setItem('wa_msg_mode', cfg.msgMode) } catch {} }
+      if (cfg.useEmojis !== undefined) { try { localStorage.setItem('wa_use_emojis', JSON.stringify(cfg.useEmojis)) } catch {} }
+      console.log('[loadConfig] Config cargada del servidor')
+    } catch (e) { console.warn('[loadConfig] Error:', e.message) }
+  }
+
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
       setServerOnline(prev => {
         // Primera vez online → sincronizar settings al backend en background
-        if (prev !== true) setTimeout(() => syncSettingsToBackend({ silent: true }), 1200)
+        if (prev !== true) setTimeout(() => loadConfigFromServer(), 800)
         return true
       })
       // IMPORTANTE: evaluar correctamente; sin paréntesis la precedencia es incorrecta
@@ -1550,8 +1568,8 @@ export default function WhatsAppBot() {
     // Sincronizar al backend para modo Chrome cerrado
     setTimeout(() => syncSettingsToBackend({ silent: true }), 500)
   }
-  function saveGeminiKey(v) { setGeminiKey(v);   try { localStorage.setItem('wa_gemini_key', v) } catch {} }
-  function saveClaudeKey(v) { setClaudeKey(v); try { localStorage.setItem('wa_claude_key', v) } catch {} }
+  function saveGeminiKey(v) { setGeminiKey(v); try { localStorage.setItem('wa_gemini_key', v) } catch {}; setTimeout(() => syncSettingsToBackend({ silent: true }), 500) }
+  function saveClaudeKey(v) { setClaudeKey(v); try { localStorage.setItem('wa_claude_key', v) } catch {}; setTimeout(() => syncSettingsToBackend({ silent: true }), 500) }
   function saveAiPrompt(v)  { setAiPrompt(v);    try { localStorage.setItem('wa_ai_prompt', v) } catch {} }
 
   // ── Llamada IA universal (OpenAI o Gemini) ─────────────────────
@@ -2067,12 +2085,16 @@ ${conversation}`
     const lsNbFallback  = (() => { try { return localStorage.getItem('wa_nb_fallback') || '' } catch { return '' } })()
     // Leer mapa de contactos con AI activa
     const lsAiContactMap = (() => { try { return JSON.parse(localStorage.getItem('wa_ai_contact_map') || '{}') } catch { return {} } })()
+    const lsGeminiKey = (() => { try { return localStorage.getItem('wa_gemini_key') || '' } catch { return '' } })()
+    const lsClaudeKey = (() => { try { return localStorage.getItem('wa_claude_key') || '' } catch { return '' } })()
     const payload = {
       botEnabled:       lsAiOn,
       n8nEnabled:       isPublic && !!N8N_WH, // solo activar si URL pública
       n8nWebhook:       N8N_WH,
       backendPublicUrl: isPublic ? curBase : '',
       openaiKey:        lsKey,
+      geminiKey:        lsGeminiKey,
+      claudeKey:        lsClaudeKey,
       systemPrompt:     sysP,
       aiContactMap:     lsAiContactMap,
       nativeBotEnabled:       lsNbEnabled,
