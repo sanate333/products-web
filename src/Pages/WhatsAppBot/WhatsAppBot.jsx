@@ -1236,7 +1236,7 @@ export default function WhatsAppBot() {
   async function ping() {
     try {
       const d = await (await fetch(BU + '/status', { headers: H })).json()
-      window._pingRetries=0; setServerOnline(prev => {
+      setServerOnline(prev => {
         // Primera vez online → sincronizar settings al backend en background
         if (prev !== true) setTimeout(() => syncSettingsToBackend({ silent: true }), 1200)
         return true
@@ -1256,7 +1256,7 @@ export default function WhatsAppBot() {
       else if (s === 'disconnected' && !d.hasQR) {
         try { await fetch(BU + '/connect', { method: 'POST', headers: H }) } catch {}
       }
-    } catch { if(!window._pingRetries) window._pingRetries=0; window._pingRetries++; if(window._pingRetries>=20){ setServerOnline(false); setStatus('disconnected') } }
+    } catch {} // silently retry via interval
   }
 
   async function loadQR() {
@@ -2491,7 +2491,7 @@ ${conversation}`
           ))}
           <div className="wbv5-sb-footer">
             <div className={`wbv5-status-badge ${status === 'connected' ? 'green' : status === 'connecting' ? 'amber' : 'gray'}`}>
-              {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando...' : serverOnline === false ? '🔌 Despertando...' : '⏳ No conectado'}
+              {status === 'connected' ? '✅ Conectado' : status === 'connecting' ? '⏳ Conectando...' : serverOnline === false ? '🔌 Conectando...' : '⏳ No conectado'}
             </div>
             <div style={{ marginTop: '.3rem', fontSize: '.62rem', color: '#9ca3af' }}>n8n + Baileys</div>
             <button
@@ -4061,15 +4061,9 @@ ${conversation}`
                     </>
                   ) : serverOnline === false ? (
                     <>
-        <h3 style={{ color: '#f59e0b', margin: '0 0 .35rem' }}>⚠️ Servidor despertando...</h3>
-        <p style={{ opacity: .9, margin: '0 0 .6rem' }}>
-          El servidor gratuito de Render se duerme tras 15 min de inactividad. Está despertando, esto puede tomar hasta 60 segundos.
-        </p>
-        <p style={{ opacity: .7, fontSize: '.8rem', margin: '0 0 .8rem' }}>
-          Reintentando automáticamente...
-        </p>
-        <button className="wbv5-btn" style={{ marginTop: '.5rem', width: '100%', background: '#fff', color: '#075e54', fontSize: '.85rem', padding: '.55rem 1rem', fontWeight: 700 }} onClick={() => { window._pingRetries = 0; setServerOnline(null); setTimeout(ping, 500); }}>
-          🔄 Reintentar conexión
+        <p style={{ textAlign: 'center', opacity: .7 }}>Conectando al servidor...</p>
+        <button className="wbv5-btn" style={{ marginTop: '.5rem', width: '100%', background: '#fff', color: '#075e54', fontSize: '.85rem', padding: '.55rem 1rem', fontWeight: 700 }} onClick={ping}>
+          Reintentar
         </button>
       </>
                   ) : (
