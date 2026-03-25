@@ -4722,7 +4722,7 @@ ${conversation}`
                     onClick={async () => {
                       try {
                         const payload = { systemPrompt: trainingPrompt }
-                        const r = await fetch(BU + '/settings', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-secret': SECRET }, body: JSON.stringify(payload) })
+                        const r = await fetch(BU + '/settings', { method: 'POST', headers: { 'Content-Type': 'application/json', ...H }, body: JSON.stringify(payload) })
                         if (r.ok) { tip('System prompt guardado y sincronizado') } else { tip('Error al guardar prompt') }
                       } catch { tip('Error de conexion') }
                     }}
