@@ -1,3 +1,4 @@
+
 <!DOCTYPE html><!-- build:20260314-162721 -->
 <html lang="es">
 <head>
@@ -190,7 +191,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .cc.star .cc-it{color:rgba(210,235,248,.82);border-bottom-color:rgba(255,255,255,.07)}
 .cc.star .cc-items .cc-it{color:rgba(210,235,248,.82)}
 .cc-pricing{background:rgba(7,25,46,.04);border:1px solid rgba(7,25,46,.06);border-radius:9px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
-.cc.star .cc-pricing{background:rgba(201,160,48,.09);border-color:rgba(201,160,48,.2)}.cc.star .cc-old{color:rgba(210,235,248,.65) !important}.cc.star .cc-micro{color:rgba(210,235,248,.55) !important}
+.cc.star .cc-pricing{background:rgba(201,160,48,.09);border-color:rgba(201,160,48,.2)}.cc.star .cc-old{color:rgba(7,25,46,0.80) !important}.cc.star .cc-micro{color:rgba(210,235,248,.55) !important}
 .cc-old{font-size:10.5px;color:var(--gray2);text-decoration:line-through;display:block}
 .cc-price{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--navy);display:block;line-height:1.1}
 .cc.star .cc-price{color:var(--gold2)}
@@ -834,8 +835,8 @@ footer{background:var(--black);color:rgba(255,255,255,.4)}
 /* ── CUSTOM CURSOR ── */
 #customCursor{position:fixed;width:18px;height:18px;border-radius:50%;background:rgba(61,201,232,.35);border:1.5px solid rgba(61,201,232,.6);pointer-events:none;z-index:99999;transform:translate(-50%,-50%);transition:width .2s,height .2s,background .2s;mix-blend-mode:screen}
 #customCursor.hover{width:36px;height:36px;background:rgba(201,160,48,.25);border-color:var(--gold)}
-body{cursor:none}
-a,button,[onclick]{cursor:none}
+body{cursor:auto}
+a,button,[onclick]{cursor:pointer}
 
 /* ── LIVE PROOF BAR ── */
 .live-proof-bar{position:fixed;bottom:80px;left:16px;z-index:3000;background:rgba(7,25,46,.95);border:1px solid rgba(61,201,232,.25);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:10px;font-size:12px;color:rgba(210,235,248,.85);max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4);backdrop-filter:blur(12px);animation:lpSlide .5s ease;transition:opacity .4s}
@@ -888,7 +889,7 @@ a,button,[onclick]{cursor:none}
 .cls5-h{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.4rem);font-weight:300;color:#fff;line-height:1.2;margin:0 0 20px}
 .cls5-h em{color:var(--gold);font-style:italic}
 .cls5-line1,.cls5-line2{display:block;overflow:hidden}
-.cls5-lead{font-size:15px;color:rgba(210,235,248,.65);line-height:1.7;margin:0 0 36px;max-width:560px;margin-left:auto;margin-right:auto}
+.cls5-lead{font-size:15px;color:rgba(7,25,46,0.80);line-height:1.7;margin:0 0 36px;max-width:560px;margin-left:auto;margin-right:auto}
 
 /* Stats counters */
 .cls5-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:36px}
@@ -920,13 +921,13 @@ a,button,[onclick]{cursor:none}
 /* CTA buttons */
 .cls5-ctas{display:flex;flex-direction:column;align-items:center;gap:14px;margin-bottom:24px}
 @media(min-width:500px){.cls5-ctas{flex-direction:row;justify-content:center}}
-.cls5-btn-main{position:relative;background:linear-gradient(135deg,var(--gold),#d4a820);color:#fff;border:none;border-radius:100px;padding:18px 40px;font-size:16px;font-weight:800;cursor:none;overflow:hidden;display:flex;align-items:center;gap:10px;box-shadow:0 8px 40px rgba(201,160,48,.45);transition:box-shadow .3s,transform .2s}
+.cls5-btn-main{position:relative;background:linear-gradient(135deg,var(--gold),#d4a820);color:#fff;border:none;border-radius:100px;padding:18px 40px;font-size:16px;font-weight:800;cursor:pointer;overflow:hidden;display:flex;align-items:center;gap:10px;box-shadow:0 8px 40px rgba(201,160,48,.45);transition:box-shadow .3s,transform .2s}
 .cls5-btn-main:hover{box-shadow:0 16px 60px rgba(201,160,48,.6)}
 .btn-shine{position:absolute;top:-50%;left:-70%;width:50%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.25),transparent);transform:skewX(-20deg);animation:shineSweep 3s ease-in-out infinite}
 @keyframes shineSweep{0%{left:-70%}60%,100%{left:130%}}
 .btn-arrow{font-size:20px;transition:transform .3s}
 .cls5-btn-main:hover .btn-arrow{transform:translateX(6px)}
-.cls5-btn-wa{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:100px;padding:16px 32px;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 6px 30px rgba(37,211,102,.35);transition:box-shadow .3s,transform .2s;cursor:none}
+.cls5-btn-wa{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:100px;padding:16px 32px;font-size:15px;font-weight:700;text-decoration:none;box-shadow:0 6px 30px rgba(37,211,102,.35);transition:box-shadow .3s,transform .2s;cursor:pointer}
 .cls5-btn-wa:hover{box-shadow:0 12px 50px rgba(37,211,102,.5)}
 .cls5-micro{font-size:11px;color:rgba(210,235,248,.35);margin:0}
 
@@ -966,8 +967,8 @@ a,button,[onclick]{cursor:none}
 .marquee-wrap{overflow:hidden;background:rgba(61,201,232,.06);border-top:1px solid rgba(61,201,232,.12);border-bottom:1px solid rgba(61,201,232,.12);padding:10px 0;margin:0 0 0}
 .marquee-track{display:flex;gap:48px;white-space:nowrap;animation:marqueeRoll 30s linear infinite}
 .marquee-track:hover{animation-play-state:paused}
-.marquee-item{font-size:12.5px;color:rgba(210,235,248,.65);display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
-.marquee-item strong{color:var(--sky2)}
+.marquee-item{font-size:12.5px;color:rgba(7,25,46,0.80);display:inline-flex;align-items:center;gap:6px;flex-shrink:0}
+.marquee-item strong{color:#07192e}
 @keyframes marqueeRoll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
 @media(max-width:600px){
@@ -975,6 +976,7 @@ a,button,[onclick]{cursor:none}
   .cls5-btn-main{font-size:14px;padding:16px 28px}
   .live-proof-bar{font-size:11px;max-width:280px}
 }
+
 </style>
 <body>
 
@@ -1623,14 +1625,14 @@ a,button,[onclick]{cursor:none}
       <div class="pain-card">
         <div class="pain-before-after">
           <div class="pain-img-wrap">
-            <img src="https://images.pexels.com/photos/4046567/pexels-photo-4046567.jpeg?w=400&h=320&fit=crop&q=85" alt="Piel con manchas e hiperpigmentación — antes SÁNATE" loading="lazy"/>
+            <img src="https://sanate.store/ai-images/WhatsApp%20Image%202026-03-15%20at%203.38.43%20AM%20(1).jpeg" alt="Piel con manchas e hiperpigmentación — antes SÁNATE" loading="lazy"/>
             <div class="pain-label before-lbl">ANTES</div>
             <div class="pain-overlay">
               <p class="pain-quote">"Llevaba años intentando borrar las manchas. Nada funcionaba."</p>
             </div>
           </div>
           <div class="pain-img-wrap after-wrap">
-            <img src="https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?w=400&h=320&fit=crop&q=85" alt="Piel luminosa y clara — después de SÁNATE" loading="lazy"/>
+            <img src="https://sanate.store/ai-images/WhatsApp%20Image%202026-03-15%20at%203.38.43%20AM%20(2).jpeg" alt="Piel luminosa y clara — después de SÁNATE" loading="lazy"/>
             <div class="pain-label after-lbl">DESPUÉS</div>
             <div class="pain-after-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1655,14 +1657,14 @@ a,button,[onclick]{cursor:none}
       <div class="pain-card">
         <div class="pain-before-after">
           <div class="pain-img-wrap">
-            <img src="https://images.pexels.com/photos/4046316/pexels-photo-4046316.jpeg?w=500&h=500&fit=crop&q=90" alt="Piel con acné y brotes activos — antes SÁNATE" loading="lazy"/>
+            <img src="https://sanate.store/ai-images/WhatsApp%20Image%202026-03-15%20at%203.38.43%20AM.jpeg" alt="Piel con acné y brotes activos — antes SÁNATE" loading="lazy"/>
             <div class="pain-label before-lbl">ANTES</div>
             <div class="pain-overlay">
               <p class="pain-quote">"El acné me hizo perder la confianza en mí misma."</p>
             </div>
           </div>
           <div class="pain-img-wrap after-wrap">
-            <img src="https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?w=500&h=500&fit=crop&q=90" alt="Piel limpia y radiante — después SÁNATE" loading="lazy"/>
+            <img src="https://sanate.store/ai-images/WhatsApp%20Image%202026-03-15%20at%203.38.43%20AM%20(2).jpeg" alt="Piel limpia y radiante — después SÁNATE" loading="lazy"/>
             <div class="pain-label after-lbl">DESPUÉS</div>
             <div class="pain-after-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1694,7 +1696,7 @@ a,button,[onclick]{cursor:none}
             </div>
           </div>
           <div class="pain-img-wrap after-wrap">
-            <img src="https://sanate.store/imagenes_productos/1000044531.jpg" alt="Melena de León SÁNATE — después: claridad mental y energía" loading="lazy"/>
+            <img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León SÁNATE — después: claridad mental y energía" loading="lazy"/>
             <div class="pain-label after-lbl">DESPUÉS</div>
             <div class="pain-after-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
@@ -1737,11 +1739,11 @@ a,button,[onclick]{cursor:none}
         <!-- Before/After Comparison Slider -->
         <div class="ba-compare" id="baCompare">
           <div class="ba-compare-before">
-            <img src="https://images.pexels.com/photos/4046316/pexels-photo-4046316.jpeg?w=500&h=500&fit=crop&q=90" alt="Antes SÁNATE — piel con manchas y acné" loading="lazy"/>
+            <img src="https://sanate.store/ai-images/WhatsApp%20Image%202026-03-15%20at%203.38.43%20AM.jpeg" alt="Antes SÁNATE — piel con manchas y acné" loading="lazy"/>
             <div class="ba-compare-label">ANTES</div>
           </div>
           <div class="ba-compare-after" id="baAfter" style="width:50%">
-            <img src="https://images.pexels.com/photos/3762940/pexels-photo-3762940.jpeg?w=500&h=500&fit=crop&q=90" alt="Después SÁNATE — piel transformada y luminosa" loading="lazy"/>
+            <img src="https://sanate.store/ai-images/WhatsApp%20Image%202026-03-15%20at%203.38.43%20AM%20(2).jpeg" alt="Después SÁNATE — piel transformada y luminosa" loading="lazy"/>
             <div class="ba-compare-label right">DESPUÉS</div>
           </div>
           <div class="ba-slider-line" id="baLine" style="left:50%">
@@ -1865,8 +1867,8 @@ a,button,[onclick]{cursor:none}
             <div class="cc-it"><span class="ck">✓</span>Polen multifloral Huila 500mg x90 cáps — estimula colágeno, uñas, cabello</div>
             <div class="cc-it"><span class="ck">✓</span>Envío GRATIS 🚚 · Pago contra entrega</div>
           </div>
-          <div class="cc-pricing"><div><span class="cc-old">Antes $280.000</span><span class="cc-price">$169.900</span></div><span class="cc-disc">-39%</span></div>
-          <button class="cc-cta" onclick="addItem({id:'c7',name:'Combo Integral Colágeno',desc:'Sebo + 2 jabones Avena + Polen 500mg x90',price:169900,img:'https://sanate.store/imagenes_productos/1000750133.jpg'})">🛒 Quiero este combo — $169.900</button>
+          <div class="cc-pricing"><div><span class="cc-old">Antes $280.000</span><span class="cc-price">$139.900</span></div><span class="cc-disc">-39%</span></div>
+          <button class="cc-cta" onclick="addItem({id:'c7',name:'Combo Integral Colágeno',desc:'Sebo + 2 jabones Avena + Polen 500mg x90',price:139900,img:'https://sanate.store/imagenes_productos/1000750133.jpg'})">🛒 Quiero este combo — $139.900</button>
           <div class="cc-micro">🔒 Garantía 30 días · 8% OFF por transferencia · Resultado o devolución</div>
         </div>
       </div>
@@ -1947,12 +1949,12 @@ a,button,[onclick]{cursor:none}
       </div>
       <!-- T5 -->
       <div class="tcard best">
-        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000044531.jpg" alt="Tickera Power Mental SÁNATE — Melena León + Polen"/><span class="rib green" style="font-size:9px;top:8px;left:8px;right:auto">🧠 Mejor combo mental</span></div>
+        <div class="tc-img"><img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Tickera Power Mental SÁNATE — Melena León + Polen"/><span class="rib green" style="font-size:9px;top:8px;left:8px;right:auto">🧠 Mejor combo mental</span></div>
         <div class="tc-body">
           <div class="tc-name">Tickera Power Mental</div>
           <div class="tc-desc">Melena de León 250mg x120 + Polen 500mg x90 + 2 Sebos grandes. Mente y piel al 100%.</div>
           <div class="tc-pr"><span class="tc-price">$219.000</span><span class="tc-old">$365.000</span><span class="tc-disc">-40%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t5',name:'Tickera Power Mental',desc:'Melena x120 + Polen x90 + 2 Sebos',price:219000,img:'https://sanate.store/imagenes_productos/1000044531.jpg'})">🛒 Agregar</button>
+          <button class="tc-btn" onclick="addItem({id:'t5',name:'Tickera Power Mental',desc:'Melena x120 + Polen x90 + 2 Sebos',price:219000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- T6 -->
@@ -1961,8 +1963,8 @@ a,button,[onclick]{cursor:none}
         <div class="tc-body">
           <div class="tc-name">Tickera Máxima SÁNATE</div>
           <div class="tc-desc">6 jabones + 2 Sebos + Melena 250mg x120 + Polen 500mg x90 + Shampoo + Acondicionador. <strong style="color:var(--gold)">🎁 +Jabón 100g de REGALO por superar $230K</strong></div>
-          <div class="tc-pr"><span class="tc-price">$239.000</span><span class="tc-old">$440.000</span><span class="tc-disc">-46%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'t6',name:'Tickera Máxima SÁNATE',desc:'Todo el catálogo SÁNATE + jabón 100g de regalo',price:239000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">🛒 El pack completo — $239.000</button>
+          <div class="tc-pr"><span class="tc-price">$256.000</span><span class="tc-old">$440.000</span><span class="tc-disc">-46%</span></div>
+          <button class="tc-btn" onclick="addItem({id:'t6',name:'Tickera Máxima SÁNATE',desc:'Todo el catálogo SÁNATE + jabón 100g de regalo',price:256000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">🛒 El pack completo — $256.000</button>
         </div>
       </div>
     </div>
@@ -1982,13 +1984,13 @@ a,button,[onclick]{cursor:none}
         </div>
         <div class="tc-body">
           <div class="tc-name">Combo Capilar Básico</div>
-          <div class="tc-desc">Shampoo Natural 450ml + Néctar Capilar. El ritual completo para cabello fuerte y brillante.</div>
+          <!-- desc removed: redundant with item list -->
           <div style="background:rgba(61,201,232,.07);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:11px;color:var(--navy)">
             <div style="display:flex;gap:5px;align-items:center;margin-bottom:3px">💧 <strong>Shampoo Natural 450ml</strong> <span style="color:var(--gray2);font-size:10px">anticaída · sin sulfatos</span></div>
-            <div style="display:flex;gap:5px;align-items:center">✨ <strong>Néctar Capilar 200ml</strong> <span style="color:var(--gray2);font-size:10px">brillo · hidratación · peinar</span></div>
+            <div style="display:flex;gap:5px;align-items:center">✨ <strong>Néctar Capilar 200gr</strong> <span style="color:var(--gray2);font-size:10px">brillo · caspa · desde 1ª aplicación</span></div>
           </div>
-          <div class="tc-pr"><span class="tc-price">$55.000</span><span class="tc-old">$75.000</span><span class="tc-disc">-27%</span></div>
-          <button class="tc-btn" onclick="addItem({id:'ch1',name:'Combo Capilar Básico',desc:'Shampoo 450ml + Néctar Capilar 200ml',price:55000,img:'https://sanate.store/imagenes_productos/1000748981.jpg'})">🛒 Agregar</button>
+          <div class="tc-pr"><span class="tc-price">$79.000</span><span class="tc-old">$99.000</span><span class="tc-disc">-20%</span></div>
+          <button class="tc-btn" onclick="addItem({id:'ch1',name:'Combo Capilar Básico',desc:'Shampoo 450ml + Néctar Capilar 200gr',price:79000,img:'https://sanate.store/imagenes_productos/1000748981.jpg'})">🛒 Agregar</button>
         </div>
       </div>
       <!-- CH2 BEST -->
@@ -1999,7 +2001,7 @@ a,button,[onclick]{cursor:none}
         </div>
         <div class="tc-body">
           <div class="tc-name">Combo Cabello & Piel</div>
-          <div class="tc-desc">Shampoo + Néctar + 3 jabones. Cuida tu piel y cabello con un solo pedido.</div>
+          <!-- desc removed: redundant with item list -->
           <div style="background:rgba(201,160,48,.08);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:11px;color:var(--navy)">
             <div style="display:flex;gap:5px;align-items:center;margin-bottom:3px">💧 <strong>Shampoo Natural 450ml</strong></div>
             <div style="display:flex;gap:5px;align-items:center;margin-bottom:3px">✨ <strong>Néctar Capilar 200ml</strong></div>
@@ -2025,7 +2027,7 @@ a,button,[onclick]{cursor:none}
         </div>
         <div class="tc-body">
           <div class="tc-name">Kit Capilar Premium</div>
-          <div class="tc-desc">Shampoo + Néctar + Sebo de Res + 2 jabones. Rutina completa cuerpo y cabello.</div>
+          <!-- desc removed: redundant with item list -->
           <div style="background:rgba(61,201,232,.07);border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:11px;color:var(--navy)">
             <div style="display:flex;gap:5px;align-items:center;margin-bottom:3px">💧 <strong>Shampoo 450ml</strong> + <strong>Néctar Capilar</strong></div>
             <div style="display:flex;gap:5px;align-items:center">🧴 <strong>Sebo de Res grande</strong> + <strong>2 jabones</strong></div>
@@ -2066,9 +2068,9 @@ a,button,[onclick]{cursor:none}
             <div style="font-size:10.5px;color:rgba(210,235,248,.55);margin-bottom:10px">x60 cápsulas 250mg</div>
             <button class="btn btn-sky" style="width:100%;padding:9px;font-size:10.5px">🛒 Agregar</button>
           </div>
-          <div style="background:rgba(201,160,48,.09);border-radius:10px;padding:14px;border:1px solid rgba(201,160,48,.22);text-align:center;cursor:pointer" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas puras 250mg · mejor precio/cáp',price:129900,img:'https://sanate.store/imagenes_productos/1000044531.jpg'})">
+          <div style="background:rgba(201,160,48,.09);border-radius:10px;padding:14px;border:1px solid rgba(201,160,48,.22);text-align:center;cursor:pointer" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas puras 250mg · mejor precio/cáp',price:136000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">
             <div style="font-size:9.5px;font-weight:800;color:var(--gold);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">⭐ Mejor precio/cáp</div>
-            <div style="font-family:var(--serif);font-size:20px;color:var(--gold2);font-weight:600;margin-bottom:4px">$129.900</div>
+            <div style="font-family:var(--serif);font-size:20px;color:var(--gold2);font-weight:600;margin-bottom:4px">$136.000</div>
             <div style="font-size:10.5px;color:rgba(210,235,248,.55);margin-bottom:10px">x120 cápsulas 250mg</div>
             <button class="btn btn-gold" style="width:100%;padding:9px;font-size:10.5px">🛒 Agregar</button>
           </div>
@@ -2180,9 +2182,9 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://sanate.store/imagenes_productos/1000747650.jpg" alt="Néctar Capilar 200ml SÁNATE — crema para peinar"/>
+          <img src="https://sanate.store/imagenes_productos/nectar_capilar.jpg" alt="Néctar Capilar 200ml SÁNATE — crema para peinar"/>
           <span class="ptag tl">✨ Nuevo</span><span class="ptag tr">Peinar</span>
-          <button class="padd" onclick="addItem({id:'nc1',name:'Néctar Capilar 200ml',desc:'Crema para peinar · brillo · sin frizz · hidratación',price:35000,img:'https://sanate.store/imagenes_productos/1000747650.jpg'})">+</button>
+          <button class="padd" onclick="addItem({id:'nc1',name:'Néctar Capilar 200ml',desc:'Crema para peinar · brillo · sin frizz · hidratación',price:35000,img:'https://sanate.store/imagenes_productos/nectar_capilar.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Cabello · Crema para peinar</div>
@@ -2208,16 +2210,16 @@ a,button,[onclick]{cursor:none}
       </div>
       <div class="pc">
         <div class="pimg">
-          <img src="https://sanate.store/imagenes_productos/1000044531.jpg" alt="Melena de León x120 250mg — SÁNATE"/>
+          <img src="https://sanate.store/imagenes_productos/1000044536.jpg" alt="Melena de León x120 250mg — SÁNATE"/>
           <span class="ptag tr">Mejor precio</span>
-          <button class="padd" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas · mejor precio por cápsula',price:129900,img:'https://sanate.store/imagenes_productos/1000044531.jpg'})">+</button>
+          <button class="padd" onclick="addItem({id:'m2',name:'Melena de León x120 — 250mg',desc:'120 cápsulas · mejor precio por cápsula',price:136000,img:'https://sanate.store/imagenes_productos/1000044536.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Melena de León</div>
           <div class="pstars">★★★★★ <span>(67)</span></div>
           <div class="pname">Melena de León x120 — 250mg</div>
           <div class="pdesc">El doble de cápsulas · Mejor precio por cápsula · 250mg puros</div>
-          <div class="ppr"><span class="pprice">$129.900</span><span class="pold">$159.000</span></div>
+          <div class="ppr"><span class="pprice">$136.000</span><span class="pold">$159.000</span></div>
         </div>
       </div>
     </div>
@@ -2277,7 +2279,7 @@ a,button,[onclick]{cursor:none}
     </div>
 
     <!-- FEED EMBED REAL DE INSTAGRAM -->
-    <div class="ig-embed-grid fu" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">
+    <div class="ig-embed-grid fu ig-feed-container" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">
       <div class="ig-embed-item" onclick="window.open('https://www.instagram.com/sanate.col/','_blank')">
         <div class="ig-embed-inner">
           <div class="ig-embed-content">
@@ -2789,13 +2791,8 @@ document.getElementById('qsoOv').addEventListener('click',e=>{if(e.target===docu
 // ─── UPSELL ENGINE ───
 // Catálogo de ofertas flash para upsell
 const upsellCatalog=[
-  {id:'up_jabon1',name:'Jabón Artesanal 100g — a elección',why:'🔥 Lleva 1 jabón extra',desc:'Cúrcuma · Avena & Arroz · o Caléndula',price:15000,oldPrice:29000,img:'https://sanate.store/imagenes_productos/1000747650.jpg',triggers:['s1','c5','ch3'],notIfHas:['c1','c4','c6','j1','j3']},
-  {id:'up_polen50',name:'Polen 500mg x50 cáps',why:'💛 Colágeno desde adentro',desc:'Multifloral del Huila · energía · piel',price:39000,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750133.jpg',triggers:['s1','c4','c1','j1','j3'],notIfHas:['p1','p2','c7','t3']},
-  {id:'up_melena60',name:'Melena de León x60 — 250mg',why:'🧠 Para la mente también',desc:'Memoria · sueño · concentración · 250mg',price:39000,oldPrice:89900,img:'https://sanate.store/imagenes_productos/1000044536.jpg',triggers:['s1','c4','c1','c7','j1'],notIfHas:['m1','m2','t1','t2','t5']},
-  {id:'up_sebo',name:'Sebo de Res Original — Grande',why:'✨ El secreto japonés',desc:'Frasco vidrio · regenera manchas · hidrata',price:39000,oldPrice:76000,img:'https://sanate.store/imagenes_productos/1000745738.jpg',triggers:['c1','j1','j3','p1','p2','m1'],notIfHas:['s1','c4','c5','c7','ch3','t2']},
-  {id:'up_nectar',name:'Néctar Capilar 200ml',why:'💆 Para tu cabello también',desc:'Crema para peinar · brillo · sin frizz',price:15000,oldPrice:35000,img:'https://sanate.store/imagenes_productos/1000747650.jpg',triggers:['sh1','ch1'],notIfHas:['nc1','ch2','ch3']},
-  {id:'up_shampoo',name:'Shampoo Natural 450ml',why:'💧 Completa tu rutina capilar',desc:'Anticaída · sin sulfatos · brillo natural',price:15000,oldPrice:40000,img:'https://sanate.store/imagenes_productos/1000748981.jpg',triggers:['nc1'],notIfHas:['sh1','ch1','ch2','ch3']},
-];
+  {id:'up_polen50',name:'Polen Premium x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · 500mg x50 cápsulas',price:39000,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
+]
 const upsellAdded=new Set();
 
 function renderUpsell(){
@@ -3368,19 +3365,18 @@ setTimeout(showNextProof,3000);
 
   // Crear overlay
   const ov=document.createElement('div');
-  ov.id='discountPopup';
+  ov.id='discountPopup' style='display:none!important';
   ov.innerHTML=`
 <div class="dpop-overlay" id="dpopOv">
   <div class="dpop-box">
     <button class="dpop-close" onclick="closeDiscountPopup()">&times;</button>
     <div class="dpop-badge">OFERTA EXCLUSIVA</div>
     <div class="dpop-emoji">🌿</div>
-    <h2 class="dpop-title">¡Obtén <span style="color:var(--gold2)">10% OFF</span> en tu primer pedido!</h2>
-    <p class="dpop-sub">Déjanos tu nombre y correo. Recibirás el código de descuento + ofertas exclusivas de SÁNATE directo en tu bandeja.</p>
+    <h2 class="dpop-title">¡Obtén <span style="color:var(--gold2)">10% OFF</span> + Exfoliante Facial Premium <span style="color:var(--gold2)">GRATIS</span>!</h2>
+    <p class="dpop-sub">Déjanos tu correo y te aplicamos el 10% de descuento automáticamente + un Exfoliante Facial Premium GRATIS en tu pedido.</p>
     <form class="dpop-form" id="dpopForm" onsubmit="return handleDiscountForm(event)">
-      <input type="text" class="dpop-input" id="dpopName" placeholder="Tu nombre" required autocomplete="given-name"/>
       <input type="email" class="dpop-input" id="dpopEmail" placeholder="Tu correo electrónico" required autocomplete="email"/>
-      <button type="submit" class="dpop-btn">QUIERO MI 10% DE DESCUENTO</button>
+      <button type="submit" class="dpop-btn">QUIERO MI 10% + EXFOLIANTE GRATIS</button>
     </form>
     <p class="dpop-legal">Sin spam. Solo ofertas reales. Puedes cancelar cuando quieras.</p>
     <div class="dpop-trust">
@@ -3404,24 +3400,32 @@ function closeDiscountPopup(){
 }
 function handleDiscountForm(e){
   e.preventDefault();
-  const name=document.getElementById('dpopName').value.trim();
   const email=document.getElementById('dpopEmail').value.trim();
-  if(!name||!email)return false;
+  if(!email)return false;
   // Guardar lead en localStorage para remarketing
   const leads=JSON.parse(localStorage.getItem('sanate_leads')||'[]');
-  leads.push({name,email,date:new Date().toISOString(),source:'popup_10off'});
+  leads.push({email,date:new Date().toISOString(),source:'popup_10off_exfoliante'});
   localStorage.setItem('sanate_leads',JSON.stringify(leads));
-  // Mostrar código
+  // Auto-aplicar descuento
+  localStorage.setItem('sanate_discount','10');
+  localStorage.setItem('sanate_exfoliante','1');
+  // Mostrar confirmación
   const box=document.querySelector('.dpop-box');
   box.innerHTML=`
     <div style="text-align:center;padding:28px 20px">
       <div style="font-size:48px;margin-bottom:12px">🎉</div>
-      <h2 style="font-family:var(--serif);font-size:26px;color:var(--navy);margin-bottom:8px">¡Listo, ${name}!</h2>
-      <p style="font-size:14px;color:var(--gray);margin-bottom:18px;line-height:1.6">Tu código de descuento es:</p>
-      <div style="background:linear-gradient(135deg,var(--gold),var(--goldd));color:#fff;font-size:28px;font-weight:800;letter-spacing:4px;padding:14px 28px;border-radius:12px;display:inline-block;margin-bottom:16px;box-shadow:0 6px 24px rgba(201,160,48,.4)">SANATE10</div>
-      <p style="font-size:13px;color:var(--gray2);margin-bottom:16px">Úsalo al confirmar tu pedido por WhatsApp. Válido en todos los combos.</p>
+      <h2 style="font-family:var(--serif);font-size:26px;color:var(--navy);margin-bottom:8px">¡Listo!</h2>
+      <div style="background:#22c55e;color:#fff;font-size:16px;font-weight:700;padding:12px 24px;border-radius:10px;display:inline-block;margin-bottom:14px">✓ 10% OFF aplicado automáticamente</div>
+      <p style="font-size:14px;color:var(--gray);margin-bottom:14px;line-height:1.6">Tu Exfoliante Facial Premium GRATIS se agregará a tu pedido.</p>
+      <p style="font-size:13px;color:var(--gray2);margin-bottom:16px">El descuento se verá reflejado en tu carrito.</p>
       <button class="btn btn-gold" onclick="closeDiscountPopup();gs('combos')" style="width:100%">✦ Ver combos ahora</button>
     </div>`;
+  // Notificación flotante
+  const notif=document.createElement('div');
+  notif.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;z-index:100001;box-shadow:0 8px 32px rgba(0,0,0,.3);animation:fadeInDown .5s ease';
+  notif.textContent='🎉 ¡10% OFF + Exfoliante GRATIS aplicados a tu carrito!';
+  document.body.appendChild(notif);
+  setTimeout(()=>{notif.style.opacity='0';notif.style.transition='opacity .5s';setTimeout(()=>notif.remove(),500)},4000);
   return false;
 }
 
@@ -3466,5 +3470,112 @@ function handleDiscountForm(e){
 .ig-embed-text{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px}
 .ig-embed-sub{font-size:10.5px;color:var(--gray2)}
 </style>
-</body>
+<script src="/hotfixes/slider-fix.js?v=40"></script>
+<script src="/hotfixes/popup-banner-fix.js?v=40"></script>
+<script src="/hotfixes/super-ofertas-fix.js?v=41"></script>
+<script>
+/* SO2 Image Patch v2.0 - Persistent MutationObserver + interval */
+(function(){
+"use strict";
+var N="/ai-images/iMAGENES%20nEW/";
+var M={
+"combo1_jabones.png":N+"Curcuma%20Jabon1.webp",
+"pack_jabones.png":N+"Curcuma%20Jabon1.webp",
+"combo_secreto.png":N+"Combo%20Secreto%20Japones%20de%2099%2C000%202jabones%201%20sebo%20grande.webp",
+"combo4_secreto.png":N+"Combo%20Secreto%20Japones%20de%2099%2C000%202jabones%201%20sebo%20grande.webp",
+"combo3_piel.png":N+"Combo%20Secreto%20Japones%20de%2099%2C000%202jabones%201%20sebo%20grande.webp",
+"melena_leon.png":N+"Melena%20de%20leon%20x60%202.jpg",
+"melena_hero1.png":N+"Melena%20de%20leon%20x60%202.jpg",
+"melena_hero2.png":N+"Melena%20de%20leon%20x60..jpg",
+"melena_oferta1.png":N+"Melena%20de%20leon%20x60..jpg",
+"sebo_hero1.png":"/ai-images/Sebo%20grande%20-%20Tabla%20beneficios%20(2).png",
+"sebo_oferta1.png":"/ai-images/ecom/sebo_promo1.png",
+"Polen2_opt.jpg":N+"pOLEN%20X90..jpg",
+"POLEN5_opt.jpg":N+"pOLEN%20X90..jpg",
+"polen%20capsulas%20x90.png":N+"pOLEN%20X90..jpg",
+"x90 caps Polen_opt.jpg":N+"pOLEN%20X90..jpg",
+"X50Caps_opt.jpg":N+"POELNX50..jpg",
+"combo5_doble.png":N+"Curcuma%20Jabon1.webp",
+"combo6_jabones6.png":N+"Curcuma%20Jabon1.webp",
+"calendula_hero1.png":N+"Curcuma%20Jabon1.webp",
+"8shampoo%20(1).png":N+"Shampo%20500ml.jpg",
+"8shampoo (1).png":N+"Shampo%20500ml.jpg"
+};
+function mapSrc(s){
+  if(!s||s.indexOf("iMAGENES")!==-1)return null;
+  for(var k in M){if(s.indexOf(k)!==-1)return M[k];}
+  return null;
+}
+function patchSO2(){
+  document.querySelectorAll(".so2-slide").forEach(function(img){
+    var r=mapSrc(img.getAttribute("src")||"");
+    if(r)img.setAttribute("src",r);
+  });
+  document.querySelectorAll(".so2-blur-bg").forEach(function(el){
+    var bg=el.style.backgroundImage||"";
+    for(var k in M){if(bg.indexOf(k)!==-1){el.style.backgroundImage="url("+M[k]+")";break;}}
+  });
+}
+/* Persistent interval - runs every 2s forever to override cached carousel */
+setInterval(patchSO2,2000);
+/* Also patch on initial load timings */
+[500,1000,1500,2000,3000,5000,8000,12000].forEach(function(t){setTimeout(patchSO2,t);});
+/* MutationObserver to catch any src changes */
+var obs=new MutationObserver(function(muts){
+  muts.forEach(function(m){
+    if(m.type==="attributes"&&m.attributeName==="src"){
+      var img=m.target;
+      if(img.classList&&img.classList.contains("so2-slide")){
+        var r=mapSrc(img.getAttribute("src")||"");
+        if(r)img.setAttribute("src",r);
+      }
+    }
+    if(m.addedNodes){
+      for(var i=0;i<m.addedNodes.length;i++){
+        var nd=m.addedNodes[i];
+        if(nd.querySelectorAll){
+          nd.querySelectorAll(".so2-slide").forEach(function(img){
+            var r=mapSrc(img.getAttribute("src")||"");
+            if(r)img.setAttribute("src",r);
+          });
+        }
+      }
+    }
+  });
+});
+function startObs(){
+  if(document.body)obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["src"]});
+  else setTimeout(startObs,200);
+}
+startObs();
+})();
+</script>
+<script src="/hotfixes/social-proof-fix.js?v=40"></script>
+<script src="/hotfixes/combo-fix.js?v=91"></script>
+<script src="/hotfixes/img-rotation.js?v=40"></script>
+<script src="/hotfixes/patch-super-ofertas.js?v=40"></script>
+<script src="/hotfixes/melena-fix.js?v=44"></script>
+<script>/* TICKERAS-SHOW v1 */(function(){function applyT(){if(document.getElementById('tickeras-show-css'))return;var s=document.createElement('style');s.id='tickeras-show-css';s.textContent=['#tickeras.sec-off{padding-top:40px!important;padding-bottom:40px!important}','#tickeras>.w>.sh:first-child{display:block!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2){display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:14px!important;visibility:visible!important;opacity:1!important;margin-top:18px!important}','#tickeras>.w>:nth-child(2) .tcard{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important;height:auto!important}','#tickeras>.w>:nth-child(2) .tc-img{display:block!important;visibility:visible!important;opacity:1!important;height:160px!important;overflow:hidden!important}','#tickeras>.w>:nth-child(2) .tc-img img{display:block!important;visibility:visible!important;width:100%!important;height:100%!important;object-fit:cover!important}','#tickeras>.w>:nth-child(2) .tc-body{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2) .tc-btn{display:block!important;visibility:visible!important;opacity:1!important}','@media(max-width:840px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr 1fr!important}}','@media(max-width:500px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr!important}}'].join('');document.head.appendChild(s);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyT);}else{applyT();}setTimeout(applyT,300);setTimeout(applyT,800);})();</script><script>/* TICKERAS-HIDE v2 */setInterval(function(){var s=document.getElementById('tickeras-show-css');if(s)s.parentNode.removeChild(s);var t=document.querySelector('#tickeras');if(!t)return;t.style.removeProperty('display');var w=t.querySelector('.w');if(!w||w.children.length<4)return;w.children[0].style.setProperty('display','none','important');w.children[1].style.setProperty('display','none','important');w.children[2].style.setProperty('display','block','important');w.children[3].style.setProperty('display','grid','important');w.children[3].style.setProperty('grid-template-columns','repeat(3,1fr)','important');w.children[3].style.setProperty('gap','14px','important');t.style.setProperty('padding-top','40px','important');t.style.setProperty('padding-bottom','40px','important');},200);</script><style id="cc-blur-fix">/* COMBO-CARDS-FIX v3 */
+#combos .cc .cc-img{position:relative!important;overflow:hidden!important;isolation:isolate!important;aspect-ratio:1/1!important;height:auto!important;background:#111!important}
+#combos .cc .cc-img::before{content:''!important;position:absolute!important;inset:-30px!important;filter:blur(30px) saturate(1.3) brightness(0.75)!important;z-index:0!important;pointer-events:none!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
+#combos .cc .cc-img img{position:relative!important;z-index:1!important;width:100%!important;height:100%!important;object-fit:contain!important;background:transparent!important;opacity:1!important}
+#combos .cc .cc-img img~img{display:none!important}
+#combos .cg:nth-child(2) .cc:nth-child(1) .cc-img img{content:url(/ai-images/ecom/combo1_jabones.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(2) .cc-img img{content:url(/ai-images/ecom/combo3_piel.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(3) .cc-img img{content:url(/ai-images/ecom/sebo_hero1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(1) .cc-img img{content:url(/ai-images/ecom/melena_oferta1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(2) .cc-img img{content:url(/ai-images/ecom/combo5_doble.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(3) .cc-img img{content:url(/ai-images/ecom/combo6_jabones6.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(1) .cc-img::before{background-image:url(/ai-images/ecom/combo1_jabones.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(2) .cc-img::before{background-image:url(/ai-images/ecom/combo3_piel.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(3) .cc-img::before{background-image:url(/ai-images/ecom/sebo_hero1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(1) .cc-img::before{background-image:url(/ai-images/ecom/melena_oferta1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(2) .cc-img::before{background-image:url(/ai-images/ecom/combo5_doble.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(3) .cc-img::before{background-image:url(/ai-images/ecom/combo6_jabones6.png)!important}
+#combos .cc.star{background:linear-gradient(160deg,#191510 0%,#0c0a06 100%)!important}
+#combos .cc.star .cc-tname,#combos .cc.star .cc-tsub{color:#f0e8d0!important}
+#combos .cc.star .cc-body,#combos .cc.star .cc-it,#combos .cc.star .cc-micro{color:#c8bea0!important}
+#combos .cc.star .cc-price{color:#f0c040!important}
+#combos .cc.star .cc-old{color:#888!important}
+</style><script>/* COMBO-IMG-FIX v2 */(function(){var IMGS=[['/ai-images/ecom/combo1_jabones.png','/ai-images/ecom/combo3_piel.png','/ai-images/ecom/sebo_hero1.png'],['/ai-images/ecom/melena_oferta1.png','/ai-images/ecom/combo5_doble.png','/ai-images/ecom/combo6_jabones6.png']];function fix(){var allCg=document.querySelectorAll('#combos .cg');allCg.forEach(function(cg,ri){if(ri>1)return;cg.querySelectorAll('.cc').forEach(function(cc,ci){var src=IMGS[ri][ci];if(!src)return;var ccImg=cc.querySelector('.cc-img');if(!ccImg)return;var imgs=ccImg.querySelectorAll('img');for(var k=imgs.length-1;k>0;k--)imgs[k].parentNode.removeChild(imgs[k]);Array.from(ccImg.children).forEach(function(c){if(c.tagName==='DIV'&&!c.classList.contains('cc-blur-bg'))c.style.setProperty('display','none','important');});var img=ccImg.querySelector('img');if(img&&img.src.split('/').pop()!==src.split('/').pop())img.src=src;if(img){img.style.setProperty('display','block','important');img.style.setProperty('opacity','1','important');img.style.setProperty('object-fit','contain','important');img.style.setProperty('position','relative','important');img.style.setProperty('z-index','1','important');}});});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fix);}else{fix();}setTimeout(fix,300);setTimeout(fix,900);setTimeout(fix,2000);setInterval(fix,200);})();</script></body>
 </html>
