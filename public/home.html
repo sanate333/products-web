@@ -3578,5 +3578,30 @@ startObs();
 #combos .cc.star .cc-body,#combos .cc.star .cc-it,#combos .cc.star .cc-micro{color:#c8bea0!important}
 #combos .cc.star .cc-price{color:#f0c040!important}
 #combos .cc.star .cc-old{color:#888!important}
-</style></body>
+</style><script>/* CART-FIX v1 — fix addVarItem to read from DOM (combo-fix.js chgVar only updates DOM, not varState) */
+(function(){
+  window.addVarItem=function(combo,needed,baseName,price,img){
+    var types=["curcuma","avena","calendula"];
+    var labels={curcuma:"Cúscuma",avena:"Avena & Arroz",calendula:"Caléndula & Aloe"};
+    var total=0,parts=[];
+    types.forEach(function(t){
+      var el=document.getElementById(combo+"-"+t);
+      var qty=el?parseInt(el.textContent)||0:0;
+      total+=qty;
+      if(qty>0)parts.push(qty+"x "+labels[t]);
+    });
+    if(total<needed){
+      var lbl=document.getElementById("vt-"+combo);
+      if(lbl){lbl.classList.add("over");setTimeout(function(){lbl.classList.remove("over")},800);}
+      var wrap=document.getElementById("vw-"+combo);
+      if(wrap){wrap.style.borderColor="var(--red)";setTimeout(function(){wrap.style.borderColor=""},900);}
+      return;
+    }
+    var desc=parts.join(" + ");
+    if(typeof addItem==="function"){
+      addItem({id:combo+"_"+Date.now(),name:baseName,desc:desc,price:price,img:img});
+    }
+  };
+})();
+</script></body>
 </html>
