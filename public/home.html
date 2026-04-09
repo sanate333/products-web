@@ -3,9 +3,6 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-<meta http-equiv="Pragma" content="no-cache"/>
-<meta http-equiv="Expires" content="0"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5"/>
 <title>SÁNATE — Cosmética Natural Artesanal · Armenia, Colombia</title>
 <meta name="description" content="Jabones artesanales, Sebo de Res, Melena de León y Polen 500mg. +4 años en Colombia. +12.000 pieles transformadas. Envío GRATIS · Pago contra entrega."/>
@@ -14,15 +11,6 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <style>
-/* CART-DISPLAY-FIX: force items visible when cart has items */
-#crtItems:has(.citem) { display: flex !important; flex-direction: column !important; }
-#crtItems:not(:has(.citem)) { display: none !important; }
-/* UPSELL BUTTON SMALLER */
-.upc-add { font-size: 12px !important; padding: 6px 12px !important; min-width: auto !important; }
-.upsell-box { padding: 10px 14px !important; }
-.upsell-badge { font-size: 10px !important; padding: 3px 8px !important; }
-
-
 :root{
   --sky:#3DC9E8;--sky2:#7DDCF0;--skyd:#0A9EC8;
   --navy:#07192E;--navy2:#0C2240;--navy3:#132D50;
@@ -1383,21 +1371,6 @@ a,button,[onclick]{cursor:pointer}
           <datalist id="cities"><option value="Bogotá"/><option value="Medellín"/><option value="Cali"/><option value="Barranquilla"/><option value="Armenia"/><option value="Pereira"/><option value="Manizales"/><option value="Bucaramanga"/><option value="Cartagena"/><option value="Cúcuta"/><option value="Ibagué"/><option value="Santa Marta"/><option value="Pasto"/><option value="Villavicencio"/><option value="Neiva"/><option value="Popayán"/><option value="Montería"/></datalist>
         </div>
       </div>
-      <div class="fr">
-        <div class="fd"><label>Departamento *</label>
-          <select id="fdep" required style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff">
-            <option value="">Selecciona...</option>
-            <option>Amazonas</option><option>Antioquia</option><option>Arauca</option><option>Atlántico</option>
-            <option>Bolívar</option><option>Boyacá</option><option>Caldas</option><option>Caquetá</option>
-            <option>Casanare</option><option>Cauca</option><option>Cesar</option><option>Chocó</option>
-            <option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option><option>Guaviare</option>
-            <option>Huila</option><option>La Guajira</option><option>Magdalena</option><option>Meta</option>
-            <option>Nariño</option><option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option>
-            <option>Risaralda</option><option>San Andrés</option><option>Santander</option><option>Sucre</option>
-            <option>Tolima</option><option>Valle del Cauca</option><option>Vaupés</option><option>Vichada</option>
-          </select>
-        </div>
-      </div>
       <div class="fr full"><div class="fd"><label>Dirección *</label><input id="fadr" type="text" placeholder="Calle, Carrera, Número" autocomplete="street-address" required/></div></div>
       <div class="fr">
         <div class="fd"><label>Barrio *</label><input id="fbar" type="text" placeholder="Nombre del barrio" required/></div>
@@ -1423,21 +1396,6 @@ a,button,[onclick]{cursor:pointer}
       <p class="ok-s">Tu pedido fue registrado. Te contactaremos por WhatsApp para confirmar el despacho. ¡Gracias por confiar en SÁNATE! 💛</p>
       <div class="ok-order" id="okOrder"></div>
       <button class="ok-wa" onclick="sendWA()">💬 Confirmar por WhatsApp ahora</button>
-      <!-- SECCIÓN COMPROBANTE -->
-      <div id="comprobanteSection" style="display:none;margin-top:16px;padding:16px;background:#f0fdf4;border:2px dashed #22c55e;border-radius:12px;text-align:center">
-        <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:8px">📸 Sube tu comprobante de pago</div>
-        <div style="font-size:12px;color:#555;margin-bottom:12px">Adjunta el pantallazo de tu transferencia para confirmar tu pedido más rápido</div>
-        <label for="comprobanteInput" style="display:inline-block;padding:10px 24px;background:#22c55e;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">📎 Seleccionar imagen</label>
-        <input type="file" id="comprobanteInput" accept="image/*" style="display:none" onchange="handleComprobante(this)"/>
-        <div id="comprobantePreview" style="display:none;margin-top:12px">
-          <img id="comprobanteImg" style="max-width:200px;border-radius:8px;border:1px solid #ddd"/>
-          <div id="comprobanteStatus" style="margin-top:8px;font-size:13px;font-weight:600;color:#22c55e">✅ Comprobante recibido — verificando...</div>
-        </div>
-        <div id="comprobanteOk" style="display:none;margin-top:10px;padding:12px;background:#dcfce7;border-radius:8px">
-          <div style="font-size:16px;font-weight:700;color:#166534">✅ Comprobante verificado</div>
-          <div style="font-size:12px;color:#555;margin-top:4px">Tu pago fue recibido. Despacharemos tu pedido hoy mismo.</div>
-        </div>
-      </div>
     </div>
   </div>
 </div>
@@ -2240,7 +2198,7 @@ a,button,[onclick]{cursor:pointer}
         <div class="pimg">
           <img src="https://sanate.store/imagenes_productos/1000750135.jpg" alt="Polen Multifloral x50 500mg SÁNATE"/>
           <span class="ptag tl">Económico</span>
-          <button class="padd" onclick="addItem({id:'p2',name:'Colágeno Polen Multifloral x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg'})">+</button>
+          <button class="padd" onclick="addItem({id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Polen</div>
@@ -2833,7 +2791,7 @@ document.getElementById('qsoOv').addEventListener('click',e=>{if(e.target===docu
 // ─── UPSELL ENGINE ───
 // Catálogo de ofertas flash para upsell
 const upsellCatalog=[
-  {id:'up_polen50',name:'Polen Premium x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
+  {id:'up_polen50',name:'Colágeno Polen Multifloral x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
 ]
 const upsellAdded=new Set();
 
@@ -3597,165 +3555,90 @@ startObs();
 <script src="/hotfixes/img-rotation.js?v=40"></script>
 <script src="/hotfixes/patch-super-ofertas.js?v=40"></script>
 <script src="/hotfixes/melena-fix.js?v=44"></script>
-<script>/* TICKERAS-SHOW v1 */(function(){function applyT(){if(document.getElementById('tickeras-show-css'))return;var s=document.createElement('style');s.id='tickeras-show-css';s.textContent=['#tickeras.sec-off{padding-top:40px!important;padding-bottom:40px!important}','#tickeras>.w>.sh:first-child{display:block!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2){display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:14px!important;visibility:visible!important;opacity:1!important;margin-top:18px!important}','#tickeras>.w>:nth-child(2) .tcard{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important;height:auto!important}','#tickeras>.w>:nth-child(2) .tc-img{display:block!important;visibility:visible!important;opacity:1!important;height:160px!important;overflow:hidden!important}','#tickeras>.w>:nth-child(2) .tc-img img{display:block!important;visibility:visible!important;width:100%!important;height:100%!important;object-fit:cover!important}','#tickeras>.w>:nth-child(2) .tc-body{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2) .tc-btn{display:block!important;visibility:visible!important;opacity:1!important}','@media(max-width:840px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr 1fr!important}}','@media(max-width:500px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr!important}}'].join('');document.head.appendChild(s);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyT);}else{applyT();}setTimeout(applyT,300);setTimeout(applyT,800);})();</script><script>/* TICKERAS-HIDE v2 */setInterval(function(){var s=document.getElementById('tickeras-show-css');if(s)s.parentNode.removeChild(s);var t=document.querySelector('#tickeras');if(!t)return;t.style.removeProperty('display');var w=t.querySelector('.w');if(!w||w.children.length<4)return;w.children[0].style.setProperty('display','none','important');w.children[1].style.setProperty('display','none','important');w.children[2].style.setProperty('display','block','important');w.children[3].style.setProperty('display','grid','important');w.children[3].style.setProperty('grid-template-columns','repeat(3,1fr)','important');w.children[3].style.setProperty('gap','14px','important');t.style.setProperty('padding-top','40px','important');t.style.setProperty('padding-bottom','40px','important');},200);</script><style id="cc-blur-fix">/* COMBO-CARDS-FIX v4 */
-#combos .cc .cc-img{position:relative!important;overflow:hidden!important;aspect-ratio:1/1!important;height:auto!important;background:#0a0a0a!important;display:block!important}
-#combos .cc .cc-img img{display:none!important;visibility:hidden!important;pointer-events:none!important}
-#combos .cc .cc-img .rib{position:absolute!important;z-index:3!important}
-#combos .cc .cc-img::before{content:""!important;position:absolute!important;inset:-20px!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;filter:blur(22px) saturate(1.4) brightness(0.55)!important;z-index:0!important;transform:scale(1.05)!important}
-#combos .cc .cc-img::after{content:""!important;position:absolute!important;inset:0!important;background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;z-index:1!important}
-#combos .cg:nth-child(2) .cc:nth-child(1) .cc-img::before,
-#combos .cg:nth-child(2) .cc:nth-child(1) .cc-img::after{background-image:url(/ai-images/ecom/combo1_jabones.png)!important}
-#combos .cg:nth-child(2) .cc:nth-child(2) .cc-img::before,
-#combos .cg:nth-child(2) .cc:nth-child(2) .cc-img::after{background-image:url(/ai-images/ecom/combo3_piel.png)!important}
-#combos .cg:nth-child(2) .cc:nth-child(3) .cc-img::before,
-#combos .cg:nth-child(2) .cc:nth-child(3) .cc-img::after{background-image:url(/ai-images/ecom/sebo_hero1.png)!important}
-#combos .cg:nth-child(3) .cc:nth-child(1) .cc-img::before,
-#combos .cg:nth-child(3) .cc:nth-child(1) .cc-img::after{background-image:url(/ai-images/ecom/melena_oferta1.png)!important}
-#combos .cg:nth-child(3) .cc:nth-child(2) .cc-img::before,
-#combos .cg:nth-child(3) .cc:nth-child(2) .cc-img::after{background-image:url(/ai-images/ecom/combo5_doble.png)!important}
-#combos .cg:nth-child(3) .cc:nth-child(3) .cc-img::before,
-#combos .cg:nth-child(3) .cc:nth-child(3) .cc-img::after{background-image:url(/ai-images/ecom/combo6_jabones6.png)!important}
+<script>/* TICKERAS-SHOW v1 */(function(){function applyT(){if(document.getElementById('tickeras-show-css'))return;var s=document.createElement('style');s.id='tickeras-show-css';s.textContent=['#tickeras.sec-off{padding-top:40px!important;padding-bottom:40px!important}','#tickeras>.w>.sh:first-child{display:block!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2){display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:14px!important;visibility:visible!important;opacity:1!important;margin-top:18px!important}','#tickeras>.w>:nth-child(2) .tcard{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important;height:auto!important}','#tickeras>.w>:nth-child(2) .tc-img{display:block!important;visibility:visible!important;opacity:1!important;height:160px!important;overflow:hidden!important}','#tickeras>.w>:nth-child(2) .tc-img img{display:block!important;visibility:visible!important;width:100%!important;height:100%!important;object-fit:cover!important}','#tickeras>.w>:nth-child(2) .tc-body{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2) .tc-btn{display:block!important;visibility:visible!important;opacity:1!important}','@media(max-width:840px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr 1fr!important}}','@media(max-width:500px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr!important}}'].join('');document.head.appendChild(s);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyT);}else{applyT();}setTimeout(applyT,300);setTimeout(applyT,800);})();</script><script>/* TICKERAS-HIDE v2 */setInterval(function(){var s=document.getElementById('tickeras-show-css');if(s)s.parentNode.removeChild(s);var t=document.querySelector('#tickeras');if(!t)return;t.style.removeProperty('display');var w=t.querySelector('.w');if(!w||w.children.length<4)return;w.children[0].style.setProperty('display','none','important');w.children[1].style.setProperty('display','none','important');w.children[2].style.setProperty('display','block','important');w.children[3].style.setProperty('display','grid','important');w.children[3].style.setProperty('grid-template-columns','repeat(3,1fr)','important');w.children[3].style.setProperty('gap','14px','important');t.style.setProperty('padding-top','40px','important');t.style.setProperty('padding-bottom','40px','important');},200);</script><style id="cc-blur-fix">/* COMBO-CARDS-FIX v3 */
+#combos .cc .cc-img{position:relative!important;overflow:hidden!important;isolation:isolate!important;aspect-ratio:1/1!important;height:auto!important;background:#111!important}
+#combos .cc .cc-img::before{content:''!important;position:absolute!important;inset:-30px!important;filter:blur(30px) saturate(1.3) brightness(0.75)!important;z-index:0!important;pointer-events:none!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
+#combos .cc .cc-img img{position:relative!important;z-index:1!important;width:100%!important;height:100%!important;object-fit:contain!important;background:transparent!important;opacity:1!important}
+#combos .cc .cc-img img~img{display:none!important}
+#combos .cg:nth-child(2) .cc:nth-child(1) .cc-img img{content:url(/ai-images/ecom/combo1_jabones.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(2) .cc-img img{content:url(/ai-images/ecom/combo3_piel.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(3) .cc-img img{content:url(/ai-images/ecom/sebo_hero1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(1) .cc-img img{content:url(/ai-images/ecom/melena_oferta1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(2) .cc-img img{content:url(/ai-images/ecom/combo5_doble.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(3) .cc-img img{content:url(/ai-images/ecom/combo6_jabones6.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(1) .cc-img::before{background-image:url(/ai-images/ecom/combo1_jabones.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(2) .cc-img::before{background-image:url(/ai-images/ecom/combo3_piel.png)!important}
+#combos .cg:nth-child(2) .cc:nth-child(3) .cc-img::before{background-image:url(/ai-images/ecom/sebo_hero1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(1) .cc-img::before{background-image:url(/ai-images/ecom/melena_oferta1.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(2) .cc-img::before{background-image:url(/ai-images/ecom/combo5_doble.png)!important}
+#combos .cg:nth-child(3) .cc:nth-child(3) .cc-img::before{background-image:url(/ai-images/ecom/combo6_jabones6.png)!important}
 #combos .cc.star{background:linear-gradient(160deg,#191510 0%,#0c0a06 100%)!important}
 #combos .cc.star .cc-tname,#combos .cc.star .cc-tsub{color:#f0e8d0!important}
 #combos .cc.star .cc-body,#combos .cc.star .cc-it,#combos .cc.star .cc-micro{color:#c8bea0!important}
 #combos .cc.star .cc-price{color:#f0c040!important}
 #combos .cc.star .cc-old{color:#888!important}
-</style><script>/* CART-FIX v4.2 — 2026-04-09 */
-(function(){
-var fmt=function(n){return '$'+Number(n).toLocaleString('es-CO');};
-window.cart=[];
-window.renderCart=function(){
-  var total=window.cart.reduce(function(s,i){return s+i.price*i.qty;},0);
-  var count=window.cart.reduce(function(s,i){return s+i.qty;},0);
-  ['navBadge','flBadge'].forEach(function(id){var el=document.getElementById(id);if(el){el.textContent=count;el.style.display=count>0?'flex':'none';}});
-  document.querySelectorAll('.cbadge').forEach(function(el){el.textContent=count;el.style.display=count>0?'flex':'none';});
-  var ie=document.getElementById('crtEmpty'),ii=document.getElementById('crtItems'),fi=document.getElementById('crtFoot');
-  if(window.cart.length===0){if(ie)ie.style.display='';if(ii)ii.style.display='none';if(fi)fi.style.display='none';return;}
-  if(ie)ie.style.display='none';if(ii)ii.style.display='flex';if(fi)fi.style.display='';
-  if(ii){
-    ii.innerHTML='';  /* Clear items — safe since crtItems is never in frozenWraps */
-    window.cart.forEach(function(item){
-      var d=document.createElement('div');d.className='citem';
-      d.innerHTML=
-        '<div class="ci-img"><img src="'+item.img+'" alt="" loading="lazy" style="width:62px;height:62px;object-fit:cover;border-radius:8px"/></div>'+
-        '<div class="ci-info">'+
-          '<div class="ci-name" style="font-size:15px;font-weight:700;color:#111">'+item.name+'</div>'+
-          '<div class="ci-sub" style="font-size:12px;color:#555;margin:2px 0">'+item.desc+'</div>'+
-          '<div class="ci-bot" style="display:flex;align-items:center;gap:8px;margin-top:6px">'+
-            '<div class="ci-qty" style="display:flex;align-items:center;gap:4px">'+
-              '<button class="qb qb-m" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:16px">&#8722;</button>'+
-              '<span class="qn" style="min-width:20px;text-align:center;font-weight:700">'+item.qty+'</span>'+
-              '<button class="qb qb-p" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:16px">+</button>'+
-            '</div>'+
-            '<span class="ci-price" style="font-size:15px;font-weight:700;color:#16a34a;flex:1">'+fmt(item.price*item.qty)+'</span>'+
-            '<button class="ci-rm" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888">&#128465;</button>'+
-          '</div>'+
-        '</div>';
-      /* Attach event listeners — avoids escaping issues with onclick strings */
-      (function(id){
-        var m=d.querySelector('.qb-m');if(m)m.addEventListener('click',function(){window.chgQty(id,-1);});
-        var p=d.querySelector('.qb-p');if(p)p.addEventListener('click',function(){window.chgQty(id,1);});
-        var r=d.querySelector('.ci-rm');if(r)r.addEventListener('click',function(){window.rmItem(id);});
-      })(item.id);
-      ii.appendChild(d);
-    });
-  }
-  var cSubt=document.getElementById('cSubt');if(cSubt)cSubt.textContent=fmt(total);
-  var cTot=document.getElementById('cTot');if(cTot)cTot.textContent=fmt(total);
-};
-window.addItem=function(p){
-  if(!p||!p.id)return;
-  var ex=window.cart.find(function(i){return i.id===p.id;});
-  if(ex){ex.qty++;}else{window.cart.push({id:p.id,name:p.name||'',desc:p.desc||'',price:+(p.price)||0,img:p.img||'',qty:1});}
-  window.renderCart();window.openCart();
-  var b=document.getElementById('navBadge');
-  if(b){b.style.transform='scale(1.6)';setTimeout(function(){b.style.transform='';},220);}
-};
-window.chgQty=function(id,d){
-  var item=window.cart.find(function(x){return x.id===id;});if(!item)return;
-  item.qty+=d;if(item.qty<=0)window.cart=window.cart.filter(function(x){return x.id!==id;});
-  window.renderCart();
-};
-window.rmItem=function(id){window.cart=window.cart.filter(function(x){return x.id!==id;});window.renderCart();};
-window.openCart=function(){var ov=document.getElementById('crtOv');if(ov){ov.classList.add('open');document.body.style.overflow='hidden';}};
-window.closeCart=function(){var ov=document.getElementById('crtOv');if(ov){ov.classList.remove('open');document.body.style.overflow='';}};
-window.toggleCart=function(){var ov=document.getElementById('crtOv');if(ov){ov.classList.contains('open')?window.closeCart():window.openCart();}};
-window.closeCartOv=function(e){if(e.target===document.getElementById('crtOv'))window.closeCart();};
-try{Object.defineProperty(window,'chgVar',{value:function(combo,type,delta){
-  var sp=document.getElementById(combo+'-'+type);if(!sp)return;
-  var MAXQ={c1:3,c4:2,c5:2,c6:6,ch2:3},max=MAXQ[combo]||99;
-  var types=['curcuma','avena','calendula'];
-  var tot=types.reduce(function(s,t){var e=document.getElementById(combo+'-'+t);return s+(e?parseInt(e.textContent)||0:0);},0);
-  if(delta>0&&tot>=max)return;
-  sp.textContent=String(Math.max(0,(parseInt(sp.textContent)||0)+delta));
-  var nt=types.reduce(function(s,t){var e=document.getElementById(combo+'-'+t);return s+(e?parseInt(e.textContent)||0:0);},0);
-  var vt=document.getElementById('vt-'+combo);
-  if(vt){vt.textContent=nt+' / '+max;vt.className='var-total'+(nt===max?' full':nt>max?' over':'');}
-  var btn=document.getElementById('btn-'+combo);if(btn)btn.style.opacity=nt===max?'1':'0.6';
-},writable:false,configurable:true});}catch(e){}
-window.addVarItem=function(combo,needed,baseName,price,img){
-  var types=['curcuma','avena','calendula'];
-  var labels={curcuma:'C\u00farcuma',avena:'Avena & Arroz',calendula:'Cal\u00e9ndula & Aloe'};
-  var total=0,parts=[];
-  types.forEach(function(t){var el=document.getElementById(combo+'-'+t);var qty=el?parseInt(el.textContent)||0:0;total+=qty;if(qty>0)parts.push(qty+'x '+labels[t]);});
-  if(total<needed){
-    var lbl=document.getElementById('vt-'+combo);if(lbl){lbl.classList.add('over');setTimeout(function(){lbl.classList.remove('over');},800);}
-    var wr=document.getElementById('vw-'+combo);if(wr){wr.style.borderColor='var(--red)';setTimeout(function(){wr.style.borderColor='';},900);}
-    return;
-  }
-  window.addItem({id:combo+'_'+Date.now(),name:baseName,desc:parts.join(' + '),price:price,img:img});
-};
-window.renderCart();
-})();
-</script>
-
+</style><script>/* COMBO-IMG-FIX v2 */(function(){var IMGS=[['/ai-images/ecom/combo1_jabones.png','/ai-images/ecom/combo3_piel.png','/ai-images/ecom/sebo_hero1.png'],['/ai-images/ecom/melena_oferta1.png','/ai-images/ecom/combo5_doble.png','/ai-images/ecom/combo6_jabones6.png']];function fix(){var allCg=document.querySelectorAll('#combos .cg');allCg.forEach(function(cg,ri){if(ri>1)return;cg.querySelectorAll('.cc').forEach(function(cc,ci){var src=IMGS[ri][ci];if(!src)return;var ccImg=cc.querySelector('.cc-img');if(!ccImg)return;var imgs=ccImg.querySelectorAll('img');for(var k=imgs.length-1;k>0;k--)imgs[k].parentNode.removeChild(imgs[k]);Array.from(ccImg.children).forEach(function(c){if(c.tagName==='DIV'&&!c.classList.contains('cc-blur-bg'))c.style.setProperty('display','none','important');});var img=ccImg.querySelector('img');if(img&&img.src.split('/').pop()!==src.split('/').pop())img.src=src;if(img){img.style.setProperty('display','block','important');img.style.setProperty('opacity','1','important');img.style.setProperty('object-fit','contain','important');img.style.setProperty('position','relative','important');img.style.setProperty('z-index','1','important');}});});}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',fix);}else{fix();}setTimeout(fix,300);setTimeout(fix,900);setTimeout(fix,2000);setInterval(fix,200);})();</script>
 <script>
-/* CHECKOUT-PATCH v1 — departamento + comprobante */
+/* UPSELL-PATCH v1 — Makes upsell work with hotfix.js cart system */
 (function(){
-  /* Show comprobante section after order for transfer payments */
-  var origSubmitOrder = window.submitOrder;
-  window.submitOrder = function(){
-    /* Add departamento to required fields */
-    var dep = document.getElementById('fdep');
-    if(dep && !dep.value){ dep.focus(); dep.style.borderColor='var(--red)'; setTimeout(function(){dep.style.borderColor='';},2000); return; }
-    
-    /* Call original */
-    if(typeof origSubmitOrder === 'function') origSubmitOrder();
-    
-    /* Show comprobante section for transfer payments */
-    var cs = document.getElementById('comprobanteSection');
-    if(cs && window.selPayment && window.selPayment !== 'contraentrega'){
-      cs.style.display = '';
-    }
-    
-    /* Include departamento in order */
-    if(window._order && dep){
-      window._order.departamento = dep.value;
-      window._order.address = window._order.address + ', ' + dep.value;
-    }
+  var CATALOG=[
+    {id:'up_polen50',name:'Colágeno Polen Multifloral x50 — 500mg',why:'\u{1F49B} Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
+  ];
+  var added=new Set();
+  function fmt(n){return'$'+n.toLocaleString('es-CO')}
+  function getCart(){try{return JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]')}catch(e){return[]}}
+
+  function patchRenderUpsell(){
+    var box=document.getElementById('upsellBox');
+    if(!box)return;
+    var cart=getCart();
+    var cartIds=cart.map(function(i){return(i.id||'').split('_')[0]});
+    var offers=CATALOG.filter(function(u){
+      if(added.has(u.id))return false;
+      var triggered=u.triggers.some(function(t){return cartIds.some(function(c){return c.indexOf(t)===0})});
+      var blocked=u.notIfHas.some(function(t){return cartIds.some(function(c){return c.indexOf(t)===0})});
+      var inCart=cart.some(function(i){return i.id===u.id});
+      return triggered&&!blocked&&!inCart;
+    }).slice(0,2);
+    if(!offers.length){box.style.display='none';return}
+    box.style.display='';
+    document.getElementById('upsellCards').innerHTML=offers.map(function(u){
+      return '<div class="upc" id="upc-'+u.id+'">'
+        +'<div class="upc-img"><img src="'+u.img+'" alt="'+u.name+'" loading="lazy"/></div>'
+        +'<div class="upc-info"><div class="upc-why">'+u.why+'</div><div class="upc-name">'+u.name+'</div><div class="upc-desc">'+u.desc+'</div></div>'
+        +'<div class="upc-r"><span class="upc-old">'+fmt(u.oldPrice)+'</span><span class="upc-price">'+fmt(u.price)+'</span>'
+        +'<button class="upc-add" id="uadd-'+u.id+'" onclick="window._patchAddUpsell(\''+u.id+'\')">+ Añadir</button></div></div>';
+    }).join('');
+  }
+
+  window._patchAddUpsell=function(uid){
+    var u=CATALOG.find(function(x){return x.id===uid});
+    if(!u)return;
+    added.add(uid);
+    var btn=document.getElementById('uadd-'+uid);
+    if(btn){btn.textContent='\u2713 Agregado';btn.classList.add('added');btn.disabled=true}
+    if(typeof window.addItem==='function') window.addItem({id:uid,name:u.name,desc:u.desc,price:u.price,img:u.img});
   };
-  
-  /* Handle comprobante upload */
-  window.handleComprobante = function(input){
-    if(!input.files || !input.files[0]) return;
-    var file = input.files[0];
-    var reader = new FileReader();
-    reader.onload = function(e){
-      var img = document.getElementById('comprobanteImg');
-      var preview = document.getElementById('comprobantePreview');
-      var status = document.getElementById('comprobanteStatus');
-      var ok = document.getElementById('comprobanteOk');
-      if(img) img.src = e.target.result;
-      if(preview) preview.style.display = '';
-      if(status) status.style.display = '';
-      /* Simulate verification (2 seconds) */
-      setTimeout(function(){
-        if(status) status.style.display = 'none';
-        if(ok) ok.style.display = '';
-      }, 2000);
+
+  /* Hook into hotfix.js renderCart */
+  var origRC=window.renderCart;
+  if(typeof origRC==='function'){
+    window.renderCart=function(){
+      origRC.apply(this,arguments);
+      patchRenderUpsell();
     };
-    reader.readAsDataURL(file);
-  };
+  }
+  /* Also hook openCart to render upsell on open */
+  var origOC=window.openCart;
+  if(typeof origOC==='function'){
+    window.openCart=function(){
+      origOC.apply(this,arguments);
+      setTimeout(patchRenderUpsell,50);
+    };
+  }
+  /* Initial render if cart already has items */
+  setTimeout(patchRenderUpsell,500);
+  setTimeout(patchRenderUpsell,2000);
 })();
 </script>
 </body>
