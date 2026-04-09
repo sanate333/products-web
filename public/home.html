@@ -3,6 +3,9 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5"/>
 <title>SÁNATE — Cosmética Natural Artesanal · Armenia, Colombia</title>
 <meta name="description" content="Jabones artesanales, Sebo de Res, Melena de León y Polen 500mg. +4 años en Colombia. +12.000 pieles transformadas. Envío GRATIS · Pago contra entrega."/>
@@ -3578,7 +3581,7 @@ startObs();
 #combos .cc.star .cc-body,#combos .cc.star .cc-it,#combos .cc.star .cc-micro{color:#c8bea0!important}
 #combos .cc.star .cc-price{color:#f0c040!important}
 #combos .cc.star .cc-old{color:#888!important}
-</style><script>/* CART-FIX v4 */
+</style><script>/* CART-FIX v4.2 — 2026-04-09 */
 (function(){
 var fmt=function(n){return '$'+Number(n).toLocaleString('es-CO');};
 window.cart=[];
@@ -3591,7 +3594,7 @@ window.renderCart=function(){
   if(window.cart.length===0){if(ie)ie.style.display='';if(ii)ii.style.display='none';if(fi)fi.style.display='none';return;}
   if(ie)ie.style.display='none';if(ii)ii.style.display='flex';if(fi)fi.style.display='';
   if(ii){
-    while(ii.lastChild)ii.removeChild(ii.lastChild);
+    ii.innerHTML='';  /* Clear items — safe since crtItems is never in frozenWraps */
     window.cart.forEach(function(item){
       var d=document.createElement('div');d.className='citem';
       d.innerHTML=
