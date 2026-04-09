@@ -3578,30 +3578,69 @@ startObs();
 #combos .cc.star .cc-body,#combos .cc.star .cc-it,#combos .cc.star .cc-micro{color:#c8bea0!important}
 #combos .cc.star .cc-price{color:#f0c040!important}
 #combos .cc.star .cc-old{color:#888!important}
-</style><script>/* CART-FIX v1 — fix addVarItem to read from DOM (combo-fix.js chgVar only updates DOM, not varState) */
+</style><script>/* CART-FIX v2 */
 (function(){
-  window.addVarItem=function(combo,needed,baseName,price,img){
-    var types=["curcuma","avena","calendula"];
-    var labels={curcuma:"Cúscuma",avena:"Avena & Arroz",calendula:"Caléndula & Aloe"};
-    var total=0,parts=[];
-    types.forEach(function(t){
-      var el=document.getElementById(combo+"-"+t);
-      var qty=el?parseInt(el.textContent)||0:0;
-      total+=qty;
-      if(qty>0)parts.push(qty+"x "+labels[t]);
+window.renderCart=function(){
+  var total=cart.reduce(function(s,i){return s+i.price*i.qty;},0);
+  var count=cart.reduce(function(s,i){return s+i.qty;},0);
+  ['navBadge','flBadge'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el){el.textContent=count;el.style.display=count>0?'flex':'none';}
+  });
+  document.querySelectorAll('.cbadge').forEach(function(el){el.textContent=count;el.style.display=count>0?'flex':'none';});
+  var ie=document.getElementById('crtEmpty'),ii=document.getElementById('crtItems'),fi=document.getElementById('crtFoot');
+  if(cart.length===0){if(ie)ie.style.display='';if(ii)ii.style.display='none';if(fi)fi.style.display='none';return;}
+  if(ie)ie.style.display='none';if(ii)ii.style.display='flex';if(fi)fi.style.display='';
+  if(ii){
+    while(ii.lastChild)ii.removeChild(ii.lastChild);
+    cart.forEach(function(i){
+      var d=document.createElement('div');d.className='citem';
+      d.innerHTML='<div class="ci-img"><img src="'+i.img+'" alt="" loading="lazy"/></div>'
+        +'<div class="ci-info"><div class="ci-name">'+i.name+'</div><div class="ci-sub">'+(i.desc||'')+'</div>'
+        +'<div class="ci-bot"><div class="ci-qty">'
+        +'<button class="qb" onclick="chgQty(\'' +i.id+ '\',-1)">&#8722;</button>'
+        +'<span class="qn">'+i.qty+'</span>'
+        +'<button class="qb" onclick="chgQty(\'' +i.id+ '\',1)">+</button>'
+        +'</div><span class="ci-price">$'+Number(i.price*i.qty).toLocaleString('es-CO')+'</span>'
+        +'<button class="ci-rm" onclick="rmItem(\'' +i.id+ '\')">&#128465;</button>'
+        +'</div></div>';
+      ii.appendChild(d);
     });
-    if(total<needed){
-      var lbl=document.getElementById("vt-"+combo);
-      if(lbl){lbl.classList.add("over");setTimeout(function(){lbl.classList.remove("over")},800);}
-      var wrap=document.getElementById("vw-"+combo);
-      if(wrap){wrap.style.borderColor="var(--red)";setTimeout(function(){wrap.style.borderColor=""},900);}
-      return;
-    }
-    var desc=parts.join(" + ");
-    if(typeof addItem==="function"){
-      addItem({id:combo+"_"+Date.now(),name:baseName,desc:desc,price:price,img:img});
-    }
-  };
+  }
+  var fmtP=function(n){return '$'+Number(n).toLocaleString('es-CO');};
+  var cSubt=document.getElementById('cSubt');if(cSubt)cSubt.textContent=fmtP(total);
+  var cTot=document.getElementById('cTot');if(cTot)cTot.textContent=fmtP(total);
+  if(typeof renderUpsell==='function')renderUpsell();
+};
+try{
+  Object.defineProperty(window,'chgVar',{
+    value:function(combo,type,delta){
+      var sp=document.getElementById(combo+'-'+type);if(!sp)return;
+      var MAXQ={c1:3,c4:2,c5:2,c6:6,ch2:3},max=MAXQ[combo]||99;
+      var types=['curcuma','avena','calendula'];
+      var total=types.reduce(function(s,t){var e=document.getElementById(combo+'-'+t);return s+(e?parseInt(e.textContent)||0:0);},0);
+      if(delta>0&&total>=max)return;
+      var nxt=Math.max(0,(parseInt(sp.textContent)||0)+delta);
+      sp.textContent=String(nxt);
+      var newTot=types.reduce(function(s,t){var e=document.getElementById(combo+'-'+t);return s+(e?parseInt(e.textContent)||0:0);},0);
+      var vt=document.getElementById('vt-'+combo);
+      if(vt){vt.textContent=newTot+' / '+max;vt.className='var-total'+(newTot===max?' full':newTot>max?' over':'');}
+      var btn=document.getElementById('btn-'+combo);if(btn)btn.style.opacity=newTot===max?'1':'0.6';
+    },writable:false,configurable:true
+  });
+}catch(e){}
+window.addVarItem=function(combo,needed,baseName,price,img){
+  var types=['curcuma','avena','calendula'];
+  var labels={curcuma:'Cúrcuma',avena:'Avena & Arroz',calendula:'Caléndula & Aloe'};
+  var total=0,parts=[];
+  types.forEach(function(t){var el=document.getElementById(combo+'-'+t);var qty=el?parseInt(el.textContent)||0:0;total+=qty;if(qty>0)parts.push(qty+'x '+labels[t]);});
+  if(total<needed){
+    var lbl=document.getElementById('vt-'+combo);if(lbl){lbl.classList.add('over');setTimeout(function(){lbl.classList.remove('over');},800);}
+    var wr=document.getElementById('vw-'+combo);if(wr){wr.style.borderColor='var(--red)';setTimeout(function(){wr.style.borderColor='';},900);}
+    return;
+  }
+  if(typeof addItem==='function')addItem({id:combo+'_'+Date.now(),name:baseName,desc:parts.join(' + '),price:price,img:img});
+};
 })();
 </script></body>
 </html>
