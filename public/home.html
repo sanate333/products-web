@@ -3592,21 +3592,29 @@ window.renderCart=function(){
   if(ie)ie.style.display='none';if(ii)ii.style.display='flex';if(fi)fi.style.display='';
   if(ii){
     while(ii.lastChild)ii.removeChild(ii.lastChild);
-    window.cart.forEach(function(i){
+    window.cart.forEach(function(item){
       var d=document.createElement('div');d.className='citem';
-      d.innerHTML='<div class="ci-img"><img src="'+i.img+'" alt="" loading="lazy" style="width:62px;height:62px;object-fit:cover;border-radius:8px"/></div>'
-        +'<div class="ci-info">'
-        +'<div class="ci-name" style="font-size:15px;font-weight:700;color:#111">'+i.name+'</div>'
-        +'<div class="ci-sub" style="font-size:12px;color:#555;margin:2px 0">'+i.desc+'</div>'
-        +'<div class="ci-bot" style="display:flex;align-items:center;gap:8px;margin-top:6px">'
-        +'<div class="ci-qty" style="display:flex;align-items:center;gap:4px">'
-        +'<button class="qb" onclick="window.chgQty(''+i.id+'',-1)" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer">&#8722;</button>'
-        +'<span class="qn" style="min-width:20px;text-align:center;font-weight:700">'+i.qty+'</span>'
-        +'<button class="qb" onclick="window.chgQty(''+i.id+'',1)" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer">+</button>'
-        +'</div>'
-        +'<span class="ci-price" style="font-size:15px;font-weight:700;color:#16a34a;flex:1">'+fmt(i.price*i.qty)+'</span>'
-        +'<button class="ci-rm" onclick="window.rmItem(''+i.id+'')" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888">&#128465;</button>'
-        +'</div></div>';
+      d.innerHTML=
+        '<div class="ci-img"><img src="'+item.img+'" alt="" loading="lazy" style="width:62px;height:62px;object-fit:cover;border-radius:8px"/></div>'+
+        '<div class="ci-info">'+
+          '<div class="ci-name" style="font-size:15px;font-weight:700;color:#111">'+item.name+'</div>'+
+          '<div class="ci-sub" style="font-size:12px;color:#555;margin:2px 0">'+item.desc+'</div>'+
+          '<div class="ci-bot" style="display:flex;align-items:center;gap:8px;margin-top:6px">'+
+            '<div class="ci-qty" style="display:flex;align-items:center;gap:4px">'+
+              '<button class="qb qb-m" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:16px">&#8722;</button>'+
+              '<span class="qn" style="min-width:20px;text-align:center;font-weight:700">'+item.qty+'</span>'+
+              '<button class="qb qb-p" style="width:26px;height:26px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;font-size:16px">+</button>'+
+            '</div>'+
+            '<span class="ci-price" style="font-size:15px;font-weight:700;color:#16a34a;flex:1">'+fmt(item.price*item.qty)+'</span>'+
+            '<button class="ci-rm" style="background:none;border:none;cursor:pointer;font-size:18px;color:#888">&#128465;</button>'+
+          '</div>'+
+        '</div>';
+      /* Attach event listeners — avoids escaping issues with onclick strings */
+      (function(id){
+        var m=d.querySelector('.qb-m');if(m)m.addEventListener('click',function(){window.chgQty(id,-1);});
+        var p=d.querySelector('.qb-p');if(p)p.addEventListener('click',function(){window.chgQty(id,1);});
+        var r=d.querySelector('.ci-rm');if(r)r.addEventListener('click',function(){window.rmItem(id);});
+      })(item.id);
       ii.appendChild(d);
     });
   }
@@ -3645,7 +3653,7 @@ try{Object.defineProperty(window,'chgVar',{value:function(combo,type,delta){
 },writable:false,configurable:true});}catch(e){}
 window.addVarItem=function(combo,needed,baseName,price,img){
   var types=['curcuma','avena','calendula'];
-  var labels={curcuma:'Cúrcuma',avena:'Avena & Arroz',calendula:'Caléndula & Aloe'};
+  var labels={curcuma:'C\u00farcuma',avena:'Avena & Arroz',calendula:'Cal\u00e9ndula & Aloe'};
   var total=0,parts=[];
   types.forEach(function(t){var el=document.getElementById(combo+'-'+t);var qty=el?parseInt(el.textContent)||0:0;total+=qty;if(qty>0)parts.push(qty+'x '+labels[t]);});
   if(total<needed){
