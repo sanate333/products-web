@@ -17,6 +17,11 @@
 /* CART-DISPLAY-FIX: force items visible when cart has items */
 #crtItems:has(.citem) { display: flex !important; flex-direction: column !important; }
 #crtItems:not(:has(.citem)) { display: none !important; }
+/* UPSELL BUTTON SMALLER */
+.upc-add { font-size: 12px !important; padding: 6px 12px !important; min-width: auto !important; }
+.upsell-box { padding: 10px 14px !important; }
+.upsell-badge { font-size: 10px !important; padding: 3px 8px !important; }
+
 
 :root{
   --sky:#3DC9E8;--sky2:#7DDCF0;--skyd:#0A9EC8;
@@ -1378,6 +1383,21 @@ a,button,[onclick]{cursor:pointer}
           <datalist id="cities"><option value="Bogotá"/><option value="Medellín"/><option value="Cali"/><option value="Barranquilla"/><option value="Armenia"/><option value="Pereira"/><option value="Manizales"/><option value="Bucaramanga"/><option value="Cartagena"/><option value="Cúcuta"/><option value="Ibagué"/><option value="Santa Marta"/><option value="Pasto"/><option value="Villavicencio"/><option value="Neiva"/><option value="Popayán"/><option value="Montería"/></datalist>
         </div>
       </div>
+      <div class="fr">
+        <div class="fd"><label>Departamento *</label>
+          <select id="fdep" required style="width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;background:#fff">
+            <option value="">Selecciona...</option>
+            <option>Amazonas</option><option>Antioquia</option><option>Arauca</option><option>Atlántico</option>
+            <option>Bolívar</option><option>Boyacá</option><option>Caldas</option><option>Caquetá</option>
+            <option>Casanare</option><option>Cauca</option><option>Cesar</option><option>Chocó</option>
+            <option>Córdoba</option><option>Cundinamarca</option><option>Guainía</option><option>Guaviare</option>
+            <option>Huila</option><option>La Guajira</option><option>Magdalena</option><option>Meta</option>
+            <option>Nariño</option><option>Norte de Santander</option><option>Putumayo</option><option>Quindío</option>
+            <option>Risaralda</option><option>San Andrés</option><option>Santander</option><option>Sucre</option>
+            <option>Tolima</option><option>Valle del Cauca</option><option>Vaupés</option><option>Vichada</option>
+          </select>
+        </div>
+      </div>
       <div class="fr full"><div class="fd"><label>Dirección *</label><input id="fadr" type="text" placeholder="Calle, Carrera, Número" autocomplete="street-address" required/></div></div>
       <div class="fr">
         <div class="fd"><label>Barrio *</label><input id="fbar" type="text" placeholder="Nombre del barrio" required/></div>
@@ -1403,6 +1423,21 @@ a,button,[onclick]{cursor:pointer}
       <p class="ok-s">Tu pedido fue registrado. Te contactaremos por WhatsApp para confirmar el despacho. ¡Gracias por confiar en SÁNATE! 💛</p>
       <div class="ok-order" id="okOrder"></div>
       <button class="ok-wa" onclick="sendWA()">💬 Confirmar por WhatsApp ahora</button>
+      <!-- SECCIÓN COMPROBANTE -->
+      <div id="comprobanteSection" style="display:none;margin-top:16px;padding:16px;background:#f0fdf4;border:2px dashed #22c55e;border-radius:12px;text-align:center">
+        <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:8px">📸 Sube tu comprobante de pago</div>
+        <div style="font-size:12px;color:#555;margin-bottom:12px">Adjunta el pantallazo de tu transferencia para confirmar tu pedido más rápido</div>
+        <label for="comprobanteInput" style="display:inline-block;padding:10px 24px;background:#22c55e;color:#fff;border-radius:8px;font-weight:600;cursor:pointer;font-size:14px">📎 Seleccionar imagen</label>
+        <input type="file" id="comprobanteInput" accept="image/*" style="display:none" onchange="handleComprobante(this)"/>
+        <div id="comprobantePreview" style="display:none;margin-top:12px">
+          <img id="comprobanteImg" style="max-width:200px;border-radius:8px;border:1px solid #ddd"/>
+          <div id="comprobanteStatus" style="margin-top:8px;font-size:13px;font-weight:600;color:#22c55e">✅ Comprobante recibido — verificando...</div>
+        </div>
+        <div id="comprobanteOk" style="display:none;margin-top:10px;padding:12px;background:#dcfce7;border-radius:8px">
+          <div style="font-size:16px;font-weight:700;color:#166534">✅ Comprobante verificado</div>
+          <div style="font-size:12px;color:#555;margin-top:4px">Tu pago fue recibido. Despacharemos tu pedido hoy mismo.</div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2205,7 +2240,7 @@ a,button,[onclick]{cursor:pointer}
         <div class="pimg">
           <img src="https://sanate.store/imagenes_productos/1000750135.jpg" alt="Polen Multifloral x50 500mg SÁNATE"/>
           <span class="ptag tl">Económico</span>
-          <button class="padd" onclick="addItem({id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg'})">+</button>
+          <button class="padd" onclick="addItem({id:'p2',name:'Colágeno Polen Multifloral x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Polen</div>
@@ -2798,7 +2833,7 @@ document.getElementById('qsoOv').addEventListener('click',e=>{if(e.target===docu
 // ─── UPSELL ENGINE ───
 // Catálogo de ofertas flash para upsell
 const upsellCatalog=[
-  {id:'up_polen50',name:'Polen Premium x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · 500mg x50 cápsulas',price:39000,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
+  {id:'up_polen50',name:'Polen Premium x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
 ]
 const upsellAdded=new Set();
 
@@ -3671,6 +3706,56 @@ window.addVarItem=function(combo,needed,baseName,price,img){
   window.addItem({id:combo+'_'+Date.now(),name:baseName,desc:parts.join(' + '),price:price,img:img});
 };
 window.renderCart();
+})();
+</script>
+
+<script>
+/* CHECKOUT-PATCH v1 — departamento + comprobante */
+(function(){
+  /* Show comprobante section after order for transfer payments */
+  var origSubmitOrder = window.submitOrder;
+  window.submitOrder = function(){
+    /* Add departamento to required fields */
+    var dep = document.getElementById('fdep');
+    if(dep && !dep.value){ dep.focus(); dep.style.borderColor='var(--red)'; setTimeout(function(){dep.style.borderColor='';},2000); return; }
+    
+    /* Call original */
+    if(typeof origSubmitOrder === 'function') origSubmitOrder();
+    
+    /* Show comprobante section for transfer payments */
+    var cs = document.getElementById('comprobanteSection');
+    if(cs && window.selPayment && window.selPayment !== 'contraentrega'){
+      cs.style.display = '';
+    }
+    
+    /* Include departamento in order */
+    if(window._order && dep){
+      window._order.departamento = dep.value;
+      window._order.address = window._order.address + ', ' + dep.value;
+    }
+  };
+  
+  /* Handle comprobante upload */
+  window.handleComprobante = function(input){
+    if(!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var img = document.getElementById('comprobanteImg');
+      var preview = document.getElementById('comprobantePreview');
+      var status = document.getElementById('comprobanteStatus');
+      var ok = document.getElementById('comprobanteOk');
+      if(img) img.src = e.target.result;
+      if(preview) preview.style.display = '';
+      if(status) status.style.display = '';
+      /* Simulate verification (2 seconds) */
+      setTimeout(function(){
+        if(status) status.style.display = 'none';
+        if(ok) ok.style.display = '';
+      }, 2000);
+    };
+    reader.readAsDataURL(file);
+  };
 })();
 </script>
 </body>
