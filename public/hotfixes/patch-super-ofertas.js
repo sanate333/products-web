@@ -330,4 +330,17 @@ function killPayPopup(){
 killPayPopup();
 setTimeout(killPayPopup,2000);
 
+/* 11. Force-reveal all .fu sections -- failsafe for slow IntersectionObserver */
+function forceRevealSections(){
+  var fus=document.querySelectorAll('.fu:not(.vis)');
+  fus.forEach(function(el){ el.classList.add('vis'); });
+}
+/* Reveal immediately + fallbacks to ensure nothing stays hidden */
+forceRevealSections();
+setTimeout(forceRevealSections,500);
+setTimeout(forceRevealSections,1500);
+setTimeout(forceRevealSections,3000);
+document.addEventListener('DOMContentLoaded',forceRevealSections);
+window.addEventListener('load',forceRevealSections);
+
 })();
