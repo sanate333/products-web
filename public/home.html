@@ -11,6 +11,13 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
 <style>
+/* CART-DISPLAY-FIX: force items visible when cart has items */
+#crtItems:has(.citem) { display: flex !important; flex-direction: column !important; }
+#crtItems:not(:has(.citem)) { display: none !important; }
+/* UPSELL BUTTON SMALLER */
+.upc-add { font-size: 12px !important; padding: 6px 12px !important; min-width: auto !important; }
+.upsell-box { padding: 10px 14px !important; }
+.upsell-badge { font-size: 10px !important; padding: 3px 8px !important; }
 :root{
   --sky:#3DC9E8;--sky2:#7DDCF0;--skyd:#0A9EC8;
   --navy:#07192E;--navy2:#0C2240;--navy3:#132D50;
@@ -3643,4 +3650,3 @@ startObs();
 </script>
 </body>
 </html>
-<!-- deploy 1775779129 -->
