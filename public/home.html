@@ -3973,7 +3973,24 @@ startObs();
     }).then(function(r){return r.json()}).then(function(d){console.log('Order saved:',d)}).catch(function(e){console.error('Order save error:',e)});
   }
 
-  console.log('CHECKOUT-PATCH v1 loaded');
+  function applyPatch(){
+    var current=window.submitOrder;
+    if(!current)return;
+    var src=current.toString();
+    if(src.indexOf('openPayPopup')>-1)return; // already patched
+    window.submitOrder=patchedSubmitOrder;
+    console.log('CHECKOUT-PATCH v2 applied (overrode hotfix.js submitOrder)');
+  }
+  var patchedSubmitOrder=window.submitOrder; // save our version before hotfix overwrites
+  // Re-apply after hotfix.js loads
+  setTimeout(applyPatch,100);
+  setTimeout(applyPatch,500);
+  setTimeout(applyPatch,1500);
+  setTimeout(applyPatch,3000);
+  setTimeout(applyPatch,5000);
+  if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyPatch)}
+  window.addEventListener('load',applyPatch);
+  console.log('CHECKOUT-PATCH v2 loaded');
 })();
 </script>
 </body>
