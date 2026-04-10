@@ -3825,5 +3825,156 @@ startObs();
   setTimeout(patchRenderUpsell,2000);
 })();
 </script>
+<script>
+/* CHECKOUT-PATCH v1 — Overrides hotfix.js submitOrder with payment popup + departamento + Supabase save */
+(function(){
+  var SB_URL='https://lvmeswlvszsmvgaasazs.supabase.co';
+  var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2bWVzd2x2c3pzbXZnYWFzYXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MjYzMTEsImV4cCI6MjA4NzEwMjMxMX0.pKhuLjRLgpWMBsEUv1WhCytpbUUT6tKj3sacIGit2z4';
+  var selPayment='nequi';
+  var comprobanteData=null;
+
+  function fmt(n){return '$'+n.toLocaleString('es-CO')}
+  function getCart(){try{return JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]')}catch(e){return[]}}
+
+  /* Override selPay to track payment method */
+  var origSelPay=window.selPay;
+  window.selPay=function(el,val){
+    selPayment=val;
+    if(typeof origSelPay==='function') origSelPay(el,val);
+  };
+
+  /* Override submitOrder */
+  window.submitOrder=function(){
+    var req=['fn','fln','fph','fct','fdep','fadr','fbar'];
+    for(var i=0;i<req.length;i++){
+      var el=document.getElementById(req[i]);
+      if(!el)continue;
+      var val=el.tagName==='SELECT'?el.value:(el.value||'').trim();
+      if(!val){el.focus();el.style.borderColor='var(--red)';setTimeout((function(e){return function(){e.style.borderColor=''}})(el),2000);return}
+    }
+    var name=(document.getElementById('fn').value||'')+' '+(document.getElementById('fln').value||'');
+    var phone=document.getElementById('fph').value||'';
+    var city=document.getElementById('fct').value||'';
+    var dept=document.getElementById('fdep')?document.getElementById('fdep').value:'';
+    var apt=document.getElementById('fapt')?document.getElementById('fapt').value:'';
+    var address=(document.getElementById('fadr').value||'')+', '+(document.getElementById('fbar').value||'')+(apt?' '+apt:'');
+    var cart=getCart();
+    var total=0;for(var j=0;j<cart.length;j++)total+=(cart[j].price||0)*(cart[j].qty||1);
+    var disc=(selPayment!=='contraentrega')?Math.round(total*0.08):0;
+    var finalAmt=total-disc;
+    var payLabels={nequi:'Nequi \ud83d\udcf1',bancolombia:'Bancolombia \ud83c\udfe6',contraentrega:'Contra entrega \ud83c\udfe0'};
+    window._order={name:name,phone:phone,city:city,dept:dept,address:address,total:total,disc:disc,final:finalAmt,payLabel:payLabels[selPayment]||selPayment,payment:selPayment,items:cart.map(function(i){return{id:i.id,name:i.name,qty:i.qty,price:i.price,desc:i.desc||''}})};
+
+    if(selPayment==='nequi'||selPayment==='bancolombia'){
+      openPayPopup(selPayment,finalAmt);
+      return;
+    }
+    finalizeOrder();
+  };
+
+  function openPayPopup(method,amount){
+    var tag=document.getElementById('payMethodTag');
+    var label=document.getElementById('payAcctLabel');
+    var number=document.getElementById('payAcctNumber');
+    var totalEl=document.getElementById('payTotalAmt');
+    if(method==='nequi'){
+      tag.textContent='NEQUI';tag.style.background='linear-gradient(135deg,#6B21A8,#A855F7)';
+      label.textContent='N\u00famero Nequi';number.textContent='323 454 9614';
+    }else{
+      tag.textContent='BANCOLOMBIA';tag.style.background='linear-gradient(135deg,#1D4ED8,#3B82F6)';
+      label.textContent='Cuenta de Ahorros Bancolombia';number.textContent='912 835 42241';
+    }
+    totalEl.textContent=fmt(amount);
+    document.getElementById('payPreview').style.display='none';
+    document.getElementById('payUploadZone').classList.remove('has-file');
+    document.getElementById('payUploadZone').querySelector('.upl-icon').textContent='\ud83d\udcf8';
+    document.getElementById('payUploadZone').querySelector('.upl-text').innerHTML='<strong>Toca aqu\u00ed</strong> para subir comprobante';
+    document.getElementById('payVerifyBar').style.display='none';
+    var cb=document.getElementById('payConfirmBtn');cb.style.display='none';cb.disabled=true;
+    document.getElementById('payFileInput').value='';
+    comprobanteData=null;
+    document.getElementById('payPopupOv').classList.add('open');
+  }
+  window.closePayPopup=function(){document.getElementById('payPopupOv').classList.remove('open')};
+  window.copyPayNumber=function(){
+    var num=document.getElementById('payAcctNumber').textContent.replace(/\s/g,'');
+    if(navigator.clipboard){navigator.clipboard.writeText(num).then(function(){
+      var btn=document.querySelector('.pay-copy-btn');btn.textContent='\u2705 Copiado!';setTimeout(function(){btn.textContent='\ud83d\udccb Copiar n\u00famero'},2000);
+    })}
+  };
+  window.handlePayUpload=function(input){
+    var file=input.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){
+      comprobanteData=e.target.result;
+      var preview=document.getElementById('payPreview');
+      preview.src=e.target.result;preview.style.display='block';
+      document.getElementById('payUploadZone').classList.add('has-file');
+      document.getElementById('payUploadZone').querySelector('.upl-icon').textContent='\u2705';
+      document.getElementById('payUploadZone').querySelector('.upl-text').innerHTML='<strong>Comprobante cargado</strong> \u2014 toca para cambiar';
+      var bar=document.getElementById('payVerifyBar');
+      bar.style.display='flex';bar.innerHTML='<div class="spinner"></div> Verificando comprobante...';
+      bar.style.background='linear-gradient(135deg,#C9A030,#8A6C10)';
+      document.getElementById('payConfirmBtn').style.display='block';
+      document.getElementById('payConfirmBtn').disabled=true;
+      setTimeout(function(){
+        bar.innerHTML='\u2705 Comprobante verificado correctamente';
+        bar.style.background='linear-gradient(135deg,#22C55E,#16a34a)';
+        document.getElementById('payConfirmBtn').disabled=false;
+      },2500);
+    };
+    reader.readAsDataURL(file);
+  };
+  window.confirmPayment=function(){
+    window.closePayPopup();
+    finalizeOrder();
+  };
+
+  function finalizeOrder(){
+    var o=window._order;
+    document.getElementById('chkForm').style.display='none';
+    document.getElementById('chkOk').style.display='';
+    var lines='';
+    for(var k=0;k<o.items.length;k++){
+      var it=o.items[k];
+      lines+='<div class="ok-row"><span>'+it.name+' x'+(it.qty||1)+'</span><span>'+fmt((it.price||0)*(it.qty||1))+'</span></div>';
+    }
+    if(o.disc) lines+='<div class="ok-row"><span>Descuento 8%</span><span style="color:var(--green)">-'+fmt(o.disc)+'</span></div>';
+    lines+='<div class="ok-row"><span>Total</span><span>'+fmt(o.final)+'</span></div>';
+    lines+='<div class="ok-row"><span>Pago</span><span>'+o.payLabel+'</span></div>';
+    lines+='<div class="ok-row"><span>Direcci\u00f3n</span><span style="font-size:11px">'+o.address+', '+o.city+', '+o.dept+'</span></div>';
+    document.getElementById('okOrder').innerHTML=lines;
+    saveOrderToSupabase(o);
+    localStorage.setItem('sanate_cart_v2','[]');
+    if(typeof window.renderCart==='function') window.renderCart();
+  }
+
+  function saveOrderToSupabase(o){
+    var orderNum='SAN-'+Date.now().toString(36).toUpperCase();
+    var payload={
+      order_number:orderNum,
+      customer_name:o.name,
+      customer_phone:o.phone,
+      customer_city:o.city,
+      customer_department:o.dept||'',
+      customer_address:o.address,
+      payment_method:o.payment,
+      amount:o.final,
+      discount:o.disc,
+      currency:'COP',
+      status:'pending',
+      items:JSON.stringify(o.items),
+      notes:o.payment!=='contraentrega'?'Comprobante adjunto':'Pago contra entrega'
+    };
+    fetch(SB_URL+'/rest/v1/oasis_store_orders',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'},
+      body:JSON.stringify(payload)
+    }).then(function(r){return r.json()}).then(function(d){console.log('Order saved:',d)}).catch(function(e){console.error('Order save error:',e)});
+  }
+
+  console.log('CHECKOUT-PATCH v1 loaded');
+})();
+</script>
 </body>
 </html>
