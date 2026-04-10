@@ -1403,30 +1403,31 @@ a,button,[onclick]{cursor:pointer}
         <div class="fd"><label>Nombre *</label><input id="fn" type="text" placeholder="Tu nombre" autocomplete="given-name" required/></div>
         <div class="fd"><label>Apellido *</label><input id="fln" type="text" placeholder="Tu apellido" autocomplete="family-name" required/></div>
       </div>
+      <div class="fr full"><div class="fd"><label>WhatsApp *</label><input id="fph" type="tel" placeholder="3XX XXX XXXX" autocomplete="tel" inputmode="tel" required/></div></div>
       <div class="fr">
-        <div class="fd"><label>WhatsApp *</label><input id="fph" type="tel" placeholder="3XX XXX XXXX" autocomplete="tel" inputmode="tel" required/></div>
-        <div class="fd"><label>Ciudad *</label>
-          <input id="fct" type="text" placeholder="Tu ciudad" list="cities" autocomplete="address-level2" required/>
-          <datalist id="cities"><option value="Bogotá"/><option value="Medellín"/><option value="Cali"/><option value="Barranquilla"/><option value="Armenia"/><option value="Pereira"/><option value="Manizales"/><option value="Bucaramanga"/><option value="Cartagena"/><option value="Cúcuta"/><option value="Ibagué"/><option value="Santa Marta"/><option value="Pasto"/><option value="Villavicencio"/><option value="Neiva"/><option value="Popayán"/><option value="Montería"/></datalist>
+        <div class="fd"><label>Departamento *</label>
+          <select id="fdep" class="chk-sel" required onchange="loadCities()">
+            <option value="">Selecciona departamento</option>
+            <option value="Amazonas">Amazonas</option><option value="Antioquia">Antioquia</option><option value="Arauca">Arauca</option>
+            <option value="Atlántico">Atlántico</option><option value="Bolívar">Bolívar</option><option value="Boyacá">Boyacá</option>
+            <option value="Caldas">Caldas</option><option value="Caquetá">Caquetá</option><option value="Casanare">Casanare</option>
+            <option value="Cauca">Cauca</option><option value="Cesar">Cesar</option><option value="Chocó">Chocó</option>
+            <option value="Córdoba">Córdoba</option><option value="Cundinamarca">Cundinamarca</option><option value="Guainía">Guainía</option>
+            <option value="Guaviare">Guaviare</option><option value="Huila">Huila</option><option value="La Guajira">La Guajira</option>
+            <option value="Magdalena">Magdalena</option><option value="Meta">Meta</option><option value="Nariño">Nariño</option>
+            <option value="Norte de Santander">Norte de Santander</option><option value="Putumayo">Putumayo</option>
+            <option value="Quindío">Quindío</option><option value="Risaralda">Risaralda</option>
+            <option value="San Andrés y Providencia">San Andrés y Providencia</option><option value="Santander">Santander</option>
+            <option value="Sucre">Sucre</option><option value="Tolima">Tolima</option><option value="Valle del Cauca">Valle del Cauca</option>
+            <option value="Vaupés">Vaupés</option><option value="Vichada">Vichada</option><option value="Bogotá D.C.">Bogotá D.C.</option>
+          </select>
+        </div>
+        <div class="fd"><label>Ciudad / Municipio *</label>
+          <select id="fct" class="chk-sel" required disabled>
+            <option value="">Primero selecciona departamento</option>
+          </select>
         </div>
       </div>
-      <div class="fr full"><div class="fd"><label>Departamento *</label>
-        <select id="fdep" class="chk-sel" required>
-          <option value="">Selecciona tu departamento</option>
-          <option value="Amazonas">Amazonas</option><option value="Antioquia">Antioquia</option><option value="Arauca">Arauca</option>
-          <option value="Atlántico">Atlántico</option><option value="Bolívar">Bolívar</option><option value="Boyacá">Boyacá</option>
-          <option value="Caldas">Caldas</option><option value="Caquetá">Caquetá</option><option value="Casanare">Casanare</option>
-          <option value="Cauca">Cauca</option><option value="Cesar">Cesar</option><option value="Chocó">Chocó</option>
-          <option value="Córdoba">Córdoba</option><option value="Cundinamarca">Cundinamarca</option><option value="Guainía">Guainía</option>
-          <option value="Guaviare">Guaviare</option><option value="Huila">Huila</option><option value="La Guajira">La Guajira</option>
-          <option value="Magdalena">Magdalena</option><option value="Meta">Meta</option><option value="Nariño">Nariño</option>
-          <option value="Norte de Santander">Norte de Santander</option><option value="Putumayo">Putumayo</option>
-          <option value="Quindío">Quindío</option><option value="Risaralda">Risaralda</option>
-          <option value="San Andrés y Providencia">San Andrés y Providencia</option><option value="Santander">Santander</option>
-          <option value="Sucre">Sucre</option><option value="Tolima">Tolima</option><option value="Valle del Cauca">Valle del Cauca</option>
-          <option value="Vaupés">Vaupés</option><option value="Vichada">Vichada</option><option value="Bogotá D.C.">Bogotá D.C.</option>
-        </select>
-      </div></div>
       <div class="fr full"><div class="fd"><label>Dirección *</label><input id="fadr" type="text" placeholder="Calle, Carrera, Número" autocomplete="street-address" required/></div></div>
       <div class="fr">
         <div class="fd"><label>Barrio *</label><input id="fbar" type="text" placeholder="Nombre del barrio" required/></div>
@@ -1434,7 +1435,7 @@ a,button,[onclick]{cursor:pointer}
       </div>
       <h4 style="margin-top:4px;margin-bottom:11px">💳 Método de pago</h4>
       <div class="pm-list">
-        <label class="pm sel" onclick="selPay(this,'nequi')"><input type="radio" name="pay" value="nequi" checked/><span class="pm-ico">📱</span><div class="pm-info"><h5>Nequi / Daviplata</h5><span>Transferencia digital instantánea</span></div><span class="pm-badge">8% OFF</span></label>
+        <label class="pm" onclick="selPay(this,'nequi')"><input type="radio" name="pay" value="nequi"/><span class="pm-ico">📱</span><div class="pm-info"><h5>Nequi / Daviplata</h5><span>Transferencia digital instantánea</span></div><span class="pm-badge">8% OFF</span></label>
         <label class="pm" onclick="selPay(this,'bancolombia')"><input type="radio" name="pay" value="bancolombia"/><span class="pm-ico">🏦</span><div class="pm-info"><h5>Bancolombia</h5><span>Cuenta de ahorros · 912 835 42241</span></div><span class="pm-badge">8% OFF</span></label>
         <label class="pm" onclick="selPay(this,'contraentrega')"><input type="radio" name="pay" value="contraentrega"/><span class="pm-ico">🏠</span><div class="pm-info"><h5>Pago contra entrega</h5><span>Pagas en efectivo al recibir</span></div></label>
       </div>
@@ -3826,35 +3827,108 @@ startObs();
 })();
 </script>
 <script>
-/* CHECKOUT-PATCH v1 — Overrides hotfix.js submitOrder with payment popup + departamento + Supabase save */
+/* CHECKOUT-PATCH v3 — Dept→City dynamic, payment popup on select, Supabase save */
 (function(){
   var SB_URL='https://lvmeswlvszsmvgaasazs.supabase.co';
   var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2bWVzd2x2c3pzbXZnYWFzYXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MjYzMTEsImV4cCI6MjA4NzEwMjMxMX0.pKhuLjRLgpWMBsEUv1WhCytpbUUT6tKj3sacIGit2z4';
-  var selPayment='nequi';
+  var selPayment='';
   var comprobanteData=null;
+  var paymentVerified=false;
 
   function fmt(n){return '$'+n.toLocaleString('es-CO')}
   function getCart(){try{return JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]')}catch(e){return[]}}
 
-  /* Override selPay to track payment method */
+  /* ── CITIES DATABASE ── */
+  var CITIES={
+    'Amazonas':['Leticia','Puerto Nariño'],
+    'Antioquia':['Medellín','Bello','Itagüí','Envigado','Apartadó','Turbo','Rionegro','Caucasia','Sabaneta','La Estrella','Copacabana','Barbosa','Caldas','Marinilla','El Carmen de Viboral','Girardota','Chigorodó','La Ceja','Guarne','Yarumal'],
+    'Arauca':['Arauca','Saravena','Tame','Fortul','Arauquita'],
+    'Atlántico':['Barranquilla','Soledad','Malambo','Sabanalarga','Puerto Colombia','Galapa','Baranoa','Santo Tomás','Palmar de Varela','Juan de Acosta'],
+    'Bolívar':['Cartagena','Magangué','Turbaco','Arjona','El Carmen de Bolívar','San Juan Nepomuceno','Santa Rosa del Sur','Mompox'],
+    'Boyacá':['Tunja','Duitama','Sogamoso','Chiquinquirá','Puerto Boyacá','Paipa','Moniquirá','Villa de Leyva','Garagoa','Guateque'],
+    'Caldas':['Manizales','La Dorada','Chinchiná','Villamaría','Riosucio','Anserma','Supía','Aguadas','Pensilvania'],
+    'Caquetá':['Florencia','San Vicente del Caguán','Puerto Rico','El Doncello','Belén de los Andaquíes','Cartagena del Chairá'],
+    'Casanare':['Yopal','Aguazul','Villanueva','Tauramena','Paz de Ariporo','Monterrey','Trinidad','Maní'],
+    'Cauca':['Popayán','Santander de Quilichao','Puerto Tejada','Patía','Piendamó','Corinto','Miranda','Guapi','Timbío'],
+    'Cesar':['Valledupar','Aguachica','Codazzi','Bosconia','La Jagua de Ibirico','Chimichagua','Curumaní','San Alberto'],
+    'Chocó':['Quibdó','Istmina','Condoto','Tadó','Bahía Solano','Nuquí','Riosucio'],
+    'Córdoba':['Montería','Cereté','Sahagún','Lorica','Planeta Rica','Montelíbano','Tierralta','San Pelayo','Ciénaga de Oro'],
+    'Cundinamarca':['Soacha','Facatativá','Zipaquirá','Chía','Fusagasugá','Girardot','Madrid','Mosquera','Funza','Cajicá','Sibaté','Ubaté','La Mesa','Villeta','Tocancipá','Cota','Tabio','Sopó'],
+    'Guainía':['Inírida'],
+    'Guaviare':['San José del Guaviare','El Retorno','Calamar'],
+    'Huila':['Neiva','Pitalito','Garzón','La Plata','Campoalegre','San Agustín','Gigante','Aipe','Algeciras','Rivera'],
+    'La Guajira':['Riohacha','Maicao','Uribia','San Juan del Cesar','Fonseca','Villanueva','Barrancas','Albania'],
+    'Magdalena':['Santa Marta','Ciénaga','Fundación','El Banco','Plato','Aracataca','Pivijay','Zona Bananera'],
+    'Meta':['Villavicencio','Acacías','Granada','San Martín','Puerto López','Cumaral','Restrepo','Puerto Gaitán','Guamal'],
+    'Nariño':['Pasto','Tumaco','Ipiales','Túquerres','La Unión','Samaniego','Sandoná','Barbacoas','El Charco'],
+    'Norte de Santander':['Cúcuta','Ocaña','Pamplona','Villa del Rosario','Los Patios','Tibú','El Zulia','Chinácota','Abrego'],
+    'Putumayo':['Mocoa','Puerto Asís','Orito','Valle del Guamuez','Villagarzón','Puerto Leguízamo','San Miguel'],
+    'Quindío':['Armenia','Calarcá','Montenegro','Quimbaya','La Tebaida','Circasia','Filandia','Salento','Génova','Córdoba','Buenavista','Pijao'],
+    'Risaralda':['Pereira','Dosquebradas','Santa Rosa de Cabal','La Virginia','Marsella','Belén de Umbría','Quinchía','Apía'],
+    'San Andrés y Providencia':['San Andrés','Providencia'],
+    'Santander':['Bucaramanga','Floridablanca','Girón','Piedecuesta','Barrancabermeja','San Gil','Socorro','Málaga','Barbosa','Lebrija'],
+    'Sucre':['Sincelejo','Corozal','San Marcos','Tolú','San Onofre','Sampués','Coveñas','Ovejas','Majagual'],
+    'Tolima':['Ibagué','Espinal','Melgar','Honda','Mariquita','Líbano','Chaparral','Guamo','Lérida','Flandes','Fresno'],
+    'Valle del Cauca':['Cali','Buenaventura','Palmira','Tuluá','Buga','Cartago','Yumbo','Jamundí','Florida','Pradera','Candelaria','Sevilla','Caicedonia','Dagua','Zarzal'],
+    'Vaupés':['Mitú','Carurú'],
+    'Vichada':['Puerto Carreño','La Primavera','Cumaribo'],
+    'Bogotá D.C.':['Bogotá']
+  };
+  window.loadCities=function(){
+    var dep=document.getElementById('fdep').value;
+    var sel=document.getElementById('fct');
+    sel.innerHTML='<option value="">Selecciona ciudad</option>';
+    if(dep&&CITIES[dep]){
+      CITIES[dep].forEach(function(c){
+        var o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
+      });
+      sel.disabled=false;
+    }else{
+      sel.innerHTML='<option value="">Primero selecciona departamento</option>';
+      sel.disabled=true;
+    }
+  };
+
+  /* ── PAYMENT SELECTION — opens popup immediately on Nequi/Bancolombia ── */
   var origSelPay=window.selPay;
   window.selPay=function(el,val){
     selPayment=val;
+    paymentVerified=(val==='contraentrega');
     if(typeof origSelPay==='function') origSelPay(el,val);
+    // If Nequi or Bancolombia → open payment popup right away
+    if(val==='nequi'||val==='bancolombia'){
+      var cart=getCart();
+      var total=0;for(var j=0;j<cart.length;j++)total+=(cart[j].price||0)*(cart[j].qty||1);
+      var disc=Math.round(total*0.08);
+      var finalAmt=total-disc;
+      openPayPopup(val,finalAmt);
+    }
   };
 
-  /* Override submitOrder */
+  /* ── submitOrder — validates form + requires payment verified ── */
   window.submitOrder=function(){
-    var req=['fn','fln','fph','fct','fdep','fadr','fbar'];
+    var req=['fn','fln','fph','fdep','fct','fadr','fbar'];
     for(var i=0;i<req.length;i++){
       var el=document.getElementById(req[i]);
       if(!el)continue;
       var val=el.tagName==='SELECT'?el.value:(el.value||'').trim();
       if(!val){el.focus();el.style.borderColor='var(--red)';setTimeout((function(e){return function(){e.style.borderColor=''}})(el),2000);return}
     }
+    if(!selPayment){
+      var pmList=document.querySelector('.pm-list');
+      if(pmList){pmList.style.borderColor='var(--red)';pmList.style.border='2px solid var(--red)';pmList.style.borderRadius='10px';
+        setTimeout(function(){pmList.style.border='';},2000);}
+      return;
+    }
+    if(!paymentVerified&&(selPayment==='nequi'||selPayment==='bancolombia')){
+      var cart=getCart();var total=0;for(var j=0;j<cart.length;j++)total+=(cart[j].price||0)*(cart[j].qty||1);
+      openPayPopup(selPayment,total-Math.round(total*0.08));
+      return;
+    }
     var name=(document.getElementById('fn').value||'')+' '+(document.getElementById('fln').value||'');
     var phone=document.getElementById('fph').value||'';
-    var city=document.getElementById('fct').value||'';
+    var cityEl=document.getElementById('fct');
+    var city=cityEl.tagName==='SELECT'?(cityEl.options[cityEl.selectedIndex]||{}).text||cityEl.value:cityEl.value;
     var dept=document.getElementById('fdep')?document.getElementById('fdep').value:'';
     var apt=document.getElementById('fapt')?document.getElementById('fapt').value:'';
     var address=(document.getElementById('fadr').value||'')+', '+(document.getElementById('fbar').value||'')+(apt?' '+apt:'');
@@ -3864,11 +3938,6 @@ startObs();
     var finalAmt=total-disc;
     var payLabels={nequi:'Nequi \ud83d\udcf1',bancolombia:'Bancolombia \ud83c\udfe6',contraentrega:'Contra entrega \ud83c\udfe0'};
     window._order={name:name,phone:phone,city:city,dept:dept,address:address,total:total,disc:disc,final:finalAmt,payLabel:payLabels[selPayment]||selPayment,payment:selPayment,items:cart.map(function(i){return{id:i.id,name:i.name,qty:i.qty,price:i.price,desc:i.desc||''}})};
-
-    if(selPayment==='nequi'||selPayment==='bancolombia'){
-      openPayPopup(selPayment,finalAmt);
-      return;
-    }
     finalizeOrder();
   };
 
@@ -3926,8 +3995,16 @@ startObs();
     reader.readAsDataURL(file);
   };
   window.confirmPayment=function(){
+    paymentVerified=true;
     window.closePayPopup();
-    finalizeOrder();
+    /* Mark the selected method visually as verified */
+    var allPm=document.querySelectorAll('.pm');
+    allPm.forEach(function(pm){
+      if(pm.classList.contains('sel')){
+        var badge=pm.querySelector('.pm-badge');
+        if(badge){badge.textContent='\u2705 Verificado';badge.style.background='var(--green)'}
+      }
+    });
   };
 
   function finalizeOrder(){
@@ -3947,7 +4024,6 @@ startObs();
     saveOrderToSupabase(o);
     localStorage.setItem('sanate_cart_v2','[]');
     if(typeof window.renderCart==='function') window.renderCart();
-    // Re-force display after renderCart may have hidden it
     setTimeout(function(){
       document.getElementById('chkForm').style.setProperty('display','none','important');
       document.getElementById('chkOk').style.setProperty('display','block','important');
@@ -3982,20 +4058,20 @@ startObs();
     var current=window.submitOrder;
     if(!current)return;
     var src=current.toString();
-    if(src.indexOf('openPayPopup')>-1)return; // already patched
+    if(src.indexOf('paymentVerified')>-1)return;
     window.submitOrder=patchedSubmitOrder;
-    console.log('CHECKOUT-PATCH v2 applied (overrode hotfix.js submitOrder)');
+    var origSP=window.selPay;
+    if(origSP&&origSP.toString().indexOf('paymentVerified')<0){
+      window.selPay=patchedSelPay;
+    }
+    console.log('CHECKOUT-PATCH v3 applied');
   }
-  var patchedSubmitOrder=window.submitOrder; // save our version before hotfix overwrites
-  // Re-apply after hotfix.js loads
-  setTimeout(applyPatch,100);
-  setTimeout(applyPatch,500);
-  setTimeout(applyPatch,1500);
-  setTimeout(applyPatch,3000);
-  setTimeout(applyPatch,5000);
+  var patchedSubmitOrder=window.submitOrder;
+  var patchedSelPay=window.selPay;
+  setTimeout(applyPatch,100);setTimeout(applyPatch,500);setTimeout(applyPatch,1500);setTimeout(applyPatch,3000);setTimeout(applyPatch,5000);
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyPatch)}
   window.addEventListener('load',applyPatch);
-  console.log('CHECKOUT-PATCH v2 loaded');
+  console.log('CHECKOUT-PATCH v3 loaded');
 })();
 </script>
 </body>
