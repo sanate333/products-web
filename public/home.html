@@ -18,6 +18,38 @@
 .upc-add { font-size: 12px !important; padding: 6px 12px !important; min-width: auto !important; }
 .upsell-box { padding: 10px 14px !important; }
 .upsell-badge { font-size: 10px !important; padding: 3px 8px !important; }
+/* CHECKOUT SELECT */
+.chk-sel{width:100%;padding:10px 12px;border:1.5px solid var(--gray3);border-radius:8px;font-size:14px;color:var(--navy);background:#fff;appearance:auto;cursor:pointer}
+.chk-sel:focus{border-color:var(--skyd);box-shadow:0 0 0 3px rgba(61,201,232,.15)}
+/* PAYMENT VERIFICATION POPUP */
+.pay-popup-ov{position:fixed;inset:0;z-index:3000;background:rgba(4,13,26,.82);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:16px}
+.pay-popup-ov.open{display:flex}
+.pay-popup{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:28px 24px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative;max-height:90vh;overflow-y:auto}
+.pay-popup-cls{position:absolute;right:12px;top:12px;background:none;border:none;font-size:18px;color:var(--gray);cursor:pointer}
+.pay-popup-cls:hover{color:var(--navy)}
+.pay-popup h3{font-size:18px;font-weight:700;margin-bottom:4px;color:var(--navy)}
+.pay-popup .pay-method-tag{display:inline-block;background:linear-gradient(135deg,#0A9EC8,#3DC9E8);color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;margin-bottom:14px;letter-spacing:.5px}
+.pay-acct-box{background:var(--off);border:1.5px solid var(--gray3);border-radius:12px;padding:16px;margin:12px 0 16px;text-align:center}
+.pay-acct-box .pay-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:1px;font-weight:600;margin-bottom:4px}
+.pay-acct-box .pay-number{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:2px;font-family:monospace}
+.pay-acct-box .pay-holder{font-size:12px;color:var(--gray);margin-top:4px}
+.pay-copy-btn{background:var(--skyd);color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;margin-top:8px;transition:var(--t)}
+.pay-copy-btn:hover{background:var(--sky)}
+.pay-total-line{font-size:15px;font-weight:600;color:var(--navy);margin:12px 0 8px}
+.pay-total-line strong{color:var(--skyd);font-size:18px}
+.pay-upload-zone{border:2px dashed var(--gray3);border-radius:12px;padding:24px 16px;margin:14px 0;cursor:pointer;transition:var(--t);background:#fafcfe}
+.pay-upload-zone:hover{border-color:var(--skyd);background:rgba(61,201,232,.04)}
+.pay-upload-zone.has-file{border-color:var(--green);background:rgba(34,197,94,.05)}
+.pay-upload-zone .upl-icon{font-size:32px;margin-bottom:6px}
+.pay-upload-zone .upl-text{font-size:13px;color:var(--gray);font-weight:500}
+.pay-upload-zone .upl-text strong{color:var(--navy)}
+.pay-upload-preview{max-width:100%;max-height:160px;border-radius:8px;margin-top:8px;object-fit:contain;display:none}
+.pay-verify-bar{background:linear-gradient(135deg,var(--gold),var(--goldd));color:#fff;padding:14px;border-radius:10px;font-weight:700;font-size:14px;margin-top:14px;display:none;align-items:center;justify-content:center;gap:8px}
+.pay-verify-bar .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pay-confirm-btn{background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;padding:14px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:12px;transition:var(--t);display:none}
+.pay-confirm-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(34,197,94,.4)}
+.pay-confirm-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
 :root{
   --sky:#3DC9E8;--sky2:#7DDCF0;--skyd:#0A9EC8;
   --navy:#07192E;--navy2:#0C2240;--navy3:#132D50;
@@ -1378,6 +1410,23 @@ a,button,[onclick]{cursor:pointer}
           <datalist id="cities"><option value="Bogotá"/><option value="Medellín"/><option value="Cali"/><option value="Barranquilla"/><option value="Armenia"/><option value="Pereira"/><option value="Manizales"/><option value="Bucaramanga"/><option value="Cartagena"/><option value="Cúcuta"/><option value="Ibagué"/><option value="Santa Marta"/><option value="Pasto"/><option value="Villavicencio"/><option value="Neiva"/><option value="Popayán"/><option value="Montería"/></datalist>
         </div>
       </div>
+      <div class="fr full"><div class="fd"><label>Departamento *</label>
+        <select id="fdep" class="chk-sel" required>
+          <option value="">Selecciona tu departamento</option>
+          <option value="Amazonas">Amazonas</option><option value="Antioquia">Antioquia</option><option value="Arauca">Arauca</option>
+          <option value="Atlántico">Atlántico</option><option value="Bolívar">Bolívar</option><option value="Boyacá">Boyacá</option>
+          <option value="Caldas">Caldas</option><option value="Caquetá">Caquetá</option><option value="Casanare">Casanare</option>
+          <option value="Cauca">Cauca</option><option value="Cesar">Cesar</option><option value="Chocó">Chocó</option>
+          <option value="Córdoba">Córdoba</option><option value="Cundinamarca">Cundinamarca</option><option value="Guainía">Guainía</option>
+          <option value="Guaviare">Guaviare</option><option value="Huila">Huila</option><option value="La Guajira">La Guajira</option>
+          <option value="Magdalena">Magdalena</option><option value="Meta">Meta</option><option value="Nariño">Nariño</option>
+          <option value="Norte de Santander">Norte de Santander</option><option value="Putumayo">Putumayo</option>
+          <option value="Quindío">Quindío</option><option value="Risaralda">Risaralda</option>
+          <option value="San Andrés y Providencia">San Andrés y Providencia</option><option value="Santander">Santander</option>
+          <option value="Sucre">Sucre</option><option value="Tolima">Tolima</option><option value="Valle del Cauca">Valle del Cauca</option>
+          <option value="Vaupés">Vaupés</option><option value="Vichada">Vichada</option><option value="Bogotá D.C.">Bogotá D.C.</option>
+        </select>
+      </div></div>
       <div class="fr full"><div class="fd"><label>Dirección *</label><input id="fadr" type="text" placeholder="Calle, Carrera, Número" autocomplete="street-address" required/></div></div>
       <div class="fr">
         <div class="fd"><label>Barrio *</label><input id="fbar" type="text" placeholder="Nombre del barrio" required/></div>
@@ -1404,6 +1453,32 @@ a,button,[onclick]{cursor:pointer}
       <div class="ok-order" id="okOrder"></div>
       <button class="ok-wa" onclick="sendWA()">💬 Confirmar por WhatsApp ahora</button>
     </div>
+  </div>
+</div>
+
+<!-- PAYMENT VERIFICATION POPUP -->
+<div class="pay-popup-ov" id="payPopupOv" onclick="if(event.target===this)closePayPopup()">
+  <div class="pay-popup">
+    <button class="pay-popup-cls" onclick="closePayPopup()">✕</button>
+    <h3>Realiza tu transferencia</h3>
+    <div class="pay-method-tag" id="payMethodTag">NEQUI</div>
+    <div class="pay-acct-box">
+      <div class="pay-label" id="payAcctLabel">Número Nequi</div>
+      <div class="pay-number" id="payAcctNumber">323 454 9614</div>
+      <div class="pay-holder">SÁNATE Cosmética Natural</div>
+      <button class="pay-copy-btn" onclick="copyPayNumber()">📋 Copiar número</button>
+    </div>
+    <div class="pay-total-line">Total a transferir: <strong id="payTotalAmt">$0</strong></div>
+    <p style="font-size:12px;color:var(--gray);margin-bottom:4px">Sube la captura del comprobante para verificar tu pago:</p>
+    <div class="pay-upload-zone" id="payUploadZone" onclick="document.getElementById('payFileInput').click()">
+      <div class="upl-icon">📸</div>
+      <div class="upl-text"><strong>Toca aquí</strong> para subir comprobante</div>
+      <div class="upl-text" style="font-size:11px;margin-top:2px">JPG, PNG o captura de pantalla</div>
+      <img class="pay-upload-preview" id="payPreview"/>
+    </div>
+    <input type="file" id="payFileInput" accept="image/*" style="display:none" onchange="handlePayUpload(this)"/>
+    <div class="pay-verify-bar" id="payVerifyBar"><div class="spinner"></div> Verificando comprobante...</div>
+    <button class="pay-confirm-btn" id="payConfirmBtn" onclick="confirmPayment()" disabled>✅ Confirmar pedido</button>
   </div>
 </div>
 
@@ -2205,7 +2280,7 @@ a,button,[onclick]{cursor:pointer}
         <div class="pimg">
           <img src="https://sanate.store/imagenes_productos/1000750135.jpg" alt="Polen Multifloral x50 500mg SÁNATE"/>
           <span class="ptag tl">Económico</span>
-          <button class="padd" onclick="addItem({id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg'})">+</button>
+          <button class="padd" onclick="addItem({id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,img:'https://sanate.store/ai-images/ecom/X50Caps.png'})">+</button>
         </div>
         <div class="pinfo">
           <div class="pcat">Suplementos · Polen</div>
@@ -2753,23 +2828,125 @@ function updDisc(){
   }
 }
 function submitOrder(){
-  const req=['fn','fln','fph','fct','fadr','fbar'];
+  const req=['fn','fln','fph','fct','fdep','fadr','fbar'];
   for(const id of req){
     const el=document.getElementById(id);
-    if(!el.value.trim()){el.focus();el.style.borderColor='var(--red)';setTimeout(()=>el.style.borderColor='',2000);return}
+    const val=el.tagName==='SELECT'?el.value:el.value.trim();
+    if(!val){el.focus();el.style.borderColor='var(--red)';setTimeout(()=>el.style.borderColor='',2000);return}
   }
   const name=document.getElementById('fn').value+' '+document.getElementById('fln').value;
   const phone=document.getElementById('fph').value,city=document.getElementById('fct').value;
+  const dept=document.getElementById('fdep').value;
   const address=document.getElementById('fadr').value+', '+document.getElementById('fbar').value+(document.getElementById('fapt').value?' '+document.getElementById('fapt').value:'');
   const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
-  const disc=(selPayment!=='contraentrega')?Math.round(total*.08):0,final=total-disc;
+  const disc=(selPayment!=='contraentrega')?Math.round(total*.08):0,finalAmt=total-disc;
   const payLabel={'nequi':'Nequi 📱','bancolombia':'Bancolombia 🏦','contraentrega':'Contra entrega 🏠'}[selPayment];
-  window._order={name,phone,city,address,total,disc,final,payLabel,items:[...cart]};
+  window._order={name,phone,city,dept,address,total,disc,final:finalAmt,payLabel,payment:selPayment,items:[...cart]};
+
+  // If Nequi or Bancolombia → show payment popup
+  if(selPayment==='nequi'||selPayment==='bancolombia'){
+    openPayPopup(selPayment,finalAmt);
+    return;
+  }
+  // Contra entrega → confirm directly
+  finalizeOrder();
+}
+function openPayPopup(method,amount){
+  const tag=document.getElementById('payMethodTag');
+  const label=document.getElementById('payAcctLabel');
+  const number=document.getElementById('payAcctNumber');
+  const totalEl=document.getElementById('payTotalAmt');
+  if(method==='nequi'){
+    tag.textContent='NEQUI';tag.style.background='linear-gradient(135deg,#6B21A8,#A855F7)';
+    label.textContent='Número Nequi';
+    number.textContent='323 454 9614';
+  }else{
+    tag.textContent='BANCOLOMBIA';tag.style.background='linear-gradient(135deg,#1D4ED8,#3B82F6)';
+    label.textContent='Cuenta de Ahorros Bancolombia';
+    number.textContent='912 835 42241';
+  }
+  totalEl.textContent=fmt(amount);
+  // Reset upload state
+  document.getElementById('payPreview').style.display='none';
+  document.getElementById('payUploadZone').classList.remove('has-file');
+  document.getElementById('payUploadZone').querySelector('.upl-icon').textContent='📸';
+  document.getElementById('payUploadZone').querySelector('.upl-text').innerHTML='<strong>Toca aquí</strong> para subir comprobante';
+  document.getElementById('payVerifyBar').style.display='none';
+  document.getElementById('payConfirmBtn').style.display='none';
+  document.getElementById('payConfirmBtn').disabled=true;
+  document.getElementById('payFileInput').value='';
+  window._comprobanteData=null;
+  document.getElementById('payPopupOv').classList.add('open');
+}
+function closePayPopup(){document.getElementById('payPopupOv').classList.remove('open')}
+function copyPayNumber(){
+  const num=document.getElementById('payAcctNumber').textContent.replace(/\s/g,'');
+  navigator.clipboard.writeText(num).then(()=>{
+    const btn=document.querySelector('.pay-copy-btn');
+    btn.textContent='✅ Copiado!';setTimeout(()=>btn.textContent='📋 Copiar número',2000);
+  });
+}
+function handlePayUpload(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    window._comprobanteData=e.target.result;
+    const preview=document.getElementById('payPreview');
+    preview.src=e.target.result;preview.style.display='block';
+    document.getElementById('payUploadZone').classList.add('has-file');
+    document.getElementById('payUploadZone').querySelector('.upl-icon').textContent='✅';
+    document.getElementById('payUploadZone').querySelector('.upl-text').innerHTML='<strong>Comprobante cargado</strong> — toca para cambiar';
+    // Start verification
+    const bar=document.getElementById('payVerifyBar');
+    bar.style.display='flex';
+    document.getElementById('payConfirmBtn').style.display='block';
+    document.getElementById('payConfirmBtn').disabled=true;
+    setTimeout(()=>{
+      bar.innerHTML='✅ Comprobante verificado correctamente';
+      bar.style.background='linear-gradient(135deg,var(--green),#16a34a)';
+      document.getElementById('payConfirmBtn').disabled=false;
+    },2500);
+  };
+  reader.readAsDataURL(file);
+}
+function confirmPayment(){
+  closePayPopup();
+  finalizeOrder();
+}
+function finalizeOrder(){
+  const o=window._order;
   document.getElementById('chkForm').style.display='none';
   document.getElementById('chkOk').style.display='';
-  const lines=window._order.items.map(i=>`<div class="ok-row"><span>${i.name} x${i.qty}</span><span>${fmt(i.price*i.qty)}</span></div>`).join('');
-  document.getElementById('okOrder').innerHTML=`${lines}${disc?`<div class="ok-row"><span>Descuento 8%</span><span style="color:var(--green)">-${fmt(disc)}</span></div>`:''}<div class="ok-row"><span>Total</span><span>${fmt(final)}</span></div><div class="ok-row"><span>Pago</span><span>${payLabel}</span></div><div class="ok-row"><span>Dirección</span><span style="font-size:11px">${address}, ${city}</span></div>`;
+  const lines=o.items.map(i=>`<div class="ok-row"><span>${i.name} x${i.qty}</span><span>${fmt(i.price*i.qty)}</span></div>`).join('');
+  document.getElementById('okOrder').innerHTML=`${lines}${o.disc?`<div class="ok-row"><span>Descuento 8%</span><span style="color:var(--green)">-${fmt(o.disc)}</span></div>`:''}<div class="ok-row"><span>Total</span><span>${fmt(o.final)}</span></div><div class="ok-row"><span>Pago</span><span>${o.payLabel}</span></div><div class="ok-row"><span>Dirección</span><span style="font-size:11px">${o.address}, ${o.city}, ${o.dept}</span></div>`;
+  // Save to Supabase
+  saveOrderToSupabase(o);
   cart=[];renderCart();
+}
+// ── SUPABASE ORDER SAVE ──
+const _SB_URL='https://lvmeswlvszsmvgaasazs.supabase.co';
+const _SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2bWVzd2x2c3pzbXZnYWFzYXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MjYzMTEsImV4cCI6MjA4NzEwMjMxMX0.pKhuLjRLgpWMBsEUv1WhCytpbUUT6tKj3sacIGit2z4';
+function saveOrderToSupabase(o){
+  const orderNum='SAN-'+Date.now().toString(36).toUpperCase();
+  const payload={
+    order_number:orderNum,
+    customer_name:o.name,
+    customer_phone:o.phone,
+    customer_city:o.city,
+    customer_department:o.dept||'',
+    customer_address:o.address,
+    payment_method:o.payment,
+    amount:o.final,
+    discount:o.disc,
+    currency:'COP',
+    status:'pending',
+    items:JSON.stringify(o.items.map(i=>({id:i.id,name:i.name,qty:i.qty,price:i.price}))),
+    notes:o.payment!=='contraentrega'?'Comprobante adjunto':'Pago contra entrega'
+  };
+  fetch(_SB_URL+'/rest/v1/oasis_store_orders',{
+    method:'POST',headers:{'Content-Type':'application/json','apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY,'Prefer':'return=representation'},
+    body:JSON.stringify(payload)
+  }).then(r=>r.json()).then(d=>{console.log('Order saved:',d)}).catch(e=>console.error('Order save error:',e));
 }
 function sendWA(){
   if(!window._order)return;
@@ -2798,7 +2975,7 @@ document.getElementById('qsoOv').addEventListener('click',e=>{if(e.target===docu
 // ─── UPSELL ENGINE ───
 // Catálogo de ofertas flash para upsell
 const upsellCatalog=[
-  {id:'up_polen50',name:'Colágeno Polen Multifloral x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
+  {id:'up_polen50',name:'Colágeno Polen Multifloral x50 — 500mg',why:'💛 Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/ai-images/ecom/X50Caps.png',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
 ]
 const upsellAdded=new Set();
 
@@ -3589,7 +3766,7 @@ startObs();
 /* UPSELL-PATCH v1 — Makes upsell work with hotfix.js cart system */
 (function(){
   var CATALOG=[
-    {id:'up_polen50',name:'Colágeno Polen Multifloral x50 — 500mg',why:'\u{1F49B} Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/imagenes_productos/1000750135.jpg',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
+    {id:'up_polen50',name:'Colágeno Polen Multifloral x50 — 500mg',why:'\u{1F49B} Colágeno natural desde adentro',desc:'Colágeno natural · Polen multifloral del Huila · energía · piel · cabello · 500mg x50 caps',price:39900,oldPrice:69900,img:'https://sanate.store/ai-images/ecom/X50Caps.png',triggers:['s1','c1','c3','c4','c5','c6','c7','c8','c9','c10','c11','c12','c13','c14','c15','j1','j3','m1','m2','t1','t2','t3','t4','t5','p1','sh1','nc1','ch1','ch2','ch3'],notIfHas:['p2','up_polen50']}
   ];
   var added=new Set();
   function fmt(n){return'$'+n.toLocaleString('es-CO')}
