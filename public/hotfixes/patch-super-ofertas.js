@@ -294,10 +294,15 @@ function fixNequiNumber(){
       el.textContent='322 746 1878';
     }
   });
-  /* Also fix inline Nequi sections */
-  document.querySelectorAll('*').forEach(function(el){
-    if(el.children.length===0 && el.textContent.trim()==='323 454 9614'){
-      el.textContent='322 746 1878';
+  /* Also fix inline Nequi text in known containers (avoid querySelectorAll('*') which freezes the page) */
+  var nequiContainers=document.querySelectorAll('.pay-method,.pay-details,.pay-info,[class*="nequi"],[class*="pay"],.checkout-form,#checkoutForm,#paymentSection');
+  nequiContainers.forEach(function(container){
+    var walker=document.createTreeWalker(container,NodeFilter.SHOW_TEXT,null,false);
+    var node;
+    while(node=walker.nextNode()){
+      if(node.nodeValue.indexOf('323 454 9614')!==-1){
+        node.nodeValue=node.nodeValue.replace('323 454 9614','322 746 1878');
+      }
     }
   });
 }
