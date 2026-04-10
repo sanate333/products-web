@@ -3932,8 +3932,8 @@ startObs();
 
   function finalizeOrder(){
     var o=window._order;
-    document.getElementById('chkForm').style.display='none';
-    document.getElementById('chkOk').style.display='';
+    document.getElementById('chkForm').style.setProperty('display','none','important');
+    document.getElementById('chkOk').style.setProperty('display','block','important');
     var lines='';
     for(var k=0;k<o.items.length;k++){
       var it=o.items[k];
@@ -3947,6 +3947,11 @@ startObs();
     saveOrderToSupabase(o);
     localStorage.setItem('sanate_cart_v2','[]');
     if(typeof window.renderCart==='function') window.renderCart();
+    // Re-force display after renderCart may have hidden it
+    setTimeout(function(){
+      document.getElementById('chkForm').style.setProperty('display','none','important');
+      document.getElementById('chkOk').style.setProperty('display','block','important');
+    },100);
   }
 
   function saveOrderToSupabase(o){
