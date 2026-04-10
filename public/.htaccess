@@ -68,6 +68,8 @@ RewriteRule ^$ /home.html [L]
 RewriteRule ^home-free/?$ /index.html [L]
 # Portal proveedores
 RewriteRule ^proveedores/?$ /proveedores.html [L]
+# Dashboard SPA routes → index.html
+RewriteRule ^dashboard(/.*)?$ /index.html [L]
 
 # SPA catch-all â only if file does NOT exist
 RewriteCond %{REQUEST_FILENAME} !-f
