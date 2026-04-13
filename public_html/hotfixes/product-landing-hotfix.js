@@ -1,526 +1,585 @@
 /**
- * sanate.store Product Landing Page Hotfix
- * Injects mini-landing page sections into product detail pages
- * Matches URL pattern: /producto/{id}/{slug}
+ * sanate.store Product Landing Injection Hotfix v2
+ * Injects landing-style content (benefits, usage, studies) INSIDE each product page
+ * NO external links. NO new URLs. Content lives within /producto/{id}/{slug}
  */
-
 (function() {
   'use strict';
 
-  // Product content mapping with benefits, usage, and studies
-  const productContent = {
-    'curcuma|kójico|kojico': {
-      landing: '/landing-curcuma.html',
+  // ========== ALL 25 PRODUCTS BY ID ==========
+  const productData = {
+    7: {
+      name: 'Jabón Cúrcuma + Ácido Kójico x3',
       benefits: [
-        { icon: '✨', title: 'Aclara Manchas', desc: 'Reduce hiperpigmentación y paño con cúrcuma + ácido kójico' },
-        { icon: '🔥', title: 'Combate Acné', desc: 'Propiedades antiinflamatorias que limpian a profundidad' },
-        { icon: '🌿', title: '100% Natural', desc: 'Ingredientes artesanales sin químicos agresivos' }
+        { icon: '✨', title: 'Aclara Manchas', desc: 'La cúrcumina inhibe la tirosinasa reduciendo hiperpigmentación y paño facial' },
+        { icon: '🔥', title: 'Combate el Acné', desc: 'Antiinflamatorio natural que limpia poros a profundidad sin resecar' },
+        { icon: '🌿', title: '100% Artesanal', desc: 'Sin parabenos ni sulfatos — ingredientes naturales colombianos' }
       ],
-      usage: 'Humedece el rostro, aplica el jabón y masajea 2 min. Enjuaga. Usa mañana y noche.',
-      study: 'Journal of Cosmetic Dermatology (2019): La curcumina reduce hiperpigmentación significativamente'
+      usage: 'Humedece el rostro con agua tibia. Aplica el jabón con movimientos circulares por 2 minutos. Enjuaga con agua fría para cerrar poros. Usa mañana y noche para mejores resultados.',
+      study: 'Journal of Cosmetic Dermatology (2019): La curcumina reduce significativamente la hiperpigmentación en 8 semanas de uso tópico.'
     },
-    'melena|león|leon': {
-      landing: '/landing-melena.html',
+    8: {
+      name: 'Melena de León x60 Cápsulas',
       benefits: [
-        { icon: '🧠', title: 'Claridad Mental', desc: 'Estimula el Factor de Crecimiento Nervioso (NGF)' },
-        { icon: '💡', title: 'Memoria y Enfoque', desc: 'Mejora la concentración y la capacidad cognitiva' },
-        { icon: '⚡', title: 'Energía Natural', desc: 'Vitalidad sostenida sin efectos secundarios' }
+        { icon: '🧠', title: 'Claridad Mental', desc: 'Estimula el Factor de Crecimiento Nervioso (NGF) para neuronas más fuertes' },
+        { icon: '💡', title: 'Memoria y Enfoque', desc: 'Mejora la concentración, ideal para estudio y trabajo intenso' },
+        { icon: '⚡', title: 'Energía sin Cafeína', desc: 'Vitalidad sostenida todo el día sin nerviosismo ni crash' }
       ],
-      usage: 'Tomar 1-2 cápsulas al día con agua, preferiblemente en la mañana.',
-      study: 'Mori et al. (2009): Mejora significativa de función cognitiva en adultos mayores'
+      usage: 'Tomar 2 cápsulas al día con un vaso de agua, preferiblemente en la mañana o antes de actividades que requieran concentración. Uso continuo por mínimo 4 semanas.',
+      study: 'Mori et al. (2009, Phytotherapy Research): Mejora significativa de función cognitiva en adultos tras 16 semanas de suplementación con Hericium erinaceus.'
     },
-    'sebo|res': {
-      landing: '/landing-sebo.html',
+    9: {
+      name: 'x2 Sebos de Res + x2 Jabones Cúrcuma',
       benefits: [
-        { icon: '💧', title: 'Hidratación Profunda', desc: 'Ácidos grasos que imitan los lípidos naturales de la piel' },
-        { icon: '🌟', title: 'Regenera Manchas', desc: 'Reduce cicatrices y estrías con uso constante' },
-        { icon: '👵', title: 'Remedio Ancestral', desc: 'Usado por generaciones en Colombia con resultados reales' }
+        { icon: '💧', title: 'Hidratación + Limpieza', desc: 'Combo completo: los jabones limpian y aclaran, el sebo hidrata y sella' },
+        { icon: '🌟', title: 'Reduce Manchas y Cicatrices', desc: 'Doble acción aclarante del kójico + regeneración del sebo de res' },
+        { icon: '🎯', title: 'Rutina Completa', desc: '4 productos para cubrir limpieza e hidratación facial y corporal' }
       ],
-      usage: 'Aplica una pequeña cantidad en piel limpia, masajea suavemente. Mañana y noche.',
-      study: 'Journal of Lipid Research: El perfil de ácidos grasos del sebo imita los lípidos de la piel humana'
+      usage: 'Paso 1: Limpia con jabón de cúrcuma 2 min, enjuaga. Paso 2: Aplica sebo de res en piel húmeda, masajea suavemente. Mañana con jabón + sebo. Noche igual.',
+      study: 'Journal of Lipid Research: El perfil de ácidos grasos del sebo bovino es biomimético con los lípidos naturales de la piel humana, facilitando absorción profunda.'
     },
-    'polen|colágeno|colageno': {
-      landing: '/landing-polen.html',
+    10: {
+      name: 'Cúrcuma + Ácido Kójico x6 Jabones',
       benefits: [
-        { icon: '🐝', title: 'Superalimento Natural', desc: 'Rico en aminoácidos, vitaminas B y minerales esenciales' },
-        { icon: '⚡', title: 'Energía sin Cafeína', desc: 'Vitalidad sostenida todo el día de forma natural' },
-        { icon: '🛡️', title: 'Defensas Altas', desc: 'Fortalece el sistema inmunológico naturalmente' }
+        { icon: '✨', title: 'Pack Familiar', desc: '6 jabones para toda la familia — alcanza para 3+ meses de uso diario' },
+        { icon: '💰', title: 'Mejor Precio por Unidad', desc: 'Ahorro significativo vs comprar individual — el favorito de nuestros clientes' },
+        { icon: '🔄', title: 'Resultados Acumulativos', desc: 'El uso continuo potencia los efectos aclarantes semana tras semana' }
       ],
-      usage: 'Tomar 2-3 cápsulas al día con agua, preferiblemente en la mañana.',
-      study: 'Journal of Food Science and Technology: Perfil completo de aminoácidos en el polen de abeja'
+      usage: 'Mismo uso que el jabón individual. Humedece, aplica 2 min con masaje circular, enjuaga con agua fría. Al tener 6 unidades, mantienes tu rutina sin interrupciones.',
+      study: 'Dermatología clínica confirma que la consistencia en el uso de activos despigmentantes es clave para resultados visibles en 4-8 semanas.'
     },
-    'néctar|nectar|capilar': {
-      landing: '/landing-nectar.html',
+    11: {
+      name: 'Jabón Avena y Arroz x3',
       benefits: [
-        { icon: '💎', title: 'Brillo Intenso', desc: 'Cabello radiante desde la primera aplicación' },
-        { icon: '🌊', title: 'Elimina Frizz', desc: 'Control total del encrespamiento y la sequedad' },
-        { icon: '🔥', title: 'Hidratación Total', desc: 'Nutrición profunda que dura todo el día' }
+        { icon: '🤍', title: 'Piel Sensible', desc: 'La avena coloidal calma irritación, enrojecimiento y picazón al instante' },
+        { icon: '💧', title: 'Hidratación Suave', desc: 'El arroz aporta vitamina E y ácido ferúlico para piel nutrida y suave' },
+        { icon: '👶', title: 'Para Toda la Familia', desc: 'Tan suave que es apto para pieles delicadas, incluyendo niños' }
       ],
-      usage: 'Después de lavar, aplica en cabello húmedo. No enjuagues. Peina normalmente.',
-      study: 'Biotina y queratina: componentes clave para la fortaleza y brillo capilar'
+      usage: 'Aplica sobre piel húmeda con movimientos suaves. Deja actuar 1-2 minutos para que la avena calme la piel. Enjuaga con agua tibia. Ideal para uso diario.',
+      study: 'Journal of Drugs in Dermatology: La avena coloidal tiene propiedades antiinflamatorias comprobadas, aprobada por la FDA como protector de piel.'
     },
-    'secreto|japonés|japones|arroz': {
-      landing: '/landing-secreto.html',
+    12: {
+      name: 'Mix 3 Jabones: Cúrcuma, Avena, Caléndula',
       benefits: [
-        { icon: '🌸', title: 'Luminosidad', desc: 'Ritual milenario de las geishas para piel radiante' },
-        { icon: '🧴', title: 'Doble Ritual', desc: 'Jabón de arroz + crema facial para resultados completos' },
-        { icon: '⏰', title: 'Anti-Edad', desc: 'Antioxidantes del arroz que combaten el envejecimiento' }
+        { icon: '🎨', title: 'Variedad Completa', desc: 'Tres fórmulas diferentes para alternar según lo que tu piel necesite cada día' },
+        { icon: '✨', title: 'Cúrcuma Aclara', desc: 'Reduce manchas y combate el acné con propiedades antiinflamatorias' },
+        { icon: '🌼', title: 'Caléndula Repara', desc: 'Cicatrizante natural que calma piel irritada y sensible' }
       ],
-      usage: 'Paso 1: Jabón de arroz para limpieza diaria. Paso 2: Crema facial día y noche.',
-      study: 'El ácido ferúlico del salvado de arroz es un potente antioxidante (Japanese Dermatology Research)'
+      usage: 'Alterna los jabones según necesidad: Cúrcuma para manchas/acné, Avena para calmar, Caléndula para reparar. Aplica 2 min con masaje, enjuaga con agua tibia.',
+      study: 'Phytomedicine Journal: Los extractos de Calendula officinalis aceleran la cicatrización y reducen inflamación cutánea.'
     },
-    'kit total|kit definitivo': {
-      landing: '/landing-kit-total.html',
+    13: {
+      name: 'Jabón Caléndula + Aloe Vera x3',
       benefits: [
-        { icon: '🎁', title: 'Todo en Uno', desc: 'Jabones + Sebo + Melena + Polen + Néctar + Crema' },
-        { icon: '💰', title: '30% de Ahorro', desc: 'El mejor precio comprando el kit completo' },
-        { icon: '✅', title: 'Bienestar Total', desc: 'Piel, cabello, mente y energía en un solo paquete' }
+        { icon: '🌼', title: 'Cicatrizante Natural', desc: 'La caléndula acelera la regeneración celular en zonas dañadas' },
+        { icon: '💚', title: 'Aloe Vera Calmante', desc: 'Hidrata, desinflama y protege la barrera natural de la piel' },
+        { icon: '🛡️', title: 'Protección Diaria', desc: 'Ideal para pieles que sufren de irritación, rosácea o dermatitis' }
       ],
-      usage: 'Usa cada producto según sus instrucciones. Rutina diaria para resultados óptimos.',
-      study: 'Combinar cuidado interno (suplementos) + externo (tópicos) maximiza resultados'
+      usage: 'Aplica sobre piel húmeda con movimientos suaves. Masajea por 2 minutos enfocándote en áreas irritadas. Enjuaga con agua tibia. Uso diario mañana y noche.',
+      study: 'Wounds Journal (2008): Calendula officinalis promueve la epitelización y tiene efecto antimicrobiano en heridas cutáneas.'
     },
-    'kit familia|tripack|avena|calendula|mix': {
-      landing: '/landing-curcuma.html',
+    14: {
+      name: 'Néctar Capilar 200g',
       benefits: [
-        { icon: '👨‍👩‍👧', title: 'Para toda la Familia', desc: 'Jabones naturales para cada tipo de piel' },
-        { icon: '🌿', title: '100% Artesanal', desc: 'Ingredientes naturales sin químicos dañinos' },
-        { icon: '✨', title: 'Piel Limpia', desc: 'Limpieza profunda que nutre mientras limpia' }
+        { icon: '💎', title: 'Brillo Intenso', desc: 'Cabello radiante y sedoso desde la primera aplicación sin apelmazar' },
+        { icon: '🌊', title: 'Elimina el Frizz', desc: 'Control total del encrespamiento incluso en clima húmedo' },
+        { icon: '💪', title: 'Fortalece el Cabello', desc: 'Biotina y queratina vegetal que reducen la caída y quiebre' }
       ],
-      usage: 'Humedece, aplica el jabón y masajea 2 min. Enjuaga con agua tibia.',
-      study: 'Los jabones artesanales conservan la glicerina natural, ideal para pieles sensibles'
+      usage: 'Después de lavar el cabello, aplica una cantidad generosa en medios y puntas húmedas. No enjuagues. Peina como de costumbre. Úsalo cada vez que laves tu cabello.',
+      study: 'International Journal of Trichology: La biotina mejora significativamente el grosor y la resistencia del cabello en 90 días de uso constante.'
     },
-    'energía|energia|mente|power|mental|defensa': {
-      landing: '/landing-melena.html',
+    15: {
+      name: 'Colágeno Polen Multifloral x90 Cápsulas',
       benefits: [
-        { icon: '🧠', title: 'Mente Clara', desc: 'Melena de León para enfoque + Polen para energía' },
-        { icon: '🛡️', title: 'Defensas', desc: 'Antioxidantes naturales que protegen tu sistema inmune' },
-        { icon: '⚡', title: 'Rendimiento', desc: 'Máxima potencia mental y física sin estimulantes' }
+        { icon: '🐝', title: 'Superalimento del Huila', desc: 'Polen multifloral 100% colombiano, rico en 22 aminoácidos esenciales' },
+        { icon: '⚡', title: 'Energía Pura y Natural', desc: 'Vitalidad sostenida todo el día sin cafeína ni estimulantes artificiales' },
+        { icon: '🛡️', title: 'Defensas Blindadas', desc: 'Fortalece el sistema inmunológico con vitaminas B, zinc y antioxidantes' }
       ],
-      usage: 'Melena de León: 2 caps/día. Polen: 2-3 caps/día. Preferiblemente en la mañana.',
-      study: 'La combinación de hongos funcionales + superalimentos potencia los efectos nootrópicos'
+      usage: 'Tomar 2-3 cápsulas al día con un vaso de agua, preferiblemente en la mañana con el desayuno. Consumo continuo para mejores resultados.',
+      study: 'Journal of Food Science and Technology: El polen de abeja contiene un perfil completo de aminoácidos y compuestos bioactivos con efecto inmunomodulador.'
     },
-    'ritual|regenerador|piel y bienestar': {
-      landing: '/landing-sebo.html',
+    16: {
+      name: 'Crema Sebo de Res + x2 Jabones Cúrcuma',
       benefits: [
-        { icon: '🌟', title: 'Regeneración Total', desc: 'Sebo + Jabones + Crema para renovar tu piel' },
-        { icon: '💧', title: 'Hidratación 360°', desc: 'Nutrición desde la limpieza hasta la hidratación' },
-        { icon: '🧴', title: 'Ritual Completo', desc: 'Todo lo que tu piel necesita en un solo combo' }
+        { icon: '🧴', title: 'Limpieza + Nutrición', desc: 'Los jabones aclaran y limpian, la crema de sebo sella la hidratación' },
+        { icon: '✨', title: 'Aclara y Regenera', desc: 'Doble acción: el kójico despigmenta mientras el sebo repara tejidos' },
+        { icon: '💧', title: 'Piel Suave Todo el Día', desc: 'La crema de sebo crea una barrera protectora sin sensación grasosa' }
       ],
-      usage: 'Limpia con jabón, hidrata con sebo de res, nutre con crema de arroz. 2 veces al día.',
-      study: 'La combinación de limpieza + hidratación + nutrición es el estándar en dermatología'
+      usage: 'Mañana: Lava con jabón de cúrcuma, enjuaga, aplica crema de sebo en rostro y cuello. Noche: Repite la rutina. La crema rinde para 30+ días de uso.',
+      study: 'Dermatología colombiana: La combinación de limpieza activa + hidratación oclusiva es el estándar para tratamiento de hiperpigmentación.'
+    },
+    38: {
+      name: 'Secreto Japonés x2 Jabones + Sebo 10g',
+      benefits: [
+        { icon: '🌸', title: 'Ritual Milenario', desc: 'El secreto de las geishas: agua de arroz fermentada para piel perfecta' },
+        { icon: '🧴', title: 'Kit de Inicio', desc: '2 jabones de arroz + muestra de sebo para probar la rutina completa' },
+        { icon: '⏰', title: 'Anti-Edad Natural', desc: 'El ácido ferúlico del arroz es un potente antioxidante anti-arrugas' }
+      ],
+      usage: 'Paso 1: Jabón de arroz como limpieza diaria mañana y noche. Paso 2: Aplica el sebo de 10g como hidratante en zonas secas. Ideal para conocer el ritual japonés.',
+      study: 'Japanese Journal of Dermatology: El ácido ferúlico del salvado de arroz reduce el fotoenvejecimiento y mejora la luminosidad en pieles asiáticas y latinas.'
+    },
+    39: {
+      name: 'Tripack Jabones Artesanales',
+      benefits: [
+        { icon: '🎁', title: '3 Fórmulas Únicas', desc: 'Carbón activado + Avena + Arcilla verde — una para cada necesidad' },
+        { icon: '🖤', title: 'Carbón Desintoxica', desc: 'Absorbe toxinas e impurezas de poros profundos como un imán' },
+        { icon: '💚', title: 'Arcilla Purifica', desc: 'Arcilla verde francesa que regula la grasa y cierra poros abiertos' }
+      ],
+      usage: 'Alterna los 3 jabones: Carbón (piel grasa/acné), Avena (piel sensible/seca), Arcilla verde (poros abiertos/grasa). Aplica 2 min, enjuaga. Cada jabón dura ~1 mes.',
+      study: 'Journal of Cosmetic Science: El carbón activado tiene capacidad adsorbente 1000x su peso, efectivo en limpieza profunda de poros.'
+    },
+    40: {
+      name: 'Secreto Japonés Completo',
+      benefits: [
+        { icon: '🌸', title: 'Ritual Completo', desc: 'Jabón de arroz + Crema facial de arroz — el sistema japonés completo' },
+        { icon: '💎', title: 'Luminosidad Visible', desc: 'Tu piel se ve más clara, uniforme y radiante desde la primera semana' },
+        { icon: '🧬', title: 'Antioxidante Potente', desc: 'El gamma-oryzanol del arroz protege contra radicales libres y UV' }
+      ],
+      usage: 'Paso 1: Limpia mañana y noche con jabón de arroz por 2 min. Paso 2: Aplica la crema facial de arroz en rostro y cuello. La crema funciona de día y de noche.',
+      study: 'Research in Cosmetic Science: El gamma-oryzanol y el ácido ferúlico del arroz tienen efecto despigmentante y fotoprotector comprobado.'
+    },
+    41: {
+      name: 'Melena de León x2 Cajas',
+      benefits: [
+        { icon: '🧠', title: 'Dosis Doble de NGF', desc: '120 cápsulas para 2 meses de estimulación del Factor de Crecimiento Nervioso' },
+        { icon: '📈', title: 'Resultados Potenciados', desc: 'Los efectos nootrópicos se acumulan — el segundo mes es donde más se nota' },
+        { icon: '💰', title: 'Mejor Precio', desc: 'Ahorro significativo comprando el pack de 2 vs individual' }
+      ],
+      usage: 'Tomar 2 cápsulas diarias con agua en la mañana. Para resultados óptimos, mantener el consumo continuo durante los 2 meses completos sin interrupciones.',
+      study: 'Nagano et al. (2010, Biomedical Research): El Hericium erinaceus reduce significativamente los síntomas de depresión y ansiedad tras 4 semanas.'
+    },
+    42: {
+      name: 'Sebo de Res Premium x2',
+      benefits: [
+        { icon: '💧', title: 'Hidratación Profunda', desc: 'Ácidos grasos que imitan los lípidos naturales de tu piel para absorción total' },
+        { icon: '🌟', title: 'Regenera la Piel', desc: 'Reduce visiblemente cicatrices, estrías y marcas con uso constante' },
+        { icon: '👵', title: 'Tradición Colombiana', desc: 'Remedio ancestral usado por generaciones — ahora en fórmula premium concentrada' }
+      ],
+      usage: 'Aplica una pequeña cantidad en piel limpia y húmeda. Masajea suavemente hasta absorción. Úsalo en rostro, manos, codos, rodillas. Mañana y noche. Cada envase rinde 30+ días.',
+      study: 'Journal of Lipid Research: Los ácidos palmítico y oleico del sebo bovino son biocompatibles con la piel humana, restaurando la barrera lipídica natural.'
+    },
+    44: {
+      name: 'Polen Multifloral x90 Caps',
+      benefits: [
+        { icon: '🐝', title: 'Del Huila para Ti', desc: 'Polen recolectado de abejas del Huila colombiano — biodiversidad pura' },
+        { icon: '💪', title: 'Energía + Colágeno', desc: 'Aminoácidos que tu cuerpo usa para producir colágeno y mantener la vitalidad' },
+        { icon: '🛡️', title: 'Inmunidad Reforzada', desc: 'Rico en zinc, selenio y vitaminas del complejo B para defensas altas' }
+      ],
+      usage: 'Tomar 2-3 cápsulas al día con agua y alimentos. Mañana o mediodía para energía. Consumo mínimo 30 días para notar beneficios completos.',
+      study: 'Nutrients Journal (2020): El polen de abeja exhibe propiedades antioxidantes, antiinflamatorias e inmunomoduladoras comprobadas clínicamente.'
+    },
+    45: {
+      name: 'Tripack Jabones + Sebo 10g',
+      benefits: [
+        { icon: '🎁', title: 'Pack Completo', desc: '3 jabones artesanales + muestra de sebo de res — limpieza + hidratación' },
+        { icon: '🧪', title: 'Prueba Todo', desc: 'Conoce los jabones artesanales y el sebo premium en un solo combo' },
+        { icon: '✅', title: 'Rutina Lista', desc: 'Todo lo que necesitas para empezar tu rutina natural de cuidado de piel' }
+      ],
+      usage: 'Usa los jabones alternando según tu necesidad diaria (2 min de masaje + enjuague). Aplica el sebo de 10g como hidratante nocturno en zonas que necesiten reparación.',
+      study: 'La combinación de limpieza activa con jabones naturales + hidratación oclusiva con sebo maximiza la regeneración cutánea nocturna.'
+    },
+    46: {
+      name: 'Energía + Memoria',
+      benefits: [
+        { icon: '⚡', title: 'Doble Potencia', desc: 'Melena de León para el cerebro + Polen para el cuerpo — energía integral' },
+        { icon: '🧠', title: 'Enfoque Láser', desc: 'NGF + aminoácidos = concentración sostenida para estudio y trabajo' },
+        { icon: '🔋', title: 'Sin Bajones', desc: 'Energía natural que no causa nerviosismo ni crash como la cafeína' }
+      ],
+      usage: 'Mañana: 2 caps Melena de León + 2 caps Polen con el desayuno. La Melena potencia tu mente, el Polen tu energía física. Consumo diario por mínimo 30 días.',
+      study: 'La sinergia entre hongos funcionales (Hericium erinaceus) y superalimentos (polen) potencia los efectos nootrópicos y energéticos.'
+    },
+    50: {
+      name: 'Piel y Bienestar',
+      benefits: [
+        { icon: '🌿', title: 'Cuidado Integral', desc: 'Jabones naturales para limpiar + productos para nutrir tu piel' },
+        { icon: '💧', title: 'Hidratación Natural', desc: 'Ingredientes que respetan el pH y la barrera natural de tu piel' },
+        { icon: '😊', title: 'Bienestar Diario', desc: 'Rutina sencilla que cuida tu piel y mejora cómo te sientes cada día' }
+      ],
+      usage: 'Limpia tu piel con los jabones naturales (2 min de masaje). Aplica el hidratante después. Rutina mañana y noche para resultados óptimos.',
+      study: 'Una rutina consistente de limpieza + hidratación con ingredientes naturales mejora la salud cutánea en 2-4 semanas según estudios dermatológicos.'
+    },
+    54: {
+      name: 'Kit Familia Piel',
+      benefits: [
+        { icon: '👨‍👩‍👧‍👦', title: 'Para Toda la Familia', desc: 'Jabones y productos de cuidado para cada miembro del hogar' },
+        { icon: '🌿', title: 'Todo Natural', desc: 'Sin químicos agresivos — seguro para pieles sensibles y delicadas' },
+        { icon: '💰', title: 'Ahorro Familiar', desc: 'Pack completo a mejor precio que comprando productos individuales' }
+      ],
+      usage: 'Cada miembro elige el jabón según su tipo de piel. Cúrcuma para manchas, Avena para sensible, Caléndula para reparar. Complementar con sebo como hidratante.',
+      study: 'La Academia Americana de Dermatología recomienda jabones sin sulfatos ni parabenos para el cuidado diario de toda la familia.'
+    },
+    55: {
+      name: 'Mente y Defensa',
+      benefits: [
+        { icon: '🧠', title: 'Cerebro Protegido', desc: 'Melena de León estimula NGF para neuronas más fuertes y conectadas' },
+        { icon: '🛡️', title: 'Inmunidad Activa', desc: 'Polen multifloral cargado de antioxidantes para defensas blindadas' },
+        { icon: '🎯', title: 'Combo Inteligente', desc: 'Mente clara + cuerpo protegido = rendimiento total sin estimulantes' }
+      ],
+      usage: 'Melena de León: 2 caps/día en la mañana para enfoque. Polen: 2 caps/día con almuerzo para defensas. Mantener mínimo 30 días para resultados completos.',
+      study: 'Frontiers in Aging Neuroscience (2020): Los hongos funcionales tienen potencial neuroprotector y los superalimentos refuerzan la inmunidad adaptativa.'
+    },
+    56: {
+      name: 'Capilar Completo',
+      benefits: [
+        { icon: '💎', title: 'Cabello Perfecto', desc: 'Melena de León fortalece desde adentro + Néctar Capilar nutre desde afuera' },
+        { icon: '🔄', title: 'Doble Acción', desc: 'Suplemento oral para crecimiento + tratamiento tópico para brillo' },
+        { icon: '📈', title: 'Resultados Visibles', desc: 'Menos caída, más brillo y volumen desde las primeras semanas' }
+      ],
+      usage: 'Melena de León: 2 caps/día por la mañana. Néctar Capilar: Aplica en medios y puntas húmedas después de cada lavada, no enjuagues. Combina ambos por mínimo 60 días.',
+      study: 'International Journal of Trichology: La combinación de suplementación oral (biotina, aminoácidos) + tratamiento tópico acelera los resultados capilares.'
+    },
+    57: {
+      name: 'Power Mental',
+      benefits: [
+        { icon: '🚀', title: 'Máximo Rendimiento', desc: '2 cajas de Melena de León + Polen = la fórmula más potente del catálogo' },
+        { icon: '🧠', title: 'Nootrópico Natural', desc: 'Triple dosis de NGF + aminoácidos esenciales para performance cognitivo' },
+        { icon: '⚡', title: 'Energía Imparable', desc: 'Vitalidad mental y física sostenida durante todo el día' }
+      ],
+      usage: 'Mañana: 2 caps Melena de León + 2 caps Polen con desayuno. Mantener la dosis diaria por los 2 meses que dura el pack para máximos resultados.',
+      study: 'Biomedical Research (2010): Hericium erinaceus mejora ansiedad, depresión y concentración. El polen complementa con energía celular.'
+    },
+    58: {
+      name: 'Ritual Regenerador',
+      benefits: [
+        { icon: '🌟', title: 'Regeneración Total', desc: 'Sebo de res + Jabones + Crema de arroz — tu piel se renueva por completo' },
+        { icon: '💧', title: 'Hidratación 360°', desc: 'Limpieza profunda + nutrición + hidratación sellada en cada paso' },
+        { icon: '🧴', title: 'Spa en Casa', desc: 'Ritual completo de cuidado facial y corporal sin salir de tu baño' }
+      ],
+      usage: 'Paso 1: Limpia con jabón (2 min). Paso 2: Aplica crema de arroz en rostro. Paso 3: Sella con sebo de res en zonas secas. Ritual completo mañana y noche.',
+      study: 'Dermatología moderna confirma que la rutina de 3 pasos (limpieza-tratamiento-hidratación) es el gold standard para regeneración cutánea.'
+    },
+    59: {
+      name: 'Kit Total SANATE',
+      benefits: [
+        { icon: '👑', title: 'TODO en Uno', desc: 'Jabones + Sebo + Melena + Polen + Néctar + Crema — el paquete definitivo' },
+        { icon: '💰', title: 'Máximo Ahorro', desc: 'Más del 30% de descuento vs comprar cada producto por separado' },
+        { icon: '✅', title: 'Bienestar Completo', desc: 'Piel, cabello, mente, energía y defensas — todo cubierto en un kit' }
+      ],
+      usage: 'Jabones: limpieza diaria. Sebo: hidratante facial. Melena: 2 caps/mañana. Polen: 2 caps/almuerzo. Néctar: en cabello húmedo. Crema de arroz: noche. ¡Rutina total!',
+      study: 'La sinergia entre cuidado interno (suplementos) y externo (tópicos naturales) maximiza los resultados según estudios de medicina integrativa.'
     }
   };
 
   // Brand colors
   const colors = {
     celeste: '#3dc9e8',
+    celesteLight: 'rgba(61, 201, 232, 0.08)',
     gold: '#e8c87a',
+    goldLight: 'rgba(232, 200, 122, 0.1)',
     dark: '#0a1628',
     white: '#ffffff',
-    lightGray: '#f5f5f5',
-    borderGray: '#e0e0e0'
+    lightBg: '#f8fafc',
+    border: '#e2e8f0'
   };
 
-  /**
-   * Injects CSS styles for the product landing section
-   */
+  // ========== CSS STYLES ==========
   function injectStyles() {
-    const styleId = 'product-landing-inject-styles';
-    if (document.getElementById(styleId)) return;
-
-    const styles = document.createElement('style');
-    styles.id = styleId;
-    styles.textContent = `
-      .product-landing-inject {
-        margin: 40px 0;
-        padding: 30px 20px;
-        background: linear-gradient(135deg, rgba(61, 201, 232, 0.05) 0%, rgba(232, 200, 122, 0.05) 100%);
-        border-radius: 12px;
-        border-top: 3px solid ${colors.celeste};
-        animation: fadeInSlide 0.6s ease-out;
+    if (document.getElementById('pli-styles-v2')) return;
+    const s = document.createElement('style');
+    s.id = 'pli-styles-v2';
+    s.textContent = `
+      .pli-section {
+        margin: 30px 0 20px;
+        padding: 0;
+        animation: pliFadeIn 0.5s ease-out;
+      }
+      @keyframes pliFadeIn {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes pliShimmer {
+        0% { background-position: -200% center; }
+        100% { background-position: 200% center; }
       }
 
-      @keyframes fadeInSlide {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .product-landing-inject h3 {
+      /* Section Title */
+      .pli-title {
+        font-size: 22px;
+        font-weight: 800;
         color: ${colors.dark};
-        font-size: 24px;
-        font-weight: 700;
-        margin: 0 0 25px 0;
         text-align: center;
-      }
-
-      .product-landing-inject h4 {
-        color: ${colors.dark};
-        font-size: 18px;
-        font-weight: 600;
-        margin: 30px 0 15px 0;
+        margin: 0 0 20px;
+        padding-bottom: 12px;
+        border-bottom: 3px solid ${colors.celeste};
+        background: linear-gradient(90deg, ${colors.celeste}, ${colors.gold}, ${colors.celeste});
+        background-size: 200% auto;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: pliShimmer 3s linear infinite;
       }
 
       /* Benefits Grid */
-      .landing-benefits-grid {
+      .pli-benefits {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
-        margin-bottom: 30px;
+        gap: 14px;
+        margin-bottom: 20px;
       }
-
-      .benefit-card {
-        padding: 20px;
+      .pli-benefit {
         background: ${colors.white};
-        border: 1px solid ${colors.borderGray};
-        border-radius: 8px;
+        border: 1px solid ${colors.border};
+        border-radius: 10px;
+        padding: 18px 14px;
         text-align: center;
         transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(10, 22, 40, 0.05);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
       }
-
-      .benefit-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 4px 12px rgba(61, 201, 232, 0.15);
+      .pli-benefit:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(61,201,232,0.15);
         border-color: ${colors.celeste};
       }
-
-      .benefit-icon {
-        font-size: 32px;
-        margin-bottom: 10px;
+      .pli-benefit-icon {
+        font-size: 30px;
         display: block;
-      }
-
-      .benefit-title {
-        color: ${colors.dark};
-        font-weight: 600;
-        font-size: 14px;
         margin-bottom: 8px;
       }
-
-      .benefit-desc {
-        color: #666;
-        font-size: 13px;
+      .pli-benefit-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: ${colors.dark};
+        margin-bottom: 6px;
+      }
+      .pli-benefit-desc {
+        font-size: 12px;
+        color: #64748b;
         line-height: 1.5;
       }
 
-      /* Modo de Uso Box */
-      .landing-usage-box {
-        background: ${colors.white};
+      /* Usage Box */
+      .pli-usage {
+        background: linear-gradient(135deg, ${colors.goldLight}, ${colors.celesteLight});
         border: 2px solid ${colors.gold};
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 25px;
-        line-height: 1.8;
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 16px;
+      }
+      .pli-usage-title {
+        font-size: 16px;
+        font-weight: 700;
         color: ${colors.dark};
+        margin: 0 0 10px;
+      }
+      .pli-usage-text {
         font-size: 14px;
+        color: #334155;
+        line-height: 1.7;
+        margin: 0;
       }
 
-      /* Study/Trust Box */
-      .landing-study-box {
-        background: ${colors.lightGray};
-        padding: 18px;
+      /* Study Box */
+      .pli-study {
+        background: ${colors.lightBg};
         border-left: 4px solid ${colors.celeste};
-        margin-bottom: 25px;
-        border-radius: 4px;
+        border-radius: 0 8px 8px 0;
+        padding: 14px 18px;
+        margin-bottom: 10px;
       }
-
-      .landing-study-box {
-        font-style: italic;
-        color: #555;
+      .pli-study-title {
         font-size: 14px;
+        font-weight: 700;
+        color: ${colors.dark};
+        margin: 0 0 8px;
+      }
+      .pli-study-text {
+        font-size: 13px;
+        color: #475569;
         line-height: 1.6;
+        font-style: italic;
+        margin: 0;
       }
 
-      /* Section separator */
-      .product-landing-inject h4 {
-        margin-top: 20px;
+      /* Trust Badge */
+      .pli-trust {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid ${colors.border};
+      }
+      .pli-trust-item {
+        font-size: 11px;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        gap: 4px;
       }
 
-      /* Mobile Responsive */
+      /* Mobile */
       @media (max-width: 768px) {
-        .product-landing-inject {
-          padding: 20px 15px;
-          margin: 25px 0;
-        }
-
-        .product-landing-inject h3 {
-          font-size: 20px;
-          margin-bottom: 20px;
-        }
-
-        .product-landing-inject h4 {
-          font-size: 16px;
-        }
-
-        .landing-benefits-grid {
+        .pli-benefits {
           grid-template-columns: 1fr;
-          gap: 15px;
-          margin-bottom: 25px;
+          gap: 10px;
         }
-
-        .benefit-card {
-          padding: 15px;
-        }
-
-        .benefit-icon {
-          font-size: 28px;
-        }
-
-        .benefit-title {
-          font-size: 13px;
-        }
-
-        .benefit-desc {
-          font-size: 12px;
-        }
-
-        .landing-usage-box,
-        .landing-study-box {
-          padding: 15px;
-          font-size: 13px;
-        }
-
-        .landing-cta-button {
-          padding: 10px 20px;
-          font-size: 13px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .product-landing-inject {
-          padding: 15px 10px;
-          margin: 20px 0;
-        }
-
-        .product-landing-inject h3 {
+        .pli-title {
           font-size: 18px;
-          margin-bottom: 15px;
         }
-
-        .benefit-icon {
-          font-size: 24px;
+        .pli-benefit {
+          padding: 14px 12px;
         }
-
-        .benefit-title {
-          font-size: 12px;
-        }
-
-        .benefit-desc {
-          font-size: 11px;
-        }
+        .pli-benefit-icon { font-size: 26px; }
+        .pli-benefit-title { font-size: 13px; }
+        .pli-benefit-desc { font-size: 11px; }
+        .pli-usage { padding: 14px 16px; }
+        .pli-usage-text { font-size: 13px; }
+        .pli-study { padding: 12px 14px; }
+        .pli-trust { flex-direction: column; align-items: center; gap: 8px; }
+      }
+      @media (max-width: 480px) {
+        .pli-section { margin: 20px 0 10px; }
+        .pli-title { font-size: 16px; margin-bottom: 14px; }
       }
     `;
-
-    document.head.appendChild(styles);
+    document.head.appendChild(s);
   }
 
-  /**
-   * Extracts product title from the page
-   * @returns {string} Product title in lowercase
-   */
-  function getProductTitle() {
-    const pageDetail = document.querySelector('.pageDetail');
-    if (!pageDetail) return '';
-
-    // Try multiple selectors to find the product title
-    const titleSelectors = ['h1', 'h2', '.product-title', '[data-product-title]'];
-    for (const selector of titleSelectors) {
-      const titleEl = pageDetail.querySelector(selector);
-      if (titleEl) {
-        return titleEl.textContent.toLowerCase().trim();
-      }
-    }
-
-    return '';
+  // ========== EXTRACT PRODUCT ID FROM URL ==========
+  function getProductIdFromURL() {
+    const m = window.location.pathname.match(/\/producto\/(\d+)/);
+    return m ? parseInt(m[1], 10) : null;
   }
 
-  /**
-   * Determines which product content to use based on title keywords
-   * @param {string} title - Product title in lowercase
-   * @returns {object|null} Product content object or null if no match
-   */
-  function getProductContentByTitle(title) {
-    for (const [keywords, content] of Object.entries(productContent)) {
-      const keywordList = keywords.split('|');
-      const matches = keywordList.some(keyword => title.includes(keyword.toLowerCase()));
-      if (matches) {
-        return content;
-      }
+  // ========== FALLBACK: MATCH BY TITLE KEYWORDS ==========
+  function getProductByTitle(title) {
+    const t = title.toLowerCase();
+    const keywordMap = {
+      'curcuma': 7, 'kójico': 7, 'kojico': 7,
+      'melena': 8,
+      'sebo': 42, 'res': 42,
+      'polen': 15, 'colágeno': 15, 'colageno': 15,
+      'néctar': 14, 'nectar': 14,
+      'avena': 11, 'arroz': 11,
+      'calendula': 13, 'aloe': 13,
+      'mix': 12,
+      'tripack': 39,
+      'secreto': 40, 'japonés': 40, 'japones': 40,
+      'kit total': 59, 'kit definitivo': 59,
+      'kit familia': 54,
+      'energía': 46, 'energia': 46, 'memoria': 46,
+      'mente': 55, 'defensa': 55,
+      'capilar': 56,
+      'power': 57,
+      'ritual': 58, 'regenerador': 58,
+      'piel y bienestar': 50, 'bienestar': 50
+    };
+    for (const [kw, id] of Object.entries(keywordMap)) {
+      if (t.includes(kw)) return productData[id] || null;
     }
     return null;
   }
 
-  /**
-   * Creates and returns the HTML for the benefits grid
-   * @param {array} benefits - Array of benefit objects
-   * @returns {string} HTML string
-   */
-  function createBenefitsGrid(benefits) {
-    const benefitCards = benefits
-      .map(
-        (benefit) => `
-      <div class="benefit-card">
-        <span class="benefit-icon">${benefit.icon}</span>
-        <div class="benefit-title">${benefit.title}</div>
-        <div class="benefit-desc">${benefit.desc}</div>
+  // ========== BUILD HTML ==========
+  function buildSection(data) {
+    const benefits = data.benefits.map(b => `
+      <div class="pli-benefit">
+        <span class="pli-benefit-icon">${b.icon}</span>
+        <div class="pli-benefit-title">${b.title}</div>
+        <div class="pli-benefit-desc">${b.desc}</div>
       </div>
-    `
-      )
-      .join('');
+    `).join('');
 
-    return `<div class="landing-benefits-grid">${benefitCards}</div>`;
-  }
-
-  /**
-   * Creates the complete landing injection HTML
-   * @param {object} content - Product content object
-   * @returns {string} HTML string
-   */
-  function createLandingHTML(content) {
     return `
-      <section class="product-landing-inject">
-        <h3>✨ Beneficios Principales</h3>
-        ${createBenefitsGrid(content.benefits)}
-
-        <h4>📋 Modo de Uso</h4>
-        <div class="landing-usage-box">
-          ${content.usage}
+      <div class="pli-section">
+        <div class="pli-title">✨ Beneficios Principales</div>
+        <div class="pli-benefits">${benefits}</div>
+        <div class="pli-usage">
+          <div class="pli-usage-title">📋 Modo de Uso</div>
+          <p class="pli-usage-text">${data.usage}</p>
         </div>
-
-        <h4>🔬 Respaldado por Estudios</h4>
-        <div class="landing-study-box">
-          📚 ${content.study}
+        <div class="pli-study">
+          <div class="pli-study-title">🔬 Respaldo Científico</div>
+          <p class="pli-study-text">${data.study}</p>
         </div>
-      </section>
+        <div class="pli-trust">
+          <span class="pli-trust-item">🇨🇴 Hecho en Colombia</span>
+          <span class="pli-trust-item">🌿 100% Natural</span>
+          <span class="pli-trust-item">🚚 Envío Nacional</span>
+          <span class="pli-trust-item">⭐ +500 Clientes</span>
+        </div>
+      </div>
     `;
   }
 
-  /**
-   * Injects the landing section into the page
-   */
-  function injectLandingSection() {
-    // Check if already injected
-    if (document.querySelector('.product-landing-inject')) {
-      return;
-    }
-
-    // Find insertion point
+  // ========== INJECT ==========
+  function inject() {
+    if (document.querySelector('.pli-section')) return;
     const pageDetail = document.querySelector('.pageDetail');
-    if (!pageDetail) {
-      return;
+    if (!pageDetail) return;
+
+    // Try to get product by ID from URL first (most reliable)
+    const productId = getProductIdFromURL();
+    let data = productId ? productData[productId] : null;
+
+    // Fallback: match by page title
+    if (!data) {
+      const titleEl = pageDetail.querySelector('h1') || pageDetail.querySelector('h2');
+      if (titleEl) {
+        data = getProductByTitle(titleEl.textContent);
+      }
     }
 
-    // Try to find the best insertion point (below description or add button)
-    let insertionPoint = null;
-    const detailDescription = pageDetail.querySelector('.detailDescription');
-    const btnAdd = pageDetail.querySelector('.btnAdd');
+    if (!data) return;
 
-    if (detailDescription) {
-      insertionPoint = detailDescription;
-    } else if (btnAdd) {
-      insertionPoint = btnAdd;
+    // Find best injection point
+    const descEl = pageDetail.querySelector('.detailDescription');
+    const btnEl = pageDetail.querySelector('.btnAdd');
+    const insertAfter = descEl || btnEl;
+
+    const container = document.createElement('div');
+    container.innerHTML = buildSection(data);
+    const section = container.firstElementChild;
+
+    if (insertAfter && insertAfter.parentNode) {
+      insertAfter.parentNode.insertBefore(section, insertAfter.nextSibling);
     } else {
-      // Fallback: insert at the end of pageDetail
-      insertionPoint = pageDetail;
-    }
-
-    // Get product title and find matching content
-    const title = getProductTitle();
-    if (!title) {
-      return;
-    }
-
-    const content = getProductContentByTitle(title);
-    if (!content) {
-      return;
-    }
-
-    // Create and inject the landing HTML
-    const landingHTML = createLandingHTML(content);
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = landingHTML;
-    const landingElement = tempDiv.firstElementChild;
-
-    // Insert after the insertion point
-    if (insertionPoint === pageDetail) {
-      pageDetail.appendChild(landingElement);
-    } else {
-      insertionPoint.parentNode.insertBefore(landingElement, insertionPoint.nextSibling);
+      pageDetail.appendChild(section);
     }
   }
 
-  /**
-   * Checks if the current page is a product detail page
-   * @returns {boolean}
-   */
-  function isProductDetailPage() {
-    return /\/producto\//.test(window.location.pathname);
-  }
-
-  /**
-   * Initialize the hotfix
-   */
+  // ========== INIT ==========
   function init() {
-    if (!isProductDetailPage()) {
-      return;
-    }
-
-    // Inject styles once
+    if (!/\/producto\//.test(window.location.pathname)) return;
     injectStyles();
+    inject();
 
-    // Try to inject landing section
-    injectLandingSection();
-
-    // Set up observer for React re-renders
-    // Check every 1.5 seconds for changes (catches React updates and component mounting)
-    let checkCount = 0;
-    const maxChecks = 100; // Stop checking after ~150 seconds
-    const intervalId = setInterval(() => {
-      checkCount++;
-
-      if (!document.querySelector('.product-landing-inject')) {
-        injectLandingSection();
-      }
-
-      // Stop checking after maxChecks attempts
-      if (checkCount >= maxChecks) {
-        clearInterval(intervalId);
-      }
+    // Poll for React re-renders
+    let checks = 0;
+    const iv = setInterval(() => {
+      if (++checks > 80) { clearInterval(iv); return; }
+      if (!document.querySelector('.pli-section')) inject();
     }, 1500);
 
-    // Also listen for common React/SPA navigation events
-    const originalPushState = window.history.pushState;
-    window.history.pushState = function(...args) {
-      const result = originalPushState.apply(window.history, args);
-      if (isProductDetailPage()) {
-        setTimeout(injectLandingSection, 500);
-      }
-      return result;
+    // SPA navigation hook
+    const origPush = history.pushState;
+    history.pushState = function() {
+      const r = origPush.apply(this, arguments);
+      setTimeout(() => {
+        if (/\/producto\//.test(location.pathname)) {
+          // Remove old section on navigation
+          const old = document.querySelector('.pli-section');
+          if (old) old.remove();
+          inject();
+        }
+      }, 600);
+      return r;
     };
-
-    // Listen for custom events that some SPAs use
-    document.addEventListener('pagechange', () => {
-      if (isProductDetailPage()) {
-        setTimeout(injectLandingSection, 300);
-      }
+    window.addEventListener('popstate', () => {
+      setTimeout(() => {
+        if (/\/producto\//.test(location.pathname)) {
+          const old = document.querySelector('.pli-section');
+          if (old) old.remove();
+          inject();
+        }
+      }, 600);
     });
   }
 
-  // Wait for DOM to be ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
-
-  // Also initialize after a short delay to catch dynamically loaded pages
-  setTimeout(init, 100);
+  setTimeout(init, 200);
 })();
