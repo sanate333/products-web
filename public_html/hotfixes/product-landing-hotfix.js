@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5 — themed — 2026-04-13 */
+/* SANATE Product Landing v5.1 themed deploy fix */
 (function(){
 'use strict';
 
