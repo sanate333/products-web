@@ -7,6 +7,44 @@
 (function() {
   'use strict';
 
+  // ========== LANDING PAGE MAPPING ==========
+  // Maps product keywords to landing page filenames
+  const landingPageMap = {
+    'curcuma': 'landing-curcuma',
+    'cúrcuma': 'landing-curcuma',
+    'kójico': 'landing-curcuma',
+    'kojico': 'landing-curcuma',
+    'melena': 'landing-melena',
+    'sebo': 'landing-sebo',
+    'polen': 'landing-polen',
+    'néctar': 'landing-nectar',
+    'nectar': 'landing-nectar',
+    'capilar completo': 'landing-nectar',
+    'secreto': 'landing-secreto',
+    'japonés': 'landing-secreto',
+    'japones': 'landing-secreto',
+    'kit total': 'landing-kit-total',
+    'kit familia': 'landing-kit-total',
+    'avena': 'landing-curcuma',
+    'calendula': 'landing-curcuma',
+    'tripack': 'landing-curcuma',
+    'energía': 'landing-polen',
+    'energia': 'landing-polen',
+    'power': 'landing-melena',
+    'mente': 'landing-melena',
+    'ritual': 'landing-sebo',
+    'piel': 'landing-sebo',
+    'regenerador': 'landing-sebo'
+  };
+
+  function getLandingPage(productName) {
+    const lower = productName.toLowerCase();
+    for (const [keyword, page] of Object.entries(landingPageMap)) {
+      if (lower.includes(keyword)) return '/' + page + '.html';
+    }
+    return null;
+  }
+
   // ========== CONFIGURATION ==========
   const CONFIG = {
     checkInterval: 500, // ms between render checks
@@ -430,7 +468,8 @@
     if (!cardEl.querySelector('.cat-see-more')) {
       const seeMoreLink = document.createElement('a');
       seeMoreLink.className = 'cat-see-more';
-      seeMoreLink.href = `/landing-${slug}.html`;
+      const landingUrl = getLandingPage(productName);
+      seeMoreLink.href = landingUrl || `/landing-${slug}.html`;
       seeMoreLink.textContent = '→ Ver más';
       seeMoreLink.style.display = 'block';
       seeMoreLink.style.marginTop = '4px';
