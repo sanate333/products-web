@@ -1,1 +1,12 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/logo.png"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><meta name="description" content="SANATE"/><link rel="apple-touch-icon" href="/logo192.png"/><link rel="manifest" href="/manifest.json"/><title>SANATE</title><script defer="defer" src="/static/js/main.b29121b2.js"></script><link href="/static/css/main.30cc253e.css" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div></body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"/><link rel="icon" href="/logo.png"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#000000"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"><meta name="description" content="SANATE"/><link rel="apple-touch-icon" href="/logo192.png"/><link rel="manifest" href="/manifest.json"/><title>SANATE</title><script defer="defer" src="/static/js/main.b29121b2.js"></script><link href="/static/css/main.30cc253e.css" rel="stylesheet"></head><body><noscript>You need to enable JavaScript to run this app.</noscript><div id="root"></div><script src="/hotfix.js"></script><script src="/cx_panel.js"></script><script>
+/* Dynamic hotfix loader v1 */
+(function(){
+  var p=window.location.pathname;
+  var scripts=[];
+  if(p==='/catalogo')scripts.push('/hotfixes/catalog-hotfix.js?v=1');
+  if(p.indexOf('/dashboard/sub-banners')===0)scripts.push('/hotfixes/dashboard-subbanner-hotfix.js?v=1');
+  scripts.forEach(function(src){
+    var s=document.createElement('script');s.src=src;s.defer=true;document.body.appendChild(s);
+  });
+})();
+</script></body></html>
