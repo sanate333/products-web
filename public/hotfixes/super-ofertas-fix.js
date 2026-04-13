@@ -74,6 +74,12 @@ var SO_CSS = ""
 +".so2-cta.so2-added{background:#166534!important;pointer-events:none}"
 +".so2-cta.so2-added::after{display:none}"
 
+/* Ver más link */
++".so2-ver-mas{display:block;text-align:center;margin-top:9px;padding:9px 0;color:#94a3b8;font-size:12px;font-weight:600;text-decoration:none;letter-spacing:.3px;border-radius:8px;transition:color .2s,background .2s;}"
++".so2-ver-mas:hover{color:#3dc9e8;background:rgba(61,201,232,.08);}"
++".so2-card.so2-star .so2-ver-mas{color:#c8a84b}"
++".so2-card.so2-star .so2-ver-mas:hover{color:#e8c87a;background:rgba(232,200,122,.08)}"
+
 /* âââ TOAST NOTIFICATION âââ */
 +".so2-toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-120px);z-index:100000;background:linear-gradient(135deg,#166534,#15803d);color:#fff;padding:16px 28px;border-radius:14px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.3),0 0 0 2px rgba(22,101,52,.3);transition:transform .5s cubic-bezier(.22,1,.36,1),opacity .4s ease;opacity:0;pointer-events:none;max-width:92vw;text-align:center}"
 +".so2-toast.so2-toast-show{transform:translateX(-50%) translateY(0);opacity:1}"
@@ -89,16 +95,13 @@ var SO_CSS = ""
 +".so2-hdr{padding:0 16px}"
 +".so2-hdr h2{font-size:20px}"
 +".so2-hdr p{font-size:13px}"
-+".so2-track{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;gap:16px;padding:10px 20px 20px;perspective:none;max-width:100%;scroll-padding:0 20px;justify-content:flex-start;overscroll-behavior-x:contain}"
++".so2-track{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:16px;padding:10px 20px 20px;perspective:none;max-width:100%;scroll-padding:0 20px}"
 +".so2-track::-webkit-scrollbar{display:none}"
-+".so2-track{-ms-overflow-style:none;scrollbar-width:none;scroll-padding-left:10px}"
-+".so2-card{flex:0 0 82%;max-width:300px;scroll-snap-align:start;transform:none!important;transition:transform .3s ease,box-shadow .3s ease}"
++".so2-track{-ms-overflow-style:none;scrollbar-width:none}"
++".so2-card{flex:0 0 82%;max-width:300px;scroll-snap-align:center;transform:none!important;transition:transform .3s ease,box-shadow .3s ease}"
 +".so2-card:nth-child(2){transform:none!important;box-shadow:0 15px 40px rgba(0,180,130,.2),0 10px 30px rgba(0,0,0,.2)!important}"
 +".so2-card:hover{transform:translateY(-4px)!important}"
-+".so2-card h3{font-size:18px!important;font-weight:900!important;color:#071926!important;-webkit-text-fill-color:#071926!important;background:rgba(255,255,255,.93)!important;-webkit-background-clip:unset!important;background-clip:unset!important;padding:10px 14px 6px!important;margin:0!important;line-height:1.25!important;text-shadow:none!important}"
-+".so2-card .so2-body{background:#fff!important}"
 +".so2-img{aspect-ratio:1/1;height:auto}"
-+".so2-slide{object-fit:cover!important}"
 +".so2-body{padding:14px 16px 18px}"
 +".so2-body h3{font-size:15px}"
 +".so2-desc{font-size:12px;margin-bottom:10px}"
@@ -141,7 +144,8 @@ var MOBILE_URG_CSS = ""
       x: '$105.000', p: '$66.000', pct: '-37%',
       tag: '🧴 Más vendido', accent: '#27ae60',
       urg: 'Ideal para manchas, acné y piel opaca — Ahorras $39.000',
-      img: '/ai-images/iMAGENES%20nEW/Curcuma%20Jabon1.webp', 
+      img: '/ai-images/iMAGENES%20nEW/Curcuma%20Jabon1.webp',
+      landing: '/landing-curcuma.html',
       cartId: 'j1', cartName: 'Tripack Jabones Artesanales', cartDesc: '3 jabones artesanales 100g a elección', cartPrice: 66000
     },
     {
@@ -151,6 +155,7 @@ var MOBILE_URG_CSS = ""
       tag: '🔥 El más elegido', accent: '#e74c3c', star: true,
       urg: 'Piel seca, arrugas y falta de hidratación — Ahorras $30.000',
       img: '/ai-images/iMAGENES%20nEW/Combo%20Secreto%20Japones%20de%2099%2C000%202jabones%201%20sebo%20grande.webp', imgs: ['/ai-images/ecom/sebo_hero1.png'],
+      landing: '/landing-secreto.html',
       cartId: 'c4', cartName: 'Secreto Japonés', cartDesc: 'Sebo 100g + 2 Jabones + Exfoliante', cartPrice: 99000
     },
     {
@@ -160,6 +165,7 @@ var MOBILE_URG_CSS = ""
       tag: '🧠 Memoria & Enfoque', accent: '#9b59b6',
       urg: 'Niebla mental, falta de memoria y ansiedad — Ahorras $43.800',
       img: '/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60%202.jpg', imgs: ['/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60..jpg'],
+      landing: '/landing-melena.html',
       cartId: 'm2', cartName: 'Melena de León × 2 Cajas', cartDesc: '2 cajas Melena de León 250mg × 60 cáps', cartPrice: 136000
     },
     {
@@ -169,6 +175,7 @@ var MOBILE_URG_CSS = ""
       tag: '✨ Doble Poder', accent: '#d35400',
       urg: 'Piel reseca, cicatrices y estrías — Ahorras $32.100',
       img: '/ai-images/Sebo%20grande%20-%20Tabla%20beneficios%20(2).png', imgs: ['/ai-images/ecom/sebo_promo1.png'],
+      landing: '/landing-sebo.html',
       cartId: 'c14', cartName: 'Sebo Premium × 2', cartDesc: '2 Sebos de Res originales 100g vidrio', cartPrice: 119900
     },
     {
@@ -178,6 +185,7 @@ var MOBILE_URG_CSS = ""
       tag: '⭐ Combo Estrella', accent: '#f39c12', star: true,
       urg: 'Piel + mente: el combo más completo — Ahorras $39.000',
       img: '/ai-images/iMAGENES%20nEW/Combo%20Secreto%20Japones%20de%2099%2C000%202jabones%201%20sebo%20grande.webp', imgs: ['/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60%202.jpg'],
+      landing: '/landing-secreto.html',
       cartId: 'c5', cartName: 'Combo Piel & Bienestar', cartDesc: 'Secreto Japonés + Melena de León × 60', cartPrice: 149900
     },
     {
@@ -186,7 +194,8 @@ var MOBILE_URG_CSS = ""
       x: '$120.000', p: '$99.000', pct: '-18%',
       tag: '💛 Energía Natural', accent: '#f1c40f',
       urg: 'Cansancio, sistema inmune y falta de vitalidad — Ahorras $21.000',
-      img: '/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg', 
+      img: '/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg',
+      landing: '/landing-polen.html',
       cartId: 'p1', cartName: 'Polen Multifloral × 90', cartDesc: 'Polen Multifloral Premium 500mg × 90 cáps', cartPrice: 99000
     },
     {
@@ -196,6 +205,7 @@ var MOBILE_URG_CSS = ""
       tag: '💚 Inicio Natural', accent: '#1abc9c',
       urg: 'Ideal para empezar tu rutina natural — Ahorras $26.000',
       img: '/ai-images/iMAGENES%20nEW/Curcuma%20Jabon1.webp', imgs: ['/ai-images/ecom/sebo_promo1.png'],
+      landing: '/landing-curcuma.html',
       cartId: 'c3', cartName: '2 Jabones + Sebo 10g', cartDesc: '2 Jabones 100g + Sebo de Res 10g prueba', cartPrice: 66000
     },
     {
@@ -205,6 +215,7 @@ var MOBILE_URG_CSS = ""
       tag: '💪 Rendimiento Total', accent: '#2ecc71',
       urg: 'Fatiga mental, baja concentración y sistema inmune — Ahorras $39.000',
       img: '/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60%202.jpg', imgs: ['/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg'],
+      landing: '/landing-melena.html',
       cartId: 'c6', cartName: 'Combo Energía + Memoria', cartDesc: 'Polen × 90 + Melena de León × 60 cáps', cartPrice: 149900
     },
     {
@@ -214,6 +225,7 @@ var MOBILE_URG_CSS = ""
       tag: '🏡 Para la Familia', accent: '#3498db',
       urg: 'Cuidado diario para toda la familia — Ahorras $40.000',
       img: '/ai-images/ecom/sebo_lifestyle1.png', imgs: ['/ai-images//iMAGENES%20nEW/Curcuma%20Jabon1.webp'],
+      landing: '/landing-sebo.html',
       cartId: 'c8', cartName: 'Kit Familia Piel', cartDesc: '2 Sebos grandes 100g + 2 Jabones 100g', cartPrice: 139900
     },
     {
@@ -223,6 +235,7 @@ var MOBILE_URG_CSS = ""
       tag: '🛡️ Inmunidad', accent: '#2c3e50',
       urg: 'Defensas bajas, niebla mental y agotamiento — Ahorras $29.000',
       img: '/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60%202.jpg', imgs: ['/ai-images/iMAGENES%20nEW/POELNX50..jpg'],
+      landing: '/landing-melena.html',
       cartId: 'c9', cartName: 'Combo Mente & Defensa', cartDesc: 'Melena de León × 60 + Polen × 50 cáps', cartPrice: 129900
     },
     {
@@ -232,6 +245,7 @@ var MOBILE_URG_CSS = ""
       tag: '💇 Cabello Sano', accent: '#16a085',
       urg: 'Caída, resequedad y cuero cabelludo irritado — Ahorras $19.100',
       img: '/ai-images/iMAGENES%20nEW/Shampo%20500ml.jpg', imgs: ['/ai-images/ecom/8shampoo%20(1).png'],
+      landing: '/landing-nectar.html',
       cartId: 'c13', cartName: 'Capilar Completo', cartDesc: 'Shampoo 500ml + Secreto Japonés', cartPrice: 119900
     },
     {
@@ -241,6 +255,7 @@ var MOBILE_URG_CSS = ""
       tag: '⚡ Máx. Potencia', accent: '#8e44ad',
       urg: 'Niebla mental, memoria débil y agotamiento nervioso — Ahorras $49.000',
       img: '/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60%202.jpg', imgs: ['/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg'],
+      landing: '/landing-melena.html',
       cartId: 'c12', cartName: 'Power Mental', cartDesc: 'Melena × 2 Cajas + Polen × 90 cáps', cartPrice: 179900
     },
     {
@@ -250,6 +265,7 @@ var MOBILE_URG_CSS = ""
       tag: '🌿 Noche Perfecta', accent: '#34495e',
       urg: 'Piel cansada, insomnio y defensas bajas — Ahorras $45.900',
       img: '/ai-images/ecom/sebo_beneficios1.png', imgs: ['/ai-images/iMAGENES%20nEW/Melena%20de%20leon%20x60%202.jpg'],
+      landing: '/landing-sebo.html',
       cartId: 'c15', cartName: 'Ritual Regenerador', cartDesc: '2 Sebos grandes + Melena de León × 60 cáps', cartPrice: 139900
     },
     {
@@ -259,6 +275,7 @@ var MOBILE_URG_CSS = ""
       tag: '🏆 Pack Máximo', accent: '#c0392b', star: true,
       urg: 'Transformación total: piel, mente y energía — Ahorras $111.900',
       img: '/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg', imgs: ['/ai-images/iMAGENES%20nEW/Curcuma%20Jabon1.webp'],
+      landing: '/landing-kit-total.html',
       cartId: 'c10', cartName: 'Kit Total SÁNATE', cartDesc: 'Polen × 90 + Melena × 2 Cajas + Sebo + 3 Jabones', cartPrice: 259000
     },
     {
@@ -267,7 +284,8 @@ var MOBILE_URG_CSS = ""
       x: '$240.000', p: '$129.000', pct: '-46%',
       tag: '🔥 Doble Poder', accent: '#e67e22', star: true,
       urg: '¡Lleva 2 por menos que el precio de 1.5! — Ahorras $111.000',
-      img: '/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg', 
+      img: '/ai-images/iMAGENES%20nEW/pOLEN%20X90..jpg',
+      landing: '/landing-polen.html',
       cartId: 'p2', cartName: '2 Polen Multifloral × 90', cartDesc: '2 frascos Polen Multifloral Premium 500mg × 90 cáps', cartPrice: 129000
     }
   ]
@@ -380,6 +398,9 @@ function buildSuperOfertas(){
     h += '<span class="so2-save">Ahorras ' + v.pct.replace('-','') + '</span>';
     h += '</div>';
     h += '<button class="so2-cta" onclick="addToCartSO(' + ci + ')" style="border:none">&#128722; A&ntilde;adir al carrito</button>';
+    if(v.landing){
+      h += '<a class="so2-ver-mas" href="' + v.landing + '">&#128269; Ver m&aacute;s info</a>';
+    }
     h += '</div></div>';
   });
 
@@ -428,8 +449,14 @@ function scrollToCenter(){
   if(window.innerWidth > 768) return;
   var track = document.querySelector('.so2-track');
   if(!track) return;
-  /* v8: justify-content:flex-start handles position, just ensure scrollLeft=0 */
-  track.scrollLeft = 0;
+  var cards = track.querySelectorAll('.so2-card');
+  if(cards.length >= 2){
+    setTimeout(function(){
+      var card = cards[1];
+      var scrollLeft = card.offsetLeft - (track.offsetWidth - card.offsetWidth) / 2;
+      track.scrollLeft = scrollLeft;
+    }, 200);
+  }
 }
 
 /* Fix popup on mobile â re-bind all QSO triggers */
@@ -572,7 +599,7 @@ setInterval(tickSO2Carousel,3500);
     var title = v.querySelector('.vtitle');
     var desc = v.querySelector('.vdesc,.vd,[class*="desc"]');
     var addBtn = v.querySelector('[onclick*="addItem"],.vadd,button');
-    if(thumb) thumb.src = '/imagenes_productos/reel_thumb_3.jpg';
+    if(thumb) thumb.src = '/imagenes_productos/Polen_Multifloral_x90.png';
     if(title) title.textContent = 'Polen Premium x50 — Energía y Colágeno Natural';
     if(desc) desc.textContent = 'Polen multifloral del Huila · 500mg · 50 cápsulas · Colágeno natural + vitalidad';
     // Add preview button if not already there
@@ -588,7 +615,7 @@ setInterval(tickSO2Carousel,3500);
     }
     // Also fix addItem onclick
     if(addBtn && addBtn.hasAttribute('onclick')){
-      addBtn.setAttribute('onclick', "addItem({id:'p2',name:'Polen Premium x50 \u2014 500mg',desc:'Col\u00e1geno natural + Polen multifloral 500mg x50',price:69900,img:'/imagenes_productos/reel_thumb_3.jpg'})");
+      addBtn.setAttribute('onclick', "addItem({id:'p2',name:'Polen Premium x50 \u2014 500mg',desc:'Col\u00e1geno natural + Polen multifloral 500mg x50',price:69900,img:'/imagenes_productos/Polen_Multifloral_x90.png'})");
     }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', doIt);
@@ -633,48 +660,4 @@ setInterval(tickSO2Carousel,3500);
   setTimeout(patchPolen,3000);
   setTimeout(patchPolen,5000);
   setTimeout(patchPolen,8000);
-})();
-
-/* v10: Touch direction lock — vertical scroll priority over carousel swipe */
-(function(){
-  function setupTouchLock(){
-    var track = document.querySelector('.so2-track');
-    if(!track || window.innerWidth > 768) return;
-    var startX, startY, locked;
-    track.addEventListener('touchstart', function(e){
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      locked = null;
-    }, {passive: true});
-    track.addEventListener('touchmove', function(e){
-      if(locked !== null) return;
-      var dx = Math.abs(e.touches[0].clientX - startX);
-      var dy = Math.abs(e.touches[0].clientY - startY);
-      if(dx < 4 && dy < 4) return; /* wait for movement */
-      if(dy > dx){
-        /* Vertical scroll — disable carousel horizontal scroll */
-        locked = 'v';
-        track.style.overflowX = 'hidden';
-      } else {
-        locked = 'h';
-      }
-    }, {passive: true});
-    track.addEventListener('touchend', function(){
-      if(locked === 'v'){
-        track.style.overflowX = 'auto';
-      }
-      locked = null;
-    }, {passive: true});
-    track.addEventListener('touchcancel', function(){
-      track.style.overflowX = 'auto';
-      locked = null;
-    }, {passive: true});
-  }
-  /* Run after track is built */
-  var iv2 = setInterval(function(){
-    if(document.querySelector('.so2-track')){
-      clearInterval(iv2);
-      setupTouchLock();
-    }
-  }, 500);
 })();
