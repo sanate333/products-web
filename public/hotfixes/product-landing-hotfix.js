@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.5 safe-sibling injection */
+/* SANATE Product Landing v5.6 always-on SPA navigation */
 (function(){
 'use strict';
 
@@ -273,15 +273,47 @@ function inject(){
   setTimeout(function(){startBounce(section);},300);
 }
 
-// Init
+// Retry-inject: polls every 400ms up to 30x after SPA navigation
+function injectWithRetry(){
+  inject();
+  var retries=0;
+  var iv2=setInterval(function(){
+    if(++retries>30){clearInterval(iv2);return;}
+    if(!document.querySelector('.snt-landing')){inject();}
+    else{clearInterval(iv2);}
+  },400);
+}
+
+// Init — handlers ALWAYS registered so SPA nav from /catalogo works
 function init(){
-  if(!/\/producto\//.test(location.pathname))return;
-  injectCSS();inject();
-  var checks=0;
-  var iv=setInterval(function(){if(++checks>80){clearInterval(iv);return;}if(!document.querySelector('.snt-landing'))inject();},1500);
+  // If starting on a product page, inject now + keep polling
+  if(/\/producto\//.test(location.pathname)){
+    injectCSS();inject();
+    var checks=0;
+    var iv=setInterval(function(){if(++checks>80){clearInterval(iv);return;}if(!document.querySelector('.snt-landing'))inject();},1500);
+  }
+  // ALWAYS register SPA navigation handlers (not just on product pages)
   var origPush=history.pushState;
-  history.pushState=function(){var r=origPush.apply(this,arguments);setTimeout(function(){if(/\/producto\//.test(location.pathname)){var old=document.querySelector('.snt-landing');if(old)old.remove();inject();}},600);return r;};
-  window.addEventListener('popstate',function(){setTimeout(function(){if(/\/producto\//.test(location.pathname)){var old=document.querySelector('.snt-landing');if(old)old.remove();inject();}},600);});
+  history.pushState=function(){
+    var r=origPush.apply(this,arguments);
+    setTimeout(function(){
+      if(/\/producto\//.test(location.pathname)){
+        injectCSS();
+        var old=document.querySelector('.snt-landing');if(old)old.remove();
+        injectWithRetry();
+      }
+    },100);
+    return r;
+  };
+  window.addEventListener('popstate',function(){
+    setTimeout(function(){
+      if(/\/producto\//.test(location.pathname)){
+        injectCSS();
+        var old=document.querySelector('.snt-landing');if(old)old.remove();
+        injectWithRetry();
+      }
+    },100);
+  });
 }
 
 // Hide 10% discount popup temporarily
