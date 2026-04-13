@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════════════════════════
-   SÁNATE — Chat Asesor IA v2.0
+   SÁNATE — Chat Asesor IA v1.0
    Dr. Santiago Morales — Especialista en Cosmética Natural
-   Powered by Google Gemini Flash
+   Powered by Google Gemini 1.5 Flash
    ═══════════════════════════════════════════════════════════════════ */
 (function(){
 'use strict';
@@ -10,144 +10,84 @@
 var GEMINI_URL='/chat-proxy.php';
 var DOC_NAME='Dr. Santiago Morales';
 var DOC_TITLE='Especialista en Cosmética Natural · SÁNATE';
-var DOC_AVATAR='https://randomuser.me/api/portraits/men/32.jpg';
-
-/* ─── CHIP LABELS MAP ─────────────────────────────────────────── */
-var CHIP_LABELS={
-  manchas:'🔴 Manchas en la piel',
-  acne:'🌋 Acné / Granos',
-  sensible:'💧 Piel sensible',
-  reseca:'🏜️ Piel reseca',
-  cabello:'💇 Caída del cabello',
-  energia:'⚡ Energía / Mente',
-  estrias:'Estrías / Cicatrices',
-  axilas:'Axilas oscuras',
-  cicatrices:'Cicatrices',
-  precio:'💰 Ver precios',
-  combo1:'Combo x3 Jabones',
-  combo3:'Combo Piel Sensible',
-  combo4:'⭐ Secreto Japonés',
-  pagar:'✅ Quiero pedirlo',
-  envio:'🚚 Info de envío',
-  devolucion:'Devolución'
-};
+var DOC_AVATAR='https://sanate.store/img/doctor-avatar.jpg';
 
 /* ─── PRODUCTS DATA ───────────────────────────────────────────── */
 var P={
   c1:{id:'c1',name:'Combo x3 Jabones a Elección',price:66000,old:99000,disc:'-33%',tag:'Precio especial',
-    desc:'Elige 3 jabones artesanales 100g. Caléndula, Cúrcuma o Avena & Arroz.',
+    desc:'Elige 3 jabones artesanales 100g. Ideal para empezar tu rutina.',
     img:'https://sanate.store/imagenes_productos/Tripack_Jabones_Artesanales.png'},
-  c4:{id:'c4',name:'Combo Secreto Japonés',price:89900,old:139000,disc:'-35%',tag:'⭐ El más elegido',
-    desc:'Sebo de Res 100g + 2 Jabones + Exfoliante Premium. Resultados visibles en 21 días.',
+  c4:{id:'c4',name:'Combo Secreto Japonés',price:99000,old:139000,disc:'-29%',tag:'⭐ El más elegido',
+    desc:'Sebo de Res + 2 jabones + Exfoliante Premium. +5.000 pieles transformadas. Resultados en 21 días.',
     img:'https://sanate.store/imagenes_productos/Sebo_Premium_x2.png',star:true},
-  c3:{id:'c3',name:'Combo 2 Jabones Cúrcuma + Sebo 10g',price:66000,old:99000,disc:'-33%',tag:'Para manchas y acné',
-    desc:'2 jabones de Cúrcuma 100g + Sebo de prueba 10g. Ideal para manchas activas.',
+  c3:{id:'c3',name:'Combo Piel Sensible',price:66000,old:99000,disc:'-33%',tag:'Para piel delicada',
+    desc:'Formulado especialmente para pieles reactivas, sensibles e intolerantes.',
     img:'https://sanate.store/imagenes_productos/Tripack_Jabones___Sebo_10g.png'},
-  c5:{id:'c5',name:'Combo Doble Sebo Grande',price:126900,old:179000,disc:'-29%',tag:'Resultados intensivos',
-    desc:'2 Sebos de Res Premium 100g + 2 Jabones. Para cicatrices, estrías y piel muy reseca.',
+  c5:{id:'c5',name:'Combo Doble Sebo Grande',price:136900,old:179000,disc:'-24%',tag:'Resultados intensivos',
+    desc:'2 frascos de Sebo de Res Premium 100g. Para cicatrices, estrías y piel muy seca.',
     img:'https://sanate.store/imagenes_productos/Sebo_Premium_x2.png'},
-  c6:{id:'c6',name:'Combo 6 Jabones a Elección',price:126000,old:198000,disc:'-36%',tag:'Pack familiar',
-    desc:'6 jabones artesanales a tu elección. Envío GRATIS a toda Colombia.',
+  c6:{id:'c6',name:'Combo 6 Jabones',price:136000,old:198000,disc:'-31%',tag:'Pack familiar',
+    desc:'6 jabones artesanales a tu elección. El favorito de las familias.',
     img:'https://sanate.store/imagenes_productos/Tripack_Jabones_Artesanales.png'},
-  c7:{id:'c7',name:'Tratamiento Integral Colágeno',price:159900,old:219000,disc:'-27%',tag:'Tratamiento completo',
-    desc:'Sebo 100g + 2 Jab. Avena & Arroz + Polen 90 cáps. La solución integral.',
+  c7:{id:'c7',name:'Combo Integral Colágeno',price:139900,old:189000,disc:'-26%',tag:'Paquete completo',
+    desc:'Colágeno natural + jabones + sebo. La solución integral para resultados totales.',
     img:'https://sanate.store/imagenes_productos/Melena_de_Le_n_x2_Cajas.png'}
 };
 
 /* ─── SYSTEM PROMPT ──────────────────────────────────────────── */
-var SYSTEM=`Eres el Dr. Santiago Morales, asesor de cosmética y bienestar natural de SÁNATE Colombia. Llevas 4 años ayudando clientes. Tono cercano, humano, cálido. NUNCA digas que eres IA o bot. 1-2 emojis máximo por bloque.
+var SYSTEM=`Eres el Dr. Santiago Morales, asesor de salud y cosmética natural de SÁNATE Colombia. Tienes 30 años, eres empático, cercano y muy profesional. Tu misión es escuchar al cliente, diagnosticar su necesidad y guiarlos al producto ideal de forma natural y honesta.
 
-══ FORMATO OBLIGATORIO ══
-Divide SIEMPRE tu respuesta en 2 a 4 mensajes cortos separados por [MSG].
-Cada mensaje: máximo 2 líneas, UNA sola idea. Como WhatsApp real.
-Ejemplo: "Buenas tardes ☀️[MSG]Entiendo, las manchas pueden desesperar.[MSG]¿Son más en el rostro o en otras zonas?[CHIPS:rostro,axilas,espalda]"
-NUNCA envíes un solo bloque largo. SIEMPRE usa [MSG].
+PERSONALIDAD Y TONO:
+- Mensajes CORTOS y directos (2-4 líneas máximo, nunca más)
+- Cálido, cercano, como un doctor de confianza que habla por WhatsApp
+- Usa 1-2 emojis por mensaje, nunca más
+- NUNCA menciones que eres IA o un bot
+- Habla en español colombiano natural y fluido
+- Haz UNA sola pregunta por mensaje, no varias a la vez
 
-══ FLUJO DE CONVERSACIÓN (4-6 turnos hasta cierre) ══
-TURNO 1 — Bienvenida + diagnóstico:
-  Msg1: Saludo por horario + empatía corta [MSG]
-  Msg2: Pregunta diagnóstico específica + [CHIPS:opcion1,opcion2,opcion3]
+PRODUCTOS SÁNATE (cosmética artesanal, Armenia, Quindío - +4 años de experiencia):
+• Jabón Cúrcuma: manchas oscuras, hiperpigmentación, acné, cicatrices → $18.000 c/u
+• Jabón Avena & Arroz: piel sensible, seca, irritada, hidratación profunda → $18.000 c/u
+• Jabón Caléndula & Aloe: regenera, calma irritación, piel reactiva → $18.000 c/u
+• Sebo de Res Premium: cicatrices, estrías, quemaduras, piel muy seca → $65.000
+• Shampoo Néctar Capilar: caída del cabello, cuero cabelludo, nutrición capilar → $45.000
+• Melena de León (hongo): memoria, concentración, bienestar mental, ansiedad → $69.900
+• Polen Multifloral: energía, sistema inmune, vitalidad → $35.000
 
-TURNO 2 — Profundizar:
-  Msg1: Valida lo que dijo [MSG]
-  Msg2: Pregunta de profundidad (zona, tiempo, intensidad) [MSG]
-  Msg3: Dato útil breve sobre el producto ideal
+COMBOS RECOMENDADOS (más económicos que comprar separado):
+• c1 — "x3 Jabones": $66.000 (antes $99.000, -33%) → para empezar, 3 jabones a elección
+• c4 — "Secreto Japonés" ⭐ MÁS VENDIDO: $99.000 → Sebo + 2 jabones + exfoliante, manchas y acné
+• c3 — "Piel Sensible": $66.000 → pieles delicadas y reactivas
+• c5 — "Doble Sebo Grande": $136.900 → cicatrices y estrías intensas
+• c6 — "6 Jabones": $136.000 → pack familiar
+• c7 — "Integral Colágeno": $139.900 → paquete completo con colágeno
 
-TURNO 3 — Presentar solución:
-  Msg1: "Para lo que describes tengo exactamente lo que necesitas" [MSG]
-  Msg2: Beneficio clave del producto [MSG]
-  Msg3: Presenta 3 combos + [SHOW:c4,c1,c3] (según síntoma) [CHIPS:pagar,precio,envio]
+FLUJO IDEAL DE CONVERSACIÓN:
+1. Primero: saluda calurosamente y pregunta SOLO "¿qué problema de piel o salud tienes?"
+2. Segundo: según la respuesta, haz UNA pregunta de diagnóstico más específica
+3. Tercero: diagnostica y recomienda 2-3 combos relevantes. Al FINAL de tu mensaje añade EXACTAMENTE: [SHOW:c4,c1] con los códigos correspondientes (máx 3 combos)
+4. Si objetan el precio: menciona el ahorro, pago CONTRA ENTREGA (sin adelantar plata), garantía 30 días
+5. Cuando detectes intención de compra (dice "quiero", "cómo pido", "me interesa", "lo tomo", "cuánto", "sí"), añade EXACTAMENTE: [PEDIDO] al final de tu mensaje
 
-TURNO 4 — Cierre de venta:
-  Si muestra interés o dice "quiero", "cómo pido", "precio", "me interesa":
-  Msg1: "¡Perfecto! 🌿" + confirma elección [MSG]
-  Msg2: Menciona envío GRATIS + pago contra entrega [MSG]
-  Msg3: Pregunta de cierre: "¿Te lo proceso para hoy o mañana?" + [PEDIDO]
+INFORMACIÓN DE VENTA:
+- Pago CONTRA ENTREGA: el cliente paga cuando recibe el producto, no antes
+- Envío GRATIS a toda Colombia
+- Llega en 1-3 días hábiles desde Armenia, Quindío
+- Garantía de satisfacción 30 días sin preguntas
+- 100% artesanal, sin parabenos, sin sulfatos, sin rellenos
 
-HORARIO DE SALUDO: 05:00-11:59→"Buenos días" | 12:00-18:59→"Buenas tardes" | 19:00-04:59→"Buenas noches"
-
-PRODUCTOS Y PRECIOS OFICIALES:
-• Jabón Cúrcuma 100g: manchas, acné, zonas oscuras, hiperpigmentación
-• Jabón Avena & Arroz 100g: piel sensible, seca, granitos, textura opaca
-• Jabón Caléndula & Aloe 100g: regenera, calma irritación, piel reactiva
-• Sebo de Res Premium 100g (vidrio): cicatrices, resequedad intensa, axilas, regeneración. Ingredientes: caléndula, aceite oliva, almendras, vitamina E
-• Shampoo 500ml: caída del cabello → $40.000
-• Melena de León 60 cáps (caja): memoria, enfoque, ansiedad, sueño → $89.900
-• Melena de León 120 cáps → $129.900 | 2×120 cáps → $220.000
-• Polen Premium x50 cáps: energía, colágeno, inmunidad → $69.000
-• Polen Premium x90 cáps → $99.000
-• Microdosis (ps1l0) 20 cáps → $99.900 | 40 cáps → $149.900 | 60 cáps → $179.900 (solo +18, no mezclar con psiquiátricos)
-• ChocoFungi 2.5g → $99.000 | 5g → $139.900
-
-TABLA COMBOS OFICIAL (NUNCA inventar precios):
-c1 – Tripack Mixto o x3 Jabones a elección → $66.000
-c3 – 2 Jab.Cúrcuma + Sebo 10g → $66.000
-c4 ⭐ – Secreto Japonés: Sebo 100g + 2 Jabones + Exfoliante → $89.900 (Envío GRATIS)
-c5 – Doble Sebo Grande: 2 Sebos 100g + 2 Jabones → $126.900 (Envío GRATIS)
-c6 – 6 Jabones a elección → $126.000 (Envío GRATIS)
-c7 – Tratamiento Integral: Sebo 100g + 2 Jab.Avena + Polen 90 cáps → $159.900
-
-REGLA JABONES: mínimo x3 jabones ($66.000). No vendemos por unidad en combos normales.
-Si quiere probar: 2 jabones $49.000 o 1 jabón $29.000 — SOLO por transferencia, no contra entrega.
-
-PROTOCOLO MANCHAS: 1°Recomendar Jabón Avena&Arroz + Caléndula (prepara piel) 2°Mencionar Cúrcuma como refuerzo 3°Cerrar con Combo 4 Secreto Japonés $89.900
-
-REGLAS DE CONVERSACIÓN:
-1. NO dar precios al inicio. Si solo saluda → preguntar qué problema quiere tratar. Luego de respuesta → añadir [CHIPS:manchas,acne,reseca,sensible,cabello,energia]
-2. Si pregunta precio → primero 1 pregunta de diagnóstico → luego sí precio. Plantilla de precios SOLO una vez.
-3. Tras enviar precios → solo preguntas orientación, NO repetir valores
-4. NO usar 😊 más de 2 veces en toda la conversación
-5. NO usar "¡Gracias por confiar en Sánate!" más de 2 veces
-6. Si cliente dice "gracias","listo","igualmente","hasta luego","ok gracias" → NO responder nada más
-7. NO dar números de pago automáticamente. SOLO si cliente escribe "nequi" → dar Nequi 322 746 1878. Solo si escribe "cuenta de ahorros" → dar Bancolombia 912 835 42241
-
-ENVÍOS:
-- Medellín/Bogotá: 1 día | Resto ciudades principales: 1-3 días hábiles
-- Sale mismo día de la compra. Guía llega por WhatsApp/SMS
-- Estamos en Armenia, Quindío. No recibimos llamadas.
-- Ciudades lejanas: +$4.900 (no mencionarlo salvo que pregunten)
-
-DEVOLUCIONES: "Analizaremos tu caso y te damos razón". Si pide dirección: "Llévalo al Interrapidísimo más cercano, bien empacado con cinta"
-
-MARCADORES ESPECIALES (siempre al final del mensaje, línea aparte, sin puntos):
-[SHOW:c4,c1] → tarjetas de productos (usar al hacer PRIMERA recomendación, máx 3 combos, códigos: c1 c3 c4 c5 c6 c7)
-[PEDIDO] → formulario de pedido (solo cuando cliente claramente quiere comprar)
-[CHIPS:opcion1,opcion2,opcion3] → botones de selección rápida para el cliente
-
-Usa [CHIPS:...] cada vez que hagas una pregunta al cliente. Opciones disponibles: manchas, acne, sensible, reseca, cabello, energia, estrias, axilas, cicatrices, precio, combo1, combo3, combo4, pagar, envio
-
-EJEMPLOS DE USO CHIPS:
-- "¿Qué problema tienes?" → [CHIPS:manchas,acne,sensible,reseca,cabello,energia]
-- "¿Es para rostro o cuerpo?" → [CHIPS:rostro,cuerpo,ambos]
-- Cuando recomiende productos → [CHIPS:pagar,envio,precio]`;
+REGLAS CRÍTICAS:
+- [SHOW:...] solo lo usas UNA VEZ, cuando hagas tu primera recomendación de productos
+- [PEDIDO] solo cuando el cliente muestre intención clara de comprar
+- Estos marcadores van SIEMPRE al final, en línea aparte
+- No menciones que son comandos, son invisibles para el usuario
+- Mantén conversación 100% natural y profesional`;
 
 /* ─── STATE ──────────────────────────────────────────────────── */
 var history=[];
 var selectedProduct=null;
 var chatOpen=false;
 var orderSubmitted=false;
-var emojiSmileCount=0;
-var thanksCount=0;
 
 /* ─── FORMAT ─────────────────────────────────────────────────── */
 var fmt=function(n){return '$'+Number(n).toLocaleString('es-CO');};
@@ -169,7 +109,6 @@ function injectCSS(){
 @keyframes sacPulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.18);opacity:.2}}
 @keyframes sacBlink{0%,100%{opacity:1}50%{opacity:.35}}
 @keyframes sacSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
-@keyframes sacChip{from{opacity:0;transform:translateY(8px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
 
 /* ── CONNECTING SCREEN ── */
 .sac-conn{background:#fff;border-radius:22px;width:360px;max-width:100%;padding:40px 28px 36px;text-align:center;animation:sacIn .4s ease;box-shadow:0 32px 80px rgba(4,13,26,.25)}
@@ -213,18 +152,11 @@ function injectCSS(){
 .sac-row:not(.u) .sac-bbl{background:#fff;border-radius:4px 16px 16px 16px;box-shadow:0 1px 6px rgba(0,0,0,.08)}
 .sac-row.u .sac-bbl{background:linear-gradient(135deg,#0d47a1,#1565c0);color:#fff;border-radius:16px 16px 4px 16px;box-shadow:0 1px 6px rgba(13,71,161,.3)}
 
-/* Typing indicator */
-.sac-typing-row{display:flex;align-items:center;gap:7px;animation:sacSlide .25s ease}
-.sac-typing-label{font-size:11px;color:#64748b;font-style:italic;margin-bottom:2px}
+/* Typing */
 .sac-typing{display:flex;gap:4px;padding:10px 14px;background:#fff;border-radius:4px 16px 16px 16px;box-shadow:0 1px 6px rgba(0,0,0,.08)}
 .sac-typing span{width:7px;height:7px;border-radius:50%;background:#94a3b8;animation:sacDot 1.4s ease-in-out infinite}
 .sac-typing span:nth-child(2){animation-delay:.22s}
 .sac-typing span:nth-child(3){animation-delay:.44s}
-
-/* Quick reply chips */
-.sac-chips-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;width:100%;padding-bottom:2px}
-.sac-chip{background:#fff;border:1.5px solid #bfdbfe;color:#1e40af;border-radius:100px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap;animation:sacChip .3s ease both;box-shadow:0 1px 4px rgba(13,71,161,.08);line-height:1.2}
-.sac-chip:hover,.sac-chip:active{background:#0d47a1;color:#fff;border-color:#0d47a1;transform:translateY(-1px);box-shadow:0 3px 12px rgba(13,71,161,.28)}
 
 /* Product cards */
 .sac-cards{display:flex;flex-direction:column;gap:8px;margin-top:6px;width:100%}
@@ -280,7 +212,6 @@ function injectCSS(){
   .sac-ov{padding:0;align-items:flex-end}
   .sac-win{width:100%;border-radius:22px 22px 0 0;height:90vh;max-height:90vh}
   .sac-conn{border-radius:22px 22px 0 0;width:100%}
-  .sac-chip{font-size:12px;padding:6px 11px}
 }
 `;
   document.head.appendChild(s);
@@ -312,7 +243,7 @@ function injectHTML(){
       <div class="sac-doc-info">
         <div class="sac-doc-name">${DOC_NAME}</div>
         <div class="sac-doc-role">${DOC_TITLE}</div>
-        <div class="sac-online" id="sacStatus">En línea · Respondiendo ahora</div>
+        <div class="sac-online">En línea · Respondiendo ahora</div>
       </div>
       <button class="sac-x" onclick="window._sacChat&&window._sacChat.close()" title="Cerrar">&#x2715;</button>
     </div>
@@ -328,9 +259,11 @@ function injectHTML(){
 </div>`;
   document.body.appendChild(wrap.firstElementChild);
 
+  // Enter key handler
   document.getElementById('sacInp').addEventListener('keydown',function(e){
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();window._sacChat&&window._sacChat.send();}
   });
+  // Click outside to close
   document.getElementById('sacOv').addEventListener('click',function(e){
     if(e.target===this)window._sacChat&&window._sacChat.close();
   });
@@ -356,55 +289,17 @@ function addMsg(role,text,extra){
   msgs.scrollTop=msgs.scrollHeight;
 }
 
-/* Typing indicator con texto "Respondiendo..." */
 function showTyping(){
   var msgs=document.getElementById('sacMsgs');
   if(!msgs||document.getElementById('sacTyp'))return;
-
-  // Update header status
-  var st=document.getElementById('sacStatus');
-  if(st){st.textContent='Escribiendo...';}
-
   var t=document.createElement('div');
-  t.id='sacTyp';
-  t.className='sac-typing-row';
-  t.innerHTML='<img class="sac-av" src="'+DOC_AVATAR+'" alt="Dr."/>'+
-    '<div>'+
-      '<div class="sac-typing-label">Dr. Santiago está escribiendo...</div>'+
-      '<div class="sac-typing"><span></span><span></span><span></span></div>'+
-    '</div>';
+  t.id='sacTyp';t.className='sac-row';
+  t.innerHTML='<img class="sac-av" src="'+DOC_AVATAR+'" alt="Dr."/><div class="sac-typing"><span></span><span></span><span></span></div>';
   msgs.appendChild(t);
   msgs.scrollTop=msgs.scrollHeight;
 }
+function hideTyping(){var t=document.getElementById('sacTyp');if(t)t.remove();}
 
-function hideTyping(){
-  var t=document.getElementById('sacTyp');
-  if(t)t.remove();
-  var st=document.getElementById('sacStatus');
-  if(st){st.textContent='En línea · Respondiendo ahora';}
-}
-
-/* Remove all existing chips from chat */
-function clearChips(){
-  var all=document.querySelectorAll('.sac-chips-wrap');
-  all.forEach(function(el){el.remove();});
-}
-
-/* Build quick reply chip buttons */
-function buildChips(codesStr){
-  var keys=codesStr.split(',').map(function(s){return s.trim();}).filter(Boolean);
-  if(!keys.length)return '';
-  var h='<div class="sac-chips-wrap">';
-  keys.forEach(function(k,i){
-    var label=CHIP_LABELS[k]||k;
-    // escape single quotes for safe inline onclick
-    var safeLabel=label.replace(/'/g,'&#39;');
-    h+='<button class="sac-chip" style="animation-delay:'+(i*0.06)+'s" onclick="window._sacChat&&window._sacChat.chipClick(\''+safeLabel+'\')">'+label+'</button>';
-  });
-  return h+'</div>';
-}
-
-/* Build product cards */
 function buildCards(codes){
   var ids=codes.split(',').map(function(s){return s.trim();}).filter(function(c){return P[c];});
   if(!ids.length)return '';
@@ -429,7 +324,6 @@ function buildCards(codes){
   return h+'</div>';
 }
 
-/* Build order form */
 function buildOrderForm(){
   var prod=selectedProduct?P[selectedProduct]:null;
   var prodH=prod?
@@ -445,16 +339,9 @@ function buildOrderForm(){
     '<input class="sac-inp" id="sacP" placeholder="Teléfono / WhatsApp" type="tel" autocomplete="tel"/>'+
     '<input class="sac-inp" id="sacC" placeholder="Ciudad de entrega" autocomplete="address-level2"/>'+
     '<input class="sac-inp" id="sacA" placeholder="Dirección exacta (barrio, calle, número)" autocomplete="street-address"/>'+
-    '<button class="sac-btn" id="sacConfirm" onclick="window._sacChat.confirm()">✓ Confirmar pedido — Pago contra entrega</button>'+
-    '<div class="sac-form-note">🔒 Pagas cuando recibes · Envío GRATIS · Garantía 30 días</div>'+
+    '<button class="sac-btn" id="sacConfirm" onclick="window._sacChat.confirm()">✓ Confirmar pedido</button>'+
+    '<div class="sac-form-note">🔒 Pago contra entrega · Envío GRATIS · Garantía 30 días sin preguntas</div>'+
   '</div>';
-}
-
-/* ─── MULTI-MSG HELPERS ──────────────────────────────────────── */
-function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
-
-function splitMessages(raw){
-  return raw.split('[MSG]').map(function(s){return s.trim();}).filter(Boolean);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -469,7 +356,7 @@ async function askGemini(userText){
       body:JSON.stringify({
         system_instruction:{parts:[{text:SYSTEM}]},
         contents:history,
-        generationConfig:{temperature:0.75,maxOutputTokens:420,topP:0.92,topK:40}
+        generationConfig:{temperature:0.78,maxOutputTokens:380,topP:0.92,topK:40}
       })
     });
     var json=await res.json();
@@ -485,17 +372,11 @@ async function askGemini(userText){
 
 function parseResponse(raw){
   var showM=raw.match(/\[SHOW:([^\]]+)\]/);
-  var chipsM=raw.match(/\[CHIPS:([^\]]+)\]/);
   var doPedido=raw.indexOf('[PEDIDO]')>=0;
-  var clean=raw
-    .replace(/\[SHOW:[^\]]+\]/g,'')
-    .replace(/\[CHIPS:[^\]]+\]/g,'')
-    .replace(/\[PEDIDO\]/g,'')
-    .trim();
+  var clean=raw.replace(/\[SHOW:[^\]]+\]/g,'').replace(/\[PEDIDO\]/g,'').trim();
   var extra='';
   if(showM)extra+=buildCards(showM[1]);
   if(doPedido&&!orderSubmitted)extra+=buildOrderForm();
-  if(chipsM)extra+=buildChips(chipsM[1]);
   return{text:clean,extra:extra};
 }
 
@@ -510,6 +391,7 @@ function submitOrder(){
 
   nombre=nombre.trim();tel=tel.trim();ciudad=ciudad.trim();dir=dir.trim();
   if(!nombre||!tel||!ciudad||!dir){
+    // Highlight empty fields
     ['sacN','sacP','sacC','sacA'].forEach(function(id){
       var el=document.getElementById(id);
       if(el&&!el.value.trim()){el.style.borderColor='#ef4444';el.focus();}
@@ -520,9 +402,11 @@ function submitOrder(){
   var prod=selectedProduct?P[selectedProduct]:{name:'Combo SÁNATE',price:0,img:''};
   var ref='SN'+Date.now().toString().slice(-6);
 
+  // Disable button
   var btn=document.getElementById('sacConfirm');
   if(btn){btn.disabled=true;btn.textContent='Procesando...';}
 
+  // POST to dashboard backend (same format as cart)
   var fd=new FormData();
   fd.append('nombre',nombre);
   fd.append('whatsapp',tel);
@@ -539,13 +423,15 @@ function submitOrder(){
   fetch('/pedidoPost.php',{method:'POST',body:fd})
     .then(function(r){return r.json();})
     .then(function(d){console.log('[ChatAsesor] Pedido guardado:',d);})
-    .catch(function(e){console.log('[ChatAsesor] Backend:',e.message);});
+    .catch(function(e){console.log('[ChatAsesor] Backend note:',e.message);});
 
+  // Remove form
   var form=document.getElementById('sacOrderForm');
   if(form)form.remove();
-  clearChips();
+
   orderSubmitted=true;
 
+  // Show success card
   var msgs=document.getElementById('sacMsgs');
   var srow=document.createElement('div');
   srow.className='sac-row';
@@ -555,24 +441,26 @@ function submitOrder(){
         '<span class="sac-suc-ico">🎉</span>'+
         '<div class="sac-suc-h">¡Pedido confirmado, '+nombre.split(' ')[0]+'!</div>'+
         '<div class="sac-suc-num">Pedido #'+ref+'</div>'+
-        '<div class="sac-suc-s"><strong>'+prod.name+'</strong><br>'+fmt(prod.price)+' · Pago contra entrega<br>📍 '+ciudad+' — llega en <strong>1-3 días hábiles</strong><br>Te contactamos al <strong>'+tel+'</strong> para confirmar. 📦</div>'+
+        '<div class="sac-suc-s"><strong>'+prod.name+'</strong><br>'+fmt(prod.price)+' · Pago contra entrega<br>📍 '+ciudad+' — llega en <strong>1-3 días hábiles</strong><br>Te contactamos al <strong>'+tel+'</strong> para confirmar.</div>'+
       '</div>'+
     '</div>';
   msgs.appendChild(srow);
   msgs.scrollTop=msgs.scrollHeight;
 
+  // Disable input after order
   var inp=document.getElementById('sacInp');
   var sbtn=document.getElementById('sacSend');
   if(inp){inp.disabled=true;inp.placeholder='¡Pedido recibido! 🎉';}
   if(sbtn)sbtn.disabled=true;
 
+  // Doctor closing message
   setTimeout(function(){
-    addMsg('doc','¡Listo, '+nombre.split(' ')[0]+'! Tu piel lo va a agradecer 🌿 Nuestro equipo te confirma por WhatsApp pronto. ¡Gracias por elegir SÁNATE!');
+    addMsg('doc','¡Excelente decisión, '+nombre.split(' ')[0]+'! 🌿 Tu piel va a notar la diferencia desde la primera semana. Nuestro equipo te contactará pronto para coordinar la entrega. ¡Gracias por confiar en SÁNATE! 💚');
   },1800);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   OPEN / CLOSE / SEND / CHIP
+   OPEN / CLOSE / SEND
    ═══════════════════════════════════════════════════════════════ */
 var _timers=[];
 
@@ -582,8 +470,6 @@ function openChat(){
   orderSubmitted=false;
   history=[];
   selectedProduct=null;
-  emojiSmileCount=0;
-  thanksCount=0;
   _timers.forEach(clearTimeout);
   _timers=[];
 
@@ -602,38 +488,33 @@ function openChat(){
   _timers.push(setTimeout(function(){
     q.textContent='👤 1 persona antes en la cola';
   },3200));
+
   _timers.push(setTimeout(function(){
     q.textContent='✅ Conectado con Dr. Santiago';
     q.style.background='#dcfce7';
     q.style.borderColor='#86efac';
     q.style.color='#166534';
   },6000));
+
   _timers.push(setTimeout(function(){
     conn.style.display='none';
     win.classList.add('open');
+    // Reset queue style for next open
     setTimeout(function(){
       q.textContent='👥 2 personas antes en la cola';
       q.style.background='';q.style.borderColor='';q.style.color='';
     },500);
-
-    // Doctor greeting — 2 bubbles for natural feel
+    // Doctor greeting with typing delay
     showTyping();
     _timers.push(setTimeout(function(){
       hideTyping();
-      addMsg('doc','¡Hola! Soy el Dr. Santiago 👨‍⚕️ Especialista en cosmética natural de SÁNATE.');
-    },1000));
-    _timers.push(setTimeout(function(){
-      showTyping();
-    },1500));
-    _timers.push(setTimeout(function(){
-      hideTyping();
-      var greetChips=buildChips('manchas,acne,reseca,sensible,cabello,energia');
-      addMsg('doc','¿Cuéntame, qué problema de piel o salud te está preocupando hoy?',greetChips);
+      addMsg('doc','¡Hola! Soy el Dr. Santiago 👨‍⚕️ Especialista en cosmética natural de SÁNATE.\n\n¿Cuéntame, qué problema de piel o salud te está preocupando?');
       var inp=document.getElementById('sacInp');
       if(inp){inp.disabled=false;inp.focus();}
-    },2800));
+    },1400));
   },7200));
 
+  // Disable input while connecting
   var inp=document.getElementById('sacInp');
   var sbtn=document.getElementById('sacSend');
   if(inp)inp.disabled=true;
@@ -657,7 +538,6 @@ async function sendMsg(){
   inp.value='';
   inp.disabled=true;
   sbtn.disabled=true;
-  clearChips();
 
   addMsg('user',txt);
   showTyping();
@@ -665,24 +545,8 @@ async function sendMsg(){
   var raw=await askGemini(txt);
   hideTyping();
 
-  // Split into individual message bubbles separated by [MSG]
-  var segments=splitMessages(raw);
-  if(!segments.length)segments=['Disculpa, hubo un error. ¿Puedes repetir?'];
-
-  for(var i=0;i<segments.length;i++){
-    if(i>0){
-      // Brief pause then show typing before next bubble
-      await wait(320);
-      showTyping();
-      // Typing duration scales with message length (700-1300ms)
-      var ms=700+Math.min(segments[i].length*4,600);
-      await wait(ms);
-      hideTyping();
-      await wait(120);
-    }
-    var parsed=parseResponse(segments[i]);
-    addMsg('doc',parsed.text,parsed.extra);
-  }
+  var parsed=parseResponse(raw);
+  addMsg('doc',parsed.text,parsed.extra);
 
   if(!orderSubmitted){
     inp.disabled=false;
@@ -691,17 +555,11 @@ async function sendMsg(){
   }
 }
 
-function chipClick(label){
-  var inp=document.getElementById('sacInp');
-  if(!inp||inp.disabled)return;
-  inp.value=label;
-  sendMsg();
-}
-
 function pickProduct(id){
   selectedProduct=id;
   var prod=P[id];
   if(!prod)return;
+  // Simulate user selecting the product
   var inp=document.getElementById('sacInp');
   if(inp&&!inp.disabled){
     inp.value='Quiero el '+prod.name;
@@ -716,16 +574,16 @@ function init(){
   injectCSS();
   injectHTML();
 
+  // Public API
   window._sacChat={
     open:openChat,
     close:closeChat,
     send:sendMsg,
     pick:pickProduct,
-    confirm:submitOrder,
-    chipClick:chipClick
+    confirm:submitOrder
   };
 
-  // Intercept "Asesoría gratis" WhatsApp button
+  // Intercept "Asesoría gratis" WhatsApp button → open chat instead
   document.addEventListener('click',function(e){
     var btn=e.target.closest('.flwa');
     if(btn){
@@ -734,9 +592,9 @@ function init(){
       openChat();
       return false;
     }
-  },true);
+  },true); // capture phase to intercept before href navigation
 
-  // Support any button with data-chat="asesor"
+  // Also support any button with data-chat="asesor"
   document.addEventListener('click',function(e){
     var btn=e.target.closest('[data-chat="asesor"]');
     if(btn){e.preventDefault();openChat();}
