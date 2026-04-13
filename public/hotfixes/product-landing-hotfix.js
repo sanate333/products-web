@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.6 always-on SPA navigation */
+/* SANATE Product Landing v5.7 full-width below detail-contain */
 (function(){
 'use strict';
 
@@ -237,17 +237,20 @@ function startBounce(container){
   raf=requestAnimationFrame(tick);
 }
 
-// Inject — insert AFTER .textDetail (sibling), never inside React-managed subtree
+// Inject — insert AFTER .detail-contain (full-width, below image+info columns)
 function inject(){
+  var detailContain=document.querySelector('.detail-contain');
   var textDetail=document.querySelector('.textDetail');
   var desc=document.querySelector('.detailDescription');
   var btn=document.querySelector('.btnAdd');
-  if(!textDetail&&!desc&&!btn)return;
+  if(!detailContain&&!textDetail&&!desc&&!btn)return;
   var existing=document.querySelector('.snt-landing');
   if(existing){
-    // Already in correct position (sibling of textDetail or after desc)?
-    if(textDetail&&existing.previousElementSibling===textDetail)return;
-    if(!textDetail&&desc&&existing.previousElementSibling===desc)return;
+    // Already correct? Check parent is .detail and prev sibling is .detail-contain
+    var dc=document.querySelector('.detail-contain');
+    if(dc&&existing.previousElementSibling===dc)return;
+    // Or fallback: prev is textDetail
+    if(!dc&&textDetail&&existing.previousElementSibling===textDetail)return;
     existing.remove();
   }
   var id=getID();
@@ -260,8 +263,10 @@ function inject(){
   var div=document.createElement('div');
   div.innerHTML=build(data);
   var section=div.firstElementChild;
-  // Insert AFTER .textDetail as sibling (outside React tree) — avoids removeChild conflicts
-  if(textDetail&&textDetail.parentNode){
+  // Insert AFTER .detail-contain so landing is full-width below the 2-column flex layout
+  if(detailContain&&detailContain.parentNode){
+    detailContain.parentNode.insertBefore(section,detailContain.nextSibling);
+  } else if(textDetail&&textDetail.parentNode){
     textDetail.parentNode.insertBefore(section,textDetail.nextSibling);
   } else if(desc){
     desc.parentNode.insertBefore(section,desc.nextSibling);
