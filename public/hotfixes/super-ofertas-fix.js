@@ -91,10 +91,12 @@ var SO_CSS = ""
 +".so2-hdr p{font-size:13px}"
 +".so2-track{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:16px;padding:10px 20px 20px;perspective:none;max-width:100%;scroll-padding:0 20px}"
 +".so2-track::-webkit-scrollbar{display:none}"
-+".so2-track{-ms-overflow-style:none;scrollbar-width:none}"
-+".so2-card{flex:0 0 82%;max-width:300px;scroll-snap-align:center;transform:none!important;transition:transform .3s ease,box-shadow .3s ease}"
++".so2-track{-ms-overflow-style:none;scrollbar-width:none;scroll-padding-left:10px}"
++".so2-card{flex:0 0 82%;max-width:300px;scroll-snap-align:start;transform:none!important;transition:transform .3s ease,box-shadow .3s ease}"
 +".so2-card:nth-child(2){transform:none!important;box-shadow:0 15px 40px rgba(0,180,130,.2),0 10px 30px rgba(0,0,0,.2)!important}"
 +".so2-card:hover{transform:translateY(-4px)!important}"
+"+".so2-card h3{font-size:18px!important;font-weight:900!important;color:#071926!important;background:rgba(255,255,255,.93)!important;padding:10px 14px 6px!important;margin:0!important;line-height:1.25!important;text-shadow:none!important}"
++".so2-card .so2-body{background:#fff!important;padding:0!important}"
 +".so2-img{aspect-ratio:1/1;height:auto}"
 +".so2-body{padding:14px 16px 18px}"
 +".so2-body h3{font-size:15px}"
@@ -422,14 +424,8 @@ function injectStyles(){
 
 /* Scroll carousel to center card on mobile */
 function scrollToCenter(){
-  if(window.innerWidth > 768) return;
-  var track = document.querySelector('.so2-track');
-  if(!track) return;
-  var cards = track.querySelectorAll('.so2-card');
-  if(cards.length >= 2){
-    /* patched: always start at card 0 */
-    track.scrollLeft = 0;
-  }
+  /* v3: completely disabled — start snap handles card 1 */
+  return;
 }
 
 /* Fix popup on mobile â re-bind all QSO triggers */
