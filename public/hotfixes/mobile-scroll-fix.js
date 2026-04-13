@@ -1,10 +1,10 @@
-/* mobile-scroll-fix.js v4 — webkit-text-fill-color fix + card[0] scroll */
+/* mobile-scroll-fix.js v5 — nuclear: disable snap -> force card[0] -> re-enable */
 (function(){'use strict';
 
 function injectTitleCSS(){
-  if(document.getElementById('msf-v4'))return;
+  if(document.getElementById('msf-v5'))return;
   var s=document.createElement('style');
-  s.id='msf-v4';
+  s.id='msf-v5';
   s.textContent=
     '@media(max-width:840px){'+
     '.so2-card h3{font-size:18px!important;font-weight:900!important;'+
@@ -19,39 +19,62 @@ function injectTitleCSS(){
   document.head.appendChild(s);
 }
 
-function ensureCard1(){
+function forceCard0(){
   var track=document.querySelector('.so2-track');
   if(!track||window.innerWidth>840)return;
-  var cards=track.querySelectorAll('.so2-card');
-  if(cards.length>=1){
+  /* Nuclear: disable snap, force scroll to 0, re-enable */
+  track.style.scrollSnapType='none';
+  track.scrollLeft=0;
+  requestAnimationFrame(function(){
     track.scrollLeft=0;
-    cards[0].scrollIntoView({behavior:'auto',block:'nearest',inline:'start'});
-  }
+    requestAnimationFrame(function(){
+      track.scrollLeft=0;
+      setTimeout(function(){
+        track.style.scrollSnapType='x mandatory';
+      },80);
+    });
+  });
 }
 
 function waitForTrack(){
   var track=document.querySelector('.so2-track');
   if(track){
     injectTitleCSS();
-    ensureCard1();
+    forceCard0();
+    /* Keep retrying for 8 seconds */
     var n=0;
     var iv=setInterval(function(){
-      ensureCard1();
-      if(++n>30)clearInterval(iv);
-    },150);
+      var t=document.querySelector('.so2-track');
+      if(t&&window.innerWidth<=840){
+        t.style.scrollSnapType='none';
+        t.scrollLeft=0;
+        requestAnimationFrame(function(){
+          t.scrollLeft=0;
+          setTimeout(function(){t.style.scrollSnapType='x mandatory';},80);
+        });
+      }
+      if(++n>40)clearInterval(iv);
+    },200);
   } else {
     var obs=new MutationObserver(function(){
       if(document.querySelector('.so2-track')){
         obs.disconnect();
         injectTitleCSS();
-        setTimeout(function(){
-          ensureCard1();
-          var n=0;
-          var iv=setInterval(function(){
-            ensureCard1();
-            if(++n>30)clearInterval(iv);
-          },150);
-        },10);
+        setTimeout(forceCard0,50);
+        /* Keep retrying for 8 seconds */
+        var n=0;
+        var iv=setInterval(function(){
+          var t=document.querySelector('.so2-track');
+          if(t&&window.innerWidth<=840){
+            t.style.scrollSnapType='none';
+            t.scrollLeft=0;
+            requestAnimationFrame(function(){
+              t.scrollLeft=0;
+              setTimeout(function(){t.style.scrollSnapType='x mandatory';},80);
+            });
+          }
+          if(++n>40)clearInterval(iv);
+        },200);
       }
     });
     obs.observe(document.body,{childList:true,subtree:true});
@@ -63,7 +86,4 @@ if(document.readyState==='loading'){
 } else {
   waitForTrack();
 }
-window.addEventListener('resize',function(){
-  if(window.innerWidth<=840){injectTitleCSS();ensureCard1();}
-});
 })();
