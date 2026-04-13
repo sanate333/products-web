@@ -1473,7 +1473,7 @@ behold-widget::part(branding){display:none!important}
       <div class="ok-t">¡Pedido confirmado!</div>
       <p class="ok-s">Tu pedido fue registrado. Te contactaremos por WhatsApp para confirmar el despacho. ¡Gracias por confiar en SÁNATE! 💛</p>
       <div class="ok-order" id="okOrder"></div>
-      <button class="ok-wa" onclick="sendWA()">💬 Confirmar por WhatsApp ahora</button>
+      <button class="ok-wa" id="okWaBtn" onclick="sendWA()">💬 Confirmar por WhatsApp ahora</button>
     </div>
   </div>
 </div>
@@ -4023,12 +4023,66 @@ startObs();
     lines+='<div class="ok-row"><span>Direcci\u00f3n</span><span style="font-size:11px">'+o.address+', '+o.city+', '+o.dept+'</span></div>';
     document.getElementById('okOrder').innerHTML=lines;
     saveOrderToSupabase(o);
+    sendOrderEmail(o);
     localStorage.setItem('sanate_cart_v2','[]');
     if(typeof window.renderCart==='function') window.renderCart();
     setTimeout(function(){
       document.getElementById('chkForm').style.setProperty('display','none','important');
       document.getElementById('chkOk').style.setProperty('display','block','important');
     },100);
+    /* AUTO-COUNTDOWN 5s → abre WhatsApp automáticamente */
+    startWaCountdown();
+  }
+
+  /* ── EMAIL NOTIFICATION ── */
+  function sendOrderEmail(o){
+    var items='';
+    for(var k=0;k<o.items.length;k++){
+      var it=o.items[k];
+      items+='<tr><td style="padding:8px 12px;border-bottom:1px solid #eee;">'+it.name+'</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">x'+(it.qty||1)+'</td><td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:right;font-weight:bold;">'+fmt((it.price||0)*(it.qty||1))+'</td></tr>';
+    }
+    var html='<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;">'
+      +'<div style="background:linear-gradient(135deg,#07192E,#0A2E4E);padding:24px;text-align:center;border-radius:12px 12px 0 0;">'
+      +'<h1 style="color:#fff;margin:0;font-size:22px;">🛒 Nuevo Pedido SÁNATE</h1></div>'
+      +'<div style="padding:24px;background:#fff;">'
+      +'<p style="font-size:16px;font-weight:bold;color:#07192E;">'+o.name+'</p>'
+      +'<p style="color:#567080;">📱 '+o.phone+' · 📍 '+o.city+', '+o.dept+'</p>'
+      +'<p style="color:#567080;">🏠 '+o.address+'</p>'
+      +'<table style="width:100%;border-collapse:collapse;margin:16px 0;">'
+      +'<thead><tr style="background:#f0f4f8;"><th style="padding:8px 12px;text-align:left;">Producto</th><th style="padding:8px 12px;text-align:center;">Cant.</th><th style="padding:8px 12px;text-align:right;">Subtotal</th></tr></thead>'
+      +'<tbody>'+items+'</tbody></table>'
+      +(o.disc?'<p style="color:#22C55E;font-weight:bold;">🎉 Descuento 8%: -'+fmt(o.disc)+'</p>':'')
+      +'<div style="background:linear-gradient(135deg,#C9A030,#8A6C10);color:#fff;padding:16px;border-radius:10px;text-align:center;font-size:20px;font-weight:800;margin:12px 0;">💰 Total: '+fmt(o.final)+'</div>'
+      +'<p style="color:#567080;">💳 Pago: '+o.payLabel+'</p>'
+      +'</div></div>';
+    fetch(SB_URL+'/functions/v1/sanate-email-v6',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'send_test',email:'sanate333@gmail.com',subject:'🛒 Nuevo Pedido — '+o.name+' — '+fmt(o.final),body:html,template:'default'})
+    }).then(function(r){return r.json()}).then(function(d){console.log('Email sent:',d)}).catch(function(e){console.error('Email error:',e)});
+  }
+
+  /* ── AUTO-COUNTDOWN WHATSAPP ── */
+  function startWaCountdown(){
+    var btn=document.getElementById('okWaBtn');
+    if(!btn)return;
+    var sec=5;
+    btn.innerHTML='💬 Abriendo WhatsApp en <strong>'+sec+'</strong>s...';
+    btn.style.background='linear-gradient(135deg,#25D366,#128C7E)';
+    btn.style.color='#fff';
+    btn.style.border='none';
+    var iv=setInterval(function(){
+      sec--;
+      if(sec<=0){
+        clearInterval(iv);
+        btn.innerHTML='✅ Abriendo WhatsApp...';
+        sendWA();
+      }else{
+        btn.innerHTML='💬 Abriendo WhatsApp en <strong>'+sec+'</strong>s...';
+      }
+    },1000);
+    /* Click cancela countdown y abre directo */
+    btn.onclick=function(){clearInterval(iv);sendWA()};
   }
 
   function saveOrderToSupabase(o){
