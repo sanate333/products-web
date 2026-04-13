@@ -279,157 +279,212 @@
     s.id = 'pli-styles-v2';
     s.textContent = `
       .pli-section {
-        margin: 30px 0 20px;
-        padding: 0;
-        animation: pliFadeIn 0.5s ease-out;
+        margin: 40px -20px 20px;
+        padding: 40px 24px 30px;
+        background: linear-gradient(180deg, #0a1628 0%, #0f2847 50%, #0a1628 100%);
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+        animation: pliFadeIn 0.6s ease-out;
+      }
+      .pli-section::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: radial-gradient(circle at 20% 20%, rgba(61,201,232,0.15) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(232,200,122,0.1) 0%, transparent 50%);
+        pointer-events: none;
       }
       @keyframes pliFadeIn {
-        from { opacity: 0; transform: translateY(15px); }
+        from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
       }
       @keyframes pliShimmer {
         0% { background-position: -200% center; }
         100% { background-position: 200% center; }
       }
+      @keyframes pliFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
+      }
+      @keyframes pliGlow {
+        0%, 100% { box-shadow: 0 0 15px rgba(61,201,232,0.2); }
+        50% { box-shadow: 0 0 30px rgba(61,201,232,0.4); }
+      }
 
       /* Section Title */
       .pli-title {
-        font-size: 22px;
-        font-weight: 800;
-        color: ${colors.dark};
+        font-size: 26px;
+        font-weight: 900;
         text-align: center;
-        margin: 0 0 20px;
-        padding-bottom: 12px;
-        border-bottom: 3px solid ${colors.celeste};
+        margin: 0 0 30px;
+        padding-bottom: 16px;
+        position: relative;
+        z-index: 1;
         background: linear-gradient(90deg, ${colors.celeste}, ${colors.gold}, ${colors.celeste});
         background-size: 200% auto;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
         animation: pliShimmer 3s linear infinite;
+        letter-spacing: 0.5px;
+      }
+      .pli-title::after {
+        content: '';
+        display: block;
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, ${colors.celeste}, ${colors.gold});
+        margin: 12px auto 0;
+        border-radius: 2px;
       }
 
       /* Benefits Grid */
       .pli-benefits {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 14px;
-        margin-bottom: 20px;
+        gap: 16px;
+        margin-bottom: 28px;
+        position: relative;
+        z-index: 1;
       }
       .pli-benefit {
-        background: ${colors.white};
-        border: 1px solid ${colors.border};
-        border-radius: 10px;
-        padding: 18px 14px;
+        background: rgba(255,255,255,0.06);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(61,201,232,0.2);
+        border-radius: 14px;
+        padding: 24px 16px;
         text-align: center;
-        transition: all 0.3s ease;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        transition: all 0.4s ease;
+        animation: pliFloat 4s ease-in-out infinite;
       }
+      .pli-benefit:nth-child(2) { animation-delay: 0.5s; }
+      .pli-benefit:nth-child(3) { animation-delay: 1s; }
       .pli-benefit:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 16px rgba(61,201,232,0.15);
+        transform: translateY(-6px) scale(1.03);
         border-color: ${colors.celeste};
+        background: rgba(61,201,232,0.1);
+        animation: pliGlow 2s ease-in-out infinite;
       }
       .pli-benefit-icon {
-        font-size: 30px;
+        font-size: 40px;
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 12px;
+        filter: drop-shadow(0 2px 8px rgba(61,201,232,0.3));
       }
       .pli-benefit-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: ${colors.dark};
-        margin-bottom: 6px;
+        font-size: 16px;
+        font-weight: 800;
+        color: ${colors.white};
+        margin-bottom: 8px;
+        letter-spacing: 0.3px;
       }
       .pli-benefit-desc {
-        font-size: 12px;
-        color: #64748b;
-        line-height: 1.5;
+        font-size: 13px;
+        color: rgba(255,255,255,0.7);
+        line-height: 1.6;
       }
 
       /* Usage Box */
       .pli-usage {
-        background: linear-gradient(135deg, ${colors.goldLight}, ${colors.celesteLight});
-        border: 2px solid ${colors.gold};
-        border-radius: 10px;
-        padding: 18px 20px;
-        margin-bottom: 16px;
+        background: linear-gradient(135deg, rgba(232,200,122,0.15), rgba(61,201,232,0.1));
+        border: 1px solid rgba(232,200,122,0.3);
+        border-radius: 14px;
+        padding: 22px 24px;
+        margin-bottom: 18px;
+        position: relative;
+        z-index: 1;
       }
       .pli-usage-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: ${colors.dark};
-        margin: 0 0 10px;
+        font-size: 18px;
+        font-weight: 800;
+        color: ${colors.gold};
+        margin: 0 0 12px;
       }
       .pli-usage-text {
         font-size: 14px;
-        color: #334155;
-        line-height: 1.7;
+        color: rgba(255,255,255,0.85);
+        line-height: 1.8;
         margin: 0;
       }
 
       /* Study Box */
       .pli-study {
-        background: ${colors.lightBg};
+        background: rgba(61,201,232,0.08);
         border-left: 4px solid ${colors.celeste};
-        border-radius: 0 8px 8px 0;
-        padding: 14px 18px;
-        margin-bottom: 10px;
+        border-radius: 0 12px 12px 0;
+        padding: 18px 22px;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
       }
       .pli-study-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: ${colors.dark};
-        margin: 0 0 8px;
+        font-size: 16px;
+        font-weight: 800;
+        color: ${colors.celeste};
+        margin: 0 0 10px;
       }
       .pli-study-text {
         font-size: 13px;
-        color: #475569;
-        line-height: 1.6;
+        color: rgba(255,255,255,0.7);
+        line-height: 1.7;
         font-style: italic;
         margin: 0;
       }
 
-      /* Trust Badge */
+      /* Trust Badges */
       .pli-trust {
         display: flex;
         justify-content: center;
-        gap: 20px;
-        margin-top: 16px;
-        padding-top: 12px;
-        border-top: 1px solid ${colors.border};
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        position: relative;
+        z-index: 1;
       }
       .pli-trust-item {
-        font-size: 11px;
-        color: #94a3b8;
+        font-size: 12px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.6);
         display: flex;
         align-items: center;
-        gap: 4px;
+        gap: 5px;
+        background: rgba(255,255,255,0.05);
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid rgba(255,255,255,0.08);
       }
 
       /* Mobile */
       @media (max-width: 768px) {
+        .pli-section {
+          margin: 30px -10px 15px;
+          padding: 28px 16px 24px;
+        }
         .pli-benefits {
           grid-template-columns: 1fr;
-          gap: 10px;
+          gap: 12px;
         }
-        .pli-title {
-          font-size: 18px;
-        }
+        .pli-title { font-size: 20px; margin-bottom: 22px; }
         .pli-benefit {
-          padding: 14px 12px;
+          padding: 18px 14px;
+          animation: none;
         }
-        .pli-benefit-icon { font-size: 26px; }
-        .pli-benefit-title { font-size: 13px; }
-        .pli-benefit-desc { font-size: 11px; }
-        .pli-usage { padding: 14px 16px; }
+        .pli-benefit-icon { font-size: 34px; }
+        .pli-benefit-title { font-size: 15px; }
+        .pli-benefit-desc { font-size: 12px; }
+        .pli-usage { padding: 16px 18px; }
+        .pli-usage-title { font-size: 16px; }
         .pli-usage-text { font-size: 13px; }
-        .pli-study { padding: 12px 14px; }
-        .pli-trust { flex-direction: column; align-items: center; gap: 8px; }
+        .pli-study { padding: 14px 16px; }
+        .pli-trust { gap: 8px; }
+        .pli-trust-item { font-size: 11px; padding: 5px 10px; }
       }
       @media (max-width: 480px) {
-        .pli-section { margin: 20px 0 10px; }
-        .pli-title { font-size: 16px; margin-bottom: 14px; }
+        .pli-section { margin: 20px -5px 10px; padding: 22px 12px 20px; }
+        .pli-title { font-size: 18px; }
       }
     `;
     document.head.appendChild(s);
@@ -504,9 +559,24 @@
 
   // ========== INJECT ==========
   function inject() {
-    if (document.querySelector('.pli-section')) return;
-    const pageDetail = document.querySelector('.pageDetail');
-    if (!pageDetail) return;
+    // Remove any incorrectly placed section first
+    const existing = document.querySelector('.pli-section');
+    const descEl = document.querySelector('.detailDescription');
+    const btnEl = document.querySelector('.btnAdd');
+
+    // We MUST have either detailDescription or btnAdd to inject in the right spot
+    // Never inject without these - prevents content appearing at the top of page
+    if (!descEl && !btnEl) return;
+
+    // If already injected in the correct position (after description), skip
+    if (existing) {
+      const prev = existing.previousElementSibling;
+      if (prev && (prev.classList.contains('detailDescription') || prev.classList.contains('btnAdd') || prev.closest('.deFlexGoTocart'))) {
+        return; // Already correctly placed
+      }
+      // Remove incorrectly placed section
+      existing.remove();
+    }
 
     // Try to get product by ID from URL first (most reliable)
     const productId = getProductIdFromURL();
@@ -514,7 +584,7 @@
 
     // Fallback: match by page title
     if (!data) {
-      const titleEl = pageDetail.querySelector('h1') || pageDetail.querySelector('h2');
+      const titleEl = document.querySelector('.pageDetail h2') || document.querySelector('.pageDetail h1');
       if (titleEl) {
         data = getProductByTitle(titleEl.textContent);
       }
@@ -522,19 +592,17 @@
 
     if (!data) return;
 
-    // Find best injection point
-    const descEl = pageDetail.querySelector('.detailDescription');
-    const btnEl = pageDetail.querySelector('.btnAdd');
-    const insertAfter = descEl || btnEl;
-
+    // Build and insert AFTER the description (primary) or btnAdd container (secondary)
     const container = document.createElement('div');
     container.innerHTML = buildSection(data);
     const section = container.firstElementChild;
 
-    if (insertAfter && insertAfter.parentNode) {
-      insertAfter.parentNode.insertBefore(section, insertAfter.nextSibling);
-    } else {
-      pageDetail.appendChild(section);
+    if (descEl) {
+      descEl.parentNode.insertBefore(section, descEl.nextSibling);
+    } else if (btnEl) {
+      // btnAdd is inside .deFlexGoTocart, insert after that container
+      const btnContainer = btnEl.closest('.deFlexGoTocart') || btnEl.parentNode;
+      btnContainer.parentNode.insertBefore(section, btnContainer.nextSibling);
     }
   }
 
