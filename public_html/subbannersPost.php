@@ -4,20 +4,18 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Cargar variables de entorno desde el archivo .env
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit; }
+
 require __DIR__.'/vendor/autoload.php';
 use Dotenv\Dotenv;
-
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-// Obtener los valores de las variables de entorno
 $servidor = $_ENV['DB_HOST'] . ':' . $_ENV['DB_PORT'];
 $usuario = $_ENV['DB_USER'];
 $contrasena = $_ENV['DB_PASS'];
 $dbname = $_ENV['DB_NAME'];
 $rutaweb = $_ENV['RUTA_WEB'];
-$mensaje = "";
 
 try {
     $dsn = "mysql:host=$servidor;dbname=$dbname";
@@ -25,52 +23,39 @@ try {
     $conexion->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        // Verificar si se envió la imagen
         if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
-            // Crear carpeta para imágenes si no existe
             $carpetaImagenes = './imagenes_subbanners';
             if (!file_exists($carpetaImagenes)) {
                 mkdir($carpetaImagenes, 0777, true);
             }
 
-            // Inicializar ruta de la imagen
-            $rutaImagenCompleta = '';
-
-            // Subir la imagen
             $nombreImagen = $_FILES['imagen']['name'];
+            // Sanitize filename - replace spaces
+            $nombreImagen = preg_replace('/\s+/', '_', $nombreImagen);
             $rutaImagen = $carpetaImagenes . '/' . $nombreImagen;
             move_uploaded_file($_FILES['imagen']['tmp_name'], $rutaImagen);
             $rutaImagenCompleta = $rutaweb . $rutaImagen;
 
-            // Almacenar enlace completo en la base de datos
             $sqlInsert = "INSERT INTO `subbanner` (imagen) VALUES (:imagen)";
             $stmt = $conexion->prepare($sqlInsert);
             $stmt->bindParam(':imagen', $rutaImagenCompleta);
             $stmt->execute();
 
-            // Obtener el ID de la última inserción
             $lastId = $conexion->lastInsertId();
 
-            // Obtener la fecha de creación actualizada
-            $sqlSelect = "SELECT createdAt FROM `subbanner` WHERE idSubBanner = :lastId";
-            $stmtSelect = $conexion->prepare($sqlSelect);
-            $stmtSelect->bindParam(':lastId', $lastId);
-            $stmtSelect->execute();
-            $createdAt = $stmtSelect->fetchColumn();
-
-            // Respuesta JSON con enlace de la imagen y fecha de creación
             echo json_encode([
                 "mensaje" => "Sub-banner creado exitosamente",
-                "imagen" => $rutaImagenCompleta,
-                "createdAt" => $createdAt
+                "idSubBanner" => $lastId,
+                "imagen" => $rutaImagenCompleta
             ]);
         } else {
-            echo json_encode(["error" => "Debe enviarse una imagen"]);
+            $err = isset($_FILES['imagen']) ? $_FILES['imagen']['error'] : 'No file';
+            echo json_encode(["error" => "Debe enviarse una imagen. Code: " . $err]);
         }
     } else {
         echo json_encode(["error" => "Método no permitido"]);
     }
 } catch (PDOException $error) {
-    echo json_encode(["error" => "Error de conexión: " . $error->getMessage()]);
+    echo json_encode(["error" => "Error DB: " . $error->getMessage()]);
 }
 ?>
