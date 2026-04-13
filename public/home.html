@@ -1019,6 +1019,23 @@ a,button,[onclick]{cursor:pointer}
 
 </style>
 <script type="module" src="https://w.behold.so/widget.js"></script>
+<style>
+/* Hide Behold watermark */
+behold-widget{--behold-watermark-display:none}
+behold-widget::part(watermark){display:none!important}
+behold-widget::part(branding){display:none!important}
+</style>
+<script>
+/* Remove Behold watermark via shadow DOM */
+(function hideBeholdMark(){
+  var w=document.querySelector('behold-widget');
+  if(w&&w.shadowRoot){
+    var marks=w.shadowRoot.querySelectorAll('a[href*="behold"],div[class*="watermark"],div[class*="branding"],[class*="powered"]');
+    marks.forEach(function(m){m.style.display='none'});
+  }
+  setTimeout(hideBeholdMark,1000);
+})();
+</script>
 <body>
 
 <!-- QUIENES SOMOS MODAL -->
