@@ -22,10 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ─── API KEY (server-side only, never exposed to browser) ────────
-$GEMINI_KEY = 'AIzaSyDvQPN2hRuzn7SjDzdChWmbRRqo2-Rn04Y';
+$GEMINI_KEY = 'REMOVED_SEE_ENV';
 
 // ─── MODEL ───────────────────────────────────────────────────────
-$MODEL = 'gemini-flash-latest';
+$MODEL = 'gemini-2.0-flash';
 $GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{$MODEL}:generateContent?key={$GEMINI_KEY}";
 
 // ─── READ BODY ───────────────────────────────────────────────────
