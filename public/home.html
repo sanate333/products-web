@@ -4324,6 +4324,7 @@ startObs();
     cards.appendChild(card);
 
     document.getElementById('upsellAddBtn').onclick=function(){
+      var btn=this;
       if(typeof window.addItem==='function'){
         window.addItem({id:picked.id,name:picked.name,desc:picked.desc,price:picked.price,img:picked.img});
       } else {
@@ -4333,10 +4334,13 @@ startObs();
         try{localStorage.setItem('sanate_cart_v2',JSON.stringify(c2))}catch(e){}
         if(typeof window.renderCart==='function')window.renderCart();
       }
-      this.textContent='✔ Agregado';
-      this.disabled=true;
-      this.style.background='#15803d';
-      setTimeout(function(){if(typeof window.renderUpsell==='function')window.renderUpsell()},300);
+      /* Show selected state - don't switch to next offer */
+      btn.textContent='✅ Seleccionado';
+      btn.disabled=true;
+      btn.style.background='#166534';
+      btn.style.opacity='0.9';
+      card.style.border='2px solid #166534';
+      card.style.background='linear-gradient(135deg,#dcfce7,#d1fae5)';
     };
   };
 
