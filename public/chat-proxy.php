@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ─── API KEY (server-side only, never exposed to browser) ────────
-$GEMINI_KEY = 'REPLACE_WITH_NEW_KEY'; // <-- pegar nueva key aquí
+$GEMINI_KEY = 'AIzaSyCczupFF4zv9xL8mSfR-kPM4hKpIg8Vt10'; // <-- pegar nueva key aquí
 
 // ─── MODEL ───────────────────────────────────────────────────────
 $MODEL = 'gemini-2.0-flash';
