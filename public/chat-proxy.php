@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // ─── API KEY (server-side only, never exposed to browser) ────────
-$GEMINI_KEY = 'AIzaSyCczupFF4zv9xL8mSfR-kPM4hKpIg8Vt10'; // <-- pegar nueva key aquí
+$GEMINI_KEY = 'AIzaSyDvQPN2hRuzn7SjDzdChWmbRRqo2-Rn04Y';
 
 // ─── MODEL ───────────────────────────────────────────────────────
-$MODEL = 'gemini-2.0-flash';
-$GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/{$MODEL}:generateContent?key={$GEMINI_KEY}";
+$MODEL = 'gemini-flash-latest';
+$GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{$MODEL}:generateContent?key={$GEMINI_KEY}";
 
 // ─── READ BODY ───────────────────────────────────────────────────
 $body = file_get_contents('php://input');
