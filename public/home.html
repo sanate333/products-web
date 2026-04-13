@@ -4189,16 +4189,19 @@ startObs();
       var address=((document.getElementById('fadr')||{}).value||'').trim()+', '+((document.getElementById('fbar')||{}).value||'').trim();
       var apt=((document.getElementById('fapt')||{}).value||'').trim();
       if(apt)address+=' '+apt;
-      var total=0;
-      for(var i=0;i<cart.length;i++)total+=(cart[i].price||0)*(cart[i].qty||1);
+      var subtotal=0;
+      for(var i=0;i<cart.length;i++)subtotal+=(cart[i].price||0)*(cart[i].qty||1);
       var payVal='';
       document.querySelectorAll('#chkOv input[type="radio"]').forEach(function(r){if(r.checked)payVal=r.value});
-      var disc=(payVal!=='contraentrega')?Math.round(total*0.08):0;
-      var finalAmt=total-disc;
+      var disc=(payVal!=='contraentrega')?Math.round(subtotal*0.08):0;
+      var afterDisc=subtotal-disc;
+      /* Envío: GRATIS si >= $55,000, si no $14,900 */
+      var shipping=(afterDisc<55000)?14900:0;
+      var finalAmt=afterDisc+shipping;
       var fmtP=function(n){return'$'+n.toLocaleString('es-CO')};
 
       /* ── 1. PHP Dashboard (pedidoPost.php) ── */
-      var productos=cart.map(function(i){return{idProducto:0,titulo:i.name,cantidad:i.qty||1,precio:i.price||0,imagen:''}});
+      var productos=cart.map(function(i){return{idProducto:0,titulo:i.name,cantidad:i.qty||1,precio:i.price||0,imagen:i.img||''}});
       var payMap={nequi:'nequi',bancolombia:'bancolombia',contraentrega:'efectivo'};
       var fd=new FormData();
       fd.append('nombre',name);
@@ -4206,9 +4209,9 @@ startObs();
       fd.append('direccion',address);
       fd.append('ciudad',city);
       fd.append('departamento',dept);
-      fd.append('adicionales','');
+      fd.append('adicionales',shipping>0?'Envio: $14,900':'Envio GRATIS');
       fd.append('codigo','');
-      fd.append('nota','');
+      fd.append('nota',shipping>0?'Incluye envio $14,900':'Envio gratis');
       fd.append('formaPago',payMap[payVal]||payVal||'efectivo');
       fd.append('total',String(finalAmt));
       fd.append('productos',JSON.stringify(productos));
@@ -4224,8 +4227,11 @@ startObs();
         var it=cart[k];
         items+='<tr><td style="padding:8px;border-bottom:1px solid #eee;">'+it.name+'</td><td style="padding:8px;text-align:center;">x'+(it.qty||1)+'</td><td style="padding:8px;text-align:right;font-weight:bold;">'+fmtP((it.price||0)*(it.qty||1))+'</td></tr>';
       }
+      if(shipping>0){
+        items+='<tr><td style="padding:8px;border-bottom:1px solid #eee;">Envio</td><td style="padding:8px;text-align:center;">-</td><td style="padding:8px;text-align:right;font-weight:bold;">'+fmtP(shipping)+'</td></tr>';
+      }
       var payLabels={nequi:'Nequi',bancolombia:'Bancolombia',contraentrega:'Contra entrega'};
-      var emailHtml='<div style="font-family:Arial;max-width:600px;margin:0 auto;"><div style="background:linear-gradient(135deg,#07192E,#0A2E4E);padding:24px;text-align:center;border-radius:12px 12px 0 0;"><h1 style="color:#fff;margin:0;font-size:22px;">Nuevo Pedido SANATE</h1></div><div style="padding:24px;background:#fff;"><p style="font-weight:bold;color:#07192E;">'+name+'</p><p style="color:#567080;">Tel: '+phone+' | '+city+', '+dept+'</p><p style="color:#567080;">Dir: '+address+'</p><table style="width:100%;border-collapse:collapse;margin:16px 0;"><thead><tr style="background:#f0f4f8;"><th style="padding:8px;text-align:left;">Producto</th><th style="padding:8px;text-align:center;">Cant.</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead><tbody>'+items+'</tbody></table>'+(disc?'<p style="color:#22C55E;font-weight:bold;">Descuento 8%: -'+fmtP(disc)+'</p>':'')+'<div style="background:linear-gradient(135deg,#C9A030,#8A6C10);color:#fff;padding:16px;border-radius:10px;text-align:center;font-size:20px;font-weight:800;margin:12px 0;">Total: '+fmtP(finalAmt)+'</div><p style="color:#567080;">Pago: '+(payLabels[payVal]||payVal)+'</p></div></div>';
+      var emailHtml='<div style="font-family:Arial;max-width:600px;margin:0 auto;"><div style="background:linear-gradient(135deg,#07192E,#0A2E4E);padding:24px;text-align:center;border-radius:12px 12px 0 0;"><h1 style="color:#fff;margin:0;font-size:22px;">Nuevo Pedido SANATE</h1></div><div style="padding:24px;background:#fff;"><p style="font-weight:bold;color:#07192E;">'+name+'</p><p style="color:#567080;">Tel: '+phone+' | '+city+', '+dept+'</p><p style="color:#567080;">Dir: '+address+'</p><table style="width:100%;border-collapse:collapse;margin:16px 0;"><thead><tr style="background:#f0f4f8;"><th style="padding:8px;text-align:left;">Producto</th><th style="padding:8px;text-align:center;">Cant.</th><th style="padding:8px;text-align:right;">Subtotal</th></tr></thead><tbody>'+items+'</tbody></table>'+(disc?'<p style="color:#22C55E;font-weight:bold;">Descuento 8%: -'+fmtP(disc)+'</p>':'')+(shipping>0?'<p style="color:#E67E22;font-weight:bold;">Envio: +'+fmtP(shipping)+'</p>':'<p style="color:#22C55E;font-weight:bold;">Envio GRATIS</p>')+'<div style="background:linear-gradient(135deg,#C9A030,#8A6C10);color:#fff;padding:16px;border-radius:10px;text-align:center;font-size:20px;font-weight:800;margin:12px 0;">Total: '+fmtP(finalAmt)+'</div><p style="color:#567080;">Pago: '+(payLabels[payVal]||payVal)+'</p></div></div>';
       fetch(SB+'/functions/v1/sanate-email-v6?action=send_test',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
@@ -4238,10 +4244,10 @@ startObs();
       fetch(SB+'/rest/v1/oasis_store_orders',{
         method:'POST',
         headers:{'Content-Type':'application/json','apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Prefer':'return=representation'},
-        body:JSON.stringify({order_number:orderNum,customer_name:name,customer_phone:phone,customer_city:city,customer_department:dept,customer_address:address,payment_method:payVal,amount:finalAmt,discount:disc,currency:'COP',status:'pending',items:JSON.stringify(cart.map(function(i){return{id:i.id,name:i.name,qty:i.qty,price:i.price}})),notes:payVal!=='contraentrega'?'Comprobante adjunto':'Pago contra entrega'})
+        body:JSON.stringify({order_number:orderNum,customer_name:name,customer_phone:phone,customer_city:city,customer_department:dept,customer_address:address,payment_method:payVal,amount:finalAmt,discount:disc,currency:'COP',status:'pending',items:JSON.stringify(cart.map(function(i){return{id:i.id,name:i.name,qty:i.qty,price:i.price,img:i.img||''}})),notes:shipping>0?'Incluye envio $14,900':(payVal!=='contraentrega'?'Comprobante adjunto':'Pago contra entrega')})
       }).then(function(r){return r.json()}).then(function(d){console.log('[SYNC] Supabase:',d)}).catch(function(e){console.error('[SYNC] Supabase error:',e)});
 
-      console.log('[SYNC] Order sync triggered for: '+name+' | '+fmtP(finalAmt));
+      console.log('[SYNC] Order sync triggered for: '+name+' | '+fmtP(finalAmt)+(shipping>0?' (incluye envio $14,900)':' (envio gratis)'));
     }catch(e){console.error('[SYNC] Error:',e)}
   }
 
