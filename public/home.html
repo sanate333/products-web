@@ -3772,7 +3772,12 @@ startObs();
   ];
   var added=new Set();
   function fmt(n){return'$'+n.toLocaleString('es-CO')}
-  function getCart(){try{return JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]')}catch(e){return[]}}
+  function getCart(){
+    try{var c=JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]');if(c.length)return c;}catch(e){}
+    if(window._cart&&window._cart.length)return window._cart;
+    try{var c2=JSON.parse(localStorage.getItem('cart')||'[]');if(c2.length)return c2;}catch(e2){}
+    return[];
+  }
 
   function patchRenderUpsell(){
     var box=document.getElementById('upsellBox');
@@ -3837,7 +3842,12 @@ startObs();
   var paymentVerified=false;
 
   function fmt(n){return '$'+n.toLocaleString('es-CO')}
-  function getCart(){try{return JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]')}catch(e){return[]}}
+  function getCart(){
+    try{var c=JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]');if(c.length)return c;}catch(e){}
+    if(window._cart&&window._cart.length)return window._cart;
+    try{var c2=JSON.parse(localStorage.getItem('cart')||'[]');if(c2.length)return c2;}catch(e2){}
+    return[];
+  }
 
   /* ── CITIES DATABASE ── */
   var CITIES={
