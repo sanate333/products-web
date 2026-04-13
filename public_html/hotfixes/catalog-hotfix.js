@@ -163,8 +163,8 @@
         transform: translateY(0);
       }
 
-      /* Ver más link */
-      .cat-see-more {
+      /* Reserved */
+      .cat-reserved-unused {
         color: #1a7a3a;
         text-decoration: none;
         font-size: 11px;
@@ -462,18 +462,6 @@
       addBtn.textContent = '🛒 AÑADIR AL CARRITO';
       addBtn.addEventListener('click', (e) => handleAddToCart(e, productName, price, image));
       textContainer.appendChild(addBtn);
-    }
-
-    // Add "Ver más" link if not already present
-    if (!cardEl.querySelector('.cat-see-more')) {
-      const seeMoreLink = document.createElement('a');
-      seeMoreLink.className = 'cat-see-more';
-      const landingUrl = getLandingPage(productName);
-      seeMoreLink.href = landingUrl || `/landing-${slug}.html`;
-      seeMoreLink.textContent = '→ Ver más';
-      seeMoreLink.style.display = 'block';
-      seeMoreLink.style.marginTop = '4px';
-      textContainer.appendChild(seeMoreLink);
     }
 
     cardEl.dataset.enhanced = 'true';
