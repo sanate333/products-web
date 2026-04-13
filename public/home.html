@@ -4133,6 +4133,10 @@ startObs();
     }).then(function(r){return r.json()}).then(function(d){console.log('Order saved:',d)}).catch(function(e){console.error('Order save error:',e)});
   }
 
+  /* ── Expose IIFE functions to global scope so submitOrder can reach them ── */
+  window.finalizeOrder = finalizeOrder;
+  window.saveOrderToSupabase = saveOrderToSupabase;
+
   function applyPatch(){
     var current=window.submitOrder;
     if(!current)return;
