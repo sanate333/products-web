@@ -237,30 +237,8 @@
         line-height: 1.6;
       }
 
-      /* CTA Button */
-      .landing-cta-button {
-        display: inline-block;
-        background: ${colors.celeste};
-        color: ${colors.white};
-        padding: 12px 24px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 14px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 10px;
-      }
-
-      .landing-cta-button:hover {
-        background: #2aafce;
-        box-shadow: 0 4px 12px rgba(61, 201, 232, 0.3);
-        transform: translateY(-2px);
-      }
-
-      .landing-button-wrapper {
-        text-align: center;
+      /* Section separator */
+      .product-landing-inject h4 {
         margin-top: 20px;
       }
 
@@ -409,23 +387,17 @@
   function createLandingHTML(content) {
     return `
       <section class="product-landing-inject">
-        <h3>Beneficios Principales</h3>
+        <h3>✨ Beneficios Principales</h3>
         ${createBenefitsGrid(content.benefits)}
 
-        <h4>Modo de Uso</h4>
+        <h4>📋 Modo de Uso</h4>
         <div class="landing-usage-box">
           ${content.usage}
         </div>
 
-        <h4>Respaldado por Estudios</h4>
+        <h4>🔬 Respaldado por Estudios</h4>
         <div class="landing-study-box">
-          ${content.study}
-        </div>
-
-        <div class="landing-button-wrapper">
-          <a href="${content.landing}" class="landing-cta-button">
-            Ver detalles completos →
-          </a>
+          📚 ${content.study}
         </div>
       </section>
     `;
