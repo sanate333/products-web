@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.1 themed deploy fix */
+/* SANATE Product Landing v5.2 bounce-fix */
 (function(){
 'use strict';
 
@@ -73,24 +73,15 @@ function injectCSS(){
   s.textContent='\
 @keyframes sntFade{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}\
 @keyframes sntShimmer{0%{background-position:-200% center}100%{background-position:200% center}}\
-@keyframes sntFloat1{0%,100%{transform:translate(0,0) rotate(0deg);opacity:.18}25%{transform:translate(15px,-20px) rotate(10deg);opacity:.25}50%{transform:translate(-10px,-35px) rotate(-5deg);opacity:.15}75%{transform:translate(20px,-15px) rotate(8deg);opacity:.22}}\
-@keyframes sntFloat2{0%,100%{transform:translate(0,0) rotate(0deg);opacity:.15}33%{transform:translate(-20px,-25px) rotate(-12deg);opacity:.22}66%{transform:translate(15px,-40px) rotate(8deg);opacity:.12}}\
-@keyframes sntFloat3{0%,100%{transform:translate(0,0) scale(1);opacity:.2}50%{transform:translate(10px,-30px) scale(1.2);opacity:.1}}\
-@keyframes sntPulseGlow{0%,100%{opacity:.4}50%{opacity:.7}}\
-@keyframes sntCloudDrift{0%{transform:translateX(-10px);opacity:.06}50%{transform:translateX(10px);opacity:.1}100%{transform:translateX(-10px);opacity:.06}}\
+@keyframes sntPulseGlow{0%,100%{opacity:.35}50%{opacity:.6}}\
 @keyframes sntCardPop{from{opacity:0;transform:translateY(15px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}\
 .snt-landing{margin:35px -10px 20px;padding:50px 28px 40px;border-radius:24px;position:relative;overflow:hidden;animation:sntFade .7s ease-out}\
-.snt-deco{position:absolute;font-size:28px;pointer-events:none;z-index:0;filter:blur(.5px)}\
-.snt-deco-0{top:8%;left:5%;animation:sntFloat1 8s ease-in-out infinite}\
-.snt-deco-1{top:15%;right:8%;animation:sntFloat2 10s ease-in-out infinite}\
-.snt-deco-2{bottom:20%;left:10%;animation:sntFloat3 7s ease-in-out infinite}\
-.snt-deco-3{bottom:10%;right:5%;animation:sntFloat1 9s ease-in-out infinite .5s}\
-.snt-deco-4{top:50%;left:50%;animation:sntFloat2 11s ease-in-out infinite 1s}\
+.snt-deco{position:absolute;font-size:26px;pointer-events:none;z-index:0;opacity:.18;will-change:transform;user-select:none}\
 .snt-cloud{position:absolute;border-radius:50%;pointer-events:none;z-index:0}\
-.snt-cloud-1{width:180px;height:180px;top:-50px;right:-40px;animation:sntCloudDrift 12s ease-in-out infinite}\
-.snt-cloud-2{width:140px;height:140px;bottom:-30px;left:-30px;animation:sntCloudDrift 15s ease-in-out infinite 3s}\
-.snt-cloud-3{width:100px;height:100px;top:40%;right:10%;animation:sntCloudDrift 10s ease-in-out infinite 6s}\
-.snt-glow{position:absolute;border-radius:50%;pointer-events:none;z-index:0;animation:sntPulseGlow 4s ease-in-out infinite}\
+.snt-cloud-1{width:180px;height:180px;top:-50px;right:-40px}\
+.snt-cloud-2{width:140px;height:140px;bottom:-30px;left:-30px}\
+.snt-cloud-3{width:100px;height:100px;top:40%;right:10%}\
+.snt-glow{position:absolute;border-radius:50%;pointer-events:none;z-index:0;animation:sntPulseGlow 5s ease-in-out infinite}\
 .snt-glow-1{width:200px;height:200px;top:-60px;right:-60px}\
 .snt-glow-2{width:160px;height:160px;bottom:-40px;left:-40px}\
 .snt-badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin:0 auto 16px;position:relative;z-index:1}\
@@ -210,6 +201,42 @@ function getByTitle(t){
   return null;
 }
 
+// Screensaver-style bouncing decorations
+function startBounce(container){
+  var els=container.querySelectorAll('.snt-deco');
+  if(!els.length)return;
+  var cw=container.offsetWidth,ch=container.offsetHeight;
+  var sz=30; // approx element size in px
+  var states=[];
+  for(var i=0;i<els.length;i++){
+    states.push({
+      el:els[i],
+      x:Math.random()*(cw-sz*2)+sz,
+      y:Math.random()*(ch-sz*2)+sz,
+      vx:(Math.random()*.35+.15)*(Math.random()>.5?1:-1),
+      vy:(Math.random()*.25+.1)*(Math.random()>.5?1:-1)
+    });
+    els[i].style.left='0px';
+    els[i].style.top='0px';
+  }
+  var raf;
+  function tick(){
+    if(!document.contains(container)){cancelAnimationFrame(raf);return;}
+    var W=container.offsetWidth,H=container.offsetHeight;
+    for(var j=0;j<states.length;j++){
+      var s=states[j];
+      s.x+=s.vx;s.y+=s.vy;
+      if(s.x<=0){s.x=0;s.vx=Math.abs(s.vx);}
+      else if(s.x>=W-sz){s.x=W-sz;s.vx=-Math.abs(s.vx);}
+      if(s.y<=0){s.y=0;s.vy=Math.abs(s.vy);}
+      else if(s.y>=H-sz){s.y=H-sz;s.vy=-Math.abs(s.vy);}
+      s.el.style.transform='translate('+s.x+'px,'+s.y+'px)';
+    }
+    raf=requestAnimationFrame(tick);
+  }
+  raf=requestAnimationFrame(tick);
+}
+
 // Inject
 function inject(){
   var desc=document.querySelector('.detailDescription');
@@ -233,6 +260,8 @@ function inject(){
   var section=div.firstElementChild;
   if(desc){desc.parentNode.insertBefore(section,desc.nextSibling);}
   else if(btn){var container=btn.closest('.deFlexGoTocart')||btn.parentNode;container.parentNode.insertBefore(section,container.nextSibling);}
+  // Start bouncing animations after a short delay (let layout settle)
+  setTimeout(function(){startBounce(section);},300);
 }
 
 // Init
