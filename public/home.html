@@ -4023,6 +4023,7 @@ startObs();
     lines+='<div class="ok-row"><span>Direcci\u00f3n</span><span style="font-size:11px">'+o.address+', '+o.city+', '+o.dept+'</span></div>';
     document.getElementById('okOrder').innerHTML=lines;
     saveOrderToSupabase(o);
+    saveOrderToDashboard(o);
     sendOrderEmail(o);
     localStorage.setItem('sanate_cart_v2','[]');
     if(typeof window.renderCart==='function') window.renderCart();
@@ -4032,6 +4033,34 @@ startObs();
     },100);
     /* AUTO-COUNTDOWN 5s → abre WhatsApp automáticamente */
     startWaCountdown();
+  }
+
+  /* ── SYNC TO PHP DASHBOARD (pedidoPost.php) ── */
+  function saveOrderToDashboard(o){
+    var productos=o.items.map(function(i){
+      return {idProducto:0,titulo:i.name,cantidad:i.qty||1,precio:i.price||0,imagen:''};
+    });
+    var payMap={nequi:'nequi',bancolombia:'bancolombia',contraentrega:'efectivo'};
+    var payload={
+      nombre:o.name||'',
+      whatsapp:o.phone||'',
+      direccion:o.address||'',
+      ciudad:o.city||'',
+      departamento:o.dept||'',
+      adicionales:'',
+      codigo:'',
+      nota:'Pedido desde home.html',
+      formaPago:payMap[o.payment]||o.payment||'efectivo',
+      total:String(o.final||0),
+      productos:JSON.stringify(productos)
+    };
+    fetch('/pedidoPost.php',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }).then(function(r){return r.json()})
+    .then(function(d){console.log('Dashboard order saved:',d)})
+    .catch(function(e){console.error('Dashboard order error:',e)});
   }
 
   /* ── EMAIL NOTIFICATION ── */
@@ -4055,10 +4084,10 @@ startObs();
       +'<div style="background:linear-gradient(135deg,#C9A030,#8A6C10);color:#fff;padding:16px;border-radius:10px;text-align:center;font-size:20px;font-weight:800;margin:12px 0;">💰 Total: '+fmt(o.final)+'</div>'
       +'<p style="color:#567080;">💳 Pago: '+o.payLabel+'</p>'
       +'</div></div>';
-    fetch(SB_URL+'/functions/v1/sanate-email-v6',{
+    fetch(SB_URL+'/functions/v1/sanate-email-v6?action=send_test',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'send_test',email:'sanate333@gmail.com',subject:'🛒 Nuevo Pedido — '+o.name+' — '+fmt(o.final),body:html,template:'default'})
+      body:JSON.stringify({email:'sanate333@gmail.com',subject:'🛒 Nuevo Pedido — '+o.name+' — '+fmt(o.final),body:html,template:'default'})
     }).then(function(r){return r.json()}).then(function(d){console.log('Email sent:',d)}).catch(function(e){console.error('Email error:',e)});
   }
 
