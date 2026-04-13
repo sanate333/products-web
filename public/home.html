@@ -3661,7 +3661,7 @@ function handleDiscountForm(e){
 <script src="/hotfixes/slider-fix.js?v=40"></script>
 <script src="/hotfixes/popup-banner-fix.js?v=40"></script>
 <script>
-/* SCROLL-LOCK v1: intercept scrollLeft+scrollTo on .so2-track for 4s */
+/* SCROLL-LOCK v2 + TITLE-FIX */
 (function(){
 var _sl=Object.getOwnPropertyDescriptor(Element.prototype,'scrollLeft');
 var _st=Element.prototype.scrollTo;
@@ -3680,9 +3680,20 @@ if(_st){
   };
 }
 window._scrollLockRelease=function(){_lock=false;if(_sl)Element.prototype.scrollTo=_st;};
+/* Title CSS: dark, readable, 19px */
+(function(){
+  var s=document.createElement('style');
+  s.textContent=
+    '.so2-card h3{display:block!important;font-size:19px!important;font-weight:900!important;'+
+    'color:#071926!important;background:rgba(255,255,255,.92)!important;'+
+    'padding:10px 14px 8px!important;margin:0!important;line-height:1.25!important;'+
+    'text-shadow:none!important;border-radius:0!important;white-space:normal!important;}'+
+    '.so2-card .so2-body{background:#fff!important;}';
+  document.head.appendChild(s);
+})();
 })();
 </script>
-<script src="/hotfixes/super-ofertas-fix.js?v=41"></script>
+<script src="/hotfixes/super-ofertas-fix.js?v=42"></script>
 <script>
 /* SO2 Image Patch v2.0 - Persistent MutationObserver + interval */
 (function(){
