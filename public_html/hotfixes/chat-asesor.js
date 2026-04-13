@@ -55,7 +55,34 @@ var P={
 };
 
 /* ─── SYSTEM PROMPT ──────────────────────────────────────────── */
-var SYSTEM=`Eres el Dr. Santiago Morales, asesor de cosmética y bienestar natural de SÁNATE Colombia. Llevas 4 años ayudando clientes. Tono cercano, humano, cálido. NUNCA digas que eres IA o bot. Mensajes CORTOS (2-4 líneas máximo). UNA sola pregunta por mensaje. 1-2 emojis máximo.
+var SYSTEM=`Eres el Dr. Santiago Morales, asesor de cosmética y bienestar natural de SÁNATE Colombia. Llevas 4 años ayudando clientes. Tono cercano, humano, cálido. NUNCA digas que eres IA o bot. 1-2 emojis máximo por bloque.
+
+══ FORMATO OBLIGATORIO ══
+Divide SIEMPRE tu respuesta en 2 a 4 mensajes cortos separados por [MSG].
+Cada mensaje: máximo 2 líneas, UNA sola idea. Como WhatsApp real.
+Ejemplo: "Buenas tardes ☀️[MSG]Entiendo, las manchas pueden desesperar.[MSG]¿Son más en el rostro o en otras zonas?[CHIPS:rostro,axilas,espalda]"
+NUNCA envíes un solo bloque largo. SIEMPRE usa [MSG].
+
+══ FLUJO DE CONVERSACIÓN (4-6 turnos hasta cierre) ══
+TURNO 1 — Bienvenida + diagnóstico:
+  Msg1: Saludo por horario + empatía corta [MSG]
+  Msg2: Pregunta diagnóstico específica + [CHIPS:opcion1,opcion2,opcion3]
+
+TURNO 2 — Profundizar:
+  Msg1: Valida lo que dijo [MSG]
+  Msg2: Pregunta de profundidad (zona, tiempo, intensidad) [MSG]
+  Msg3: Dato útil breve sobre el producto ideal
+
+TURNO 3 — Presentar solución:
+  Msg1: "Para lo que describes tengo exactamente lo que necesitas" [MSG]
+  Msg2: Beneficio clave del producto [MSG]
+  Msg3: Presenta 3 combos + [SHOW:c4,c1,c3] (según síntoma) [CHIPS:pagar,precio,envio]
+
+TURNO 4 — Cierre de venta:
+  Si muestra interés o dice "quiero", "cómo pido", "precio", "me interesa":
+  Msg1: "¡Perfecto! 🌿" + confirma elección [MSG]
+  Msg2: Menciona envío GRATIS + pago contra entrega [MSG]
+  Msg3: Pregunta de cierre: "¿Te lo proceso para hoy o mañana?" + [PEDIDO]
 
 HORARIO DE SALUDO: 05:00-11:59→"Buenos días" | 12:00-18:59→"Buenas tardes" | 19:00-04:59→"Buenas noches"
 
@@ -370,8 +397,9 @@ function buildChips(codesStr){
   var h='<div class="sac-chips-wrap">';
   keys.forEach(function(k,i){
     var label=CHIP_LABELS[k]||k;
-    // staggered animation delay
-    h+='<button class="sac-chip" style="animation-delay:'+(i*0.06)+'s" onclick="window._sacChat&&window._sacChat.chipClick('+JSON.stringify(label)+')">'+label+'</button>';
+    // escape single quotes for safe inline onclick
+    var safeLabel=label.replace(/'/g,'&#39;');
+    h+='<button class="sac-chip" style="animation-delay:'+(i*0.06)+'s" onclick="window._sacChat&&window._sacChat.chipClick(\''+safeLabel+'\')">'+label+'</button>';
   });
   return h+'</div>';
 }
@@ -420,6 +448,13 @@ function buildOrderForm(){
     '<button class="sac-btn" id="sacConfirm" onclick="window._sacChat.confirm()">✓ Confirmar pedido — Pago contra entrega</button>'+
     '<div class="sac-form-note">🔒 Pagas cuando recibes · Envío GRATIS · Garantía 30 días</div>'+
   '</div>';
+}
+
+/* ─── MULTI-MSG HELPERS ──────────────────────────────────────── */
+function wait(ms){return new Promise(function(r){setTimeout(r,ms);});}
+
+function splitMessages(raw){
+  return raw.split('[MSG]').map(function(s){return s.trim();}).filter(Boolean);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -581,16 +616,22 @@ function openChat(){
       q.style.background='';q.style.borderColor='';q.style.color='';
     },500);
 
-    // Doctor greeting with typing delay
+    // Doctor greeting — 2 bubbles for natural feel
     showTyping();
     _timers.push(setTimeout(function(){
       hideTyping();
-      // Greeting + initial chips
+      addMsg('doc','¡Hola! Soy el Dr. Santiago 👨‍⚕️ Especialista en cosmética natural de SÁNATE.');
+    },1000));
+    _timers.push(setTimeout(function(){
+      showTyping();
+    },1500));
+    _timers.push(setTimeout(function(){
+      hideTyping();
       var greetChips=buildChips('manchas,acne,reseca,sensible,cabello,energia');
-      addMsg('doc','¡Hola! Soy el Dr. Santiago 👨‍⚕️ Especialista en cosmética natural de SÁNATE.\n\n¿Cuéntame, qué problema de piel o salud te está preocupando?',greetChips);
+      addMsg('doc','¿Cuéntame, qué problema de piel o salud te está preocupando hoy?',greetChips);
       var inp=document.getElementById('sacInp');
       if(inp){inp.disabled=false;inp.focus();}
-    },1400));
+    },2800));
   },7200));
 
   var inp=document.getElementById('sacInp');
@@ -616,8 +657,6 @@ async function sendMsg(){
   inp.value='';
   inp.disabled=true;
   sbtn.disabled=true;
-
-  // Clear existing chips when user sends a message
   clearChips();
 
   addMsg('user',txt);
@@ -626,8 +665,24 @@ async function sendMsg(){
   var raw=await askGemini(txt);
   hideTyping();
 
-  var parsed=parseResponse(raw);
-  addMsg('doc',parsed.text,parsed.extra);
+  // Split into individual message bubbles separated by [MSG]
+  var segments=splitMessages(raw);
+  if(!segments.length)segments=['Disculpa, hubo un error. ¿Puedes repetir?'];
+
+  for(var i=0;i<segments.length;i++){
+    if(i>0){
+      // Brief pause then show typing before next bubble
+      await wait(320);
+      showTyping();
+      // Typing duration scales with message length (700-1300ms)
+      var ms=700+Math.min(segments[i].length*4,600);
+      await wait(ms);
+      hideTyping();
+      await wait(120);
+    }
+    var parsed=parseResponse(segments[i]);
+    addMsg('doc',parsed.text,parsed.extra);
+  }
 
   if(!orderSubmitted){
     inp.disabled=false;
