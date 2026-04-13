@@ -201,7 +201,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 
 /* ─── COMBOS ─── */
 .cg{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:stretch}
-@media(max-width:840px){.cg{display:flex;flex-direction:row;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:12px;padding:0 16px 16px;scroll-padding-left:16px;scrollbar-width:none;grid-template-columns:unset}.cg::-webkit-scrollbar{display:none}.cg .cc{flex:0 0 82vw;max-width:300px;scroll-snap-align:start;min-width:260px}}
+@media(max-width:840px){.cg{display:flex;flex-direction:column;gap:12px;padding:0 12px}.cg .cc{flex:none;width:100%;max-width:100%;min-width:unset}}
 .cc{border-radius:14px;overflow:hidden;border:1.5px solid var(--off);box-shadow:var(--sh);transition:var(--t);cursor:pointer;display:flex;flex-direction:column;background:#fff;min-height:unset}
 .cc:hover{transform:translateY(-6px);box-shadow:var(--shh);border-color:rgba(61,201,232,.26)}
 .cc.star{border-color:var(--gold);box-shadow:0 4px 22px rgba(201,160,48,.12)}
@@ -244,8 +244,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 
 /* tickera */
 .tickera-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
-@media(max-width:840px){.tickera-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:500px){.tickera-grid{grid-template-columns:1fr}}
+@media(max-width:840px){.tickera-grid{grid-template-columns:1fr!important;gap:10px}}
 .tcard{border-radius:14px;overflow:hidden;border:1.5px solid var(--off);box-shadow:var(--sh);background:#fff;transition:var(--t);cursor:pointer}
 .tcard:hover{transform:translateY(-5px);box-shadow:var(--shh);border-color:rgba(201,160,48,.3)}
 .tcard.best{border-color:var(--gold)}
@@ -2061,7 +2060,7 @@ a,button,[onclick]{cursor:pointer}
       <h2 class="sh-title" style="font-size:clamp(20px,2.5vw,34px)">Combos <em>Cabello</em> — Shampoo<br/>+ Néctar Capilar</h2>
       <p class="sh-sub">Sin sulfatos, sin siliconas. El dúo que tu cabello necesitaba.</p>
     </div>
-    <div class="tickera-grid fu" style="grid-template-columns:repeat(3,1fr)">
+    <div class="tickera-grid fu">
       <!-- CH1 -->
       <div class="tcard">
         <div class="tc-img" style="height:160px">
@@ -3664,7 +3663,7 @@ function handleDiscountForm(e){
 .ig-embed-text{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:3px}
 .ig-embed-sub{font-size:10.5px;color:var(--gray2)}
 </style>
-<script src="/hotfixes/slider-fix.js?v=40"></script>
+<script src="/hotfixes/slider-fix.js?v=41"></script>
 <script src="/hotfixes/popup-banner-fix.js?v=40"></script>
 <script>
 /* TITLE-FIX v6 — no scroll-lock, just title CSS */
