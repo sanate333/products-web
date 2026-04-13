@@ -244,11 +244,12 @@ input,select,textarea{font-family:var(--sans);outline:none}
 
 /* tickera */
 .tickera-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
-@media(max-width:840px){.tickera-grid{grid-template-columns:1fr!important;gap:10px}}
+@media(max-width:840px){.tickera-grid{grid-template-columns:1fr!important;gap:10px}.tcard{display:flex;flex-direction:row;align-items:stretch}.tc-img{width:110px!important;min-width:110px;height:auto!important;min-height:110px}.tc-body{flex:1;padding:10px 12px 12px!important}}
 .tcard{border-radius:14px;overflow:hidden;border:1.5px solid var(--off);box-shadow:var(--sh);background:#fff;transition:var(--t);cursor:pointer}
 .tcard:hover{transform:translateY(-5px);box-shadow:var(--shh);border-color:rgba(201,160,48,.3)}
 .tcard.best{border-color:var(--gold)}
 .tc-img{height:170px;overflow:hidden;position:relative;background:var(--off)}
+.tc-img-cap{height:160px}
 .tc-img img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .4s}
 .tcard:hover .tc-img img{transform:scale(1.05)}
 .tc-body{padding:14px 16px 16px}
@@ -643,6 +644,7 @@ footer{background:var(--black);color:rgba(255,255,255,.4)}
 .var-err{font-size:10.5px;color:var(--red);font-weight:600;text-align:center;padding:5px;display:none}
 .var-err.show{display:block;animation:shake .3s ease}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+@media(max-width:840px){.vqb{width:36px;height:36px;font-size:18px}.var-qty{gap:10px}.var-qty span{font-size:16px;min-width:22px}.var-row{padding:8px 10px}.var-wrap{max-height:220px}}
 /* ══════════════════════════════════════════
    NAV DROPDOWN MENU
 ══════════════════════════════════════════ */
@@ -2063,7 +2065,7 @@ a,button,[onclick]{cursor:pointer}
     <div class="tickera-grid fu">
       <!-- CH1 -->
       <div class="tcard">
-        <div class="tc-img" style="height:160px">
+        <div class="tc-img tc-img-cap">
           <img src="https://sanate.store/imagenes_productos/nectar_capilar.jpg" alt="Combo Capilar Shampoo + Néctar SÁNATE"/>
           <span class="rib sky" style="font-size:9px;top:8px;left:8px;right:auto">💆 Cabello sano</span>
         </div>
@@ -2080,7 +2082,7 @@ a,button,[onclick]{cursor:pointer}
       </div>
       <!-- CH2 BEST -->
       <div class="tcard best">
-        <div class="tc-img" style="height:160px">
+        <div class="tc-img tc-img-cap">
           <img src="https://sanate.store/imagenes_productos/nectar_capilar.jpg" alt="Combo Cabello y Piel SÁNATE — Shampoo + jabones"/>
           <span class="rib gold" style="font-size:9px;top:8px;left:8px;right:auto">⭐ Más completo</span>
         </div>
@@ -2106,7 +2108,7 @@ a,button,[onclick]{cursor:pointer}
       </div>
       <!-- CH3 -->
       <div class="tcard">
-        <div class="tc-img" style="height:160px">
+        <div class="tc-img tc-img-cap">
           <img src="https://sanate.store/imagenes_productos/nectar_capilar.jpg" alt="Kit Capilar Premium SÁNATE"/>
           <span class="rib navy" style="font-size:9px;top:8px;left:8px;right:auto">👑 Premium</span>
         </div>
@@ -3046,15 +3048,23 @@ function chgVar(combo,type,delta){
 }
 function addVarItem(combo,needed,baseName,price,img){
   const s=varState[combo];
+  if(!s){alert('Error: combo '+combo+' no encontrado');return;}
   const tot=s.curcuma+s.avena+s.calendula;
   if(tot<needed){
     const lbl=document.getElementById('vt-'+combo);
     lbl.classList.add('over');
-    setTimeout(()=>lbl.classList.remove('over'),800);
-    // shake wrapper
+    setTimeout(()=>lbl.classList.remove('over'),1500);
     const wrap=document.getElementById('vw-'+combo);
     wrap.style.borderColor='var(--red)';
-    setTimeout(()=>wrap.style.borderColor='',900);
+    wrap.style.boxShadow='0 0 0 3px rgba(239,68,68,.25)';
+    setTimeout(()=>{wrap.style.borderColor='';wrap.style.boxShadow=''},1500);
+    // Show visible error text
+    var errEl=wrap.querySelector('.var-err');
+    if(!errEl){errEl=document.createElement('div');errEl.className='var-err';wrap.appendChild(errEl);}
+    errEl.textContent='⚠️ Elige '+needed+' jabones para continuar (llevas '+tot+')';
+    errEl.classList.add('show');
+    setTimeout(()=>errEl.classList.remove('show'),2500);
+    wrap.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
   const parts=[];
