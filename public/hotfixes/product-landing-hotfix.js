@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.3 big-decos + popup-hide */
+/* SANATE Product Landing v5.4 above-fold injection */
 (function(){
 'use strict';
 
@@ -244,8 +244,8 @@ function inject(){
   if(!desc&&!btn)return;
   var existing=document.querySelector('.snt-landing');
   if(existing){
-    var prev=existing.previousElementSibling;
-    if(prev&&(prev.classList.contains('detailDescription')||prev.closest&&prev.closest('.deFlexGoTocart')))return;
+    var nxt=existing.nextElementSibling;
+    if(nxt&&nxt.classList.contains('detailDescription'))return;
     existing.remove();
   }
   var id=getID();
@@ -258,7 +258,7 @@ function inject(){
   var div=document.createElement('div');
   div.innerHTML=build(data);
   var section=div.firstElementChild;
-  if(desc){desc.parentNode.insertBefore(section,desc.nextSibling);}
+  if(desc){desc.parentNode.insertBefore(section,desc);}
   else if(btn){var container=btn.closest('.deFlexGoTocart')||btn.parentNode;container.parentNode.insertBefore(section,container.nextSibling);}
   // Start bouncing animations after a short delay (let layout settle)
   setTimeout(function(){startBounce(section);},300);
