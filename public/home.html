@@ -3661,26 +3661,7 @@ function handleDiscountForm(e){
 <script src="/hotfixes/slider-fix.js?v=40"></script>
 <script src="/hotfixes/popup-banner-fix.js?v=40"></script>
 <script>
-/* SCROLL-LOCK v2 + TITLE-FIX */
-(function(){
-var _sl=Object.getOwnPropertyDescriptor(Element.prototype,'scrollLeft');
-var _st=Element.prototype.scrollTo;
-var _lock=true;
-setTimeout(function(){_lock=false;},4000);
-function isMobTrack(el){return _lock&&window.innerWidth<=840&&el&&el.classList&&el.classList.contains('so2-track');}
-if(_sl&&_sl.set){
-  Object.defineProperty(Element.prototype,'scrollLeft',{configurable:true,get:_sl.get,set:function(v){
-    if(isMobTrack(this)){_sl.set.call(this,0);return;}_sl.set.call(this,v);
-  }});
-}
-if(_st){
-  Element.prototype.scrollTo=function(){
-    if(isMobTrack(this)){if(_sl)_sl.set.call(this,0);return;}
-    _st.apply(this,arguments);
-  };
-}
-window._scrollLockRelease=function(){_lock=false;if(_sl)Element.prototype.scrollTo=_st;};
-/* Title CSS: dark, readable, 19px */
+/* TITLE-FIX v6 — no scroll-lock, just title CSS */
 (function(){
   var s=document.createElement('style');
   s.textContent=
@@ -3693,9 +3674,8 @@ window._scrollLockRelease=function(){_lock=false;if(_sl)Element.prototype.scroll
     '.so2-card .so2-body{background:#fff!important;}';
   document.head.appendChild(s);
 })();
-})();
 </script>
-<script src="/hotfixes/super-ofertas-fix.js?v=45"></script>
+<script src="/hotfixes/super-ofertas-fix.js?v=46"></script>
 <script>
 /* SO2 Image Patch v2.0 - Persistent MutationObserver + interval */
 (function(){
@@ -3777,7 +3757,7 @@ startObs();
 <script src="/hotfixes/combo-fix.js?v=91"></script>
 <script src="/hotfixes/img-rotation.js?v=40"></script>
 <script src="/hotfixes/patch-super-ofertas.js?v=53"></script>
-<script src="/hotfixes/mobile-scroll-fix.js?v=4"></script>
+<script src="/hotfixes/mobile-scroll-fix.js?v=5"></script>
   <script src="/hotfixes/melena-fix.js?v=44"></script>
 <script>/* TICKERAS-SHOW v1 */(function(){function applyT(){if(document.getElementById('tickeras-show-css'))return;var s=document.createElement('style');s.id='tickeras-show-css';s.textContent=['#tickeras.sec-off{padding-top:40px!important;padding-bottom:40px!important}','#tickeras>.w>.sh:first-child{display:block!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2){display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:14px!important;visibility:visible!important;opacity:1!important;margin-top:18px!important}','#tickeras>.w>:nth-child(2) .tcard{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important;height:auto!important}','#tickeras>.w>:nth-child(2) .tc-img{display:block!important;visibility:visible!important;opacity:1!important;height:160px!important;overflow:hidden!important}','#tickeras>.w>:nth-child(2) .tc-img img{display:block!important;visibility:visible!important;width:100%!important;height:100%!important;object-fit:cover!important}','#tickeras>.w>:nth-child(2) .tc-body{display:flex!important;flex-direction:column!important;visibility:visible!important;opacity:1!important}','#tickeras>.w>:nth-child(2) .tc-btn{display:block!important;visibility:visible!important;opacity:1!important}','@media(max-width:840px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr 1fr!important}}','@media(max-width:500px){#tickeras>.w>:nth-child(2){grid-template-columns:1fr!important}}'].join('');document.head.appendChild(s);}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',applyT);}else{applyT();}setTimeout(applyT,300);setTimeout(applyT,800);})();</script><script>/* TICKERAS-HIDE v2 */setInterval(function(){var s=document.getElementById('tickeras-show-css');if(s)s.parentNode.removeChild(s);var t=document.querySelector('#tickeras');if(!t)return;t.style.removeProperty('display');var w=t.querySelector('.w');if(!w||w.children.length<4)return;w.children[0].style.setProperty('display','none','important');w.children[1].style.setProperty('display','none','important');w.children[2].style.setProperty('display','block','important');w.children[3].style.setProperty('display','grid','important');w.children[3].style.setProperty('grid-template-columns','repeat(3,1fr)','important');w.children[3].style.setProperty('gap','14px','important');t.style.setProperty('padding-top','40px','important');t.style.setProperty('padding-bottom','40px','important');},200);</script><style id="cc-blur-fix">/* COMBO-CARDS-FIX v3 */
 #combos .cc .cc-img{position:relative!important;overflow:hidden!important;isolation:isolate!important;aspect-ratio:1/1!important;height:auto!important;background:#111!important}
