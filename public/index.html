@@ -4,7 +4,7 @@
   var p=window.location.pathname;
   var scripts=[];
   if(p==='/catalogo')scripts.push('/hotfixes/catalog-hotfix.js?v=3');
-  if(p.indexOf('/producto/')===0)scripts.push('/hotfixes/product-landing-hotfix.js?v=4');
+  if(p.indexOf('/producto/')===0)scripts.push('/hotfixes/product-landing-hotfix.js?v=6');
   if(p.indexOf('/dashboard/sub-banners')===0)scripts.push('/hotfixes/dashboard-subbanner-hotfix.js?v=1');
   scripts.forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;document.body.appendChild(s);
