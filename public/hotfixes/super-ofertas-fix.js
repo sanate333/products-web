@@ -572,7 +572,7 @@ setInterval(tickSO2Carousel,3500);
     var title = v.querySelector('.vtitle');
     var desc = v.querySelector('.vdesc,.vd,[class*="desc"]');
     var addBtn = v.querySelector('[onclick*="addItem"],.vadd,button');
-    if(thumb) thumb.src = '/imagenes_productos/1000750135.jpg';
+    if(thumb) thumb.src = '/imagenes_productos/reel_thumb_3.jpg';
     if(title) title.textContent = 'Polen Premium x50 — Energía y Colágeno Natural';
     if(desc) desc.textContent = 'Polen multifloral del Huila · 500mg · 50 cápsulas · Colágeno natural + vitalidad';
     // Add preview button if not already there
@@ -588,7 +588,7 @@ setInterval(tickSO2Carousel,3500);
     }
     // Also fix addItem onclick
     if(addBtn && addBtn.hasAttribute('onclick')){
-      addBtn.setAttribute('onclick', "addItem({id:'p2',name:'Polen Premium x50 \u2014 500mg',desc:'Col\u00e1geno natural + Polen multifloral 500mg x50',price:69900,img:'/imagenes_productos/1000750135.jpg'})");
+      addBtn.setAttribute('onclick', "addItem({id:'p2',name:'Polen Premium x50 \u2014 500mg',desc:'Col\u00e1geno natural + Polen multifloral 500mg x50',price:69900,img:'/imagenes_productos/reel_thumb_3.jpg'})");
     }
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', doIt);
