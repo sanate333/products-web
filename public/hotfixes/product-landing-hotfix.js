@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.8 no-whitespace fix */
+/* SANATE Product Landing v5.9 css-override whitespace */
 (function(){
 'use strict';
 
@@ -75,6 +75,8 @@ function injectCSS(){
 @keyframes sntShimmer{0%{background-position:-200% center}100%{background-position:200% center}}\
 @keyframes sntPulseGlow{0%,100%{opacity:.35}50%{opacity:.6}}\
 @keyframes sntCardPop{from{opacity:0;transform:translateY(15px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}\
+/* Remove .detail padding that creates blank space before/after landing */\
+.pageDetail .detail{padding-bottom:0!important;padding-top:0!important}\
 .snt-landing{margin:0 -10px 0;padding:32px 28px 16px;border-radius:24px;position:relative;overflow:hidden;animation:sntFade .7s ease-out}\
 .snt-deco{position:absolute;font-size:52px;pointer-events:none;z-index:0;opacity:.22;will-change:transform;user-select:none;line-height:1}\
 .snt-cloud{position:absolute;border-radius:50%;pointer-events:none;z-index:0}\
@@ -274,9 +276,7 @@ function inject(){
     var container=btn.closest('.deFlexGoTocart')||btn.parentNode;
     container.parentNode.insertBefore(section,container.nextSibling);
   }
-  // Kill .detail padding-bottom that creates blank space before/after landing
-  var det=detailContain?detailContain.parentNode:document.querySelector('.detail');
-  if(det&&det.classList.contains('detail')){det.style.setProperty('padding-bottom','8px','important');}
+  // .detail padding handled by injected CSS rule
   // Start bouncing animations after a short delay (let layout settle)
   setTimeout(function(){startBounce(section);},300);
 }
