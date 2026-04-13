@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.4 above-fold injection */
+/* SANATE Product Landing v5.5 safe-sibling injection */
 (function(){
 'use strict';
 
@@ -75,7 +75,7 @@ function injectCSS(){
 @keyframes sntShimmer{0%{background-position:-200% center}100%{background-position:200% center}}\
 @keyframes sntPulseGlow{0%,100%{opacity:.35}50%{opacity:.6}}\
 @keyframes sntCardPop{from{opacity:0;transform:translateY(15px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}\
-.snt-landing{margin:35px -10px 20px;padding:50px 28px 40px;border-radius:24px;position:relative;overflow:hidden;animation:sntFade .7s ease-out}\
+.snt-landing{margin:35px -10px 0;padding:50px 28px 16px;border-radius:24px;position:relative;overflow:hidden;animation:sntFade .7s ease-out}\
 .snt-deco{position:absolute;font-size:52px;pointer-events:none;z-index:0;opacity:.22;will-change:transform;user-select:none;line-height:1}\
 .snt-cloud{position:absolute;border-radius:50%;pointer-events:none;z-index:0}\
 .snt-cloud-1{width:180px;height:180px;top:-50px;right:-40px}\
@@ -111,13 +111,13 @@ function injectCSS(){
 .snt-review-stars{color:#f59e0b;font-size:13px;letter-spacing:1px}\
 .snt-review-text{font-size:13px;color:#334155;line-height:1.6;margin:0 0 8px}\
 .snt-review-time{font-size:11px;color:#94a3b8}\
-.snt-cta{text-align:center;padding:24px 20px;border-radius:16px;margin-bottom:24px;position:relative;z-index:1}\
+.snt-cta{text-align:center;padding:24px 20px;border-radius:16px;margin-bottom:0;position:relative;z-index:1}\
 .snt-cta-text{font-size:18px;font-weight:800;margin:0 0 6px}\
 .snt-cta-sub{font-size:13px;margin:0}\
 .snt-trust{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding-top:20px;border-top:1px solid rgba(0,0,0,.06);position:relative;z-index:1}\
 .snt-trust-item{font-size:12px;font-weight:600;background:rgba(255,255,255,.8);padding:7px 14px;border-radius:20px;border:1px solid rgba(0,0,0,.06)}\
 @media(max-width:768px){\
-.snt-landing{margin:20px -5px 15px;padding:36px 16px 30px}\
+.snt-landing{margin:20px -5px 0;padding:36px 16px 14px}\
 .snt-grid,.snt-reviews{grid-template-columns:1fr}\
 .snt-title{font-size:22px}\
 .snt-card{padding:18px 14px}\
@@ -237,15 +237,17 @@ function startBounce(container){
   raf=requestAnimationFrame(tick);
 }
 
-// Inject
+// Inject — insert AFTER .textDetail (sibling), never inside React-managed subtree
 function inject(){
+  var textDetail=document.querySelector('.textDetail');
   var desc=document.querySelector('.detailDescription');
   var btn=document.querySelector('.btnAdd');
-  if(!desc&&!btn)return;
+  if(!textDetail&&!desc&&!btn)return;
   var existing=document.querySelector('.snt-landing');
   if(existing){
-    var nxt=existing.nextElementSibling;
-    if(nxt&&nxt.classList.contains('detailDescription'))return;
+    // Already in correct position (sibling of textDetail or after desc)?
+    if(textDetail&&existing.previousElementSibling===textDetail)return;
+    if(!textDetail&&desc&&existing.previousElementSibling===desc)return;
     existing.remove();
   }
   var id=getID();
@@ -258,8 +260,15 @@ function inject(){
   var div=document.createElement('div');
   div.innerHTML=build(data);
   var section=div.firstElementChild;
-  if(desc){desc.parentNode.insertBefore(section,desc);}
-  else if(btn){var container=btn.closest('.deFlexGoTocart')||btn.parentNode;container.parentNode.insertBefore(section,container.nextSibling);}
+  // Insert AFTER .textDetail as sibling (outside React tree) — avoids removeChild conflicts
+  if(textDetail&&textDetail.parentNode){
+    textDetail.parentNode.insertBefore(section,textDetail.nextSibling);
+  } else if(desc){
+    desc.parentNode.insertBefore(section,desc.nextSibling);
+  } else if(btn){
+    var container=btn.closest('.deFlexGoTocart')||btn.parentNode;
+    container.parentNode.insertBefore(section,container.nextSibling);
+  }
   // Start bouncing animations after a short delay (let layout settle)
   setTimeout(function(){startBounce(section);},300);
 }
