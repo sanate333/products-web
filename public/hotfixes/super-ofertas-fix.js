@@ -427,16 +427,8 @@ function scrollToCenter(){
   if(window.innerWidth > 768) return;
   var track = document.querySelector('.so2-track');
   if(!track) return;
-  /* v6 nuclear: disable snap -> force scroll -> re-enable */
-  track.style.scrollSnapType = 'none';
+  /* v8: justify-content:flex-start handles position, just ensure scrollLeft=0 */
   track.scrollLeft = 0;
-  requestAnimationFrame(function(){
-    track.scrollLeft = 0;
-    requestAnimationFrame(function(){
-      track.scrollLeft = 0;
-      setTimeout(function(){ track.style.scrollSnapType = 'x mandatory'; }, 80);
-    });
-  });
 }
 
 /* Fix popup on mobile â re-bind all QSO triggers */
