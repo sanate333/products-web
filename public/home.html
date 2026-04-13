@@ -857,7 +857,7 @@ footer{background:var(--black);color:rgba(255,255,255,.4)}
 .ba-btn:hover{box-shadow:0 12px 44px rgba(201,160,48,.5);transform:translateY(-2px)}
 
 /* Comparison slider */
-.ba-compare{position:relative;border-radius:14px;overflow:hidden;height:280px;cursor:ew-resize;user-select:none;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.ba-compare{position:relative;border-radius:14px;overflow:hidden;height:280px;user-select:none;box-shadow:0 6px 24px rgba(0,0,0,.12)}
 .ba-compare-before,.ba-compare-after{position:absolute;top:0;left:0;height:100%}
 .ba-compare-before{width:100%}
 .ba-compare-after{overflow:hidden;transition:width .05s linear}
@@ -867,7 +867,7 @@ footer{background:var(--black);color:rgba(255,255,255,.4)}
 .ba-compare-label{position:absolute;font-size:9px;font-weight:900;letter-spacing:1.5px;padding:4px 10px;border-radius:4px;top:12px;z-index:5}
 .ba-compare-label:not(.right){left:10px;background:rgba(239,68,68,.85);color:#fff}
 .ba-compare-label.right{right:10px;background:rgba(34,197,94,.85);color:#fff}
-.ba-slider-line{position:absolute;top:0;bottom:0;width:3px;background:#fff;z-index:10;box-shadow:0 0 8px rgba(0,0,0,.3);transform:translateX(-50%)}
+.ba-slider-line{position:absolute;top:0;bottom:0;width:28px;background:transparent;z-index:10;transform:translateX(-50%);cursor:ew-resize}.ba-slider-line::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:3px;transform:translateX(-50%);background:#fff;box-shadow:0 0 8px rgba(0,0,0,.3)}
 .ba-slider-handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;background:linear-gradient(135deg,var(--sky-bright),var(--sky-mid));border-radius:50%;display:flex;align-items:center;justify-content:center;gap:0;box-shadow:0 2px 12px rgba(0,0,0,.3);cursor:ew-resize}
 .ba-drag-hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:9.5px;color:rgba(255,255,255,.9);background:rgba(0,0,0,.45);padding:3px 10px;border-radius:100px;white-space:nowrap;pointer-events:none;letter-spacing:.5px}
 
@@ -3489,6 +3489,7 @@ if(currentUser)updateNavAfterLogin();
   if(!compare)return;
   const after=document.getElementById('baAfter');
   const line=document.getElementById('baLine');
+  const handle=line?line.querySelector('.ba-slider-handle'):null;
   let dragging=false;
   function setPos(x){
     const r=compare.getBoundingClientRect();
@@ -3496,11 +3497,16 @@ if(currentUser)updateNavAfterLogin();
     after.style.width=pct+'%';
     line.style.left=pct+'%';
   }
-  compare.addEventListener('mousedown',e=>{dragging=true;setPos(e.clientX)});
+  /* Only start drag from the handle or the slider line — NOT the whole image */
+  function isHandle(e){
+    var t=e.target;
+    return t===handle||t===line||(handle&&handle.contains(t))||(line&&line.contains(t));
+  }
+  compare.addEventListener('mousedown',e=>{if(isHandle(e)){dragging=true;e.preventDefault();}});
   window.addEventListener('mousemove',e=>{if(dragging)setPos(e.clientX)});
   window.addEventListener('mouseup',()=>dragging=false);
-  compare.addEventListener('touchstart',e=>{dragging=true;setPos(e.touches[0].clientX)},{passive:true});
-  compare.addEventListener('touchmove',e=>{if(dragging)setPos(e.touches[0].clientX)},{passive:true});
+  compare.addEventListener('touchstart',e=>{if(isHandle(e)){dragging=true;}},{passive:true});
+  compare.addEventListener('touchmove',e=>{if(dragging){setPos(e.touches[0].clientX);e.preventDefault();}},{passive:false});
   compare.addEventListener('touchend',()=>dragging=false);
   // Auto-animate on enter
   const sliderObs=new IntersectionObserver(entries=>{
