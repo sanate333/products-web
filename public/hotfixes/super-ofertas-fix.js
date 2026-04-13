@@ -427,11 +427,16 @@ function scrollToCenter(){
   if(window.innerWidth > 768) return;
   var track = document.querySelector('.so2-track');
   if(!track) return;
-  var cards = track.querySelectorAll('.so2-card');
-  if(cards.length >= 1){
+  /* v6 nuclear: disable snap -> force scroll -> re-enable */
+  track.style.scrollSnapType = 'none';
+  track.scrollLeft = 0;
+  requestAnimationFrame(function(){
     track.scrollLeft = 0;
-    cards[0].scrollIntoView({behavior:'auto',block:'nearest',inline:'start'});
-  }
+    requestAnimationFrame(function(){
+      track.scrollLeft = 0;
+      setTimeout(function(){ track.style.scrollSnapType = 'x mandatory'; }, 80);
+    });
+  });
 }
 
 /* Fix popup on mobile â re-bind all QSO triggers */
