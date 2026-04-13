@@ -7,8 +7,8 @@
 'use strict';
 
 /* ─── CONFIG ──────────────────────────────────────────────────── */
-var GEMINI_KEY='AIzaSyCczupFF4zv9xL8mSfR-kPM4hKpIg8Vt10';
-var GEMINI_URL='https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+GEMINI_KEY;
+// API key is stored securely server-side in /chat-proxy.php
+var GEMINI_URL='/chat-proxy.php';
 var DOC_NAME='Dr. Santiago Morales';
 var DOC_TITLE='Especialista en Cosmética Natural · SÁNATE';
 var DOC_AVATAR='https://randomuser.me/api/portraits/men/32.jpg';
