@@ -1,10 +1,10 @@
-/* mobile-scroll-fix.js v5 — nuclear: disable snap -> force card[0] -> re-enable */
+/* mobile-scroll-fix.js v6 — title CSS only, no scroll loop (justify-content handles position) */
 (function(){'use strict';
 
 function injectTitleCSS(){
-  if(document.getElementById('msf-v5'))return;
+  if(document.getElementById('msf-v6'))return;
   var s=document.createElement('style');
-  s.id='msf-v5';
+  s.id='msf-v6';
   s.textContent=
     '@media(max-width:840px){'+
     '.so2-card h3{font-size:18px!important;font-weight:900!important;'+
@@ -19,62 +19,24 @@ function injectTitleCSS(){
   document.head.appendChild(s);
 }
 
-function forceCard0(){
+/* One-time scroll to card 0 after build completes */
+function scrollOnce(){
   var track=document.querySelector('.so2-track');
   if(!track||window.innerWidth>840)return;
-  /* Nuclear: disable snap, force scroll to 0, re-enable */
-  track.style.scrollSnapType='none';
   track.scrollLeft=0;
-  requestAnimationFrame(function(){
-    track.scrollLeft=0;
-    requestAnimationFrame(function(){
-      track.scrollLeft=0;
-      setTimeout(function(){
-        track.style.scrollSnapType='x mandatory';
-      },80);
-    });
-  });
 }
 
 function waitForTrack(){
   var track=document.querySelector('.so2-track');
   if(track){
     injectTitleCSS();
-    forceCard0();
-    /* Keep retrying for 8 seconds */
-    var n=0;
-    var iv=setInterval(function(){
-      var t=document.querySelector('.so2-track');
-      if(t&&window.innerWidth<=840){
-        t.style.scrollSnapType='none';
-        t.scrollLeft=0;
-        requestAnimationFrame(function(){
-          t.scrollLeft=0;
-          setTimeout(function(){t.style.scrollSnapType='x mandatory';},80);
-        });
-      }
-      if(++n>40)clearInterval(iv);
-    },200);
+    scrollOnce();
   } else {
     var obs=new MutationObserver(function(){
       if(document.querySelector('.so2-track')){
         obs.disconnect();
         injectTitleCSS();
-        setTimeout(forceCard0,50);
-        /* Keep retrying for 8 seconds */
-        var n=0;
-        var iv=setInterval(function(){
-          var t=document.querySelector('.so2-track');
-          if(t&&window.innerWidth<=840){
-            t.style.scrollSnapType='none';
-            t.scrollLeft=0;
-            requestAnimationFrame(function(){
-              t.scrollLeft=0;
-              setTimeout(function(){t.style.scrollSnapType='x mandatory';},80);
-            });
-          }
-          if(++n>40)clearInterval(iv);
-        },200);
+        setTimeout(scrollOnce,100);
       }
     });
     obs.observe(document.body,{childList:true,subtree:true});
