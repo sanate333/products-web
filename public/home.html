@@ -4268,46 +4268,83 @@ startObs();
 })();
 </script>
 
-<!-- ═══ SUPER OFERTA PRE-CARGADA EN CARRITO ═══ -->
+<!-- ═══ SUPER OFERTA SMART UPSELL v2 ═══ -->
 <script>
 (function(){
-  var OFERTA={id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,qty:1,img:'https://sanate.store/ai-images/iMAGENES%20nEW/POELNX50..jpg'};
+  var OFERTAS=[
+    {id:'upsell_colageno',name:'🌿 Colágeno Polen x50',desc:'Polen Multifloral Huila 500mg · colágeno natural · energía',price:39900,img:'/ai-images/iMAGENES%20nEW/POELNX50..jpg',fallback:'/ai-images/ecom/combo6_jabones6.png',keywords:['polen','x50','x90','colágeno','colageno']},
+    {id:'upsell_sebo_grande',name:'🧴 Sebo de Res Grande',desc:'Súper hidratante · Restaura manchas · Frasco vidrio',price:39900,img:'/imagenes_productos/sebo_grande.jpg',fallback:'/ai-images/ecom/sebo_hero1.png',keywords:['sebo','sebo de res']},
+    {id:'upsell_nectar',name:'✨ Néctar Capilar 200ml',desc:'Crema para peinar · brillo · sin frizz · hidratación',price:39900,img:'/imagenes_productos/nectar_capilar.jpg',fallback:'/imagenes_productos/nectar_capilar.jpg',keywords:['néctar','nectar','capilar','crema']}
+  ];
 
-  function preloadOferta(){
-    /* 1. localStorage */
-    var key='sanate_cart_v2';
-    var cart;
-    try{cart=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){cart=[]}
-    if(!cart.some(function(i){return i.id===OFERTA.id})){
-      cart.push(OFERTA);
-      localStorage.setItem(key,JSON.stringify(cart));
-    }
-    /* 2. window._cart (combo-fix) */
-    if(!window._cart)window._cart=[];
-    if(!window._cart.some(function(i){return i.id===OFERTA.id})){
-      window._cart.push(OFERTA);
-    }
-    /* 3. Update cart badge */
-    var badge=document.querySelector('.cart-count,.cart-badge,#cartCount');
-    if(badge){
-      var total=0;
-      var c=window._cart||cart;
-      for(var i=0;i<c.length;i++)total+=(c[i].qty||1);
-      badge.textContent=total;
-    }
-    /* 4. Re-render cart if function available */
-    if(typeof window.renderCart==='function'){
-      try{window.renderCart()}catch(e){}
-    }
-    console.log('Super oferta Polen x50 pre-cargada en carrito');
+  function cartHas(cart,offer){
+    return cart.some(function(item){
+      if(item.id===offer.id)return false;
+      var t=((item.name||'')+' '+(item.desc||'')+' '+(item.id||'')).toLowerCase();
+      return offer.keywords.some(function(kw){return t.indexOf(kw)>-1});
+    });
   }
 
-  /* Run after all scripts have loaded */
-  if(document.readyState==='complete'){
-    setTimeout(preloadOferta,500);
-  } else {
-    window.addEventListener('load',function(){setTimeout(preloadOferta,500)});
+  window.renderUpsell=function(){
+    var cards=document.getElementById('upsellCards')||document.querySelector('#upsellBox .upsell-cards');
+    if(!cards)return;
+    cards.innerHTML='';
+    var box=document.getElementById('upsellBox');
+    if(box)box.style.display='';
+
+    var cart=window._cart||[];
+    if(!cart.length)try{cart=JSON.parse(localStorage.getItem('sanate_cart_v2')||'[]')}catch(e){cart=[]}
+
+    /* Pick the right offer: first one NOT already in cart */
+    var picked=null;
+    for(var i=0;i<OFERTAS.length;i++){
+      if(!cartHas(cart,OFERTAS[i])){
+        /* Also check if this exact upsell id is already in cart */
+        var alreadyAdded=cart.some(function(c){return c.id===OFERTAS[i].id});
+        if(!alreadyAdded){picked=OFERTAS[i];break;}
+      }
+    }
+    if(!picked){if(box)box.style.display='none';return;}
+
+    var fmtV=function(n){return'$'+n.toLocaleString('es-CO')};
+    var card=document.createElement('div');
+    card.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;background:linear-gradient(135deg,#f0fdf4,#ecfdf5);border-radius:12px;border:2px solid #16a34a;margin:6px 0;box-shadow:0 2px 8px rgba(22,163,106,0.15)';
+    card.innerHTML='<img src="'+picked.img+'" style="width:56px;height:56px;object-fit:cover;border-radius:10px;flex-shrink:0;border:2px solid #dcfce7" onerror="this.src=\''+picked.fallback+'\'">'
+      +'<div style="flex:1;min-width:0;padding-right:4px">'
+      +'<div style="font-size:12px;font-weight:800;color:#111;line-height:1.3">'+picked.name+'</div>'
+      +'<div style="font-size:10px;color:#555;margin-top:2px;line-height:1.35">'+picked.desc+'</div>'
+      +'<div style="display:flex;align-items:center;gap:6px;margin-top:3px"><span style="font-size:14px;font-weight:900;color:#16a34a">'+fmtV(picked.price)+'</span><span style="font-size:10px;color:#999;text-decoration:line-through">'+fmtV(Math.round(picked.price*1.7))+'</span><span style="background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:2px 5px;border-radius:4px">-41%</span></div>'
+      +'</div>'
+      +'<button id="upsellAddBtn" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border:none;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 6px rgba(22,163,106,0.3)">🛒 Añadir</button>';
+    cards.appendChild(card);
+
+    document.getElementById('upsellAddBtn').onclick=function(){
+      if(typeof window.addItem==='function'){
+        window.addItem({id:picked.id,name:picked.name,desc:picked.desc,price:picked.price,img:picked.img});
+      } else {
+        var c2=window._cart||[];
+        c2.push({id:picked.id,name:picked.name,desc:picked.desc,price:picked.price,qty:1,img:picked.img});
+        window._cart=c2;
+        try{localStorage.setItem('sanate_cart_v2',JSON.stringify(c2))}catch(e){}
+        if(typeof window.renderCart==='function')window.renderCart();
+      }
+      this.textContent='✔ Agregado';
+      this.disabled=true;
+      this.style.background='#15803d';
+      setTimeout(function(){if(typeof window.renderUpsell==='function')window.renderUpsell()},300);
+    };
+  };
+
+  /* Re-render upsell each time cart opens */
+  var origOpen=window.openCart;
+  if(origOpen){
+    window.openCart=function(){
+      origOpen.apply(this,arguments);
+      setTimeout(function(){if(typeof window.renderUpsell==='function')window.renderUpsell()},100);
+    };
   }
+  setTimeout(function(){if(typeof window.renderUpsell==='function')window.renderUpsell()},800);
+  console.log('SUPER OFERTA SMART UPSELL v2 loaded');
 })();
 </script>
 </body>
