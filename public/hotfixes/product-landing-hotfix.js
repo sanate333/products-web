@@ -1,4 +1,4 @@
-/* SANATE Product Landing v5.7 full-width below detail-contain */
+/* SANATE Product Landing v5.8 no-whitespace fix */
 (function(){
 'use strict';
 
@@ -75,7 +75,7 @@ function injectCSS(){
 @keyframes sntShimmer{0%{background-position:-200% center}100%{background-position:200% center}}\
 @keyframes sntPulseGlow{0%,100%{opacity:.35}50%{opacity:.6}}\
 @keyframes sntCardPop{from{opacity:0;transform:translateY(15px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}\
-.snt-landing{margin:35px -10px 0;padding:50px 28px 16px;border-radius:24px;position:relative;overflow:hidden;animation:sntFade .7s ease-out}\
+.snt-landing{margin:0 -10px 0;padding:32px 28px 16px;border-radius:24px;position:relative;overflow:hidden;animation:sntFade .7s ease-out}\
 .snt-deco{position:absolute;font-size:52px;pointer-events:none;z-index:0;opacity:.22;will-change:transform;user-select:none;line-height:1}\
 .snt-cloud{position:absolute;border-radius:50%;pointer-events:none;z-index:0}\
 .snt-cloud-1{width:180px;height:180px;top:-50px;right:-40px}\
@@ -117,7 +117,7 @@ function injectCSS(){
 .snt-trust{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;padding-top:20px;border-top:1px solid rgba(0,0,0,.06);position:relative;z-index:1}\
 .snt-trust-item{font-size:12px;font-weight:600;background:rgba(255,255,255,.8);padding:7px 14px;border-radius:20px;border:1px solid rgba(0,0,0,.06)}\
 @media(max-width:768px){\
-.snt-landing{margin:20px -5px 0;padding:36px 16px 14px}\
+.snt-landing{margin:0 -5px 0;padding:24px 16px 14px}\
 .snt-grid,.snt-reviews{grid-template-columns:1fr}\
 .snt-title{font-size:22px}\
 .snt-card{padding:18px 14px}\
@@ -274,6 +274,9 @@ function inject(){
     var container=btn.closest('.deFlexGoTocart')||btn.parentNode;
     container.parentNode.insertBefore(section,container.nextSibling);
   }
+  // Kill .detail padding-bottom that creates blank space before/after landing
+  var det=detailContain?detailContain.parentNode:document.querySelector('.detail');
+  if(det&&det.classList.contains('detail')){det.style.setProperty('padding-bottom','8px','important');}
   // Start bouncing animations after a short delay (let layout settle)
   setTimeout(function(){startBounce(section);},300);
 }
