@@ -4041,24 +4041,20 @@ startObs();
       return {idProducto:0,titulo:i.name,cantidad:i.qty||1,precio:i.price||0,imagen:''};
     });
     var payMap={nequi:'nequi',bancolombia:'bancolombia',contraentrega:'efectivo'};
-    var payload={
-      nombre:o.name||'',
-      whatsapp:o.phone||'',
-      direccion:o.address||'',
-      ciudad:o.city||'',
-      departamento:o.dept||'',
-      adicionales:'',
-      codigo:'',
-      nota:'Pedido desde home.html',
-      formaPago:payMap[o.payment]||o.payment||'efectivo',
-      total:String(o.final||0),
-      productos:JSON.stringify(productos)
-    };
-    fetch('/pedidoPost.php',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
-    }).then(function(r){return r.json()})
+    var fd=new FormData();
+    fd.append('nombre',o.name||'');
+    fd.append('whatsapp',o.phone||'');
+    fd.append('direccion',o.address||'');
+    fd.append('ciudad',o.city||'');
+    fd.append('departamento',o.dept||'');
+    fd.append('adicionales','');
+    fd.append('codigo','');
+    fd.append('nota','');
+    fd.append('formaPago',payMap[o.payment]||o.payment||'efectivo');
+    fd.append('total',String(o.final||0));
+    fd.append('productos',JSON.stringify(productos));
+    fetch('/pedidoPost.php',{method:'POST',body:fd})
+    .then(function(r){return r.json()})
     .then(function(d){console.log('Dashboard order saved:',d)})
     .catch(function(e){console.error('Dashboard order error:',e)});
   }
