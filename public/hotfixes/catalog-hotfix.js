@@ -522,4 +522,31 @@
   // Also initialize on a short delay to catch SPA apps
   setTimeout(init, 100);
 
+
+// Hide 10% discount popup temporarily
+function hidePopup(){
+  var all=document.querySelectorAll('*');
+  for(var i=0;i<all.length;i++){
+    var el=all[i];
+    if(el.children.length>0&&el.children.length<10){
+      var txt=el.textContent||'';
+      if((txt.indexOf('10% OFF')!==-1||txt.indexOf('10%')!==-1&&txt.indexOf('DESCUENTO')!==-1)&&el.offsetHeight>100){
+        var style=window.getComputedStyle(el);
+        if(style.position==='fixed'||style.position==='absolute'){
+          el.style.setProperty('display','none','important');
+          break;
+        }
+      }
+    }
+  }
+}
+setTimeout(hidePopup,500);
+setTimeout(hidePopup,2000);
+setTimeout(hidePopup,4000);
+if(window.MutationObserver){
+  var popObs=new MutationObserver(function(){hidePopup();});
+  popObs.observe(document.body,{childList:true,subtree:true});
+  setTimeout(function(){popObs.disconnect();},30000);
+}
+
 })();
