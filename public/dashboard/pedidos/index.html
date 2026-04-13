@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Dashboard Pedidos — SÁNATE</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--navy:#07192E;--sky:#3DC9E8;--skyd:#0A9EC8;--gold:#C9A030;--green:#22C55E;--red:#EF4444;--gray:#567080;--off:#EBF6FA;--white:#F9FCFE;--sans:'DM Sans',system-ui,sans-serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:#f0f4f8;color:var(--navy);min-height:100vh}
+.top{background:var(--navy);padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.top .logo{font-size:20px;font-weight:700;color:#fff;letter-spacing:5px}
+.top .logo em{font-style:normal;color:var(--skyd)}
+.top a{color:var(--sky);font-size:13px;text-decoration:none;font-weight:500}
+.top a:hover{text-decoration:underline}
+.wrap{max-width:1200px;margin:0 auto;padding:24px 16px}
+h1{font-size:24px;font-weight:700;margin-bottom:4px}
+.sub{color:var(--gray);font-size:14px;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.stat{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.stat .sv{font-size:28px;font-weight:800;color:var(--navy)}
+.stat .sl{font-size:12px;color:var(--gray);margin-top:2px;font-weight:500}
+.stat.green .sv{color:var(--green)}
+.stat.gold .sv{color:var(--gold)}
+.stat.sky .sv{color:var(--skyd)}
+.filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filters select,.filters input{padding:8px 12px;border:1.5px solid #d4e6ef;border-radius:8px;font-size:13px;font-family:var(--sans);background:#fff}
+.filters select:focus,.filters input:focus{border-color:var(--skyd);outline:none}
+.reload-btn{background:var(--skyd);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--sans)}
+.reload-btn:hover{background:var(--sky)}
+.table-wrap{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--navy);color:#fff}
+th{padding:12px 14px;text-align:left;font-weight:600;font-size:12px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid #eef3f7}
+tr:hover td{background:rgba(61,201,232,.04)}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.badge.pending{background:#FEF3C7;color:#92400E}
+.badge.confirmed{background:#D1FAE5;color:#065F46}
+.badge.shipped{background:#DBEAFE;color:#1E40AF}
+.badge.delivered{background:#D1FAE5;color:#065F46}
+.badge.cancelled{background:#FEE2E2;color:#991B1B}
+.pay-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;display:inline-block}
+.pay-tag.nequi{background:#F3E8FF;color:#6B21A8}
+.pay-tag.bancolombia{background:#DBEAFE;color:#1D4ED8}
+.pay-tag.contraentrega{background:#FEF3C7;color:#92400E}
+.items-list{font-size:11px;color:var(--gray);max-width:200px}
+.empty{text-align:center;padding:60px 20px;color:var(--gray)}
+.empty .ei{font-size:48px;margin-bottom:10px}
+.amt{font-weight:700;color:var(--navy)}
+.loading{text-align:center;padding:40px;color:var(--gray)}
+@media(max-width:768px){
+  table{font-size:11px}
+  th,td{padding:8px 6px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="logo">SÁN<em>ATE</em> · Pedidos</div>
+  <a href="https://sanate.store">← Volver a la tienda</a>
+</div>
+<div class="wrap">
+  <h1>Dashboard de Pedidos</h1>
+  <p class="sub">Gestión de pedidos en tiempo real · sanate.store</p>
+
+  <div class="stats" id="stats">
+    <div class="stat"><div class="sv" id="sTot">—</div><div class="sl">Total pedidos</div></div>
+    <div class="stat green"><div class="sv" id="sRev">—</div><div class="sl">Ingresos totales</div></div>
+    <div class="stat gold"><div class="sv" id="sPend">—</div><div class="sl">Pendientes</div></div>
+    <div class="stat sky"><div class="sv" id="sToday">—</div><div class="sl">Hoy</div></div>
+  </div>
+
+  <div class="filters">
+    <select id="fStatus" onchange="loadOrders()">
+      <option value="">Todos los estados</option>
+      <option value="pending">Pendiente</option>
+      <option value="confirmed">Confirmado</option>
+      <option value="shipped">Enviado</option>
+      <option value="delivered">Entregado</option>
+      <option value="cancelled">Cancelado</option>
+    </select>
+    <select id="fPay" onchange="loadOrders()">
+      <option value="">Todos los pagos</option>
+      <option value="nequi">Nequi</option>
+      <option value="bancolombia">Bancolombia</option>
+      <option value="contraentrega">Contra entrega</option>
+    </select>
+    <input type="date" id="fDate" onchange="loadOrders()"/>
+    <button class="reload-btn" onclick="loadOrders()">Actualizar</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Fecha</th><th>Cliente</th><th>Ciudad</th><th>Productos</th><th>Total</th><th>Pago</th><th>Estado</th></tr>
+      </thead>
+      <tbody id="ordersBody">
+        <tr><td colspan="8" class="loading">Cargando pedidos...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+var SB_URL='https://lvmeswlvszsmvgaasazs.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2bWVzd2x2c3pzbXZnYWFzYXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1MjYzMTEsImV4cCI6MjA4NzEwMjMxMX0.pKhuLjRLgpWMBsEUv1WhCytpbUUT6tKj3sacIGit2z4';
+
+function fmt(n){return '$'+Number(n||0).toLocaleString('es-CO')}
+
+function loadOrders(){
+  var url=SB_URL+'/rest/v1/oasis_store_orders?select=*&order=created_at.desc&limit=200';
+  var status=document.getElementById('fStatus').value;
+  var pay=document.getElementById('fPay').value;
+  var date=document.getElementById('fDate').value;
+  if(status) url+='&status=eq.'+status;
+  if(pay) url+='&payment_method=eq.'+pay;
+  if(date) url+='&created_at=gte.'+date+'T00:00:00&created_at=lte.'+date+'T23:59:59';
+
+  fetch(url,{headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}})
+  .then(function(r){return r.json()})
+  .then(function(orders){
+    renderStats(orders);
+    renderTable(orders);
+  })
+  .catch(function(e){
+    console.error(e);
+    document.getElementById('ordersBody').innerHTML='<tr><td colspan="8" class="empty"><div class="ei">⚠️</div>Error cargando pedidos</td></tr>';
+  });
+}
+
+function renderStats(orders){
+  document.getElementById('sTot').textContent=orders.length;
+  var rev=0;orders.forEach(function(o){rev+=Number(o.amount||0)});
+  document.getElementById('sRev').textContent=fmt(rev);
+  var pend=orders.filter(function(o){return o.status==='pending'}).length;
+  document.getElementById('sPend').textContent=pend;
+  var today=new Date().toISOString().slice(0,10);
+  var tod=orders.filter(function(o){return(o.created_at||'').slice(0,10)===today}).length;
+  document.getElementById('sToday').textContent=tod;
+}
+
+function renderTable(orders){
+  var body=document.getElementById('ordersBody');
+  if(!orders.length){
+    body.innerHTML='<tr><td colspan="8" class="empty"><div class="ei">📦</div>No hay pedidos todavía</td></tr>';
+    return;
+  }
+  var html='';
+  orders.forEach(function(o){
+    var d=new Date(o.created_at);
+    var dateStr=d.toLocaleDateString('es-CO',{day:'2-digit',month:'short',year:'numeric'});
+    var timeStr=d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+    var items='';
+    try{
+      var arr=typeof o.items==='string'?JSON.parse(o.items):o.items||[];
+      items=arr.map(function(i){return i.name+' x'+(i.qty||1)}).join(', ');
+    }catch(e){items=o.notes||'—'}
+    var payClass=o.payment_method||'';
+    var payLabel={'nequi':'Nequi','bancolombia':'Bancolombia','contraentrega':'Contra entrega'}[payClass]||payClass;
+    html+='<tr>'
+      +'<td style="font-weight:600;font-size:11px;color:var(--skyd)">'+(o.order_number||'—')+'</td>'
+      +'<td>'+dateStr+'<br><span style="font-size:10px;color:var(--gray)">'+timeStr+'</span></td>'
+      +'<td><strong>'+(o.customer_name||'—')+'</strong><br><span style="font-size:11px;color:var(--gray)">'+(o.customer_phone||'')+'</span></td>'
+      +'<td>'+(o.customer_city||'—')+', '+(o.customer_department||'')+'</td>'
+      +'<td><div class="items-list">'+items+'</div></td>'
+      +'<td class="amt">'+fmt(o.amount)+(o.discount>0?'<br><span style="font-size:10px;color:var(--green)">-'+fmt(o.discount)+' desc.</span>':'')+'</td>'
+      +'<td><span class="pay-tag '+payClass+'">'+payLabel+'</span></td>'
+      +'<td><span class="badge '+(o.status||'pending')+'">'+(o.status||'pending')+'</span></td>'
+      +'</tr>';
+  });
+  body.innerHTML=html;
+}
+
+loadOrders();
+setInterval(loadOrders,30000);
+</script>
+</body>
+</html>
