@@ -89,7 +89,7 @@ var SO_CSS = ""
 +".so2-hdr{padding:0 16px}"
 +".so2-hdr h2{font-size:20px}"
 +".so2-hdr p{font-size:13px}"
-+".so2-track{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:16px;padding:10px 20px 20px;perspective:none;max-width:100%;scroll-padding:0 20px;justify-content:flex-start}"
++".so2-track{flex-direction:row;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;gap:16px;padding:10px 20px 20px;perspective:none;max-width:100%;scroll-padding:0 20px;justify-content:flex-start;overscroll-behavior-x:contain}"
 +".so2-track::-webkit-scrollbar{display:none}"
 +".so2-track{-ms-overflow-style:none;scrollbar-width:none;scroll-padding-left:10px}"
 +".so2-card{flex:0 0 82%;max-width:300px;scroll-snap-align:start;transform:none!important;transition:transform .3s ease,box-shadow .3s ease}"
@@ -633,4 +633,48 @@ setInterval(tickSO2Carousel,3500);
   setTimeout(patchPolen,3000);
   setTimeout(patchPolen,5000);
   setTimeout(patchPolen,8000);
+})();
+
+/* v10: Touch direction lock — vertical scroll priority over carousel swipe */
+(function(){
+  function setupTouchLock(){
+    var track = document.querySelector('.so2-track');
+    if(!track || window.innerWidth > 768) return;
+    var startX, startY, locked;
+    track.addEventListener('touchstart', function(e){
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      locked = null;
+    }, {passive: true});
+    track.addEventListener('touchmove', function(e){
+      if(locked !== null) return;
+      var dx = Math.abs(e.touches[0].clientX - startX);
+      var dy = Math.abs(e.touches[0].clientY - startY);
+      if(dx < 4 && dy < 4) return; /* wait for movement */
+      if(dy > dx){
+        /* Vertical scroll — disable carousel horizontal scroll */
+        locked = 'v';
+        track.style.overflowX = 'hidden';
+      } else {
+        locked = 'h';
+      }
+    }, {passive: true});
+    track.addEventListener('touchend', function(){
+      if(locked === 'v'){
+        track.style.overflowX = 'auto';
+      }
+      locked = null;
+    }, {passive: true});
+    track.addEventListener('touchcancel', function(){
+      track.style.overflowX = 'auto';
+      locked = null;
+    }, {passive: true});
+  }
+  /* Run after track is built */
+  var iv2 = setInterval(function(){
+    if(document.querySelector('.so2-track')){
+      clearInterval(iv2);
+      setupTouchLock();
+    }
+  }, 500);
 })();
