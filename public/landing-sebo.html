@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sebo de Res Premium - Crema ancestral natural para hidratar, sanar y regenerar la piel | SANATE Store">
+    <meta name="keywords" content="sebo de res, crema natural, beef tallow, piel seca, manchas, cicatrices, sanate">
+    <title>Sebo de Res Premium | SANATE - Productos Naturales</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #3dc9e8;
+            --secondary: #e8c87a;
+            --dark: #0a1628;
+            --light: #f8f9fa;
+            --white: #ffffff;
+            --gold-light: #f5ead3;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--dark);
+            line-height: 1.6;
+            background-color: var(--white);
+            overflow-x: hidden;
+        }
+
+        /* Header & Navigation */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+            padding: 1rem 2rem;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        .logo img {
+            height: 40px;
+            width: auto;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.3s ease;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        .cta-header {
+            background: linear-gradient(135deg, var(--primary), #2ba8d4);
+            color: var(--white);
+            padding: 0.8rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .cta-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(61, 201, 232, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            margin-top: 70px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, #fdf8f3 0%, #f0fbfc 100%);
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(232, 200, 122, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            left: -5%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(61, 201, 232, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(30px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            width: 100%;
+            padding: 2rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-text h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .hero-text p {
+            font-size: 1.3rem;
+            color: var(--dark);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        .price-section {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
+        }
+
+        .price-tag {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .price-original {
+            font-size: 1rem;
+            color: #999;
+            text-decoration: line-through;
+        }
+
+        .price-current {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .discount-badge {
+            background: var(--secondary);
+            color: var(--dark);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        .btn-primary, .btn-secondary {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2ba8d4);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(61, 201, 232, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .hero-image {
+            position: relative;
+            animation: fadeInRight 0.8s ease-out;
+        }
+
+        .hero-image img {
+            width: 100%;
+            max-width: 450px;
+            height: auto;
+            filter: drop-shadow(0 20px 40px rgba(232, 200, 122, 0.25));
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Benefits Section */
+        .benefits {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, rgba(232, 200, 122, 0.05) 0%, rgba(61, 201, 232, 0.05) 100%);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .section-header p {
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .benefits-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .benefit-card {
+            background: var(--white);
+            padding: 2.5rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .benefit-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--secondary);
+            box-shadow: 0 20px 40px rgba(232, 200, 122, 0.15);
+        }
+
+        .benefit-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .benefit-card h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .benefit-card p {
+            color: #666;
+            line-height: 1.8;
+        }
+
+        /* Studies Section */
+        .studies {
+            padding: 5rem 2rem;
+            background: var(--white);
+        }
+
+        .studies-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .studies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .study-card {
+            background: linear-gradient(135deg, rgba(232, 200, 122, 0.1) 0%, rgba(61, 201, 232, 0.1) 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            border-left: 5px solid var(--secondary);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .study-card h4 {
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .study-card p {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        .study-year {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        /* Usage Section */
+        .usage {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, #fdf8f3 0%, #f0fbfc 100%);
+        }
+
+        .usage-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .usage-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        .usage-steps {
+            list-style: none;
+        }
+
+        .usage-step {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, var(--secondary), #d4b359);
+            color: var(--white);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .step-text h3 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .step-text p {
+            color: #666;
+        }
+
+        .usage-image img {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 15px;
+            filter: drop-shadow(0 20px 40px rgba(232, 200, 122, 0.2));
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 5rem 2rem;
+            background: var(--white);
+        }
+
+        .pricing-container {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .pricing-card {
+            background: linear-gradient(135deg, rgba(232, 200, 122, 0.05) 0%, rgba(61, 201, 232, 0.05) 100%);
+            border: 2px solid var(--secondary);
+            padding: 3rem;
+            border-radius: 20px;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .product-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 1.5rem;
+        }
+
+        .product-specs {
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            text-align: left;
+            display: grid;
+            gap: 1rem;
+        }
+
+        .spec-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .spec-value {
+            color: var(--secondary);
+            font-weight: 700;
+        }
+
+        .price-comparison {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: var(--white);
+            border-radius: 15px;
+        }
+
+        .old-price {
+            font-size: 1rem;
+            color: #999;
+            text-decoration: line-through;
+            margin-bottom: 0.5rem;
+        }
+
+        .new-price {
+            font-size: 3rem;
+            color: var(--secondary);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .savings {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        /* Testimonials Section */
+        .testimonials {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, #fdf8f3 0%, #f0fbfc 100%);
+        }
+
+        .testimonials-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .testimonial-card {
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 15px;
+            border-top: 4px solid var(--secondary);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .stars {
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .testimonial-text {
+            color: #666;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 0.3rem;
+        }
+
+        .testimonial-role {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        /* FAQ Section */
+        .faq {
+            padding: 5rem 2rem;
+            background: var(--white);
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            background: var(--light);
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            border-color: var(--secondary);
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .faq-question:hover {
+            background: rgba(232, 200, 122, 0.05);
+        }
+
+        .faq-toggle {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--secondary);
+            color: var(--dark);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active .faq-toggle {
+            background: var(--primary);
+            color: var(--white);
+            transform: rotate(180deg);
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            color: #666;
+            transition: all 0.3s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 1.5rem;
+            max-height: 500px;
+        }
+
+        /* CTA Section */
+        .cta-final {
+            padding: 5rem 2rem;
+            background: linear-gradient(135deg, var(--secondary) 0%, #d4b359 100%);
+            color: var(--dark);
+            text-align: center;
+        }
+
+        .cta-final-content {
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .cta-final h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-final p {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            opacity: 0.95;
+        }
+
+        .cta-buttons-final {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-dark {
+            background: var(--dark);
+            color: var(--white);
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-dark:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(10, 22, 40, 0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: var(--white);
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .footer-section a {
+            color: #ccc;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--secondary);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #333;
+            padding-top: 2rem;
+            color: #999;
+        }
+
+        /* WhatsApp Floating Button */
+        .whatsapp-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: #25d366;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 2rem;
+            cursor: pointer;
+            z-index: 999;
+            box-shadow: 0 10px 30px rgba(37, 211, 102, 0.4);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .whatsapp-btn:hover {
+            transform: scale(1.1);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 10px 30px rgba(37, 211, 102, 0.4); }
+            50% { box-shadow: 0 10px 50px rgba(37, 211, 102, 0.8); }
+        }
+
+        /* Countdown Timer */
+        .countdown {
+            display: inline-flex;
+            gap: 1rem;
+            background: rgba(232, 200, 122, 0.3);
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+            border: 2px solid var(--secondary);
+        }
+
+        .countdown-item {
+            text-align: center;
+        }
+
+        .countdown-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+            display: block;
+        }
+
+        .countdown-label {
+            font-size: 0.8rem;
+            color: var(--dark);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* Scroll Animations */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease-out;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            header {
+                padding: 0.8rem 1rem;
+            }
+
+            .hero-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                padding: 1rem;
+            }
+
+            .hero-text h1 {
+                font-size: 2rem;
+            }
+
+            .hero-text p {
+                font-size: 1rem;
+            }
+
+            nav {
+                gap: 1rem;
+                font-size: 0.85rem;
+            }
+
+            .benefits-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .usage-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+            }
+
+            .cta-buttons-final {
+                flex-direction: column;
+            }
+
+            .section-header h2 {
+                font-size: 2rem;
+            }
+
+            .cta-final h2 {
+                font-size: 1.8rem;
+            }
+
+            .countdown {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Cart Badge */
+        .cart-badge {
+            position: absolute;
+            background: var(--secondary);
+            color: var(--dark);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            top: -8px;
+            right: -8px;
+        }
+
+        .cart-icon {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <img src="/logo.png" alt="SANATE Logo">
+                <span>SANATE</span>
+            </div>
+            <nav>
+                <a href="#beneficios">Beneficios</a>
+                <a href="#estudios">Estudios</a>
+                <a href="#uso">Modo de Uso</a>
+                <a href="#precios">Precio</a>
+                <a href="#faq">Preguntas</a>
+                <button class="cta-header" onclick="scrollToCart()">Comprar Ahora</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>El Secreto Ancestral de tu Abuela</h1>
+                <p>Sebo de Res Premium: La crema natural que tus abuelas usaban para regenerar y sanar la piel. Puro, sin químicos, con la potencia de miles de años de medicina ancestral colombiana.</p>
+
+                <div class="countdown">
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="days">00</span>
+                        <span class="countdown-label">Días</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="hours">00</span>
+                        <span class="countdown-label">Horas</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="minutes">00</span>
+                        <span class="countdown-label">Minutos</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-value" id="seconds">00</span>
+                        <span class="countdown-label">Segundos</span>
+                    </div>
+                </div>
+
+                <div class="price-section">
+                    <div class="price-tag">
+                        <span class="price-original">$152.000</span>
+                        <span class="price-current">$119.900</span>
+                    </div>
+                    <div class="discount-badge">-21% Descuento</div>
+                </div>
+
+                <div class="cta-buttons">
+                    <button class="btn-primary" onclick="addToCart()">Agregar al Carrito</button>
+                    <a href="https://wa.me/573234549614?text=Hola!%20Quiero%20Sebo%20Premium%20x2" target="_blank" class="btn-secondary">Consultar por WhatsApp</a>
+                </div>
+            </div>
+
+            <div class="hero-image">
+                <img src="/imagenes_productos/Sebo_Premium_x2.png" alt="Sebo de Res Premium x2">
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits" id="beneficios">
+        <div class="benefits-grid" style="max-width: 1200px; margin: 0 auto; padding: 0 2rem;">
+            <div style="grid-column: 1 / -1; text-align: center; margin-bottom: 2rem;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 1rem; color: var(--dark);">7 Poderes del Sebo de Res</h2>
+                <p style="font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto;">Descubre cómo la grasa de res regenera y transforma tu piel desde adentro</p>
+            </div>
+        </div>
+
+        <div class="benefits-grid">
+            <div class="benefit-card">
+                <div class="benefit-icon">💧</div>
+                <h3>Hidratación Profunda</h3>
+                <p>La grasa de res penetra hasta las capas más profundas de la piel. Hidrata intensamente piel seca, agrietada y deshidratada.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🩹</div>
+                <h3>Sana Grietas y Heridas</h3>
+                <p>Regenera piel dañada, heridas, grietas. Los ácidos grasos naturales restauran la barrera cutánea rápidamente.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">✨</div>
+                <h3>Reduce Manchas</h3>
+                <p>Vitaminas A, D, E y K naturales ayudan a atenuar manchas oscuras, cicatrices y marcas del tiempo.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🌿</div>
+                <h3>Anti-Envejecimiento</h3>
+                <p>Colágeno natural y ácidos grasos esenciales combaten arrugas y líneas de expresión. Piel más firme y radiante.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🔄</div>
+                <h3>Restaura Barrera Cutánea</h3>
+                <p>Repara la piel dañada por químicos. Proporciona protección natural contra agentes externos.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🌹</div>
+                <h3>Trata Estrías</h3>
+                <p>Ayuda a sanar y mejorar la apariencia de estrías antiguas y nuevas. Elasticidad y firmeza restauradas.</p>
+            </div>
+
+            <div class="benefit-card">
+                <div class="benefit-icon">🏛️</div>
+                <h3>Medicina Ancestral</h3>
+                <p>Usado durante siglos en Colombia. El remedio de las abuelas que nunca falla. 100% natural y puro.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Studies Section -->
+    <section class="studies" id="estudios">
+        <div class="studies-container">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 1rem; color: var(--dark);">Respaldado por Ciencia</h2>
+                <p style="font-size: 1.2rem; color: #666; max-width: 600px; margin: 0 auto;">Investigaciones científicas confirman los beneficios del Sebo (Tallow) para regenerar y sanar la piel</p>
+            </div>
+
+            <div class="studies-grid">
+                <div class="study-card">
+                    <h4>Perfil de Ácidos Grasos Idéntico</h4>
+                    <p>La grasa de res tiene un perfil lipídico que es prácticamente idéntico al de la piel humana. Absorción óptima y compatibilidad perfecta.</p>
+                    <span class="study-year">Journal of Lipid Research</span>
+                </div>
+
+                <div class="study-card">
+                    <h4>Reparación de Barrera Cutánea</h4>
+                    <p>El ácido palmítico y esteárico presentes en el sebo son fundamentales para restaurar la barrera lipídica de la piel.</p>
+                    <span class="study-year">Dermatology Research and Practice</span>
+                </div>
+
+                <div class="study-card">
+                    <h4>Reducción de Inflamación</h4>
+                    <p>El ácido oleico en la grasa de res reduce inflamación cutánea, calma enrojecimiento y alivia irritación.</p>
+                    <span class="study-year">International Journal of Molecular Sciences</span>
+                </div>
+
+                <div class="study-card">
+                    <h4>Cicatrización Mejorada</h4>
+                    <p>Los estudios muestran que el sebo acelera la cicatrización de heridas y reduce la apariencia de cicatrices antiguas.</p>
+                    <span class="study-year">Investigación Dermatológica</span>
+                </div>
+
+                <div class="study-card">
+                    <h4>Vitaminas Antioxidantes Naturales</h4>
+                    <p>Contiene vitaminas A, D, E y K naturales que protegen contra daño oxidativo y envejecimiento prematuro.</p>
+                    <span class="study-year">Nutrición Dermatológica</span>
+                </div>
+
+                <div class="study-card">
+                    <h4>Medicina Tradicional Comprobada</h4>
+                    <p>Siglos de uso en medicina colombiana ancestral. Efectividad comprobada por generaciones de abuelas.</p>
+                    <span class="study-year">Medicina Tradicional Colombiana</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Usage Section -->
+    <section class="usage" id="uso">
+        <div class="usage-container">
+            <div class="usage-content">
+                <h2>Modo de Uso Recomendado</h2>
+                <p style="color: #666; margin-bottom: 2rem; font-size: 1.1rem;">Sigue estos pasos sencillos para obtener el máximo beneficio de tu Sebo de Res Premium</p>
+
+                <ul class="usage-steps">
+                    <li class="usage-step">
+                        <div class="step-number">1</div>
+                        <div class="step-text">
+                            <h3>Limpia tu Piel</h3>
+                            <p>Lava tu rostro y cuerpo con agua tibia y un jabón suave. Seca completamente con una toalla limpia.</p>
+                        </div>
+                    </li>
+                    <li class="usage-step">
+                        <div class="step-number">2</div>
+                        <div class="step-text">
+                            <h3>Aplica Cantidad Pequeña</h3>
+                            <p>Toma una pequeña cantidad (tamaño de un guisante) entre tus manos. El sebo es muy concentrado.</p>
+                        </div>
+                    </li>
+                    <li class="usage-step">
+                        <div class="step-number">3</div>
+                        <div class="step-text">
+                            <h3>Masajea Suavemente</h3>
+                            <p>Masajea suavemente en el rostro o área afectada en movimientos circulares. Permite que se absorba completamente.</p>
+                        </div>
+                    </li>
+                    <li class="usage-step">
+                        <div class="step-number">4</div>
+                        <div class="step-text">
+                            <h3>Mañana y Noche</h3>
+                            <p>Usa mañana al despertar y antes de dormir. Resultados visibles después de 2-3 semanas de uso consistente.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="usage-image">
+                <img src="/ai-images/ecom/sebo_hero1.png" alt="Sebo de Res en uso">
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="precios">
+        <div class="pricing-container">
+            <div class="pricing-card">
+                <div class="product-name">Sebo de Res Premium x2</div>
+                <p style="color: #666; margin-bottom: 1.5rem; font-size: 1.1rem;">2 frascos grandes de vidrio premium</p>
+
+                <div class="product-specs">
+                    <div class="spec-item">
+                        <span class="spec-label">Presentación</span>
+                        <span class="spec-value">Frascos de vidrio premium</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Cantidad</span>
+                        <span class="spec-value">2 frascos grandes</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Ingredientes</span>
+                        <span class="spec-value">100% Sebo de Res Puro</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Origen</span>
+                        <span class="spec-value">Colombia - Premium</span>
+                    </div>
+                    <div class="spec-item">
+                        <span class="spec-label">Garantía</span>
+                        <span class="spec-value">30 días satisfacción</span>
+                    </div>
+                </div>
+
+                <div class="price-comparison">
+                    <div class="old-price">Precio regular: $152.000</div>
+                    <div class="new-price">$119.900</div>
+                    <div class="savings">Ahorras: $32.100 (21% descuento)</div>
+                </div>
+
+                <div class="cta-buttons" style="justify-content: center; animation: fadeInUp 0.8s ease-out 0.8s both;">
+                    <button class="btn-primary" onclick="addToCart()" style="width: 100%;">Agregar al Carrito</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials" id="testimonios">
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h2 style="font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 1rem; color: var(--dark);">Lo que Dicen Nuestros Clientes</h2>
+            <p style="font-size: 1.2rem; color: #666;">Transformaciones de piel real después de usar Sebo de Res</p>
+        </div>
+
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Mi piel estaba reseca y con manchas. Después de un mes con el Sebo de Res, mi piel está suave, hidratada y las manchas han desaparecido. Es como si volviera a tener 20 años."</p>
+                <p class="testimonial-author">Carmen R.</p>
+                <p class="testimonial-role">Ejecutiva, Bogotá</p>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Tenía grietas en los talones desde hace años. El sebo de mi abuela lo curaba en 3 semanas. Este producto de SANATE es exactamente igual. Funciona."</p>
+                <p class="testimonial-author">Patricia M.</p>
+                <p class="testimonial-role">Madre de 3 hijos</p>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Cicatrices de acné de toda la vida. El sebo de res las ha atenuado más que cualquier tratamiento caro. Es natural, es puro, y funciona. 10/10."</p>
+                <p class="testimonial-author">David G.</p>
+                <p class="testimonial-role">Joven Profesional</p>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Las estrías de mi embarazo siguen mejorando. Mi piel se siente radiante y los pequeños arruguitas del cuello están menos visibles. Definitivamente repetiré."</p>
+                <p class="testimonial-author">Sofía L.</p>
+                <p class="testimonial-role">Mamá Reciente</p>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Después de años de cremas caras que no funcionaban, el sebo puro hace lo que debería hacer: hidratar, sanar, regenerar. Es lo opuesto a los químicos."</p>
+                <p class="testimonial-author">Isabel T.</p>
+                <p class="testimonial-role">Dermatóloga (Cliente)</p>
+            </div>
+
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Mi abuela juraba por el sebo de res. Ahora entiendo por qué. La calidad de SANATE es excelente. Es como tener el remedio ancestral en un frasco hermoso."</p>
+                <p class="testimonial-author">Alejandra V.</p>
+                <p class="testimonial-role">Historiadora de Medicina Natural</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq" id="faq">
+        <div class="faq-container">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 1rem; color: var(--dark);">Preguntas Frecuentes</h2>
+                <p style="font-size: 1.2rem; color: #666;">Resuelve tus dudas sobre Sebo de Res Premium</p>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Es realmente solo sebo de res puro? ¿Sin químicos?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Sí, 100% sebo de res puro. Sin conservantes, sin perfumes, sin aditivos químicos. Solo grasa de res rendida y filtrada de forma natural. Exactamente lo que usaban tus abuelas hace 100 años.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿A qué huele? ¿Huele a carne?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Tiene un aroma sutil, natural, ligeramente grasoso. No huele a químicos fuertes. Algunos clientes lo encuentran casi imperceptible una vez aplicado en la piel. Es neutral, no invasivo.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Cuánto tiempo tardará en ver resultados?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Muchos clientes notan mejoría en hidratación después de 3-5 días. Cicatrices, manchas y grietas requieren 2-4 semanas de uso consistente (mañana y noche). Resultados anti-envejecimiento se notan mejor después de 6-8 semanas.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Es seguro para pieles sensibles y con acné?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Sí, es muy seguro. De hecho, el sebo es excelente para piel sensible porque es lo más similar al sebo natural de la piel. No irrita. Para acné, aplica en pequeñas cantidades y aumenta gradualmente. La piel se adapta.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Cuánto tiempo dura un frasco?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Usa solo pequeñas cantidades (tamaño de guisante para rostro). Un frasco dura 4-6 meses con uso facial. Si lo usas en rostro y cuerpo, 2-3 meses. Rinde mucho más que cremas convencionales.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Puede causar daño o efectos secundarios?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>No. Es sebo puro, lo mismo que está en tu piel naturalmente. Sin alérgenos. Sin tóxicos. Algunos pueden experimentar purgación de acné los primeros días (es bueno, la piel se limpia). Completamente seguro a largo plazo.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Hay garantía de satisfacción?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Totalmente. Si no estás satisfecho después de 30 días de uso consistente, te reembolsamos tu dinero sin preguntas. Confiamos en la calidad y efectividad de nuestro Sebo de Res Premium.</p>
+                </div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>¿Por qué es mejor que las cremas comerciales?</span>
+                    <div class="faq-toggle">+</div>
+                </div>
+                <div class="faq-answer">
+                    <p>Las cremas comerciales tienen 80% agua + químicos de relleno. El sebo es 100% nutriente. Tu piel absorbe exactamente lo que necesita. Sin parabenos, sin perfumes sintéticos, sin emulsionantes químicos. Es medicina pura.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Final CTA Section -->
+    <section class="cta-final">
+        <div class="cta-final-content">
+            <h2>Recupérate al Remedio de tus Abuelas</h2>
+            <p>No esperes más para experimentar la magia del Sebo de Res Premium. Únete a miles de clientes que ya transformaron su piel con este remedio ancestral puro y poderoso.</p>
+
+            <div class="cta-buttons-final">
+                <button class="btn-dark" onclick="addToCart()">Comprar Ahora - $119.900</button>
+                <a href="https://wa.me/573234549614?text=Hola!%20Quiero%20Sebo%20Premium%20x2%20-%20Tengo%20preguntas" target="_blank" class="btn-dark" style="background: rgba(10, 22, 40, 0.7); border: 2px solid var(--dark);">WhatsApp</a>
+            </div>
+
+            <p style="margin-top: 2rem; font-size: 0.95rem;">✓ 100% Sebo de Res Puro | ✓ Envío gratis | ✓ Garantía de 30 días</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>SANATE Store</h3>
+                <p>Productos naturales de máxima calidad para tu bienestar integral.</p>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: #999;">© 2026 SANATE. Todos los derechos reservados.</p>
+            </div>
+
+            <div class="footer-section">
+                <h3>Enlaces Rápidos</h3>
+                <a href="https://sanate.store">Volver a Catálogo</a>
+                <a href="#precios">Ver Precio</a>
+                <a href="#estudios">Leer Estudios</a>
+                <a href="#faq">Preguntas Frecuentes</a>
+            </div>
+
+            <div class="footer-section">
+                <h3>Contacto</h3>
+                <a href="https://wa.me/573234549614" target="_blank">WhatsApp: +57 323 454 9614</a>
+                <a href="mailto:info@sanate.store">Email: info@sanate.store</a>
+                <p style="margin-top: 1rem; font-size: 0.9rem; color: #999;">Atención: Lunes a Viernes 9am-6pm</p>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>SANATE - Productos naturales de Colombia para el mundo</p>
+        </div>
+    </footer>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/573234549614?text=Hola!%20Quiero%20Sebo%20Premium%20x2" target="_blank" class="whatsapp-btn">
+        💬
+    </a>
+
+    <script>
+        // Cart Management
+        const CART_KEY = 'sanate_cart_v2';
+
+        function initCart() {
+            let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+            window._cart = cart;
+            return cart;
+        }
+
+        function addToCart() {
+            let cart = window._cart || initCart();
+
+            const product = {
+                id: 'sebo-res-x2',
+                name: 'Sebo de Res Premium x2',
+                price: 119900,
+                quantity: 1,
+                image: '/imagenes_productos/Sebo_Premium_x2.png'
+            };
+
+            const existingProduct = cart.find(item => item.id === product.id);
+
+            if (existingProduct) {
+                existingProduct.quantity += 1;
+            } else {
+                cart.push(product);
+            }
+
+            localStorage.setItem(CART_KEY, JSON.stringify(cart));
+            window._cart = cart;
+
+            // Visual feedback
+            showAddedToCartMessage();
+            updateCartBadge();
+        }
+
+        function showAddedToCartMessage() {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: #25d366;
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: 10px;
+                z-index: 10000;
+                animation: slideIn 0.3s ease-out;
+                box-shadow: 0 10px 30px rgba(37, 211, 102, 0.3);
+            `;
+            message.innerHTML = '✓ Agregado al carrito';
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => message.remove(), 300);
+            }, 2000);
+        }
+
+        function updateCartBadge() {
+            const badge = document.querySelector('.cart-badge');
+            if (badge) {
+                const cart = window._cart || [];
+                badge.textContent = cart.length;
+            }
+        }
+
+        function scrollToCart() {
+            const cartSection = document.querySelector('#precios');
+            if (cartSection) {
+                cartSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Countdown Timer
+        function startCountdown() {
+            function updateCountdown() {
+                // Set end date to 7 days from now
+                const endDate = new Date();
+                endDate.setDate(endDate.getDate() + 7);
+
+                const now = new Date().getTime();
+                const distance = endDate.getTime() - now;
+
+                if (distance > 0) {
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                    document.getElementById('days').textContent = String(days).padStart(2, '0');
+                    document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+                    document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+                    document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+                }
+            }
+
+            updateCountdown();
+            setInterval(updateCountdown, 1000);
+        }
+
+        // FAQ Accordion
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.querySelector('.faq-question').addEventListener('click', () => {
+                item.classList.toggle('active');
+
+                document.querySelectorAll('.faq-item').forEach(otherItem => {
+                    if (otherItem !== item) {
+                        otherItem.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Scroll Animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.benefit-card, .study-card, .testimonial-card, .faq-item').forEach(el => {
+            el.classList.add('fade-in');
+            observer.observe(el);
+        });
+
+        // Add smooth scroll styles
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initCart();
+            startCountdown();
+            updateCartBadge();
+        });
+    </script>
+</body>
+</html>
