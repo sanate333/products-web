@@ -42,18 +42,28 @@ RewriteRule ^api/co/register/?$ api/co/register/index.php [L,QSA]
 RewriteRule ^api/co/leads/?$ api/co/leads/index.php [L,QSA]
 RewriteRule ^co/?$ /index.html [L]
 
-# ââ Archivos estÃ¡ticos: servir directo, NO pasar al SPA ââ
+# === LANDING PAGES — servir directo, NO pasar al SPA ===
+RewriteRule ^landing-melena/?$ /landing-melena.html [L]
+RewriteRule ^landing-curcuma/?$ /landing-curcuma.html [L]
+RewriteRule ^landing-sebo/?$ /landing-sebo.html [L]
+RewriteRule ^landing-polen/?$ /landing-polen.html [L]
+RewriteRule ^landing-nectar/?$ /landing-nectar.html [L]
+RewriteRule ^landing-secreto/?$ /landing-secreto.html [L]
+RewriteRule ^landing-kit-total/?$ /landing-kit-total.html [L]
+RewriteRule ^landing-[a-z0-9-]+\.html$ - [L]
+
+# === Archivos estaticos: servir directo, NO pasar al SPA ===
 RewriteRule ^home\.html$ - [L]
 RewriteRule ^proveedores\.html$ - [L]
 
-# Home Plus V5 FINAL â activa en /
+# Home Plus V5 FINAL — activa en /
 RewriteRule ^$ /home.html [L]
-# Home Free React â accesible en /home-free
+# Home Free React — accesible en /home-free
 RewriteRule ^home-free/?$ /index.html [L]
 # Portal proveedores
 RewriteRule ^proveedores/?$ /proveedores.html [L]
 
-# SPA catch-all â solo si el archivo NO existe
+# SPA catch-all — solo si el archivo NO existe
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ /index.html [L]
