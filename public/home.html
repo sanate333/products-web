@@ -4267,5 +4267,48 @@ startObs();
   console.log('ORDER-SYNC FINAL PATCH v1 loaded');
 })();
 </script>
+
+<!-- ═══ SUPER OFERTA PRE-CARGADA EN CARRITO ═══ -->
+<script>
+(function(){
+  var OFERTA={id:'p2',name:'Polen Premium x50 — 500mg',desc:'Multifloral 500mg · presentación pequeña',price:69900,qty:1,img:'https://sanate.store/ai-images/iMAGENES%20nEW/POELNX50..jpg'};
+
+  function preloadOferta(){
+    /* 1. localStorage */
+    var key='sanate_cart_v2';
+    var cart;
+    try{cart=JSON.parse(localStorage.getItem(key)||'[]')}catch(e){cart=[]}
+    if(!cart.some(function(i){return i.id===OFERTA.id})){
+      cart.push(OFERTA);
+      localStorage.setItem(key,JSON.stringify(cart));
+    }
+    /* 2. window._cart (combo-fix) */
+    if(!window._cart)window._cart=[];
+    if(!window._cart.some(function(i){return i.id===OFERTA.id})){
+      window._cart.push(OFERTA);
+    }
+    /* 3. Update cart badge */
+    var badge=document.querySelector('.cart-count,.cart-badge,#cartCount');
+    if(badge){
+      var total=0;
+      var c=window._cart||cart;
+      for(var i=0;i<c.length;i++)total+=(c[i].qty||1);
+      badge.textContent=total;
+    }
+    /* 4. Re-render cart if function available */
+    if(typeof window.renderCart==='function'){
+      try{window.renderCart()}catch(e){}
+    }
+    console.log('Super oferta Polen x50 pre-cargada en carrito');
+  }
+
+  /* Run after all scripts have loaded */
+  if(document.readyState==='complete'){
+    setTimeout(preloadOferta,500);
+  } else {
+    window.addEventListener('load',function(){setTimeout(preloadOferta,500)});
+  }
+})();
+</script>
 </body>
 </html>
