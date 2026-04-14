@@ -3057,8 +3057,8 @@ function addVarItem(combo,needed,baseName,price,img){
   if(btnR){btnR.style.opacity='0.6';btnR.style.cursor='not-allowed';btnR.style.boxShadow='';btnR.classList.remove('btn-var-ready');}
   const wrap=document.getElementById('vw-'+combo);
   if(wrap){wrap.style.borderColor='';wrap.style.boxShadow='';}
-  const errEl=wrap&&wrap.querySelector('.var-err');
-  if(errEl)errEl.classList.remove('show');
+  const errElReset=wrap&&wrap.querySelector('.var-err');
+  if(errElReset)errElReset.classList.remove('show');
 }
 // ─── UTILS ───
 function gs(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
