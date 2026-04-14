@@ -3004,68 +3004,62 @@ const varState={
   ch2:{curcuma:0,avena:0,calendula:0,max:1}
 };
 const varNames={curcuma:'Cúrcuma',avena:'Avena & Arroz',calendula:'Caléndula & Aloe'};
+function _getCount(combo,type){return parseInt(document.getElementById(combo+'-'+type)?.textContent||'0',10)||0;}
+function _getTot(combo){return _getCount(combo,'curcuma')+_getCount(combo,'avena')+_getCount(combo,'calendula');}
 function chgVar(combo,type,delta){
   const s=varState[combo];if(!s)return;
-  const cur=s.curcuma+s.avena+s.calendula;
-  if(delta>0&&cur>=s.max)return;
-  s[type]=Math.max(0,s[type]+delta);
-  const tot=s.curcuma+s.avena+s.calendula;
-  document.getElementById(combo+'-'+type).textContent=s[type];
+  const tot=_getTot(combo);
+  if(delta>0&&tot>=s.max)return;
+  const cur=_getCount(combo,type);
+  const newVal=Math.max(0,cur+delta);
+  document.getElementById(combo+'-'+type).textContent=newVal;
+  const newTot=_getTot(combo);
   const el=document.getElementById('vt-'+combo);
-  el.textContent=tot+' / '+s.max;
-  el.className='var-total'+(tot===s.max?' full':tot>s.max?' over':'');
+  if(el){el.textContent=newTot+' / '+s.max;el.className='var-total'+(newTot===s.max?' full':newTot>s.max?' over':'');}
   const btn=document.getElementById('btn-'+combo);
   if(btn){
-    const enabled=tot===s.max;
-    btn.style.opacity=enabled?'1':'0.6';
-    btn.style.cursor=enabled?'pointer':'not-allowed';
-    btn.classList.toggle('btn-var-ready', enabled);
+    const ok=newTot===s.max;
+    btn.style.opacity=ok?'1':'0.6';
+    btn.style.cursor=ok?'pointer':'not-allowed';
+    btn.classList.toggle('btn-var-ready',ok);
+    if(ok){btn.style.boxShadow='0 0 0 3px rgba(34,197,94,.45)';}else{btn.style.boxShadow='';}
   }
 }
 function addVarItem(combo,needed,baseName,price,img){
-  const s=varState[combo];
-  if(!s){alert('Error: combo '+combo+' no encontrado');return;}
-  const tot=s.curcuma+s.avena+s.calendula;
+  const s=varState[combo];if(!s){alert('combo '+combo+' no encontrado');return;}
+  const types=['curcuma','avena','calendula'];
+  const counts={};
+  types.forEach(t=>{counts[t]=_getCount(combo,t);});
+  const tot=counts.curcuma+counts.avena+counts.calendula;
   if(tot<needed){
     const lbl=document.getElementById('vt-'+combo);
-    lbl.classList.add('over');
-    setTimeout(()=>lbl.classList.remove('over'),1500);
+    if(lbl){lbl.classList.add('over');setTimeout(()=>lbl.classList.remove('over'),1500);}
     const wrap=document.getElementById('vw-'+combo);
-    wrap.style.borderColor='var(--red)';
-    wrap.style.boxShadow='0 0 0 3px rgba(239,68,68,.25)';
-    setTimeout(()=>{wrap.style.borderColor='';wrap.style.boxShadow=''},1500);
-    // Show visible error text
-    var errEl=wrap.querySelector('.var-err');
-    if(!errEl){errEl=document.createElement('div');errEl.className='var-err';wrap.appendChild(errEl);}
-    errEl.textContent='⚠️ Elige '+needed+' jabones para continuar (llevas '+tot+')';
-    errEl.classList.add('show');
-    setTimeout(()=>errEl.classList.remove('show'),2500);
-    wrap.scrollIntoView({behavior:'smooth',block:'center'});
+    if(wrap){
+      wrap.style.borderColor='var(--red)';wrap.style.boxShadow='0 0 0 3px rgba(239,68,68,.25)';
+      setTimeout(()=>{wrap.style.borderColor='';wrap.style.boxShadow='';},1500);
+      var errEl=wrap.querySelector('.var-err');
+      if(!errEl){errEl=document.createElement('div');errEl.className='var-err';wrap.appendChild(errEl);}
+      errEl.textContent='⚠️ Elige '+needed+' jabón'+(needed>1?'es':'')+' para continuar (llevas '+tot+')';
+      errEl.classList.add('show');setTimeout(()=>errEl.classList.remove('show'),2500);
+      wrap.scrollIntoView({behavior:'smooth',block:'center'});
+    }
     return;
   }
-  const parts=[];
-  if(s.curcuma>0)parts.push(s.curcuma+'x '+varNames.curcuma);
-  if(s.avena>0)parts.push(s.avena+'x '+varNames.avena);
-  if(s.calendula>0)parts.push(s.calendula+'x '+varNames.calendula);
-  const desc=parts.join(' + ');
-  addItem({id:combo+'_'+Date.now(),name:baseName,desc,price,img});
-  // Reset state after successful add
-  Object.keys(s).forEach(k=>{if(k!=='max')s[k]=0;});
-  ['curcuma','avena','calendula'].forEach(type=>{
-    const el=document.getElementById(combo+'-'+type);
-    if(el)el.textContent='0';
-  });
+  const varNamesLocal={curcuma:'Cúrcuma',avena:'Avena & Arroz',calendula:'Caléndula & Aloe'};
+  const parts=types.filter(t=>counts[t]>0).map(t=>counts[t]+'x '+varNamesLocal[t]);
+  addItem({id:combo+'_'+Date.now(),name:baseName,desc:parts.join(' + '),price,img});
+  // Reset DOM counters
+  types.forEach(t=>{const el=document.getElementById(combo+'-'+t);if(el)el.textContent='0';});
   const vtEl=document.getElementById('vt-'+combo);
   if(vtEl){vtEl.textContent='0 / '+needed;vtEl.className='var-total';}
   const btnR=document.getElementById('btn-'+combo);
-  if(btnR){btnR.style.opacity='0.6';btnR.style.cursor='not-allowed';btnR.classList.remove('btn-var-ready');}
-  // Remove error if visible
+  if(btnR){btnR.style.opacity='0.6';btnR.style.cursor='not-allowed';btnR.style.boxShadow='';btnR.classList.remove('btn-var-ready');}
   const wrap=document.getElementById('vw-'+combo);
   if(wrap){wrap.style.borderColor='';wrap.style.boxShadow='';}
-  const errEl=wrap?wrap.querySelector('.var-err'):null;
+  const errEl=wrap&&wrap.querySelector('.var-err');
   if(errEl)errEl.classList.remove('show');
 }
-
 // ─── UTILS ───
 function gs(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
 const io=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('vis');io.unobserve(x.target)}})},{threshold:.08});
