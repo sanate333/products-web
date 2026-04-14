@@ -235,6 +235,7 @@ input,select,textarea{font-family:var(--sans);outline:none}
 .cc-price{font-family:var(--serif);font-size:26px;font-weight:600;color:var(--navy);display:block;line-height:1.1}
 .cc.star .cc-price{color:var(--gold2)}
 .cc-disc{background:var(--skyd);color:#fff;font-size:9.5px;font-weight:800;padding:3px 8px;border-radius:100px}
+.cc-cta:disabled,.tc-btn:disabled{opacity:.6!important;cursor:not-allowed!important;}
 .cc-cta{width:100%;padding:14px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:6px;transition:var(--t)}
 .cc .cc-cta{background:var(--navy);color:#fff}
 .cc .cc-cta:hover{background:var(--skyd)}
@@ -1894,7 +1895,7 @@ behold-widget::part(branding){display:none!important}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $99.000</span><span class="cc-price">$66.000</span></div><span class="cc-disc">-33%</span></div>
-          <button class="cc-cta" id="btn-c1" style="opacity:0.6;pointer-events:none" onclick="addVarItem('c1',3,'Combo x3 Jabones',66000,'https://sanate.store/imagenes_productos/Tripack_Jabones_Artesanales.png')">🛒 Agregar</button>
+          <button class="cc-cta" id="btn-c1" disabled style="opacity:0.6;cursor:not-allowed" onclick="addVarItem('c1',3,'Combo x3 Jabones',66000,'https://sanate.store/imagenes_productos/Tripack_Jabones_Artesanales.png')">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días · Pago contra entrega</div>
         </div>
       </div>
@@ -1919,7 +1920,7 @@ behold-widget::part(branding){display:none!important}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $129.000</span><span class="cc-price">$99.000</span></div><span class="cc-disc">-23%</span></div>
-          <button class="cc-cta" id="btn-c4" style="opacity:0.6;pointer-events:none" onclick="addVarItem('c4',2,'Combo Secreto Japonés',99000,'https://sanate.store/imagenes_productos/Sebo_Premium_x2.png')">🛒 Quiero este combo — $99.000</button>
+          <button class="cc-cta" id="btn-c4" disabled style="opacity:0.6;cursor:not-allowed" onclick="addVarItem('c4',2,'Combo Secreto Japonés',99000,'https://sanate.store/imagenes_productos/Sebo_Premium_x2.png')">🛒 Quiero este combo — $99.000</button>
           <div class="cc-micro">🔒 Garantía 30 días · Resultado o devolución · 8% OFF por transferencia</div>
         </div>
       </div>
@@ -1959,7 +1960,7 @@ behold-widget::part(branding){display:none!important}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $210.000</span><span class="cc-price">$136.000</span></div><span class="cc-disc">-35%</span></div>
-          <button class="cc-cta" id="btn-c6" style="opacity:0.6;pointer-events:none" onclick="addVarItem('c6',6,'Combo 6 Jabones',136000,'https://sanate.store/imagenes_productos/Tripack_Jabones_Artesanales.png')">🛒 Agregar</button>
+          <button class="cc-cta" id="btn-c6" disabled style="opacity:0.6;cursor:not-allowed" onclick="addVarItem('c6',6,'Combo 6 Jabones',136000,'https://sanate.store/imagenes_productos/Tripack_Jabones_Artesanales.png')">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días</div>
         </div>
       </div>
@@ -1997,7 +1998,7 @@ behold-widget::part(branding){display:none!important}
             </div>
           </div>
           <div class="cc-pricing"><div><span class="cc-old">Antes $169.000</span><span class="cc-price">$136.900</span></div><span class="cc-disc">-19%</span></div>
-          <button class="cc-cta" id="btn-c5" style="opacity:0.6;pointer-events:none" onclick="addVarItem('c5',2,'Combo Doble Sebo Grande',136900,'https://sanate.store/imagenes_productos/Sebo_Premium_x2.png')">🛒 Agregar</button>
+          <button class="cc-cta" id="btn-c5" disabled style="opacity:0.6;cursor:not-allowed" onclick="addVarItem('c5',2,'Combo Doble Sebo Grande',136900,'https://sanate.store/imagenes_productos/Sebo_Premium_x2.png')">🛒 Agregar</button>
           <div class="cc-micro">🔒 Garantía 30 días</div>
         </div>
       </div>
@@ -2123,7 +2124,7 @@ behold-widget::part(branding){display:none!important}
             </div>
           </div>
           <div class="tc-pr"><span class="tc-price">$119.000</span><span class="tc-old">$175.000</span><span class="tc-disc">-32%</span></div>
-          <button class="tc-btn" id="btn-ch2" style="opacity:0.6;pointer-events:none" onclick="addVarItem('ch2',3,'Combo Cabello & Piel',119000,'https://sanate.store/imagenes_productos/nectar_capilar.jpg')">🛒 El más completo</button>
+          <button class="tc-btn" id="btn-ch2" disabled style="opacity:0.6;cursor:not-allowed" onclick="addVarItem('ch2',3,'Combo Cabello & Piel',119000,'https://sanate.store/imagenes_productos/nectar_capilar.jpg')">🛒 El más completo</button>
         </div>
       </div>
       <!-- CH3 -->
@@ -3013,8 +3014,8 @@ function chgVar(combo,type,delta){
   const btn=document.getElementById('btn-'+combo);
   if(btn){
     const enabled=tot===s.max;
+    btn.disabled=!enabled;
     btn.style.opacity=enabled?'1':'0.6';
-    btn.style.pointerEvents=enabled?'auto':'none';
     btn.style.cursor=enabled?'pointer':'not-allowed';
   }
 }
@@ -3054,7 +3055,7 @@ function addVarItem(combo,needed,baseName,price,img){
   const vtEl=document.getElementById('vt-'+combo);
   if(vtEl){vtEl.textContent='0 / '+needed;vtEl.className='var-total';}
   const btnR=document.getElementById('btn-'+combo);
-  if(btnR){btnR.style.opacity='0.6';btnR.style.pointerEvents='none';btnR.style.cursor='not-allowed';}
+  if(btnR){btnR.disabled=true;btnR.style.opacity='0.6';btnR.style.cursor='not-allowed';}
   // Remove error if visible
   const wrap=document.getElementById('vw-'+combo);
   if(wrap){wrap.style.borderColor='';wrap.style.boxShadow='';}
