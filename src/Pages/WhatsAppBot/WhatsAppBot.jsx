@@ -881,6 +881,7 @@ export default function WhatsAppBot() {
 
   // Refs para evitar stale closures en polling y ping
   const statusRef        = useRef('disconnected') // siempre tiene el status actual
+  const userDisconnectedRef = useRef(false) // true cuando el usuario desvinculó manualmente
   const activeRef        = useRef(null)            // siempre tiene el chat activo actual
 
   const msgsRef          = useRef(null)
@@ -1271,7 +1272,7 @@ export default function WhatsAppBot() {
       }
       else if (s === 'connecting' || s === 'qr') { loadQR() }
       // Auto-heal: si el servidor dice "disconnected" sin QR, pedir que reconecte
-      else if (s === 'disconnected' && !d.hasQR) {
+      else if (s === 'disconnected' && !d.hasQR && !userDisconnectedRef.current) {
         try { await fetch(BU + '/connect', { method: 'POST', headers: H }) } catch {}
       }
     } catch {} // silently retry via interval
@@ -1537,6 +1538,7 @@ export default function WhatsAppBot() {
   }
 
   async function regenerateQR() {
+    userDisconnectedRef.current = false  // permitir auto-heal al reconectar
     setQrDataUrl(null); setStatus('connecting')
     // drawQRWaiting después de que React renderice el canvas (si no estaba visible)
     setTimeout(drawQRWaiting, 80)
@@ -1548,9 +1550,10 @@ export default function WhatsAppBot() {
   }
 
   async function disconnectWA() {
+    userDisconnectedRef.current = true  // bloquear auto-heal
     try { await fetch(BU + '/logout', { method: 'POST', headers: H }) } catch {}
     setStatus('disconnected'); setPhone(''); setChats([]); setActive(null); setQrDataUrl(null)
-    tip('🔌 WhatsApp desconectado')
+    tip('🔌 WhatsApp desvinculado. Presiona "Generar código QR" para vincular de nuevo.')
   }
 
   async function checkN8N() {
