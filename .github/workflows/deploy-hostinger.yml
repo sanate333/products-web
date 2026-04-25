@@ -7,35 +7,13 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build React app
-        run: npm run build
-        env:
-          CI: false
-          GENERATE_SOURCEMAP: false
-
-      - name: Deploy via SFTP
+      - name: Deploy PHP/config files only (NO npm build - protect React assets)
         run: |
           sudo apt-get install -y lftp
-          lftp -e "set sftp:connect-program \"ssh -o StrictHostKeyChecking=no -p 65002\"; mirror --reverse --verbose --no-perms --delete --exclude .env --exclude config.php ./public_html/ domains/sanate.store/public_html/; quit" sftp://${{ secrets.HOSTINGER_FTP_USERNAME }}:${{ secrets.HOSTINGER_FTP_PASSWORD }}@${{ secrets.HOSTINGER_FTP_SERVER }}
-
-      - name: Fix index.html via FTP (ensure clean single-bundle)
-        run: |
-          curl -T ./public_html/index.html \
-            "ftp://${{ secrets.HOSTINGER_FTP_SERVER }}//domains/sanate.store/public_html/index.html" \
-            --user "${{ secrets.HOSTINGER_FTP_USERNAME }}:${{ secrets.HOSTINGER_FTP_PASSWORD }}" \
-            --ftp-pasv
+          lftp -e "set sftp:connect-program \"ssh -o StrictHostKeyChecking=no -p 65002\"; mirror --reverse --verbose --no-perms --delete --exclude .env --exclude config.php --exclude static --exclude index.html --exclude hotfix.js --exclude cx_panel.js --exclude hotfixes --exclude .htaccess ./public_html/ domains/sanate.store/public_html/; quit" sftp://${{ secrets.HOSTINGER_FTP_USERNAME }}:${{ secrets.HOSTINGER_FTP_PASSWORD }}@${{ secrets.HOSTINGER_FTP_SERVER }}
