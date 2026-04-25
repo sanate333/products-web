@@ -65,7 +65,7 @@ if ($DB_MAIN === '' || $DB_USER === '') {
     $DB_PORT = '3306';
     $DB_MAIN = 'u274689770_sanate';
     $DB_USER = 'u274689770_sanate';
-    $DB_PASS = 'Sanate009';
+    $DB_PASS = 'Sanate009*';
     error_log("ENV FALLBACK APPLIED");
 }
 
