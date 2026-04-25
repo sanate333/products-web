@@ -1093,8 +1093,15 @@ export default function WhatsAppBot() {
     const saved = activeGet()
     if (saved && !active) {
       setActive(saved)
-      setPage('chat')  // volver siempre al chat, no a la sección anterior
-      try { localStorage.setItem('wb_current_page', 'chat') } catch {}
+      // Solo redirigir a 'chat' si el usuario venía de la página de conexión (recién escaneó QR)
+      // En cualquier otro caso respetar la página donde estaba (incluye refresco de página)
+      setPage(currentPage => {
+        if (currentPage === 'conexion' || currentPage === 'connecting') {
+          try { localStorage.setItem('wb_current_page', 'chat') } catch {}
+          return 'chat'
+        }
+        return currentPage // mantener la página actual sin cambios
+      })
       loadM(saved.id, false)
     }
   }, [status]) // eslint-disable-line
