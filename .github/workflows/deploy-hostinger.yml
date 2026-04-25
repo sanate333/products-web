@@ -31,4 +31,4 @@ jobs:
       - name: Deploy via SFTP
         run: |
           sudo apt-get install -y lftp
-          lftp -e "set sftp:connect-program \"ssh -o StrictHostKeyChecking=no -p 65002\"; mirror --reverse --verbose --no-perms ./public_html/ /domains/sanate.store/public_html/; quit" sftp://${{ secrets.HOSTINGER_FTP_USERNAME }}:${{ secrets.HOSTINGER_FTP_PASSWORD }}@${{ secrets.HOSTINGER_FTP_SERVER }}
+          lftp -e "set sftp:connect-program \"ssh -o StrictHostKeyChecking=no -p 65002\"; mirror --reverse --verbose --no-perms ./public_html/ domains/sanate.store/public_html/; quit" sftp://${{ secrets.HOSTINGER_FTP_USERNAME }}:${{ secrets.HOSTINGER_FTP_PASSWORD }}@${{ secrets.HOSTINGER_FTP_SERVER }}
