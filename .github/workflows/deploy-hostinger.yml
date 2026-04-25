@@ -28,18 +28,7 @@ jobs:
           CI: false
           GENERATE_SOURCEMAP: false
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
-          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          port: ${{ secrets.HOSTINGER_FTP_PORT }}
-          local-dir: ./public_html/
-          server-dir: ${{ secrets.HOSTINGER_FTP_PATH }}
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/whatsapp-proxy.js
+      - name: Deploy via SFTP
+        run: |
+          sudo apt-get install -y lftp
+          lftp -e "set sftp:connect-program \"ssh -o StrictHostKeyChecking=no -p 65002\"; mirror --reverse --verbose --no-perms ./public_html/ /domains/sanate.store/public_html/; quit" sftp://${{ secrets.HOSTINGER_FTP_USERNAME }}:${{ secrets.HOSTINGER_FTP_PASSWORD }}@${{ secrets.HOSTINGER_FTP_SERVER }}
