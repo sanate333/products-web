@@ -4087,7 +4087,7 @@ ${conversation}`
                           📱 <strong>{phone}</strong>
                         </div>
                       )}
-                      <button className="wbv5-btn wbv5-btn-red" onClick={disconnectWA} style={{ width: '100%' }}>
+                      <button type="button" className="wbv5-btn wbv5-btn-red" onClick={disconnectWA} style={{ width: '100%' }}>
                         🔌 Desvincular WhatsApp
                       </button>
                     </>
@@ -4145,7 +4145,7 @@ ${conversation}`
                       <button className="wbv5-btn wbv5-btn-outline wbv5-btn-sm" onClick={ping}>🔍 Verificar</button>
                       <button className="wbv5-btn wbv5-btn-green wbv5-btn-sm" onClick={regenerateQR}>🔄 Nuevo QR</button>
                       {status === 'connected' && (
-                        <button className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={disconnectWA}>Desconectar</button>
+                        <button type="button" className="wbv5-btn wbv5-btn-red wbv5-btn-sm" onClick={disconnectWA}>Desconectar</button>
                       )}
                     </div>
                   </div>
