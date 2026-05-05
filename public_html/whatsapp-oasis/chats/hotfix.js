@@ -1,33 +1,52 @@
-/* WhatsApp Oasis — Chats hotfix v5.0
+/* WhatsApp Oasis — Chats hotfix v5.4
  * Fix 1-8: heredados de v4.4
  * Fix 9: Filter-bar persistente — inbox mantiene min-width; filtros siempre visibles
  * Fix 10: Anti-flickering — reducir frecuencia de intervalos agresivos (600ms→2s, 1s→3s)
  * Fix 11: White-screen watchdog más tolerante (espera 15 s antes de recargar)
  * Fix 12: iframeGuard solo actúa cuando hay cambio real (evita reflows constantes)
+ * Fix 13: sp-chat-iframe contenido dentro de .wbv5-chat-win (no cubre inbox-list)
+ * Fix 14: Grid layout — inbox SIEMPRE col-1 (izq), chat-win SIEMPRE col-2 (der), ignora orden DOM
  */
 (function(){
   'use strict';
   try {
     if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
-    if(window.__spChatsV5) return;
-    window.__spChatsV5 = true;
+    if(window.__spChatsV53) return;
+    window.__spChatsV53 = true;
 
     /* ── CSS ───────────────────────────────────────────────────────── */
     (function injectCss(){
-      if(document.getElementById('waoasis-chats-css-v5')) return;
+      if(document.getElementById('waoasis-chats-css-v53')) return;
       var s = document.createElement('style');
-      s.id = 'waoasis-chats-css-v5';
+      s.id = 'waoasis-chats-css-v53';
       s.textContent = [
 
-        /* Fix 9 — Inbox siempre visible, filtros nunca aplastados */
+        /* Fix 9+14 — Grid layout: inbox SIEMPRE col-1, chat-win SIEMPRE col-2 (ignora DOM order) */
         '@media (min-width:901px){',
-        '  .wbv5-chat-wrap{display:flex!important;flex-direction:row!important;}',
+        '  .wbv5-chat-wrap{',
+        '    display:grid!important;',
+        '    grid-template-columns:360px 1fr!important;',
+        '    grid-template-rows:1fr!important;',
+        '  }',
         '  .wbv5-inbox-list{',
-        '    min-width:340px!important;max-width:380px!important;',
-        '    flex:0 0 360px!important;overflow:hidden!important;',
+        '    grid-column:1!important;grid-row:1!important;',
+        '    min-width:0!important;max-width:none!important;',
+        '    overflow:hidden!important;',
         '    display:flex!important;flex-direction:column!important;',
         '  }',
-        '  .wbv5-chat-win{flex:1 1 0!important;min-width:0!important;}',
+        /* Fix 13+14 — chat-win siempre col-2, posición relativa para contener iframe */
+        '  .wbv5-chat-win{',
+        '    grid-column:2!important;grid-row:1!important;',
+        '    min-width:0!important;',
+        '    position:relative!important;overflow:hidden!important;',
+        '  }',
+        /* Fix 13 — iframe confinado dentro del chat-win, no del chat-wrap completo */
+        '  #sp-chat-iframe{',
+        '    position:absolute!important;',
+        '    left:0!important;top:0!important;',
+        '    width:100%!important;height:100%!important;',
+        '    z-index:10!important;',
+        '  }',
         /* Filtros siempre visibles — scroll horizontal si hay poco espacio */
         '  .wbv5-il-filters{',
         '    flex-wrap:wrap!important;overflow-x:auto!important;',
@@ -136,6 +155,35 @@
         }
         attachRO();
       }
+    })();
+
+
+    /* ── Fix 14: Orden visual forzado via inline style (vence cualquier CSS del app) ── */
+    (function fixOrder(){
+      function enforceGridArea(){
+        var inbox = document.querySelector('.wbv5-inbox-list');
+        var chatWin = document.querySelector('.wbv5-chat-win');
+        var wrap = document.querySelector('.wbv5-chat-wrap');
+        if(!inbox || !chatWin || !wrap) return;
+        inbox.style.setProperty('grid-column', '1', 'important');
+        inbox.style.setProperty('grid-row', '1', 'important');
+        chatWin.style.setProperty('grid-column', '2', 'important');
+        chatWin.style.setProperty('grid-row', '1', 'important');
+        wrap.style.setProperty('display', 'grid', 'important');
+        wrap.style.setProperty('grid-template-columns', '360px 1fr', 'important');
+      }
+      enforceGridArea();
+      var _obs = new MutationObserver(function(){
+        enforceGridArea();
+      });
+      var main = document.querySelector('.wbv5-main') || document.getElementById('root');
+      if(main) _obs.observe(main, {childList:true, subtree:true});
+      document.addEventListener('click', function(){
+        enforceGridArea();
+        [50,150,300,600,1200].forEach(function(d){ setTimeout(enforceGridArea,d); });
+      }, true);
+      setInterval(enforceGridArea, 1500);
+      console.info('[WA-OASIS v5.3] Grid order fix active');
     })();
 
     /* ── Fix 1: hideWbv5DiagFloat eficiente (heredado) ─────────────── */
@@ -351,11 +399,755 @@
         console.info('[WA-OASIS v5.0] injectDesktopChatIframe fallback definido');
       }
       defineInject();
-      setTimeout(defineInject, 1000);
-      setTimeout(defineInject, 3000);
+      setTimeout(defineInject, 1500);
     })();
 
-  } catch(e){
-    console.warn('[WA-OASIS:chats v5]', e);
+  } catch(e) {
+    console.error('[WA-OASIS v5] init error:', e);
   }
+})();
+
+/* ── Fix 13: Ocultar APPS CHAT (Instagram, Messenger, TikTok) del sidebar y filtros ── */
+(function hideAppChats(){
+  if(window.__spHideAppChats) return;
+  window.__spHideAppChats = true;
+
+  /* 1) Inyectar CSS base para ocultar elementos ya marcados */
+  var st = document.createElement('style');
+  st.id = 'sp-hide-appchat-style';
+  st.textContent = '.sp-hide-appchat{display:none!important;}';
+  if(!document.getElementById('sp-hide-appchat-style')) document.head.appendChild(st);
+
+  var _HIDE = ['Instagram','Messenger','TikTok'];
+
+  function hideItems(){
+    /* Sidebar: ocultar nav-items de Instagram/Messenger/TikTok */
+    document.querySelectorAll('.wbv5-nav-item').forEach(function(el){
+      if(_HIDE.indexOf(el.textContent.trim()) !== -1){
+        el.classList.add('sp-hide-appchat');
+      }
+    });
+
+    /* Sidebar: ocultar encabezado "APPS CHAT" si ya no tiene hijos visibles */
+    document.querySelectorAll('[class*="nav-section-title"],[class*="nav-group-title"],[class*="sidebar-title"]').forEach(function(el){
+      if(el.textContent.trim().toUpperCase() === 'APPS CHAT'){
+        el.classList.add('sp-hide-appchat');
+      }
+    });
+    /* Buscar también por texto directo en cualquier span/div dentro del sidebar */
+    document.querySelectorAll('.wbv5-sidebar span, .wbv5-sidebar div').forEach(function(el){
+      if(el.children.length === 0 && el.textContent.trim().toUpperCase() === 'APPS CHAT'){
+        el.classList.add('sp-hide-appchat');
+      }
+    });
+
+    /* Filtros de chats: ocultar botones Instagram / Messenger / TikTok
+       Los botones usan texto con emojis: "📷 Instagram", "💬 Messenger", "🎵 TikTok"
+       Usamos .includes() para capturar independientemente del emoji */
+    document.querySelectorAll('button.wbv5-il-filter, button[class*="filter"], [role="tab"]').forEach(function(el){
+      var txt = el.textContent.trim();
+      if(_HIDE.some(function(h){ return txt.includes(h); })){
+        el.classList.add('sp-hide-appchat');
+      }
+    });
+  }
+
+  /* Correr inmediatamente y tras breve espera (React puede tardar en renderizar) */
+  hideItems();
+  [200,600,1500,3000].forEach(function(d){ setTimeout(hideItems, d); });
+
+  /* MutationObserver con debounce — se activa cada vez que React re-renderiza el DOM */
+  var _debTimer = null;
+  var obs = new MutationObserver(function(){
+    clearTimeout(_debTimer);
+    _debTimer = setTimeout(hideItems, 300);
+  });
+  obs.observe(document.body, {childList:true, subtree:true});
+
+  console.info('[WA-OASIS v5.3] Fix 13: APPS CHAT oculto (Instagram/Messenger/TikTok)');
+})();
+
+
+/* ── Fix 15: SIEMPRE mostrar chat.html en panel derecho (incluso sin chat seleccionado) ── */
+(function fixAlwaysShowChat(){
+  if(window.__spFix15) return;
+  window.__spFix15 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  /* CSS extra: .wbv5-chat-win.sp-iframe-active también oculta contenido React */
+  (function addCss(){
+    if(document.getElementById('sp-fix15-css')) return;
+    var s = document.createElement('style');
+    s.id = 'sp-fix15-css';
+    s.textContent = [
+      '.wbv5-chat-win.sp-iframe-active .wbv5-cw-msgs{display:none!important;}',
+      '.wbv5-chat-win.sp-iframe-active .wbv5-cw-input-bar{display:none!important;}',
+      '.wbv5-chat-win.sp-iframe-active #sp-no-chat{display:none!important;}',
+      '#sp-chat-iframe{position:absolute!important;top:0!important;left:0!important;',
+      'width:100%!important;height:100%!important;border:none!important;z-index:10!important;background:#fff!important;}',
+      '.wbv5-chat-win{position:relative!important;overflow:hidden!important;}'
+    ].join('');
+    document.head.appendChild(s);
+  })();
+
+  function overrideInject(){
+    window.injectDesktopChatIframe = function(){
+      if(window.matchMedia('(max-width:900px)').matches) return;
+      if(window.location.pathname.indexOf('whatsapp-bot')===-1) return;
+
+      var cw = document.querySelector('.wbv5-chat-win');
+      if(!cw) return;
+
+      /* Limpiar placeholder "no chat" del panel */
+      var noDiv = document.getElementById('sp-no-chat');
+      if(noDiv) noDiv.remove();
+
+      /* JID sólo de click explícito — sin leer DOM auto */
+      var jid = window.__lastClickedJid || null;
+
+      var existing = document.getElementById('sp-chat-iframe');
+
+      if(existing){
+        /* JID cambió → actualizar iframe src */
+        if(jid && existing.dataset.jid !== jid){
+          existing.dataset.jid = jid;
+          existing.src = '/bot/chat.html?jid='+encodeURIComponent(jid)+'&t='+Date.now();
+        }
+        /* Sin JID o mismo JID → mantener iframe como está (NO borrar) */
+        cw.classList.add('sp-iframe-active');
+        return;
+      }
+
+      /* No hay iframe → crear uno nuevo */
+      var iframe = document.createElement('iframe');
+      iframe.id  = 'sp-chat-iframe';
+      iframe.dataset.jid = jid || '';
+      iframe.src = jid
+        ? '/bot/chat.html?jid='+encodeURIComponent(jid)+'&t='+Date.now()
+        : '/bot/chat.html';
+      iframe.allow = 'microphone';
+      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:10;background:#fff;display:block;';
+      cw.style.position = 'relative';
+      cw.style.overflow = 'hidden';
+      cw.classList.add('sp-iframe-active');
+      cw.appendChild(iframe);
+      console.info('[WA-OASIS v6] Fix15 iframe → '+iframe.src);
+    };
+
+    /* Ejecutar inmediatamente con la nueva función */
+    [100,600,1500,3000].forEach(function(d){ setTimeout(window.injectDesktopChatIframe,d); });
+    console.info('[WA-OASIS v6] Fix 15: injectDesktopChatIframe sobreescrito — siempre muestra chat.html');
+  }
+
+  /* Esperar a que sanate-panel.js defina su versión, luego sobreescribir la nuestra */
+  setTimeout(overrideInject, 1200);
+  setTimeout(overrideInject, 3500);
+
+  console.info('[WA-OASIS v6] Fix 15 init: esperando sanate-panel.js...');
+})();
+
+
+/* ── Fix 16: Separación visual clara sidebar ↔ inbox-list ── */
+(function fixVisualSeparator(){
+  if(window.__spFix16) return;
+  window.__spFix16 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  var css = [
+    /* Sidebar: borde derecho visible + sombra sutil */
+    '.wbv5-sidebar{',
+    '  border-right:2px solid rgba(0,0,0,0.13)!important;',
+    '  box-shadow:3px 0 8px rgba(0,0,0,0.07)!important;',
+    '  z-index:2!important;',
+    '  position:relative!important;',
+    '}',
+    /* Inbox: fondo ligeramente distinto + borde izquierdo */
+    '.wbv5-inbox-list{',
+    '  background:rgba(248,249,251,0.97)!important;',
+    '  border-left:1px solid rgba(0,0,0,0.07)!important;',
+    '}',
+    /* Header del inbox: fondo blanco puro para distinguir del sidebar */
+    '.wbv5-il-header,.wbv5-inbox-header{',
+    '  background:#ffffff!important;',
+    '  border-bottom:1px solid rgba(0,0,0,0.08)!important;',
+    '}'
+  ].join('\n');
+
+  var s = document.createElement('style');
+  s.id = 'sp-fix16-css';
+  s.textContent = css;
+  if(!document.getElementById('sp-fix16-css')) document.head.appendChild(s);
+
+  /* También forzar via JS por si el CSS no alcanza */
+  function applyStyles(){
+    var sidebar = document.querySelector('.wbv5-sidebar');
+    if(sidebar){
+      sidebar.style.setProperty('border-right','2px solid rgba(0,0,0,0.13)','important');
+      sidebar.style.setProperty('box-shadow','3px 0 8px rgba(0,0,0,0.07)','important');
+    }
+    var inbox = document.querySelector('.wbv5-inbox-list');
+    if(inbox){
+      inbox.style.setProperty('background','rgba(248,249,251,0.97)','important');
+    }
+  }
+
+  applyStyles();
+  [300,800,2000].forEach(function(d){ setTimeout(applyStyles, d); });
+  console.info('[WA-OASIS v6] Fix 16: separación visual sidebar/inbox aplicada');
+})();
+
+
+/* ============================================================
+   FIX 17 — Swap grid columns: chat-win CENTER, inbox-list RIGHT
+   chat.html (wbv5-chat-win) → column 1 (1fr, center 240-1006px)
+   inbox list (wbv5-inbox-list) → column 2 (360px, right 1006-1366px)
+   ============================================================ */
+(function fixSwapColumns(){
+  if(window.__spFix17) return;
+  window.__spFix17 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  var css = `
+    .wbv5-chat-wrap {
+      display: grid !important;
+      grid-template-columns: 1fr 360px !important;
+      grid-template-rows: 1fr !important;
+    }
+    .wbv5-chat-win {
+      grid-column: 1 !important;
+      grid-row: 1 !important;
+      order: 1 !important;
+    }
+    .wbv5-inbox-list {
+      grid-column: 2 !important;
+      grid-row: 1 !important;
+      order: 2 !important;
+      border-left: 1.5px solid rgba(0,0,0,0.1) !important;
+      border-right: none !important;
+    }
+  `;
+  var styleEl = document.getElementById('sp-fix17-styles');
+  if(!styleEl){
+    styleEl = document.createElement('style');
+    styleEl.id = 'sp-fix17-styles';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = css;
+
+  function enforceSwap(){
+    // Solo aplicar en desktop (>900px)
+    if(window.matchMedia('(max-width:900px)').matches) return;
+    var wrap    = document.querySelector('.wbv5-chat-wrap');
+    var inbox   = document.querySelector('.wbv5-inbox-list');
+    var chatWin = document.querySelector('.wbv5-chat-win');
+    if(!wrap || !inbox || !chatWin) return;
+    wrap.style.setProperty('display','grid','important');
+    wrap.style.setProperty('grid-template-columns','1fr 360px','important');
+    wrap.style.setProperty('grid-template-rows','1fr','important');
+    chatWin.style.setProperty('grid-column','1','important');
+    chatWin.style.setProperty('grid-row','1','important');
+    chatWin.style.setProperty('order','1','important');
+    inbox.style.setProperty('grid-column','2','important');
+    inbox.style.setProperty('grid-row','1','important');
+    inbox.style.setProperty('order','2','important');
+    inbox.style.setProperty('border-left','1.5px solid rgba(0,0,0,0.1)','important');
+    inbox.style.removeProperty('border-right');
+  }
+
+  enforceSwap();
+  [200,500,1000,2000,4000].forEach(function(d){ setTimeout(enforceSwap,d); });
+
+  // MutationObserver to resist React re-renders
+  var observer = new MutationObserver(function(muts){
+    for(var m of muts){
+      if(m.target && (m.target.classList.contains('wbv5-chat-wrap')||
+                      m.target.classList.contains('wbv5-chat-win')||
+                      m.target.classList.contains('wbv5-inbox-list'))){
+        enforceSwap();
+        break;
+      }
+    }
+  });
+  function startObserver(){
+    var wrap = document.querySelector('.wbv5-chat-wrap');
+    if(wrap){
+      observer.observe(wrap, {attributes:true, subtree:true, attributeFilter:['style','class']});
+    }
+  }
+  [300,1000,2500].forEach(function(d){ setTimeout(startObserver,d); });
+
+  // Periodic enforcement to beat any JS that resets styles
+  setInterval(enforceSwap, 1500);
+
+  console.info('[WA-OASIS v7] Fix 17: columnas intercambiadas — chat-win CENTRO, inbox-list DERECHA');
+})();
+
+
+/* ============================================================
+   FIX 18 — Mobile mode: restaurar layout natural del inbox (sin forzar grid)
+   En móvil (<= 900px) la lista de chats debe verse completa como estaba
+   ============================================================ */
+(function fixMobileInbox(){
+  if(window.__spFix18) return;
+  window.__spFix18 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  function restoreMobile(){
+    if(!window.matchMedia('(max-width:900px)').matches) return;
+    var wrap = document.querySelector('.wbv5-chat-wrap');
+    var inbox = document.querySelector('.wbv5-inbox-list');
+    var chatWin = document.querySelector('.wbv5-chat-win');
+    if(!wrap || !inbox || !chatWin) return;
+    // Quitar estilos inline forzados en móvil
+    wrap.style.removeProperty('display');
+    wrap.style.removeProperty('grid-template-columns');
+    wrap.style.removeProperty('grid-template-rows');
+    chatWin.style.removeProperty('grid-column');
+    chatWin.style.removeProperty('grid-row');
+    chatWin.style.removeProperty('order');
+    inbox.style.removeProperty('grid-column');
+    inbox.style.removeProperty('grid-row');
+    inbox.style.removeProperty('order');
+  }
+
+  restoreMobile();
+  [300,800,1500,3000].forEach(function(d){ setTimeout(restoreMobile,d); });
+  setInterval(restoreMobile, 2000);
+
+  // Escuchar resize para aplicar cuando se cambie de desktop a móvil
+  window.addEventListener('resize', restoreMobile);
+
+  console.info('[WA-OASIS v7] Fix 18: móvil restaurado — inbox completo en pantalla pequeña');
+})();
+
+
+/* ============================================================
+   FIX 17b — Corrige el CSS de Fix 17: agregar @media desktop
+   El CSS original no tenía media query, rompía el layout móvil
+   ============================================================ */
+(function fixColumnCssMediaQuery(){
+  if(window.__spFix17b) return;
+  window.__spFix17b = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  // Reemplazar el style tag de Fix 17 con versión correcta (media query desktop)
+  var styleEl = document.getElementById('sp-fix17-styles');
+  if(!styleEl){
+    styleEl = document.createElement('style');
+    styleEl.id = 'sp-fix17-styles';
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = [
+    '@media screen and (min-width:901px){',
+    '  .wbv5-chat-wrap{display:grid!important;grid-template-columns:1fr 360px!important;grid-template-rows:1fr!important;}',
+    '  .wbv5-chat-win{grid-column:1!important;grid-row:1!important;order:1!important;}',
+    '  .wbv5-inbox-list{grid-column:2!important;grid-row:1!important;order:2!important;border-left:1.5px solid rgba(0,0,0,0.1)!important;border-right:none!important;}',
+    '}',
+    '@media screen and (max-width:900px){',
+    '  .wbv5-chat-wrap{display:block!important;}',
+    '  .wbv5-chat-win{grid-column:unset!important;grid-row:unset!important;order:unset!important;}',
+    '  .wbv5-inbox-list{grid-column:unset!important;grid-row:unset!important;order:unset!important;border-left:none!important;}',
+    '}'
+  ].join('\n');
+
+  console.info('[WA-OASIS v7] Fix 17b: CSS actualizado con @media desktop');
+})();
+
+
+/* ============================================================
+   FIX 19 — Móvil: tap en contacto abre chat.html de ese chat
+   En pantallas <= 900px, al hacer click en un wbv5-conv-itm,
+   se inyecta chat.html con el JID correcto en modo fullscreen.
+   ============================================================ */
+(function fixMobileChatTap(){
+  if(window.__spFix19) return;
+  window.__spFix19 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  function isMobile(){ return window.innerWidth <= 900 || document.documentElement.clientWidth <= 900; }
+
+  function openChatMobile(jid){
+    if(!jid) return;
+    var phone = jid.replace(/@.*/,'');
+    var chatUrl = '/bot/chat.html?jid=' + encodeURIComponent(jid) + '&t=' + Date.now();
+
+    // Buscar o crear overlay fullscreen
+    var overlay = document.getElementById('sp-mobile-chat-overlay');
+    if(!overlay){
+      overlay = document.createElement('div');
+      overlay.id = 'sp-mobile-chat-overlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#fff;display:flex;flex-direction:column;border:none;outline:none;box-shadow:none;';
+
+      // iframe de chat.html — sin barra encima; #back-btn de chat.html cierra el overlay
+      var iframe = document.createElement('iframe');
+      iframe.id = 'sp-mobile-chat-frame';
+      iframe.allow = 'microphone';
+      iframe.style.cssText = 'flex:1;width:100%;border:none;background:#fff;';
+      overlay.appendChild(iframe);
+      
+      document.body.appendChild(overlay);
+    }
+
+    // Actualizar src del iframe
+    var frame = overlay.querySelector('#sp-mobile-chat-frame');
+    if(frame){
+      frame.src = chatUrl;
+      frame.onload = function(){
+        setTimeout(function(){
+          try {
+            var doc = frame.contentDocument;
+            var btn = doc && doc.getElementById('back-btn');
+            if(btn && !btn.__sp19back){
+              btn.__sp19back = true;
+              btn.addEventListener('click', function(){ overlay.style.display = 'none'; });
+            }
+          } catch(e){}
+        }, 200);
+      };
+    }
+    overlay.style.display = 'flex';
+  }
+
+  function attachMobileTapListener(){
+    var convs = document.querySelector('.wbv5-il-convs');
+    if(!convs || convs.__sp19Attached) return;
+    convs.__sp19Attached = true;
+
+    convs.addEventListener('click', function(e){
+      if(!isMobile()) return; // solo en móvil
+      var item = e.target.closest('.wbv5-conv-itm');
+      if(!item) return;
+      // Esperar a que __lastClickedJid se actualice
+      setTimeout(function(){
+        var jid = window.__lastClickedJid;
+        if(jid) openChatMobile(jid);
+      }, 120);
+    }, true);
+  }
+
+  [300,800,1500,3000,5000].forEach(function(d){ setTimeout(attachMobileTapListener, d); });
+  
+  // Reconnect si React recrea el DOM
+  var obs = new MutationObserver(function(){
+    if(document.querySelector('.wbv5-il-convs:not([__sp19Attached])')) attachMobileTapListener();
+  });
+  setTimeout(function(){
+    var root = document.querySelector('.wbv5-inbox-list') || document.body;
+    obs.observe(root, {childList:true, subtree:false});
+  }, 1000);
+
+  console.info('[WA-OASIS v7] Fix 19: móvil tap → chat.html activo');
+})();
+
+
+/* ============================================================
+   FIX 20 — Nombres en inbox: mostrar nombre real si está guardado
+   Carga /api/whatsapp/contacts y reemplaza números por nombres
+   en .wbv5-ci-name cuando el nombre difiere del teléfono.
+   ============================================================ */
+(function fixInboxNames(){
+  if(window.__spFix20) return;
+  window.__spFix20 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  var nameMap = {}; // jid/phone → displayName
+
+  function buildNameMap(contacts){
+    nameMap = {};
+    contacts.forEach(function(c){
+      var jid = (c.jid||'').replace(/@.*/,'');
+      var phone = (c.phone||'');
+      var name = (c.name || c.push_name || c.pushName || '').trim();
+      // Solo guardar si el nombre es diferente al número
+      if(name && name !== jid && name !== phone){
+        if(jid) nameMap[jid] = name;
+        if(phone) nameMap[phone] = name;
+      }
+    });
+    applyNames();
+  }
+
+  function applyNames(){
+    var nameEls = document.querySelectorAll('.wbv5-ci-name');
+    nameEls.forEach(function(el){
+      // Obtener solo el texto (sin spans hijos)
+      var textNodes = [...el.childNodes].filter(function(n){ return n.nodeType === 3; });
+      var phone = textNodes.map(function(n){ return n.textContent.trim(); }).join('');
+      var stripped = phone.replace(/[^0-9]/g,'');
+      var realName = nameMap[phone] || nameMap[stripped] || null;
+      if(realName && el.dataset.spOrigPhone !== phone){
+        textNodes.forEach(function(n){ n.textContent = realName + ' '; });
+        el.dataset.spOrigPhone = phone;
+        el.title = phone; // mostrar número al hacer hover
+      }
+    });
+  }
+
+  function loadNames(){
+    fetch('https://sanate-wa-bot.onrender.com/api/whatsapp/contacts')
+      .then(function(r){ return r.json(); })
+      .then(function(d){ buildNameMap(d.clients || d.chats || []); })
+      .catch(function(){});
+  }
+
+  loadNames();
+  setInterval(loadNames, 30000); // refresca cada 30s
+  window.__spInt20 = setInterval(applyNames, 3000); // aplica cada 3s para nuevos items
+
+  console.info('[WA-OASIS v7] Fix 20: nombres de contactos en inbox activo');
+})();
+
+
+/* ============================================================
+   FIX 21 — Limpieza overlay móvil (legacy cleanup)
+   Fix 19 ya no crea la barra ← Chats.
+   Este fix limpia cualquier overlay antiguo en caché.
+   ============================================================ */
+(function fixMobileOverlayCleanup(){
+  if(window.__spFix21) return;
+  window.__spFix21 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  function cleanLegacyBar(){
+    var overlay = document.getElementById('sp-mobile-chat-overlay');
+    if(!overlay) return;
+    var bar = overlay.querySelector('div[style*="background:#128c7e"]');
+    if(bar) bar.remove();
+    overlay.style.border = 'none';
+    overlay.style.outline = 'none';
+    overlay.style.boxShadow = 'none';
+  }
+
+  setTimeout(cleanLegacyBar, 200);
+  window.__spInt21cl = setInterval(cleanLegacyBar, 2000);
+
+  console.info('[WA-OASIS v7] Fix 21: legacy bar cleanup activo');
+})();
+
+
+/* ============================================================
+   FIX 22 — Nombres reales en inbox desde oasis_wa_chats (Supabase)
+   Reemplaza Fix 20 — usa la tabla correcta con los nombres reales.
+   ============================================================ */
+(function fixInboxNamesV2(){
+  if(window.__spFix22) return;
+  window.__spFix22 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  var nameMap22 = {};
+  var sbLoaded = false;
+
+  function getSBCreds(){
+    // Get from main chat iframe (same-origin)
+    var iframe = document.getElementById('sp-chat-iframe');
+    if(iframe && iframe.contentWindow && iframe.contentWindow.SK){
+      return {sb: iframe.contentWindow.SB, sk: iframe.contentWindow.SK};
+    }
+    var mframe = document.getElementById('sp-mobile-chat-frame');
+    if(mframe && mframe.contentWindow && mframe.contentWindow.SK){
+      return {sb: mframe.contentWindow.SB, sk: mframe.contentWindow.SK};
+    }
+    return null;
+  }
+
+  function applyNames22(){
+    var nameEls = document.querySelectorAll('.wbv5-ci-name');
+    nameEls.forEach(function(el){
+      var textNodes = [...el.childNodes].filter(function(n){ return n.nodeType === 3; });
+      var raw = textNodes.map(function(n){ return n.textContent; }).join('').trim();
+      var stripped = raw.replace(/[^0-9]/g,'');
+      var realName = nameMap22[raw] || nameMap22[stripped] || null;
+      if(realName && el.dataset.sp22Done !== realName){
+        textNodes.forEach(function(n){ n.textContent = realName; });
+        // Preserve space before span
+        if(el.childNodes.length > 1) el.childNodes[0].textContent = realName + ' ';
+        el.dataset.sp22Done = realName;
+        el.title = raw; // show original number on hover
+      }
+    });
+  }
+
+  function loadFromSupabase(){
+    var creds = getSBCreds();
+    if(!creds) return;
+    fetch(creds.sb + '/rest/v1/oasis_wa_chats?select=jid,name,phone,push_name&limit=500', {
+      headers: {'apikey': creds.sk, 'Authorization': 'Bearer ' + creds.sk}
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(!Array.isArray(data)) return;
+      nameMap22 = {};
+      data.forEach(function(c){
+        var jid = (c.jid||'').replace(/@.*/,'');
+        var phone = (c.phone||'');
+        var name = (c.name||c.push_name||'').trim();
+        // Only store if it's a real name (not just the phone number)
+        if(name && name !== jid && name !== phone && !/^[0-9+]+$/.test(name)){
+          if(jid) nameMap22[jid] = name;
+          if(phone) nameMap22[phone] = name;
+        }
+      });
+      sbLoaded = true;
+      applyNames22();
+    })
+    .catch(function(){});
+  }
+
+  // Wait for iframe to load to get credentials
+  function tryLoad(){
+    var creds = getSBCreds();
+    if(creds){ loadFromSupabase(); }
+    else { setTimeout(tryLoad, 1500); }
+  }
+  tryLoad();
+
+  // Re-apply when DOM changes (new chat items loaded)
+  window.__spInt22 = setInterval(applyNames22, 2500);
+  // Reload names every minute
+  setInterval(loadFromSupabase, 60000);
+
+  console.info('[WA-OASIS v7] Fix 22: nombres desde oasis_wa_chats activo');
+})();
+
+
+/* ============================================================
+   FIX 23 — Placeholder + anti-titileo (MutationObserver)
+   ============================================================ */
+(function fixPlaceholder(){
+  if(window.__spFix23) return;
+  window.__spFix23 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot')!==0) return;
+
+  /* Matar intervalos de Fix 20/21/22 para eliminar titileo */
+  clearInterval(window.__spInt20);   window.__spInt20   = null;
+  clearInterval(window.__spInt21cl); window.__spInt21cl = null;
+  clearInterval(window.__spInt22);   window.__spInt22   = null;
+
+  /* CSS */
+  if(!document.getElementById('sp-fix23-css')){
+    var s=document.createElement('style'); s.id='sp-fix23-css';
+    s.textContent='@media(max-width:900px){#sp-chat-placeholder{display:none!important;}.wbv5-chat-win{display:none!important;overflow:hidden!important;}.wbv5-inbox-list{width:100%!important;display:block!important;}.wbv5-chat-wrap{display:block!important;}}'+'#sp-chat-placeholder{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#f0f2f5;z-index:15;pointer-events:none;}'+
+    '#sp-chat-placeholder .sp-ph-ico{font-size:72px;margin-bottom:20px;opacity:0.55;}'+
+    '#sp-chat-placeholder .sp-ph-title{font-size:19px;color:#41525d;font-weight:500;margin-bottom:6px;}'+
+    '#sp-chat-placeholder .sp-ph-sub{font-size:14px;color:#8696a0;}';
+    document.head.appendChild(s);
+  }
+
+  function getCW(){ return document.querySelector('.wbv5-chat-win'); }
+
+  function ensurePH(){
+    var ph=document.getElementById('sp-chat-placeholder');
+    if(!ph){
+      var cw=getCW(); if(!cw) return null;
+      ph=document.createElement('div'); ph.id='sp-chat-placeholder';
+      ph.innerHTML='<div class="sp-ph-ico">💬</div><div class="sp-ph-title">Selecciona un chat</div><div class="sp-ph-sub">Elige una conversación de la lista</div>';
+      cw.style.position='relative'; cw.appendChild(ph);
+    }
+    return ph;
+  }
+
+  window.__spShowPlaceholder=function(){
+    var ph=ensurePH(); if(!ph) return;
+    ph.style.display='flex';
+    var f=document.getElementById('sp-chat-iframe');
+    if(f){f.style.display='none'; f.style.zIndex='9';}
+    var cw=getCW(); if(cw) cw.classList.remove('sp-iframe-active');
+  };
+
+  window.__spHidePlaceholder=function(){
+    var ph=document.getElementById('sp-chat-placeholder');
+    if(ph) ph.style.display='none';
+    var f=document.getElementById('sp-chat-iframe');
+    if(f){f.style.display='block'; f.style.zIndex='10';}
+    var cw=getCW(); if(cw) cw.classList.add('sp-iframe-active');
+  };
+
+  /* Override injectDesktopChatIframe: sólo abrir chat con JID explícito */
+  function patchInject(){
+    window.injectDesktopChatIframe=function(){
+      if(window.matchMedia('(max-width:900px)').matches) return;
+      if(window.location.pathname.indexOf('whatsapp-bot')===-1) return;
+      var cw=getCW(); if(!cw) return;
+      var jid=window.__lastClickedJid||null;
+      if(!jid){ window.__spShowPlaceholder(); return; }
+      window.__spHidePlaceholder();
+      var existing=document.getElementById('sp-chat-iframe');
+      if(existing){
+        if(existing.dataset.jid!==jid){
+          existing.dataset.jid=jid;
+          existing.src='/bot/chat.html?jid='+encodeURIComponent(jid)+'&t='+Date.now();
+        }
+        existing.style.display='block'; existing.style.zIndex='10';
+        cw.classList.add('sp-iframe-active'); return;
+      }
+      var iframe=document.createElement('iframe');
+      iframe.id='sp-chat-iframe'; iframe.dataset.jid=jid;
+      iframe.src='/bot/chat.html?jid='+encodeURIComponent(jid)+'&t='+Date.now();
+      iframe.allow='microphone';
+      iframe.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:10;background:#fff;display:block;';
+      cw.style.position='relative'; cw.style.overflow='hidden';
+      cw.classList.add('sp-iframe-active'); cw.appendChild(iframe);
+    };
+  }
+  patchInject();
+  setTimeout(patchInject, 1300);
+  setTimeout(patchInject, 3600);
+  setTimeout(patchInject, 6000);
+
+  /* Mostrar placeholder en carga inicial */
+  function initPH(){
+    if(window.__lastClickedJid) return;
+    if(window.innerWidth<=900||document.documentElement.clientWidth<=900) return;
+    var iframe=document.getElementById('sp-chat-iframe');
+    if(iframe){ iframe.remove(); } // remove any auto-created iframe
+    window.__spShowPlaceholder();
+  }
+  [100,400,900,1500,2000,4000].forEach(function(d){ setTimeout(initPH,d); });
+
+  /* Anti-titileo: MutationObserver para nombres */
+  var nm23={};
+  function loadSBNames(){
+    var f=document.getElementById('sp-chat-iframe');
+    var m=(f&&f.contentWindow&&f.contentWindow.SK)?{sb:f.contentWindow.SB,sk:f.contentWindow.SK}:null;
+    if(!m) return;
+    fetch(m.sb+'/rest/v1/oasis_wa_chats?select=jid,name,phone,push_name&limit=500',{headers:{'apikey':m.sk,'Authorization':'Bearer '+m.sk}})
+    .then(function(r){return r.json();}).then(function(data){
+      if(!Array.isArray(data)) return;
+      nm23={};
+      data.forEach(function(c){
+        var jid=(c.jid||'').replace(/@.*/,'');
+        var n=(c.name||c.push_name||'').trim();
+        if(n&&n!==jid&&n!==(c.phone||'')&&!/^[0-9+]+$/.test(n)){
+          if(jid) nm23[jid]=n;
+          if(c.phone) nm23[c.phone]=n;
+        }
+      });
+      applyNames23();
+    }).catch(function(){});
+  }
+  function applyNames23(){
+    document.querySelectorAll('.wbv5-ci-name').forEach(function(el){
+      var nodes=[...el.childNodes].filter(function(n){return n.nodeType===3;});
+      var raw=nodes.map(function(n){return n.textContent;}).join('').trim();
+      var stripped=raw.replace(/[^0-9]/g,'');
+      var real=nm23[raw]||nm23[stripped]||null;
+      if(real&&el.dataset.sp23!==real){
+        nodes.forEach(function(n){n.textContent=real;}); el.dataset.sp23=real; el.title=raw;
+      }
+    });
+  }
+  var obs23=null;
+  function startObs(){
+    var root=document.querySelector('.wbv5-il-convs')||document.querySelector('.wbv5-inbox-list');
+    if(!root||obs23) return;
+    obs23=new MutationObserver(function(){
+      document.querySelectorAll('.wbv5-ci-name[data-sp23]').forEach(function(el){el.dataset.sp23='';});
+      applyNames23();
+    });
+    obs23.observe(root,{childList:true,subtree:true});
+  }
+  setTimeout(function(){loadSBNames();startObs();},3000);
+  setTimeout(loadSBNames,30000);
+
+  console.info('[WA-OASIS v7] Fix 23: placeholder+titileo activo');
 })();
