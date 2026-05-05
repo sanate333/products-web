@@ -1657,3 +1657,38 @@
 
   console.info('[WA-OASIS v8] Fix 28: placeholder en carga, sin auto-apertura de chat');
 })();
+
+
+/* ============================================================
+   FIX 28b — Guard interval: placeholder forzado hasta click
+   Fix 15 tiene referencias capturadas que abren chat automático
+   incluso después del reset. Este guard corre cada 300ms y limpia
+   cualquier iframe auto-creado hasta que el usuario elija un chat.
+   ============================================================ */
+(function fix28b(){
+  if(window.__spFix28b) return;
+  window.__spFix28b = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot') !== 0) return;
+
+  var _guard = setInterval(function(){
+    /* Parar en cuanto el usuario haya elegido un chat */
+    if(window.__spUserPickedChat){ clearInterval(_guard); return; }
+
+    /* Eliminar cualquier iframe auto-creado */
+    var f = document.getElementById('sp-chat-iframe');
+    if(f){ f.remove(); }
+
+    /* Limpiar estado */
+    window.__lastClickedJid = null;
+    var cw = document.querySelector('.wbv5-chat-win');
+    if(cw) cw.classList.remove('sp-iframe-active');
+
+    /* Mostrar placeholder */
+    if(window.__spShowPlaceholder) window.__spShowPlaceholder();
+  }, 300);
+
+  /* Seguridad: máximo 10 segundos de guard */
+  setTimeout(function(){ clearInterval(_guard); }, 10000);
+
+  console.info('[WA-OASIS v8] Fix 28b: guard activo — placeholder hasta click usuario');
+})();
