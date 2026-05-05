@@ -1692,3 +1692,160 @@
 
   console.info('[WA-OASIS v8] Fix 28b: guard activo — placeholder hasta click usuario');
 })();
+
+
+/* ============================================================
+   FIX 29 — Placeholder solo en Chats + nombres reales corregidos
+   BUG 1: placeholder aparece en Clientes/Flujos etc (SPA nav)
+   BUG 2: nombres no cargan porque Fix 28b elimina iframe antes de que
+          Fix 22/23 pueda leer SB/SK (credenciales Supabase)
+   SOLUCIÓN:
+     1. Interceptar navegación SPA → ocultar placeholder fuera de whatsapp-bot
+     2. Iframe oculto con ID diferente (Fix 28b no lo elimina) para SB/SK
+   ============================================================ */
+(function fix29(){
+  if(window.__spFix29) return;
+  window.__spFix29 = true;
+
+  function isOnWABot(){
+    return window.location.pathname.indexOf('/dashboard/whatsapp-bot') === 0;
+  }
+
+  /* ── 1. Ocultar placeholder al navegar fuera de whatsapp-bot ── */
+  function syncPlaceholderToPath(){
+    var ph = document.getElementById('sp-chat-placeholder');
+    if(!ph) return;
+    if(!isOnWABot()){
+      ph.style.display = 'none';
+    }
+  }
+
+  /* Interceptar navegación SPA: pushState / replaceState / popstate */
+  (function patchHistory(){
+    var _push = history.pushState.bind(history);
+    var _replace = history.replaceState.bind(history);
+    history.pushState = function(){ _push.apply(history, arguments); setTimeout(syncPlaceholderToPath, 60); };
+    history.replaceState = function(){ _replace.apply(history, arguments); setTimeout(syncPlaceholderToPath, 60); };
+    window.addEventListener('popstate', function(){ setTimeout(syncPlaceholderToPath, 60); });
+  })();
+
+  /* Fallback: polling de ruta para React Router interno */
+  var _prevPath = window.location.pathname;
+  setInterval(function(){
+    var cur = window.location.pathname;
+    if(cur !== _prevPath){ _prevPath = cur; syncPlaceholderToPath(); }
+  }, 150);
+
+  /* Override __spShowPlaceholder con verificación de ruta */
+  var _origShow = window.__spShowPlaceholder;
+  window.__spShowPlaceholder = function(){
+    if(!isOnWABot()) return;
+    _origShow && _origShow();
+  };
+
+  /* ── 2. Nombres reales: iframe oculto específico para SB/SK ── */
+  /* Fix 28b solo elimina #sp-chat-iframe — este tiene ID diferente */
+  function loadCredentials(){
+    /* Si ya tenemos credenciales cacheadas, ir directo */
+    if(window.__spCachedSB && window.__spCachedSK){
+      fetchAndApplyNames();
+      return;
+    }
+    /* Intentar leer del iframe principal si existe y cargó */
+    var main = document.getElementById('sp-chat-iframe');
+    if(main){
+      try {
+        if(main.contentWindow && main.contentWindow.SK){
+          window.__spCachedSB = main.contentWindow.SB;
+          window.__spCachedSK = main.contentWindow.SK;
+          fetchAndApplyNames();
+          return;
+        }
+      } catch(e){}
+    }
+    /* Crear iframe oculto de credenciales */
+    if(document.getElementById('sp-cred-frame')) return;
+    var fr = document.createElement('iframe');
+    fr.id = 'sp-cred-frame';
+    fr.src = '/bot/chat.html';
+    fr.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;border:none;z-index:-1;';
+    fr.onload = function(){
+      try {
+        if(fr.contentWindow && fr.contentWindow.SK){
+          window.__spCachedSB = fr.contentWindow.SB;
+          window.__spCachedSK = fr.contentWindow.SK;
+          fetchAndApplyNames();
+          setTimeout(function(){ if(fr.parentElement) fr.remove(); }, 1000);
+        }
+      } catch(e){}
+    };
+    document.body.appendChild(fr);
+  }
+
+  function fetchAndApplyNames(){
+    var sb = window.__spCachedSB, sk = window.__spCachedSK;
+    if(!sb || !sk) return;
+    fetch(sb + '/rest/v1/oasis_wa_chats?select=jid,name,push_name,phone&limit=1000', {
+      headers: {'apikey': sk, 'Authorization': 'Bearer ' + sk}
+    }).then(function(r){ return r.json(); }).then(function(data){
+      if(!Array.isArray(data)) return;
+      var map = {};
+      data.forEach(function(c){
+        var jid = (c.jid || '').replace(/@.*/, '');
+        var nm = (c.name || c.push_name || '').trim();
+        if(!nm || nm === jid || /^[0-9+\-\s()]+$/.test(nm)) return;
+        if(jid) map[jid] = nm;
+        /* Guardar también sin prefijo 57 (Colombia) */
+        var short = jid.replace(/^57/, '');
+        if(short.length >= 8) map[short] = nm;
+        if(c.phone){
+          var p = String(c.phone).replace(/\D/g,'');
+          map[p] = nm;
+          map[p.replace(/^57/,'')] = nm;
+        }
+      });
+      window.__spNames29 = map;
+      applyNames29();
+      console.info('[Fix29] nombres cargados:', Object.keys(map).length, 'contactos');
+    }).catch(function(){});
+  }
+
+  function applyNames29(){
+    if(!window.__spNames29 || !isOnWABot()) return;
+    document.querySelectorAll('.wbv5-conv-itm').forEach(function(item){
+      var nameEl = item.querySelector('.wbv5-ci-name');
+      if(!nameEl) return;
+      /* Leer solo nodos de texto directos (excluye badges <span>) */
+      var txts = Array.from(nameEl.childNodes).filter(function(n){ return n.nodeType === 3; });
+      var raw = txts.map(function(n){ return n.textContent; }).join('').trim();
+      var num = raw.replace(/[^0-9]/g, '');
+      var shortNum = num.replace(/^57/, '');
+      var real = window.__spNames29[raw] || window.__spNames29[num] || window.__spNames29[shortNum] || null;
+      if(real && txts.length > 0 && txts[0].textContent.trim() !== real){
+        txts[0].textContent = real + ' ';
+      }
+    });
+  }
+
+  /* Iniciar carga de credenciales */
+  [800, 2000, 4000].forEach(function(d){ setTimeout(loadCredentials, d); });
+
+  /* Re-aplicar nombres cada vez que React re-renderice la lista */
+  setInterval(applyNames29, 2000);
+
+  /* Cuando el usuario abre un chat, cachear SB/SK del iframe principal */
+  var _credCheck = setInterval(function(){
+    if(window.__spCachedSB) { clearInterval(_credCheck); return; }
+    var f = document.getElementById('sp-chat-iframe');
+    try {
+      if(f && f.contentWindow && f.contentWindow.SK){
+        window.__spCachedSB = f.contentWindow.SB;
+        window.__spCachedSK = f.contentWindow.SK;
+        fetchAndApplyNames();
+        clearInterval(_credCheck);
+      }
+    } catch(e){}
+  }, 500);
+
+  console.info('[WA-OASIS v8] Fix 29: placeholder solo en whatsapp-bot + nombres corregidos');
+})();
