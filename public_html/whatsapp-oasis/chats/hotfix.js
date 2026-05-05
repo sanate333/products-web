@@ -227,6 +227,14 @@
       return rank;
     }
 
+    /* Actualizar rank local inmediatamente cuando enviamos o recibimos nuevo mensaje */
+    function updateLocalRank(jidOrPhone){
+      if(!jidOrPhone) return;
+      var key = String(jidOrPhone).replace(/\D/g,'');
+      if(key) _chatOrder[key] = Date.now(); // rank = ahora
+    }
+    window.__spUpdateChatRank = updateLocalRank; // exponer para uso desde otros fixes
+
     var _sortBusy = false;
     function sortChatList(){
       if(_sortBusy) return;
@@ -249,9 +257,11 @@
 
     var _sortTimer = null;
     var _inboxObs = new MutationObserver(function(muts){
-      if(!muts.some(function(m){ return m.addedNodes.length > 0; })) return;
+      // Disparar si: nuevos nodos O si cambia el orden (childList sin addedNodes = movimiento DOM)
+      var hasChange = muts.some(function(m){ return m.addedNodes.length > 0 || m.removedNodes.length > 0; });
+      if(!hasChange) return;
       clearTimeout(_sortTimer);
-      _sortTimer = setTimeout(function(){ fetchOrder(sortChatList); }, 1200);
+      _sortTimer = setTimeout(function(){ fetchOrder(sortChatList); }, 800);
     });
 
     function initObs(){
@@ -262,7 +272,24 @@
 
     fetchOrder(sortChatList);
     setTimeout(initObs, 2000);
-    setInterval(function(){ fetchOrder(sortChatList); }, 30000);
+    setInterval(function(){ fetchOrder(sortChatList); }, 12000); // cada 12s (antes 30s)
+
+    /* ── Sort inmediato via SSE — cuando llega mensaje nuevo re-ordenar sin esperar 12s ── */
+    (function hookSSE(){
+      try {
+        var es = new EventSource('/api/sse');
+        es.addEventListener('message', function(e){
+          try {
+            var d = JSON.parse(e.data || '{}');
+            if(d.type === 'message' && !d.data?.fromMe){
+              // Mensaje entrante: re-fetch y re-sort inmediatamente
+              setTimeout(function(){ fetchOrder(sortChatList); }, 400);
+            }
+          } catch(_){}
+        });
+        es.onerror = function(){ /* reconectar automatico por el browser */ };
+      } catch(_){}
+    })();
 
     /* ── Fix 6: Click tracker (heredado + mejorado) ──────────────────── */
     (function fixClickTracker(){
