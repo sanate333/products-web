@@ -1521,3 +1521,139 @@
 
   console.info('[WA-OASIS v8] Fix 27: click/tap unificado con header-JID fallback');
 })();
+
+
+/* ============================================================
+   FIX 28 — Placeholder en carga inicial + sin auto-apertura
+   PROBLEMA: Fix 27 lee .wbv5-cw-sub como fallback en llamadas
+   automáticas → abre el chat de React sin que el usuario haga click.
+   SOLUCIÓN:
+     1. injectDesktopChatIframe solo usa __lastClickedJid (sin header fallback)
+     2. En carga: resetear estado y forzar placeholder
+     3. El click del usuario sigue usando Fix 27's listener (que sí usa header)
+   ============================================================ */
+(function fix28(){
+  if(window.__spFix28) return;
+  window.__spFix28 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot') !== 0) return;
+
+  /* ── 1. Patch definitivo: injectDesktopChatIframe SIN fallback de header ── */
+  function patchDesktop28(){
+    window.injectDesktopChatIframe = function(){
+      if(window.matchMedia('(max-width:900px)').matches) return;
+      if(window.location.pathname.indexOf('whatsapp-bot') === -1) return;
+      var cw = document.querySelector('.wbv5-chat-win');
+      if(!cw) return;
+
+      /* Solo JID explícito — NO leer de .wbv5-cw-sub en llamadas automáticas */
+      var jid = window.__lastClickedJid || null;
+      if(!jid){
+        window.__spShowPlaceholder && window.__spShowPlaceholder();
+        return;
+      }
+
+      window.__spHidePlaceholder && window.__spHidePlaceholder();
+      var existing = document.getElementById('sp-chat-iframe');
+      if(existing){
+        if(existing.dataset.jid !== jid){
+          existing.dataset.jid = jid;
+          existing.src = '/bot/chat.html?jid=' + encodeURIComponent(jid) + '&t=' + Date.now();
+        }
+        existing.style.display = 'block';
+        existing.style.zIndex = '10';
+        cw.classList.add('sp-iframe-active');
+        return;
+      }
+      var iframe = document.createElement('iframe');
+      iframe.id = 'sp-chat-iframe';
+      iframe.dataset.jid = jid;
+      iframe.src = '/bot/chat.html?jid=' + encodeURIComponent(jid) + '&t=' + Date.now();
+      iframe.allow = 'microphone';
+      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:10;background:#fff;display:block;';
+      cw.style.position = 'relative';
+      cw.style.overflow = 'hidden';
+      cw.classList.add('sp-iframe-active');
+      cw.appendChild(iframe);
+      console.info('[Fix28] desktop iframe → ' + jid);
+    };
+  }
+
+  /* ── 2. Reset de estado en carga inicial ── */
+  function resetOnLoad(){
+    if(window.__spUserPickedChat) return; /* ya hubo click: no limpiar */
+
+    /* Limpiar JID para que placeholder se muestre */
+    window.__lastClickedJid = null;
+
+    /* Eliminar iframe auto-creado por Fix 15/23/27 */
+    var iframe = document.getElementById('sp-chat-iframe');
+    if(iframe){ iframe.remove(); }
+
+    /* Ocultar overlay móvil si quedó de sesión anterior */
+    var ov = document.getElementById('sp-mobile-chat-overlay');
+    if(ov) ov.style.display = 'none';
+
+    /* Quitar sp-iframe-active del chat-win */
+    var cw = document.querySelector('.wbv5-chat-win');
+    if(cw) cw.classList.remove('sp-iframe-active');
+
+    /* Mostrar placeholder */
+    window.__spShowPlaceholder && window.__spShowPlaceholder();
+  }
+
+  /* ── 3. Listener de click: usa header como fallback (comportamiento de Fix27 OK) ── */
+  /* Fix 27 ya tiene attachListener27 que llama injectDesktopChatIframe con __lastClickedJid.
+     Aquí solo nos aseguramos de que la función inyectada (patchDesktop28) sea la correcta
+     en el momento del click, y de parar el reset cuando el usuario elige un chat. */
+  var _origInbox = null;
+  function wrapInboxForUserFlag(){
+    var inbox = document.querySelector('.wbv5-inbox-list');
+    if(!inbox || inbox.__sp28flag) return;
+    inbox.__sp28flag = true;
+    inbox.addEventListener('click', function(e){
+      var item = e.target.closest ? e.target.closest('.wbv5-conv-itm') : null;
+      if(!item) return;
+      window.__spUserPickedChat = true; /* marcar que el usuario ya eligió un chat */
+
+      /* En desktop: leer header 350ms después (React actualiza) y abrir iframe */
+      var isMob = window.innerWidth <= 900 || document.documentElement.clientWidth <= 900;
+      if(!isMob){
+        setTimeout(function(){
+          if(!window.__lastClickedJid){
+            var sub = document.querySelector('.wbv5-cw-sub');
+            if(sub){
+              var n = sub.textContent.replace(/[^0-9]/g,'');
+              if(n && n.length >= 8) window.__lastClickedJid = n + '@s.whatsapp.net';
+            }
+          }
+          if(window.__lastClickedJid && typeof window.injectDesktopChatIframe === 'function'){
+            window.injectDesktopChatIframe();
+          }
+        }, 350);
+      }
+    }, true);
+  }
+
+  /* ── Aplicar ── */
+  patchDesktop28();
+  [0, 50, 200, 1800, 4300, 7300].forEach(function(d){ setTimeout(patchDesktop28, d); });
+
+  /* Reset en carga inicial: varias pasadas hasta que React renderice */
+  [150, 400, 900, 1600, 2500].forEach(function(d){
+    setTimeout(resetOnLoad, d);
+  });
+
+  /* Adjuntar flag de usuario */
+  [300, 800, 1600, 3200].forEach(function(d){ setTimeout(wrapInboxForUserFlag, d); });
+
+  /* Reconectar si React recrea DOM */
+  setTimeout(function(){
+    var obs = new MutationObserver(function(){
+      var inbox = document.querySelector('.wbv5-inbox-list');
+      if(inbox && !inbox.__sp28flag) wrapInboxForUserFlag();
+    });
+    obs.observe(document.body, {childList: true, subtree: true});
+  }, 1000);
+
+  console.info('[WA-OASIS v8] Fix 28: placeholder en carga, sin auto-apertura de chat');
+})();
