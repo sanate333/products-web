@@ -1342,3 +1342,182 @@
 
   console.info('[WA-OASIS v7] Fix 26 v2: iframe hidden, display:flex chat-win, sin loops');
 })();
+
+
+/* ============================================================
+   FIX 27 — Click/tap unificado con fallback a header
+   PROBLEMA: .wbv5-conv-itm no tiene data-jid.
+   SOLUCIÓN: tras click, esperar ~350ms a que React actualice
+   .wbv5-cw-sub (que sí tiene el teléfono), usarlo como JID.
+   Desktop: inject iframe. Móvil: overlay fullscreen.
+   También corrige placeholder z-index tapando iframe.
+   ============================================================ */
+(function fix27(){
+  if(window.__spFix27) return;
+  window.__spFix27 = true;
+  if(window.location.pathname.indexOf('/dashboard/whatsapp-bot') !== 0) return;
+
+  /* Lee el teléfono del header del chat (React lo actualiza al seleccionar) */
+  function headerJid(){
+    var sub = document.querySelector('.wbv5-cw-sub');
+    if(!sub) return '';
+    var n = sub.textContent.replace(/[^0-9]/g,'');
+    return (n && n.length >= 8) ? n + '@s.whatsapp.net' : '';
+  }
+
+  /* Abre chat en móvil vía overlay fullscreen */
+  function openMobileChat(jid){
+    if(!jid) return;
+    var url = '/bot/chat.html?jid=' + encodeURIComponent(jid) + '&t=' + Date.now();
+    var ov = document.getElementById('sp-mobile-chat-overlay');
+    if(!ov){
+      ov = document.createElement('div');
+      ov.id = 'sp-mobile-chat-overlay';
+      ov.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;background:#fff;display:flex;flex-direction:column;';
+      var fr = document.createElement('iframe');
+      fr.id = 'sp-mobile-chat-frame';
+      fr.allow = 'microphone';
+      fr.style.cssText = 'flex:1;width:100%;border:none;background:#fff;';
+      ov.appendChild(fr);
+      document.body.appendChild(ov);
+    }
+    var fr = document.getElementById('sp-mobile-chat-frame');
+    if(fr) fr.src = url;
+    ov.style.display = 'flex';
+    console.info('[Fix27] móvil abierto: ' + jid);
+  }
+  window.__spOpenMobileChat27 = openMobileChat;
+
+  /* Patch injectDesktopChatIframe: usa header como fallback cuando __lastClickedJid es null */
+  function patchDesktop27(){
+    window.injectDesktopChatIframe = function(){
+      if(window.matchMedia('(max-width:900px)').matches) return;
+      if(window.location.pathname.indexOf('whatsapp-bot') === -1) return;
+      var cw = document.querySelector('.wbv5-chat-win');
+      if(!cw) return;
+
+      /* Obtener JID: __lastClickedJid → header de React → existente en iframe */
+      var jid = window.__lastClickedJid || headerJid();
+      if(!jid){
+        var ex = document.getElementById('sp-chat-iframe');
+        if(!ex || !ex.dataset.jid){
+          window.__spShowPlaceholder && window.__spShowPlaceholder();
+        }
+        return;
+      }
+
+      window.__lastClickedJid = jid;
+      window.__spHidePlaceholder && window.__spHidePlaceholder();
+
+      var existing = document.getElementById('sp-chat-iframe');
+      if(existing){
+        if(existing.dataset.jid !== jid){
+          existing.dataset.jid = jid;
+          existing.src = '/bot/chat.html?jid=' + encodeURIComponent(jid) + '&t=' + Date.now();
+        }
+        existing.style.display = 'block';
+        existing.style.zIndex = '10';
+        cw.classList.add('sp-iframe-active');
+        return;
+      }
+      var iframe = document.createElement('iframe');
+      iframe.id = 'sp-chat-iframe';
+      iframe.dataset.jid = jid;
+      iframe.src = '/bot/chat.html?jid=' + encodeURIComponent(jid) + '&t=' + Date.now();
+      iframe.allow = 'microphone';
+      iframe.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;border:none;z-index:10;background:#fff;display:block;';
+      cw.style.position = 'relative';
+      cw.style.overflow = 'hidden';
+      cw.classList.add('sp-iframe-active');
+      cw.appendChild(iframe);
+      console.info('[Fix27] desktop iframe → ' + jid);
+    };
+  }
+
+  /* Listener unificado en inbox — detecta click en conv-item */
+  function attachListener27(){
+    var inbox = document.querySelector('.wbv5-inbox-list');
+    if(!inbox || inbox.__sp27) return;
+    inbox.__sp27 = true;
+
+    inbox.addEventListener('click', function(e){
+      var item = e.target.closest ? e.target.closest('.wbv5-conv-itm') : null;
+      if(!item) return;
+
+      var isMob = window.innerWidth <= 900 || document.documentElement.clientWidth <= 900;
+
+      /* Intentar JID inmediato desde atributos DOM o nombre numérico */
+      var jid = item.getAttribute('data-jid') || item.getAttribute('data-id') || '';
+      if(!jid){
+        var nameEl = item.querySelector('.wbv5-ci-name');
+        if(nameEl){
+          var raw = nameEl.textContent.replace(/⚡[^⚡]*/g,'').trim();
+          var num = raw.replace(/\D/g,'');
+          if(num.length >= 8) jid = num + '@s.whatsapp.net';
+        }
+      }
+      if(jid) window.__lastClickedJid = jid;
+      window.__spUserPickedChat = true;
+
+      if(isMob){
+        /* Móvil: prevenir comportamiento nativo, abrir overlay */
+        e.preventDefault();
+        e.stopPropagation();
+        if(jid){
+          openMobileChat(jid);
+        } else {
+          /* Sin JID inmediato → esperar que React actualice el header (~80-400ms) */
+          var tries = 0;
+          var poll = setInterval(function(){
+            tries++;
+            var hj = headerJid();
+            if(hj){
+              clearInterval(poll);
+              window.__lastClickedJid = hj;
+              openMobileChat(hj);
+            } else if(tries >= 10){ clearInterval(poll); }
+          }, 80);
+        }
+      } else {
+        /* Desktop: esperar React, luego inject */
+        setTimeout(function(){
+          if(!window.__lastClickedJid){
+            var hj = headerJid();
+            if(hj) window.__lastClickedJid = hj;
+          }
+          if(typeof window.injectDesktopChatIframe === 'function'){
+            window.injectDesktopChatIframe();
+          }
+        }, 350);
+      }
+    }, true);
+  }
+
+  /* Fix inmediato: placeholder tapando iframe con JID válido */
+  function fixPlaceholderOverIframe(){
+    var ph = document.getElementById('sp-chat-placeholder');
+    if(!ph || ph.style.display === 'none') return;
+    var iframe = document.getElementById('sp-chat-iframe');
+    if(iframe && iframe.dataset.jid){
+      ph.style.display = 'none';
+      if(!window.__lastClickedJid) window.__lastClickedJid = iframe.dataset.jid;
+    }
+  }
+
+  /* Aplicar patches */
+  patchDesktop27();
+  [0, 1600, 4100, 7100].forEach(function(d){ setTimeout(patchDesktop27, d); });
+  [300, 800, 1600, 3100, 5100].forEach(function(d){ setTimeout(attachListener27, d); });
+  setInterval(fixPlaceholderOverIframe, 600);
+
+  /* Reconectar si React recrea inbox */
+  setTimeout(function(){
+    var obs = new MutationObserver(function(){
+      var inbox = document.querySelector('.wbv5-inbox-list');
+      if(inbox && !inbox.__sp27) attachListener27();
+    });
+    obs.observe(document.body, {childList: true, subtree: true});
+  }, 1000);
+
+  console.info('[WA-OASIS v8] Fix 27: click/tap unificado con header-JID fallback');
+})();
