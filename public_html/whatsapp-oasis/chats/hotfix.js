@@ -1849,3 +1849,902 @@
 
   console.info('[WA-OASIS v8] Fix 29: placeholder solo en whatsapp-bot + nombres corregidos');
 })();
+
+
+/* ============================================================
+   FIX 30 — Placeholder solo en seccion Chats (deteccion por DOM)
+   BUG: Fix 29 detectaba cambio de seccion por URL, pero la URL
+        NUNCA cambia en esta SPA (siempre /dashboard/whatsapp-bot).
+   SOLUCION: .wbv5-inbox-list solo existe en DOM cuando React renderiza
+        la seccion Chats. En Clientes/Flujos etc ese elemento no existe.
+        Polling 150ms fuerza display:none fuera de Chats.
+   ============================================================ */
+(function fix30(){
+  if(window.__spFix30) return;
+  window.__spFix30 = true;
+  function isOnChatsSection(){
+    return !!document.querySelector('.wbv5-inbox-list');
+  }
+  window.__spShowPlaceholder = function(){
+    if(!isOnChatsSection()) return;
+    var ph = document.getElementById('sp-chat-placeholder');
+    if(!ph) return;
+    ph.style.display = 'flex';
+  };
+  setInterval(function(){
+    if(!isOnChatsSection()){
+      var ph = document.getElementById('sp-chat-placeholder');
+      if(ph && ph.style.display !== 'none') ph.style.display = 'none';
+    }
+  }, 150);
+  console.info('[WA-OASIS v8] Fix 30: placeholder solo en seccion Chats (deteccion DOM)');
+})();
+
+
+/* ============================================================
+   FIX 31 — Eliminar placeholder del DOM fuera de Chats (no solo ocultar)
+   BUG: Fix 30 ponia display:none pero el elemento sigue en body con
+        position:fixed z-index:2000 — cualquier timer puede re-mostrarlo.
+   SOLUCION: Eliminarlo completamente del DOM cuando no estamos en Chats.
+        Override total de __spShowPlaceholder para recrearlo al volver.
+   ============================================================ */
+(function fix31(){
+  if(window.__spFix31) return;
+  window.__spFix31 = true;
+
+  function isOnChatsSection(){
+    return !!document.querySelector('.wbv5-inbox-list');
+  }
+
+  window.__spShowPlaceholder = function(){
+    if(!isOnChatsSection()) return;
+    var ph = document.getElementById('sp-chat-placeholder');
+    if(ph){ ph.style.display = 'flex'; return; }
+    ph = document.createElement('div');
+    ph.id = 'sp-chat-placeholder';
+    ph.style.cssText = 'position:fixed;z-index:2000;background:#f0f2f5;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;left:240px;top:0;width:calc(100vw - 640px);height:100vh;';
+    var ico = document.createElement('div');
+    ico.style.cssText = 'width:80px;height:80px;border-radius:50%;background:#e9edef;display:flex;align-items:center;justify-content:center;margin-bottom:16px;';
+    ico.innerHTML = '<svg width="36" height="36" fill="#8696a0" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
+    var txt = document.createElement('div');
+    txt.textContent = 'Selecciona un chat';
+    txt.style.cssText = 'font-size:16px;color:#667781;font-weight:400;';
+    var sub = document.createElement('div');
+    sub.textContent = 'Elige una conversacion de la lista';
+    sub.style.cssText = 'font-size:13px;color:#8696a0;margin-top:4px;';
+    ph.appendChild(ico); ph.appendChild(txt); ph.appendChild(sub);
+    document.body.appendChild(ph);
+  };
+
+  setInterval(function(){
+    if(!isOnChatsSection()){
+      var ph = document.getElementById('sp-chat-placeholder');
+      if(ph && ph.parentElement) ph.parentElement.removeChild(ph);
+    }
+  }, 100);
+
+  console.info('[WA-OASIS v8] Fix 31: placeholder eliminado del DOM fuera de Chats');
+})();
+
+
+/* ============================================================
+   FIX 32 — Placeholder dentro de .wbv5-chat-win (position:absolute)
+   BUG: Fix 31 crea placeholder con ancho hardcodeado dejando gap derecho.
+        .wbv5-chat-win ya tiene position:relative — meter el placeholder
+        adentro con inset:0 lo hace llenar exactamente el panel sin calculos.
+        Cuando React desmonta .wbv5-chat-win (al navegar a Clientes etc.),
+        el placeholder desaparece naturalmente con su padre.
+   ============================================================ */
+(function fix32(){
+  if(window.__spFix32) return;
+  window.__spFix32 = true;
+
+  function isOnChatsSection(){ return !!document.querySelector('.wbv5-inbox-list'); }
+
+  function relocate(){
+    var ph = document.getElementById('sp-chat-placeholder');
+    if(!ph) return;
+    var cw = document.querySelector('.wbv5-chat-win');
+    if(!cw){
+      if(ph.parentElement) ph.parentElement.removeChild(ph);
+      return;
+    }
+    if(ph.parentElement === cw) return;
+    /* Cambiar a absolute dentro del contenedor */
+    ph.style.position = 'absolute';
+    ph.style.left = '0'; ph.style.top = '0';
+    ph.style.right = '0'; ph.style.bottom = '0';
+    ph.style.width = ''; ph.style.height = '';
+    ph.style.zIndex = '5';
+    cw.appendChild(ph);
+  }
+
+  /* Override __spShowPlaceholder con logica limpia */
+  window.__spShowPlaceholder = function(){
+    if(!isOnChatsSection()) return;
+    var ph = document.getElementById('sp-chat-placeholder');
+    if(!ph){
+      var cw = document.querySelector('.wbv5-chat-win');
+      if(!cw) return;
+      ph = document.createElement('div');
+      ph.id = 'sp-chat-placeholder';
+      ph.style.cssText = 'position:absolute;left:0;top:0;right:0;bottom:0;z-index:5;'
+        + 'background:#f0f2f5;display:flex;flex-direction:column;'
+        + 'align-items:center;justify-content:center;pointer-events:none;';
+      var ico = document.createElement('div');
+      ico.style.cssText = 'width:80px;height:80px;border-radius:50%;background:#e9edef;'
+        + 'display:flex;align-items:center;justify-content:center;margin-bottom:16px;';
+      ico.innerHTML = '<svg width="36" height="36" fill="#8696a0" viewBox="0 0 24 24">'
+        + '<path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg>';
+      var txt = document.createElement('div');
+      txt.textContent = 'Selecciona un chat';
+      txt.style.cssText = 'font-size:16px;color:#667781;font-weight:400;';
+      var sub = document.createElement('div');
+      sub.textContent = 'Elige una conversacion de la lista';
+      sub.style.cssText = 'font-size:13px;color:#8696a0;margin-top:4px;';
+      ph.appendChild(ico); ph.appendChild(txt); ph.appendChild(sub);
+      cw.appendChild(ph);
+    } else {
+      ph.style.display = 'flex';
+      relocate();
+    }
+  };
+
+  /* Polling 200ms: mover al lugar correcto si algo lo sacó */
+  setInterval(relocate, 200);
+
+  /* Relocalizar el placeholder que ya existe ahora mismo */
+  setTimeout(relocate, 50);
+
+  console.info('[WA-OASIS v8] Fix 32: placeholder en .wbv5-chat-win, sin gap lateral');
+})();
+
+
+/* ============================================================
+   FIX 33 — Ocultar flecha ← en desktop, visible solo en móvil
+   En desktop la flecha no tiene sentido (no hay "volver a lista").
+   En móvil es necesaria para regresar a la lista de chats.
+   Detecta el botón por texto "←" (no tiene clase CSS propia).
+   ============================================================ */
+(function fix33(){
+  if(window.__spFix33) return;
+  window.__spFix33 = true;
+
+  function applyBackBtn(){
+    var btns = Array.from(document.querySelectorAll('button'));
+    var backBtn = btns.find(function(b){ return b.textContent.trim() === '←'; });
+    if(!backBtn) return;
+    var isMobile = window.innerWidth <= 768;
+    backBtn.style.display = isMobile ? '' : 'none';
+  }
+
+  /* Aplicar al cargar, en resize y periódicamente (React re-renderiza) */
+  setInterval(applyBackBtn, 500);
+  window.addEventListener('resize', applyBackBtn);
+  setTimeout(applyBackBtn, 300);
+
+  console.info('[WA-OASIS v8] Fix 33: flecha <- oculta en desktop, visible en movil');
+})();
+
+(function fix34(){
+  if(window.__spFix34) return; window.__spFix34 = true;
+  function applyBackBtnIframe(){
+    var f = document.getElementById("sp-chat-iframe");
+    if(!f) return;
+    var cd;
+    try { cd = f.contentDocument || f.contentWindow.document; } catch(e){ return; }
+    var backBtn = cd.getElementById("back-btn");
+    if(!backBtn) return;
+    var isMobile = window.innerWidth <= 768;
+    backBtn.style.display = isMobile ? "" : "none";
+  }
+  setInterval(applyBackBtnIframe, 500);
+  window.addEventListener("resize", applyBackBtnIframe);
+  setTimeout(applyBackBtnIframe, 300);
+  console.info("[WA-OASIS v8] Fix 34: back-btn iframe oculto desktop");
+})();
+
+(function fix35(){
+  if(window.__spFix35) return; window.__spFix35 = true;
+
+  // 1. Restore hamburger — v31 killFixedHam() hides sp-hamburger because it has position:fixed + "ham" in ID
+  function restoreHamburger(){
+    var ham = document.getElementById("sp-hamburger");
+    if(ham && window.getComputedStyle(ham).display === "none"){
+      ham.style.setProperty("display","flex","important");
+    }
+  }
+  setInterval(restoreHamburger, 250);
+  [100,300,700,1200,2000,3500].forEach(function(d){ setTimeout(restoreHamburger,d); });
+
+  // 2. Fix 20px white-space gap on right side of inbox list
+  var gapStyle = document.createElement("style");
+  gapStyle.id = "sp-fix35-css";
+  gapStyle.textContent =
+    ".wbv5-inbox-list{flex:1 1 auto!important;min-width:280px!important;max-width:400px!important;}" +
+    ".wbv5-main,.wbv5-root{width:100vw!important;max-width:100vw!important;overflow-x:hidden!important;}" +
+    ".wbv5-root > *{flex-shrink:0!important;}";
+  document.head.appendChild(gapStyle);
+  function fixGap(){
+    var inbox = document.querySelector(".wbv5-inbox-list");
+    if(!inbox) return;
+    var main = document.querySelector(".wbv5-main") || inbox.parentElement;
+    if(!main) return;
+    // Make main fill to viewport edge
+    main.style.setProperty("width","100%","important");
+    main.style.setProperty("flex","1","important");
+  }
+  setInterval(fixGap, 1500);
+  [200,600,1200].forEach(function(d){ setTimeout(fixGap,d); });
+
+  // 3. Day divider — separator between today vs older chats
+  var divStyle = document.createElement("style");
+  divStyle.textContent = ".sp35-divider{display:block!important;width:100%!important;padding:3px 14px!important;font-size:10px!important;font-weight:700!important;color:#94a3b8!important;text-transform:uppercase!important;letter-spacing:0.6px!important;background:linear-gradient(to right,#f1f5f9,#e8edf4)!important;border-top:1px solid #e2e8f0!important;border-bottom:1px solid #e2e8f0!important;margin:1px 0!important;box-sizing:border-box!important;pointer-events:none!important;}";
+  document.head.appendChild(divStyle);
+
+  function injectDayDividers(){
+    var convs = document.querySelector(".wbv5-il-convs");
+    if(!convs) return;
+    var items = Array.from(convs.querySelectorAll(".wbv5-il-item")).filter(function(el){
+      return el.style.display !== "none" && !el.getAttribute("data-sp-dd");
+    });
+    if(items.length < 2) return;
+    convs.querySelectorAll(".sp35-divider").forEach(function(d){ d.remove(); });
+    var todayBoundaryDone = false;
+    items.forEach(function(item){
+      var timeEl = item.querySelector("[class*=ci-time],[class*=il-time]");
+      if(!timeEl) return;
+      var t = timeEl.textContent.trim();
+      var isToday = /^d{1,2}:d{2}/.test(t);
+      if(!isToday && !todayBoundaryDone){
+        todayBoundaryDone = true;
+        var div = document.createElement("div");
+        div.className = "sp35-divider";
+        div.textContent = "Anteriores";
+        convs.insertBefore(div, item);
+      }
+    });
+    // Insert "Hoy" at very top if first item is today
+    var firstTime = items[0] && items[0].querySelector("[class*=ci-time],[class*=il-time]");
+    if(firstTime && /^d{1,2}:d{2}/.test(firstTime.textContent.trim())){
+      var existing = convs.querySelector(".sp35-divider-hoy");
+      if(!existing){
+        var divH = document.createElement("div");
+        divH.className = "sp35-divider sp35-divider-hoy";
+        divH.textContent = "Hoy";
+        convs.insertBefore(divH, convs.firstChild);
+      }
+    }
+  }
+  setInterval(injectDayDividers, 2500);
+  [1500,2500,4000].forEach(function(d){ setTimeout(injectDayDividers,d); });
+
+  // 4. Kill AI error toast (belt+suspenders backup to v36)
+  function killAIToast(){
+    try{
+      document.querySelectorAll("*").forEach(function(el){
+        try{
+          if(el.childElementCount < 5 && el.textContent &&
+             (el.textContent.indexOf("Error") !== -1 || el.textContent.indexOf("error") !== -1) &&
+             el.textContent.indexOf("IA") !== -1 &&
+             ["fixed","absolute"].indexOf(window.getComputedStyle(el).position) !== -1 &&
+             window.getComputedStyle(el).display !== "none" &&
+             window.getComputedStyle(el).opacity !== "0"){
+            el.style.setProperty("display","none","important");
+          }
+        }catch(ei){}
+      });
+    }catch(e){}
+  }
+  setInterval(killAIToast, 800);
+
+  console.info("[WA-OASIS v8] Fix 35: hamburger restaurado, gap corregido, divisores dia, AI toast");
+})();
+
+(function fix35(){
+  if(window.__spFix35) return; window.__spFix35 = true;
+
+  // 1. Restore hamburger — v31 killFixedHam() hides sp-hamburger because it has position:fixed + "ham" in ID
+  function restoreHamburger(){
+    var ham = document.getElementById("sp-hamburger");
+    if(ham && window.getComputedStyle(ham).display === "none"){
+      ham.style.setProperty("display","flex","important");
+    }
+  }
+  setInterval(restoreHamburger, 250);
+  [100,300,700,1200,2000,3500].forEach(function(d){ setTimeout(restoreHamburger,d); });
+
+  // 2. Fix 20px white-space gap on right side of inbox list
+  var gapStyle = document.createElement("style");
+  gapStyle.id = "sp-fix35-css";
+  gapStyle.textContent =
+    ".wbv5-inbox-list{flex:1 1 auto!important;min-width:280px!important;max-width:400px!important;}" +
+    ".wbv5-main,.wbv5-root{width:100vw!important;max-width:100vw!important;overflow-x:hidden!important;}" +
+    ".wbv5-root > *{flex-shrink:0!important;}";
+  document.head.appendChild(gapStyle);
+  function fixGap(){
+    var inbox = document.querySelector(".wbv5-inbox-list");
+    if(!inbox) return;
+    var main = document.querySelector(".wbv5-main") || inbox.parentElement;
+    if(!main) return;
+    // Make main fill to viewport edge
+    main.style.setProperty("width","100%","important");
+    main.style.setProperty("flex","1","important");
+  }
+  setInterval(fixGap, 1500);
+  [200,600,1200].forEach(function(d){ setTimeout(fixGap,d); });
+
+  // 3. Day divider — separator between today vs older chats
+  var divStyle = document.createElement("style");
+  divStyle.textContent = ".sp35-divider{display:block!important;width:100%!important;padding:3px 14px!important;font-size:10px!important;font-weight:700!important;color:#94a3b8!important;text-transform:uppercase!important;letter-spacing:0.6px!important;background:linear-gradient(to right,#f1f5f9,#e8edf4)!important;border-top:1px solid #e2e8f0!important;border-bottom:1px solid #e2e8f0!important;margin:1px 0!important;box-sizing:border-box!important;pointer-events:none!important;}";
+  document.head.appendChild(divStyle);
+
+  function injectDayDividers(){
+    var convs = document.querySelector(".wbv5-il-convs");
+    if(!convs) return;
+    var items = Array.from(convs.querySelectorAll(".wbv5-il-item")).filter(function(el){
+      return el.style.display !== "none" && !el.getAttribute("data-sp-dd");
+    });
+    if(items.length < 2) return;
+    convs.querySelectorAll(".sp35-divider").forEach(function(d){ d.remove(); });
+    var todayBoundaryDone = false;
+    items.forEach(function(item){
+      var timeEl = item.querySelector("[class*=ci-time],[class*=il-time]");
+      if(!timeEl) return;
+      var t = timeEl.textContent.trim();
+      var isToday = /^d{1,2}:d{2}/.test(t);
+      if(!isToday && !todayBoundaryDone){
+        todayBoundaryDone = true;
+        var div = document.createElement("div");
+        div.className = "sp35-divider";
+        div.textContent = "Anteriores";
+        convs.insertBefore(div, item);
+      }
+    });
+    // Insert "Hoy" at very top if first item is today
+    var firstTime = items[0] && items[0].querySelector("[class*=ci-time],[class*=il-time]");
+    if(firstTime && /^d{1,2}:d{2}/.test(firstTime.textContent.trim())){
+      var existing = convs.querySelector(".sp35-divider-hoy");
+      if(!existing){
+        var divH = document.createElement("div");
+        divH.className = "sp35-divider sp35-divider-hoy";
+        divH.textContent = "Hoy";
+        convs.insertBefore(divH, convs.firstChild);
+      }
+    }
+  }
+  setInterval(injectDayDividers, 2500);
+  [1500,2500,4000].forEach(function(d){ setTimeout(injectDayDividers,d); });
+
+  // 4. Kill AI error toast (belt+suspenders backup to v36)
+  function killAIToast(){
+    try{
+      document.querySelectorAll("*").forEach(function(el){
+        try{
+          if(el.childElementCount < 5 && el.textContent &&
+             (el.textContent.indexOf("Error") !== -1 || el.textContent.indexOf("error") !== -1) &&
+             el.textContent.indexOf("IA") !== -1 &&
+             ["fixed","absolute"].indexOf(window.getComputedStyle(el).position) !== -1 &&
+             window.getComputedStyle(el).display !== "none" &&
+             window.getComputedStyle(el).opacity !== "0"){
+            el.style.setProperty("display","none","important");
+          }
+        }catch(ei){}
+      });
+    }catch(e){}
+  }
+  setInterval(killAIToast, 800);
+
+  console.info("[WA-OASIS v8] Fix 35: hamburger restaurado, gap corregido, divisores dia, AI toast");
+})();
+
+(function fix36(){
+  if(window.__spFix36) return; window.__spFix36 = true;
+
+  // 1. Fix 20px white-space gap: inbox-list has app CSS width:340px but grid column is 360px
+  var gapCss = document.createElement("style");
+  gapCss.id = "sp-fix36-css";
+  gapCss.textContent =
+    "@media(min-width:769px){" +
+    ".wbv5-inbox-list{width:100%!important;max-width:100%!important;}" +
+    "}";
+  document.head.appendChild(gapCss);
+  function fixInboxWidth(){
+    var inbox = document.querySelector(".wbv5-inbox-list");
+    if(!inbox) return;
+    inbox.style.setProperty("width","100%","important");
+    inbox.style.setProperty("max-width","100%","important");
+  }
+  setInterval(fixInboxWidth, 1000);
+  [100,300,700,1500].forEach(function(d){ setTimeout(fixInboxWidth,d); });
+
+  // 2. Day dividers using correct class wbv5-conv-itm
+  var divStyle = document.createElement("style");
+  divStyle.textContent =
+    ".sp36-div{display:flex!important;align-items:center!important;gap:8px!important;" +
+    "padding:4px 12px!important;font-size:10px!important;font-weight:700!important;" +
+    "color:#94a3b8!important;text-transform:uppercase!important;letter-spacing:0.5px!important;" +
+    "background:#f1f5f9!important;border-top:1px solid #e2e8f0!important;" +
+    "border-bottom:1px solid #e2e8f0!important;margin:0!important;" +
+    "width:100%!important;box-sizing:border-box!important;pointer-events:none!important;}" +
+    ".sp36-div::before,.sp36-div::after{content:'';flex:1;height:1px;background:#e2e8f0!important;}";
+  document.head.appendChild(divStyle);
+
+  var _lastDivCount = -1;
+  function injectDayDividers(){
+    var convs = document.querySelector(".wbv5-il-convs");
+    if(!convs) return;
+    var items = Array.from(convs.querySelectorAll(".wbv5-conv-itm")).filter(function(el){
+      return el.style.display !== "none";
+    });
+    if(items.length === _lastDivCount) return;
+    _lastDivCount = items.length;
+
+    // Remove existing dividers
+    convs.querySelectorAll(".sp36-div").forEach(function(d){ d.remove(); });
+    if(items.length === 0) return;
+
+    var todayGroupDone = false;
+    var anteriorDone = false;
+
+    // Insert HOY at top if first item is today (HH:MM format)
+    var firstTimeEl = items[0].querySelector("[class*=ci-time],[class*=conv-time],[class*=time]");
+    var firstTime = firstTimeEl ? firstTimeEl.textContent.trim() : "";
+    var firstIsToday = /^\d{1,2}:\d{2}/.test(firstTime);
+    if(firstIsToday){
+      var divHoy = document.createElement("div");
+      divHoy.className = "sp36-div";
+      divHoy.setAttribute("data-sp36","hoy");
+      divHoy.textContent = "Hoy";
+      convs.insertBefore(divHoy, items[0]);
+    }
+
+    // Insert ANTERIORES divider before first non-today item
+    items.forEach(function(item){
+      var timeEl = item.querySelector("[class*=ci-time],[class*=conv-time],[class*=time]");
+      if(!timeEl) return;
+      var t = timeEl.textContent.trim();
+      var isToday = /^\d{1,2}:\d{2}/.test(t);
+      if(!isToday && !anteriorDone){
+        anteriorDone = true;
+        var divAnt = document.createElement("div");
+        divAnt.className = "sp36-div";
+        divAnt.setAttribute("data-sp36","ant");
+        divAnt.textContent = "Anteriores";
+        convs.insertBefore(divAnt, item);
+      }
+    });
+  }
+
+  setInterval(injectDayDividers, 2000);
+  [1000,2000,3500,5000].forEach(function(d){ setTimeout(injectDayDividers,d); });
+
+  console.info("[WA-OASIS v8] Fix 36: gap cerrado, divisores dia correctos");
+})();
+
+(function fix37(){
+  if(window.__spFix37b) return; window.__spFix37b = true;
+
+  // 1. Hamburger: SOLO en movil (<=768px). Override Fix35 que lo deja siempre visible.
+  //    Corre a 200ms para ganar la carrera contra Fix35 (250ms).
+  var hamCSS = document.createElement("style");
+  hamCSS.id = "sp-fix37-css";
+  hamCSS.textContent =
+    // Desktop: ocultar
+    "@media(min-width:769px){#sp-hamburger{display:none!important;}}" +
+    // Movil: mostrar + compensar search/inbox header
+    "@media(max-width:768px){" +
+    "#sp-hamburger{display:flex!important;}" +
+    ".wbv5-il-search{padding-left:56px!important;box-sizing:border-box!important;}" +
+    "[class*=inbox-header],[class*=il-header]{padding-left:56px!important;}" +
+    "}";
+  document.head.appendChild(hamCSS);
+
+  function syncHamburger(){
+    var ham = document.getElementById("sp-hamburger");
+    if(!ham) return;
+    var isMobile = window.innerWidth <= 768;
+    if(isMobile){
+      ham.style.setProperty("display","flex","important");
+    } else {
+      // Forzar none — override Fix35 inline style
+      ham.style.setProperty("display","none","important");
+    }
+  }
+  setInterval(syncHamburger, 200);
+  window.addEventListener("resize", syncHamburger);
+  [50,200,500,1000,2000].forEach(function(d){ setTimeout(syncHamburger,d); });
+
+  // 2. Panel button — abrir navbarDashboard correctamente
+  function fixPanelBtn(){
+    var btn = document.getElementById("sp-panel-btn");
+    if(!btn || btn.__fix37patched) return;
+    btn.__fix37patched = true;
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      e.preventDefault();
+      var grid = document.querySelector(".containerGrid");
+      if(!grid) return;
+      var isOpen = grid.classList.contains("sp-nav-open");
+      if(isOpen){
+        grid.classList.remove("sp-nav-open");
+        var bd = document.getElementById("sp-nav-bd");
+        if(bd) bd.remove();
+      } else {
+        grid.classList.add("sp-nav-open");
+        // Ensure backdrop exists
+        var bd = document.getElementById("sp-nav-bd");
+        if(!bd){
+          bd = document.createElement("div");
+          bd.id = "sp-nav-bd";
+          bd.style.cssText = "position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.38);cursor:pointer";
+          bd.addEventListener("click", function(){
+            var g2 = document.querySelector(".containerGrid");
+            if(g2) g2.classList.remove("sp-nav-open");
+            bd.remove();
+          });
+          document.body.appendChild(bd);
+        }
+      }
+      // Also close sp-hamburger sidebar when Panel is clicked
+      var sidebar = document.querySelector(".wbv5-sidebar");
+      var overlay = document.getElementById("sp-sidebar-overlay");
+      var hamBtn = document.getElementById("sp-hamburger");
+      if(sidebar) sidebar.classList.remove("sp-open");
+      if(overlay) overlay.classList.remove("active");
+      if(hamBtn) hamBtn.classList.remove("open");
+    }, true); // capture phase to override v28
+  }
+
+  // Inject Panel button if missing
+  function ensurePanelBtn(){
+    if(document.getElementById("sp-panel-btn")) { fixPanelBtn(); return; }
+    var sb = document.querySelector(".wbv5-sidebar");
+    if(!sb) return;
+    var fs = sb.querySelector(".wbv5-nav-section");
+    if(!fs) return;
+    var btn = document.createElement("button");
+    btn.id = "sp-panel-btn";
+    btn.innerHTML = "&#127968; Panel";
+    btn.style.cssText = "display:flex!important;align-items:center;gap:6px;padding:9px 14px;" +
+      "margin:4px 8px 10px;background:#25D366;color:#fff;border:none;border-radius:8px;" +
+      "cursor:pointer;font-size:13px;font-weight:600;width:calc(100% - 16px);box-sizing:border-box;";
+    btn.__fix37patched = true;
+    btn.addEventListener("click", function(e){
+      e.stopPropagation(); e.preventDefault();
+      var grid = document.querySelector(".containerGrid"); if(!grid) return;
+      var isOpen = grid.classList.contains("sp-nav-open");
+      if(isOpen){ grid.classList.remove("sp-nav-open"); var bd=document.getElementById("sp-nav-bd"); if(bd) bd.remove(); }
+      else {
+        grid.classList.add("sp-nav-open");
+        var bd2 = document.getElementById("sp-nav-bd");
+        if(!bd2){ bd2=document.createElement("div"); bd2.id="sp-nav-bd"; bd2.style.cssText="position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,.38);cursor:pointer"; bd2.onclick=function(){ var g2=document.querySelector(".containerGrid"); if(g2) g2.classList.remove("sp-nav-open"); bd2.remove(); }; document.body.appendChild(bd2); }
+      }
+      var sidebar2 = document.querySelector(".wbv5-sidebar"); var ov2 = document.getElementById("sp-sidebar-overlay"); var hb2 = document.getElementById("sp-hamburger");
+      if(sidebar2) sidebar2.classList.remove("sp-open"); if(ov2) ov2.classList.remove("active"); if(hb2) hb2.classList.remove("open");
+    });
+    sb.insertBefore(btn, fs);
+  }
+
+  setInterval(ensurePanelBtn, 1500);
+  [500,1200,2500].forEach(function(d){ setTimeout(ensurePanelBtn,d); });
+
+  console.info("[WA-OASIS v8] Fix 37: hamburger movil-only, search padding, panel btn fix");
+})();
+
+(function fix38(){
+  if(window.__spFix38) return; window.__spFix38 = true;
+
+  // 1. CSS base: desktop=none, mobile=flex, search padding fix
+  var css = document.createElement("style");
+  css.id = "sp-fix38-css";
+  css.textContent =
+    "@media(min-width:769px){#sp-hamburger{display:none!important;}}" +
+    "@media(max-width:768px){" +
+    "#sp-hamburger{display:flex!important;}" +
+    ".wbv5-il-search{padding-left:58px!important;width:100%!important;box-sizing:border-box!important;}" +
+    "}";
+  document.head.appendChild(css);
+
+  // 2. MutationObserver: corrects hamburger display INSTANTLY on every style mutation
+  //    Stops the Fix35/Fix37 setInterval fight completely.
+  function getWantedDisplay(){
+    return window.innerWidth <= 768 ? "flex" : "none";
+  }
+  function applyHam(ham){
+    var want = getWantedDisplay();
+    var cur = ham.style.getPropertyValue("display");
+    var pri = ham.style.getPropertyPriority("display");
+    if(cur !== want || pri !== "important"){
+      // Temporarily disconnect to avoid re-triggering observer
+      if(ham.__fix38obs) ham.__fix38obs.disconnect();
+      ham.style.setProperty("display", want, "important");
+      if(ham.__fix38obs) ham.__fix38obs.observe(ham, {attributes:true,attributeFilter:["style"]});
+    }
+  }
+  function attachObserver(){
+    var ham = document.getElementById("sp-hamburger");
+    if(!ham || ham.__fix38obs) return;
+    applyHam(ham);
+    var obs = new MutationObserver(function(){ applyHam(ham); });
+    ham.__fix38obs = obs;
+    obs.observe(ham, {attributes:true, attributeFilter:["style"]});
+  }
+  attachObserver();
+  setInterval(function(){
+    var ham = document.getElementById("sp-hamburger");
+    if(ham && !ham.__fix38obs) attachObserver();
+    else if(ham) applyHam(ham);
+  }, 400);
+  window.addEventListener("resize", function(){
+    var ham = document.getElementById("sp-hamburger");
+    if(ham) applyHam(ham);
+  });
+
+  // 3. Search padding enforcement on mobile
+  function fixSearch(){
+    if(window.innerWidth > 768) return;
+    var s = document.querySelector(".wbv5-il-search");
+    if(s) s.style.setProperty("padding-left","58px","important");
+  }
+  setInterval(fixSearch, 1500);
+  [500,1200,2500].forEach(function(d){ setTimeout(fixSearch,d); });
+
+  console.info("[WA-OASIS v8] Fix 38: ham MutationObserver, no flicker, search padding");
+})();
+
+(function fix39(){
+  if(window.__spFix39) return; window.__spFix39 = true;
+
+  // ===== 1. PANEL BUTTON FIX =====
+  // The navbarDashboard has class "navbarDashboardClosed" (display:none).
+  // sp-nav-open class alone is not enough — must directly show/hide navbar.
+  var panelCSS = document.createElement("style");
+  panelCSS.textContent =
+    ".navbarDashboard.sp-nav-panel-open{" +
+    "display:block!important;position:fixed!important;" +
+    "left:0!important;top:0!important;height:100vh!important;" +
+    "width:220px!important;z-index:99999!important;" +
+    "overflow-y:auto!important;background:#fff!important;" +
+    "box-shadow:4px 0 20px rgba(0,0,0,0.15)!important;}" +
+    "#sp-nav-bd39{position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.4);cursor:pointer;}";
+  document.head.appendChild(panelCSS);
+
+  function openDashNav(){
+    var navbar = document.querySelector(".navbarDashboard");
+    if(!navbar) return;
+    navbar.classList.add("sp-nav-panel-open");
+    // Also add backdrop
+    if(!document.getElementById("sp-nav-bd39")){
+      var bd = document.createElement("div");
+      bd.id = "sp-nav-bd39";
+      bd.onclick = closeDashNav;
+      document.body.appendChild(bd);
+    }
+  }
+  function closeDashNav(){
+    var navbar = document.querySelector(".navbarDashboard");
+    if(navbar) navbar.classList.remove("sp-nav-panel-open");
+    var bd = document.getElementById("sp-nav-bd39");
+    if(bd) bd.remove();
+  }
+
+  function patchPanelBtn(){
+    var btn = document.getElementById("sp-panel-btn");
+    if(!btn || btn.__fix39) return;
+    btn.__fix39 = true;
+    btn.addEventListener("click", function(e){
+      e.stopImmediatePropagation(); e.preventDefault();
+      var navbar = document.querySelector(".navbarDashboard");
+      if(!navbar) return;
+      var isOpen = navbar.classList.contains("sp-nav-panel-open");
+      if(isOpen){ closeDashNav(); }
+      else { openDashNav(); }
+      // Close hamburger sidebar too
+      var sb = document.querySelector(".wbv5-sidebar");
+      var ov = document.getElementById("sp-sidebar-overlay");
+      var hb = document.getElementById("sp-hamburger");
+      if(sb) sb.classList.remove("sp-open");
+      if(ov) ov.classList.remove("active");
+      if(hb){ hb.classList.remove("open"); hb.style.setProperty("display","none","important"); setTimeout(function(){ hb.style.setProperty("display",window.innerWidth<=768?"flex":"none","important"); },50); }
+    }, true);
+  }
+
+  patchPanelBtn();
+  setInterval(patchPanelBtn, 1500);
+
+  // ===== 2. FLASH FIX — suppress iframe injection for 3s on page load =====
+  // The flash is caused by Fix28b injecting/removing sp-chat-iframe briefly.
+  // Mark page-load time so existing code can gate itself.
+  if(!window.__spPageLoadTime) window.__spPageLoadTime = Date.now();
+  
+  // Override __spShowPlaceholder to also suppress iframe flash
+  var _origShow = window.__spShowPlaceholder;
+  window.__spShowPlaceholder = function(){
+    // Remove any lingering iframe on page load
+    var iframe = document.getElementById("sp-chat-iframe");
+    if(iframe && (Date.now() - (window.__spPageLoadTime||0)) < 4000){
+      iframe.remove();
+    }
+    if(_origShow) _origShow.apply(this, arguments);
+  };
+
+  // On page load, immediately clear active chat state to prevent flash
+  setTimeout(function(){
+    var iframe = document.getElementById("sp-chat-iframe");
+    if(iframe) iframe.remove();
+    if(window.__spShowPlaceholder) window.__spShowPlaceholder();
+  }, 50);
+
+  // ===== 3. SMOOTH SORT — add CSS transitions to reduce visual jump =====
+  var sortCSS = document.createElement("style");
+  sortCSS.textContent =
+    ".wbv5-conv-itm{transition:background 0.2s!important;}" +
+    ".wbv5-il-convs{overflow-anchor:none!important;}";
+  document.head.appendChild(sortCSS);
+
+  // ===== 4. KEEP SEBASTIAN ORDER STABLE =====
+  // Prevent re-sort during first 5 seconds so React initial render is stable.
+  window.__spSortGrace = Date.now() + 5000;
+  var _origFetch = window.fetchOrder;
+  if(typeof _origFetch === "function"){
+    window.fetchOrder = function(cb){
+      if(Date.now() < (window.__spSortGrace||0)){
+        console.info("[Fix39] Sort blocked during grace period");
+        return;
+      }
+      return _origFetch.apply(this, arguments);
+    };
+  }
+
+  console.info("[WA-OASIS v8] Fix 39: panel btn fixed, flash suppressed, sort stable");
+})();
+
+(function fix40(){
+  if(window.__spFix40) return; window.__spFix40 = true;
+  // Correct the navbarDashboard overlay background — Fix39 forced white bg, making white text invisible
+  var css = document.createElement("style");
+  css.textContent = ".navbarDashboard.sp-nav-panel-open{background:linear-gradient(rgb(11,61,91),rgb(10,46,68))!important;box-shadow:4px 0 20px rgba(0,0,0,0.3)!important;}";
+  document.head.appendChild(css);
+})();
+
+(function fix41(){
+  if(window.__spFix41) return; window.__spFix41 = true;
+  function parseMin(s){
+    if(!s) return -1;
+    var m=s.replace(/\.\s*/g,"").match(/(\d{1,2}):(\d{2})\s*(am|pm)/i);
+    if(!m) return -1;
+    var h=parseInt(m[1]),mn=parseInt(m[2]),ap=m[3].toLowerCase();
+    if(ap==="pm"&&h<12)h+=12; if(ap==="am"&&h===12)h=0;
+    return h*60+mn;
+  }
+  function getTxt(el){var q=el.querySelector("[class*=time],[class*=Time]");return q?q.textContent.trim():"";}
+  function sortChats(){
+    var list=document.querySelector(".wbv5-il-convs");
+    if(!list) return;
+    list.querySelectorAll(".wbv5-conv-itm[data-sp-dd46]").forEach(function(el){el.remove();});
+    var divs=[...list.querySelectorAll(".sp36-div")];
+    var its=[...list.querySelectorAll(".wbv5-conv-itm:not(.sp36-div)")].filter(function(el){return getComputedStyle(el).display!=="none";});
+    if(its.length<2) return;
+    var tod=its.filter(function(el){return /\d{1,2}:\d{2}/.test(getTxt(el));});
+    var old=its.filter(function(el){return !/\d{1,2}:\d{2}/.test(getTxt(el));});
+    tod.sort(function(a,b){return parseMin(getTxt(b))-parseMin(getTxt(a));});
+    var srt=tod.concat(old);
+    var cur=[...list.querySelectorAll(".wbv5-conv-itm:not(.sp36-div)")].filter(function(el){return getComputedStyle(el).display!=="none";});
+    if(srt.length===cur.length&&srt.every(function(el,i){return el===cur[i];})) return;
+    divs.forEach(function(d){d.remove();});
+    srt.forEach(function(el){list.appendChild(el);});
+    if(tod.length>0){var h=divs.find(function(d){return /HOY/i.test(d.textContent);})||Object.assign(document.createElement("div"),{className:"sp36-div",textContent:"HOY"});list.insertBefore(h,tod[0]);}
+    if(old.length>0){var a=divs.find(function(d){return /ANTERIOR|AYER/i.test(d.textContent);})||Object.assign(document.createElement("div"),{className:"sp36-div",textContent:"ANTERIORES"});list.insertBefore(a,old[0]);}
+  }
+  [1500,3000,5000,8000].forEach(function(d){setTimeout(sortChats,d);});
+  setInterval(sortChats,6000);
+  console.info("[WA-OASIS] Fix 41: chat sort by real time");
+})();
+
+/* ═══ FIX 42: Plantillas — anti-flash + refresh dropdown + cleanup old panel ═══ */
+(function fix42(){
+  if(window.__spFix42) return; window.__spFix42=true;
+
+  /* ─── 1. Patch cargarTplsPagina to clear stale data first + refresh prod dropdown ─── */
+  var _fix42Gen=0; /* generation counter — invalidates stale promise callbacks */
+  var _orig_cargarTplsPagina = window.cargarTplsPagina;
+  window.cargarTplsPagina = function() {
+    var gen=++_fix42Gen;
+    /* Clear stale data immediately so buildPlantillasHTML shows 0 counts (no flash) */
+    if(window._panelTpls) window._panelTpls=[];
+    /* Also clear the grid while fetching */
+    var grid=document.getElementById('sp-pag-grid');
+    if(grid){
+      grid.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#94a3b8;gap:10px;padding:40px;">'+
+        '<div style="font-size:28px;">⏳</div>'+
+        '<div style="font-size:13px;font-weight:600;color:#64748b;">Cargando plantillas...</div>'+
+      '</div>';
+    }
+    var SB_P=window.SB_P||'https://lvmeswlvszsmvgaasazs.supabase.co';
+    var SK_P=window.SK_P;
+    if(!SK_P){
+      /* fallback if orig function exists */
+      if(_orig_cargarTplsPagina) _orig_cargarTplsPagina();
+      return;
+    }
+    var p1=fetch(SB_P+'/rest/v1/oasis_wa_config?select=system_prompt&id=eq.wa_templates&limit=1',{
+      headers:{'apikey':SK_P,'Authorization':'Bearer '+SK_P}
+    }).then(function(r){return r.json();});
+    var p2=fetch(SB_P+'/rest/v1/oasis_wa_config?select=system_prompt&id=eq.wa_products&limit=1',{
+      headers:{'apikey':SK_P,'Authorization':'Bearer '+SK_P}
+    }).then(function(r){return r.json();});
+    Promise.all([p1,p2]).then(function(results){
+      if(gen!==_fix42Gen) return; /* stale — newer fetch already in flight */
+      var sp=results[0]&&results[0][0]&&results[0][0].system_prompt;
+      window._panelTpls=sp?JSON.parse(sp):[];
+      var pp=results[1]&&results[1][0]&&results[1][0].system_prompt;
+      if(pp) window._panelProducts=JSON.parse(pp);
+      /* Rebuild product dropdown list with fresh counts */
+      var prodList=document.getElementById('sp-prod-list');
+      if(prodList&&window._panelProducts&&window._panelProducts.length){
+        var CMAP={jabones:'#e879f9',sebo:'#f97316',cierre:'#22c55e',seguimiento:'#3b82f6'};
+        var CUST=['#8b5cf6','#ec4899','#14b8a6','#f59e0b','#6366f1','#ef4444','#06b6d4'];
+        window._panelProducts.forEach(function(p,i){if(!CMAP[p.id])CMAP[p.id]=CUST[i%CUST.length];});
+        var freshHtml=window._panelProducts.map(function(p){
+          var cnt=(window._panelTpls||[]).filter(function(t){return (t.category||t.product||'')===p.id;}).length;
+          return '<button onclick="elegirProducto(\''+p.id+'\')" '+
+            'style="width:100%;padding:11px 16px;border:none;background:#fff;cursor:pointer;text-align:left;'+
+            'font-size:13px;font-weight:600;color:#1e293b;display:flex;align-items:center;justify-content:space-between;transition:background 0.12s;" '+
+            'onmouseover="this.style.background=\'#f8fafc\'" onmouseout="this.style.background=\'#fff\'">'+
+            '<span>'+(p.icon||'📦')+' '+p.name+'</span>'+
+            '<span style="font-size:10px;color:#94a3b8;">'+cnt+'</span>'+
+            '</button><div style="height:1px;background:#f0f4f8;margin:0 8px;"></div>';
+        }).join('');
+        freshHtml+='<button onclick="elegirProducto(\'todos\')" style="width:100%;padding:11px 16px;border:none;background:#fff;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:#00a888;transition:background 0.12s;" onmouseover="this.style.background=\'#f0fffe\'" onmouseout="this.style.background=\'#fff\'">🔎 Todas las plantillas</button>';
+        prodList.innerHTML=freshHtml;
+      }
+      if(typeof window.elegirProducto==='function') window.elegirProducto('todos');
+    }).catch(function(){
+      if(gen!==_fix42Gen) return;
+      var g=document.getElementById('sp-pag-grid');
+      if(g) g.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px;color:#ef4444;">Error cargando plantillas</div>';
+    });
+  };
+
+  /* ─── 2. Disable old floating panel (sp-plantillas-panel) to avoid double-panel clash ─── */
+  var _origMostrar=window.mostrarPanelPlantillas;
+  window.mostrarPanelPlantillas=function(){
+    /* If the new panel system is active, just activate Plantillas section instead */
+    if(window._enPlantillas&&document.getElementById('sp-plantillas-pagina')) return;
+    /* Otherwise redirect to new system by simulating nav click */
+    var navItems=document.querySelectorAll('.wbv5-nav-item,[class*="nav-item"],[class*="navItem"]');
+    for(var i=0;i<navItems.length;i++){
+      if(/plantillas/i.test(navItems[i].textContent)&&!/pro/i.test(navItems[i].textContent)){
+        navItems[i].click(); return;
+      }
+    }
+    /* Fallback: open old panel */
+    if(_origMostrar) _origMostrar();
+  };
+
+  /* ─── 3. Force-refresh on every Plantillas section entry (not just first time) ─── */
+  var _origInyectar=window.inyectarPanelPlantillasEnPagina;
+  window.inyectarPanelPlantillasEnPagina=function(){
+    if(!window._enPlantillas) return;
+    var existing=document.getElementById('sp-plantillas-pagina');
+    /* If visible but last refresh was >30s ago, force a data refresh */
+    if(existing&&existing.offsetParent!==null){
+      var now=Date.now();
+      if(!existing._spLastLoad||now-existing._spLastLoad>30000){
+        existing._spLastLoad=now;
+        window.cargarTplsPagina(); /* refresh data silently */
+      }
+      return;
+    }
+    /* Call original to build the panel */
+    if(_origInyectar) _origInyectar();
+    /* Mark load time */
+    setTimeout(function(){
+      var p=document.getElementById('sp-plantillas-pagina');
+      if(p) p._spLastLoad=Date.now();
+    },100);
+  };
+
+  console.info('[WA-OASIS] Fix 42: Plantillas anti-flash + prod dropdown refresh + old panel cleanup');
+})();
