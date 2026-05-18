@@ -6,6 +6,7 @@
   if(p==='/catalogo')scripts.push('/hotfixes/catalog-hotfix.js?v=3');
   scripts.push('/hotfixes/product-landing-hotfix.js?v=13');
   if(p.indexOf('/dashboard/sub-banners')===0)scripts.push('/hotfixes/dashboard-subbanner-hotfix.js?v=1');
+  if(p.indexOf('/dashboard/whatsapp-bot')===0)scripts.push('/hotfixes/fix103.js?v=13');
   scripts.forEach(function(src){
     var s=document.createElement('script');s.src=src;s.defer=true;document.body.appendChild(s);
   });
