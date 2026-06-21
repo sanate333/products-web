@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recorrido | La Séptima: Ayer y Hoy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body class="map-body">
+    <header class="map-header">
+      <h1>La Séptima: Ayer y Hoy</h1>
+      <p>Mapa interactivo de hitos históricos sobre la Carrera Séptima de Bogotá.</p>
+    </header>
+
+    <main class="map-wrapper">
+      <div id="map" role="application" aria-label="Mapa del recorrido histórico"></div>
+      <p id="map-status" class="map-status" aria-live="polite"></p>
+
+      <nav class="floating-nav" aria-label="Controles del mapa">
+        <a href="index.html" class="btn-secondary">Volver al inicio</a>
+        <button id="toggle-markers" class="btn-primary" type="button">Ocultar puntos</button>
+      </nav>
+    </main>
+
+    <script src="puntos.js"></script>
+    <script src="main.js"></script>
+    <!--
+      Reemplaza YOUR_API_KEY con tu clave de Google Maps JavaScript API.
+      Para GitHub Pages puedes restringirla al dominio de publicación.
+    -->
+    <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"
+    ></script>
+  </body>
+</html>
